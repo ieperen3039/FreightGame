@@ -1,16 +1,18 @@
 package NG.Tools;
 
-import nl.NG.Jetfightergame.Tools.Tracked.TrackedObject;
+import NG.DataStructures.Tracked.TrackedInteger;
 
 /**
  * @author Jorren Hendriks & Geert van Ieperen adapter design pattern
  */
 public class Timer {
 
-    private final TrackedObject<Long> time;
+    private final TrackedInteger time;
+    private final long startTime;
 
     public Timer() {
-        time = new TrackedObject<>(System.currentTimeMillis());
+        startTime = System.currentTimeMillis();
+        time = new TrackedInteger(0);
     }
 
     /**
@@ -45,14 +47,18 @@ public class Timer {
      * @return the number of miliseconds since the last update in the loop
      */
     public long getTimeSinceLastUpdate() {
-        return System.currentTimeMillis() - time.current();
+        return actualCurrent() - time.current();
     }
 
     /**
      * set loopTimer to current system time. Should only be called by NG.Engine, exactly once per loop step
      */
     public void updateLoopTime() {
-        time.update(System.currentTimeMillis());
+        time.update(actualCurrent());
+    }
+
+    private int actualCurrent() {
+        return (int) (System.currentTimeMillis() - startTime);
     }
 
 }
