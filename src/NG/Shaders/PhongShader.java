@@ -1,7 +1,6 @@
 package NG.Shaders;
 
 import NG.DataStructures.Color4f;
-import NG.Settings.Settings;
 import NG.Tools.Directory;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -17,7 +16,7 @@ public class PhongShader extends AbstractShader {
     private static final Path VERTEX_PATH = Directory.shaders.getPath("Phong", "vertex.vert");
     private static final Path FRAGMENT_PATH = Directory.shaders.getPath("Phong", "fragment.frag");
 
-    public PhongShader(Settings s) throws ShaderException, IOException {
+    public PhongShader(int maxPointLights) throws ShaderException, IOException {
         super(VERTEX_PATH, null, FRAGMENT_PATH);
 
         // Create the Material uniform
@@ -30,7 +29,7 @@ public class PhongShader extends AbstractShader {
         createUniform("ambientLight");
         createUniform("cameraPosition");
 
-        createPointLightsUniform(s.MAX_POINT_LIGHTS);
+        createPointLightsUniform(maxPointLights);
     }
 
     public void setSpecular(float power) {

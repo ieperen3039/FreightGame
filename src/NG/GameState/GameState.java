@@ -2,6 +2,8 @@ package NG.GameState;
 
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.FreightGame;
+import NG.Engine.Game;
+import NG.Engine.GameModule;
 import NG.Entities.Entity;
 import NG.Tools.Toolbox;
 
@@ -11,16 +13,17 @@ import java.util.List;
 /**
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
-public class GameState {
+public class GameState implements GameModule {
     private final List<Entity> dynamicEntities;
     private final List<Entity> worldObjects;
 
-    public GameState(FreightGame freightGame) {
+    public GameState() {
         this.dynamicEntities = new ArrayList<>();
         this.worldObjects = new ArrayList<>();
     }
 
-    public void init() {
+    @Override
+    public void init(Game game) {
 
     }
 
@@ -39,5 +42,10 @@ public class GameState {
         Toolbox.drawAxisFrame(gl);
         dynamicEntities.forEach(entity -> entity.draw(gl));
         worldObjects.forEach(entity -> entity.draw(gl));
+    }
+
+    @Override
+    public void cleanup() {
+
     }
 }

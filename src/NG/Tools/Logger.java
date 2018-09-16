@@ -10,10 +10,22 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
+ * A logger class that has its levels reflected in enum constants
+ * The order of the constants reflect the order of level
  * @author Geert van Ieperen created on 2-6-2018.
  */
 public enum Logger {
-    DEBUG, INFO, WARN, ERROR;
+    // order matters!
+    /** for any information about the internal functioning */
+    DEBUG,
+    /** for errors caused by a break of assumptions in internal, where the game still could continue */
+    ASSERT,
+    /** for general information about the game state */
+    INFO,
+    /** for errors that allow the game to continue */
+    WARN,
+    /** for errors that probably cause the game to crash at some point */
+    ERROR;
 
     public static boolean doPrintCallsites = true;
 
@@ -110,6 +122,11 @@ public enum Logger {
         onlinePrints.remove(source);
     }
 
+    /**
+     * Set the logger to display only the text supplied by loggers that came after the supplied logger. A call to {@code
+     * setLoggerLevel(Logger.values()[0])} will enable all loggers
+     * @param minimum the minimum logger level that IS displayed
+     */
     public static void setLoggingLevel(Logger minimum) {
         Logger[] levels = values();
         for (int i = 0; i < levels.length; i++) {
@@ -157,6 +174,7 @@ public enum Logger {
                 break;
             case WARN:
             case ERROR:
+            case ASSERT:
                 err.accept(prefix + ": " + concatenate(s));
                 break;
         }

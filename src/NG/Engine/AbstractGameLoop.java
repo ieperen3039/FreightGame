@@ -13,7 +13,7 @@ import java.util.function.Supplier;
  *         <p>
  *         a general-purpose game loop also usable for rendering
  */
-public abstract class AbstractGameLoop extends Thread {
+public abstract class AbstractGameLoop extends Thread implements GameModule {
     private float targetDeltaMillis;
     private CountDownLatch pauseBlock = new CountDownLatch(0);
     private boolean shouldStop;
@@ -56,9 +56,9 @@ public abstract class AbstractGameLoop extends Thread {
     }
 
     /**
-     * is always called when this gameloop terminates
+     * is automatically called when this gameloop terminates
      */
-    protected abstract void cleanup();
+    public abstract void cleanup();
 
     /**
      * start the loop, running until {@link #stopLoop()} is called.

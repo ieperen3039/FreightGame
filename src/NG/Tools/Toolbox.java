@@ -6,7 +6,13 @@ import NG.DataStructures.MatrixStack.SGL;
 import NG.Shapes.BasicShapes;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.lwjgl.BufferUtils;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.function.Function;
@@ -339,5 +345,17 @@ public final class Toolbox {
         }
 
         return cMat[m][n];
+    }
+
+    public static ByteBuffer toByteBuffer(Path path) throws IOException {
+        ByteBuffer buffer;
+
+        try (SeekableByteChannel fc = Files.newByteChannel(path)) {
+            buffer = BufferUtils.createByteBuffer((int) fc.size() + 1);
+            while (fc.read(buffer) != -1) ;
+        }
+
+        buffer.flip();
+        return buffer;
     }
 }

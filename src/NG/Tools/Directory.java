@@ -8,7 +8,7 @@ import java.nio.file.Paths;
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public enum Directory {
-    shaders("res", "shaders"), meshes("res", "models", "general");
+    shaders("res", "shaders"), meshes("res", "models", "general"), fonts;
 
     private final Path directory;
 

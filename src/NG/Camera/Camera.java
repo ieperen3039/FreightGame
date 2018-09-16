@@ -1,17 +1,19 @@
 package NG.Camera;
 
+import NG.Engine.Game;
+import NG.Engine.GameModule;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 /**
  * @author Geert van Ieperen created on 29-10-2017.
  */
-public interface Camera {
+public interface Camera extends GameModule {
 
     /**
      * initialize the camera and its fields
      */
-    void init();
+    void init(Game game);
 
     /**
      * a copy of the direction vector of the eye of the camera to the focus of the camera.

@@ -93,6 +93,16 @@ public class PairList<L, R> extends AbstractList<Pair<L, R>> {
         }
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
+    public int indexOfLeft(Object o) {
+        return leftList.indexOf(o);
+    }
+
+    @SuppressWarnings("SuspiciousMethodCalls")
+    public int indexOfRight(Object o) {
+        return rightList.indexOf(o);
+    }
+
     /** sets the element of the given position to the given pair */
     public void set(int index, L left, R right) {
         leftList.set(index, left);

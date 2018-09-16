@@ -1,6 +1,6 @@
 package NG.Camera;
 
-import NG.Engine.FreightGame;
+import NG.Engine.Game;
 import NG.Tools.Vectors;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -22,7 +22,7 @@ public class PointCenteredCamera implements Camera {
      * The point to which the camera is looking.
      */
     public final Vector3f focus;
-    private final FreightGame game;
+    private final Game game;
 
     /** we follow the ISO convention. Phi gives rotation, theta the height */
     private float theta;
@@ -32,7 +32,7 @@ public class PointCenteredCamera implements Camera {
     /** cached eye position */
     private Vector3f eye;
 
-    public PointCenteredCamera(FreightGame game, Vector3f eye, Vector3f focus) {
+    public PointCenteredCamera(Game game, Vector3f eye, Vector3f focus) {
         this.game = game;
         this.focus = focus;
         this.eye = eye;
@@ -61,7 +61,7 @@ public class PointCenteredCamera implements Camera {
         return (float) Math.acos(eye.z() / vDist);
     }
 
-    public PointCenteredCamera(Vector3f focus, float theta, float phi, FreightGame game) {
+    public PointCenteredCamera(Vector3f focus, float theta, float phi, Game game) {
         this.focus = focus;
         this.theta = theta;
         this.phi = phi;

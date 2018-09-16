@@ -1,39 +1,51 @@
 package NG.Camera;
 
 
-import NG.Engine.FreightGame;
+import NG.ActionHandling.GLFWListener;
+import NG.Engine.Game;
 import NG.Settings.KeyBinding;
 import org.joml.Vector3f;
+
+import java.util.function.Consumer;
 
 /**
  * @author Geert van Ieperen created on 22-12-2017. a camera that doesn't move
  */
 public class StaticCamera implements Camera {
 
-    public static final float QUARTER = (float) (Math.PI / 2);
+    public static final float EIGHTST = (float) (Math.PI / 4);
     private Vector3f eye, focus;
     private Vector3f up;
-    private FreightGame game;
+    private GLFWListener callbacks;
+    private Consumer<Integer> keyListener;
 
-    public StaticCamera(FreightGame game, Vector3f focus, Vector3f up) {
+    public StaticCamera(Vector3f focus, Vector3f up) {
         this.eye = new Vector3f(20, 20, 20);
         this.focus = focus;
         this.up = up;
-        this.game = game;
     }
 
     @Override
-    public void init() {
-        game.registerKeyPressListener(k -> {
+    public void init(Game game) {
+        callbacks = game.callbacks();
+
+        keyListener = k -> {
             switch (KeyBinding.get(k)) {
                 case CAMERA_LEFT:
-                    eye.rotateZ(QUARTER);
+                    eye.rotateZ(EIGHTST);
                     break;
                 case CAMERA_RIGHT:
-                    eye.rotateZ(-QUARTER);
+                    eye.rotateZ(-EIGHTST);
                     break;
             }
-        });
+        };
+
+        callbacks.onKeyPress(keyListener);
+    }
+
+    @Override
+    public void cleanup() {
+        callbacks.removeListener(keyListener);
     }
 
     @Override

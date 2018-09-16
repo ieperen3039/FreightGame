@@ -31,7 +31,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
  *         <p>
  *         A window which initializes GLFW and manages it.
  */
-public class GLFWWindow {
+public class GLFWWindow implements GameModule {
     private static final boolean GL_DEBUG_MESSAGES = false;
 
     private final String title;
@@ -46,10 +46,9 @@ public class GLFWWindow {
     private int height;
     private boolean fullScreen = false;
     private boolean mouseIsCaptured;
-    private FreightGame game;
+    private Game game;
 
-    public GLFWWindow(FreightGame game, String title, boolean resizable) {
-        this.game = game;
+    public GLFWWindow(String title, boolean resizable) {
         this.title = title;
         this.resizable = resizable;
 
@@ -57,8 +56,9 @@ public class GLFWWindow {
         this.mousePosY = BufferUtils.createDoubleBuffer(1);
     }
 
-    public void init() {
-        Settings settings = game.settings;
+    public void init(Game game) {
+        this.game = game;
+        Settings settings = game.settings();
         // Setup error callback, print to System.err
         GLFWErrorCallback.createPrint(Logger.ERROR.getPrintStream()).set();
 
@@ -297,7 +297,7 @@ public class GLFWWindow {
      * @return Whether vSync is enabled.
      */
     public boolean vSyncEnabled() {
-        return game.settings.V_SYNC;
+        return game.settings().V_SYNC;
     }
 
     /**
@@ -332,9 +332,9 @@ public class GLFWWindow {
 
     public void setFullScreen() {
         GLFWVidMode vidmode = glfwGetVideoMode(primaryMonitor);
-        glfwSetWindowMonitor(window, primaryMonitor, 0, 0, vidmode.width(), vidmode.height(), game.settings.TARGET_FPS);
+        glfwSetWindowMonitor(window, primaryMonitor, 0, 0, vidmode.width(), vidmode.height(), game.settings().TARGET_FPS);
 
-        if (game.settings.V_SYNC) {
+        if (game.settings().V_SYNC) {
             // Turn on vSync
             glfwSwapInterval(1);
         }
@@ -348,8 +348,8 @@ public class GLFWWindow {
         // Center window on display
         glfwSetWindowPos(
                 window,
-                (vidmode.width() - game.settings.WINDOW_WIDTH) / 2,
-                (vidmode.height() - game.settings.WINDOW_HEIGHT) / 2
+                (vidmode.width() - game.settings().WINDOW_WIDTH) / 2,
+                (vidmode.height() - game.settings().WINDOW_HEIGHT) / 2
         );
         fullScreen = false;
     }
