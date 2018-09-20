@@ -106,7 +106,7 @@ public class JarModReader {
                 Constructor<?> constructor = c.getConstructor();
                 Mod inst = (Mod) constructor.newInstance();
                 // also verifies correct loading of class
-                Logger.INFO.print("Loaded mod " + inst.getName());
+                Logger.INFO.print("Loaded mod " + inst.getModName());
                 list.add(inst);
             }
         }

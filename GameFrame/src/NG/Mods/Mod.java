@@ -19,7 +19,7 @@ public interface Mod extends GameAspect {
     void init(Game game) throws Version.MisMatchException;
 
     /** @return the name of this mod */
-    default String getName() {
+    default String getModName() {
         return getClass().getName();
     }
 }

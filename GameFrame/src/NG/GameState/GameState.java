@@ -51,8 +51,8 @@ public class GameState implements GameAspect {
      */
     public void draw(SGL gl) {
         Toolbox.drawAxisFrame(gl);
-        dynamicEntities.forEach(entity -> entity.draw(gl));
         worldObjects.forEach(entity -> entity.draw(gl));
+        dynamicEntities.forEach(entity -> entity.draw(gl));
     }
 
     @Override

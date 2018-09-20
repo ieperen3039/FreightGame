@@ -1,12 +1,13 @@
-package NG.ScreenOverlay.Userinterface;
+package NG.ScreenOverlay.Menu;
 
 import NG.ScreenOverlay.JFGFonts;
-import NG.ScreenOverlay.MenuStyleSettings;
 import NG.ScreenOverlay.ScreenOverlay;
+import NG.Tools.Logger;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.function.Consumer;
 
-import static NG.ScreenOverlay.MenuStyleSettings.*;
+import static NG.ScreenOverlay.Menu.MenuStyleSettings.*;
 import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_CENTER;
 
 /**
@@ -43,12 +44,19 @@ public class MenuSlider extends MenuClickable {
     }
 
     @Override
-    public void onClick(int x, int y) {
-        value = (float) width / x;
-        try {
-            handler.accept(value);
-        } catch (Exception ex) {
-            throw new RuntimeException("Error occurred in slider \"" + text + "\", with value " + value, ex);
+    public void onClick(int button, int x, int y) {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            value = (float) width / x;
+            try {
+                handler.accept(value);
+            } catch (Exception ex) {
+                throw new RuntimeException("Error occurred in slider \"" + text + "\", with value " + value, ex);
+            }
         }
+    }
+
+    @Override
+    public void onClick() {
+        Logger.ASSERT.print("onClick() called on slider");
     }
 }

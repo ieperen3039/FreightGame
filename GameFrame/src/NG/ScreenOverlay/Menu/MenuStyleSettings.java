@@ -1,6 +1,7 @@
-package NG.ScreenOverlay;
+package NG.ScreenOverlay.Menu;
 
 import NG.DataStructures.Color4f;
+import NG.ScreenOverlay.JFGFonts;
 
 import static NG.DataStructures.Color4f.BLACK;
 

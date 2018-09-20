@@ -1,13 +1,12 @@
-package NG.ScreenOverlay.Userinterface;
+package NG.ScreenOverlay.Menu;
 
-import NG.ScreenOverlay.MenuStyleSettings;
 import NG.ScreenOverlay.ScreenOverlay;
 
 import java.util.function.Consumer;
 
 import static NG.ScreenOverlay.JFGFonts.ORBITRON_MEDIUM;
-import static NG.ScreenOverlay.MenuStyleSettings.TEXT_COLOR;
-import static NG.ScreenOverlay.MenuStyleSettings.TEXT_SIZE_LARGE;
+import static NG.ScreenOverlay.Menu.MenuStyleSettings.TEXT_COLOR;
+import static NG.ScreenOverlay.Menu.MenuStyleSettings.TEXT_SIZE_LARGE;
 import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_CENTER;
 
 /**
@@ -48,7 +47,7 @@ public class MenuToggle extends MenuClickable {
     }
 
     @Override
-    public void onClick(int x, int y) {
+    public void onClick() {
         value = !value;
         handler.accept(value);
     }

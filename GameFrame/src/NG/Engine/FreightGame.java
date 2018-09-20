@@ -48,7 +48,7 @@ public class FreightGame implements Game {
 //        camera = new StaticCamera(Vectors.zeroVector(), Vectors.zVector());
         camera = new PointCenteredCamera(new Vector3f(20, 20, 20), Vectors.zeroVector());
         window = new GLFWWindow(Settings.GAME_NAME, true);
-        renderer = new RenderLoop(30);
+        renderer = new RenderLoop(settings.TARGET_FPS);
         gamestate = new GameState();
         inputHandler = new GLFWListener();
 
@@ -70,7 +70,7 @@ public class FreightGame implements Game {
                 initMod(mod);
 
             } catch (Version.MisMatchException | InvalidNumberOfModulesException ex) {
-                Logger.ERROR.print("Error while loading " + mod.getName(), ex);
+                Logger.ERROR.print("Error while loading " + mod.getModName(), ex);
             }
         }
 
@@ -85,7 +85,7 @@ public class FreightGame implements Game {
 
         } else if (mod instanceof MapGeneratorMod) {
             if (mapGenerator != null) throw new InvalidNumberOfModulesException(
-                    "Tried loading " + mod.getName() + " while we already have a Map Generator Mod: " + mapGenerator);
+                    "Tried loading " + mod.getModName() + " while we already have a Map Generator Mod: " + mapGenerator);
 
             mapGenerator = (MapGeneratorMod) mod;
         }

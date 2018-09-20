@@ -31,7 +31,7 @@ public class BaseTracksMod implements TrackMod {
     }
 
     @Override
-    public String getName() {
+    public String getModName() {
         return "BaseTracks";
     }
 
@@ -48,7 +48,7 @@ public class BaseTracksMod implements TrackMod {
 
         @Override
         public TrackPiece createNew(Vector2fc startCoord, Vector2fc startDirection, Vector2fc endCoord) {
-            if (Math.abs(endCoord.sub(startCoord, new Vector2f()).dot(startDirection)) < 0.01f) {
+            if (endCoord.sub(startCoord, new Vector2f()).angle(startDirection) < 0.01f) {
                 return new StraightTrack(game, startCoord, endCoord);
             } else {
                 return new CircleTrack(game, startCoord, startDirection, endCoord);

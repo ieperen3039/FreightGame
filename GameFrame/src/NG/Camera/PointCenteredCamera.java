@@ -1,20 +1,18 @@
 package NG.Camera;
 
 import NG.ActionHandling.GLFWListener;
-import NG.ActionHandling.GLFWListener.DragListener;
+import NG.ActionHandling.MouseScrollListener;
 import NG.Engine.Game;
 import NG.Tools.Vectors;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-
-import java.util.function.Consumer;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
 /**
  * The standard camera that rotates using dragging. Some of the code originates from the RobotRace sample code provided by the TU Eindhoven
  */
-public class PointCenteredCamera implements Camera {
+public class PointCenteredCamera implements Camera, MouseScrollListener {
 
     private static final float ZOOM_SPEED = -0.1f;
     private static final float THETA_MIN = 0.01f;
@@ -36,8 +34,7 @@ public class PointCenteredCamera implements Camera {
     private float vDist = 10f;
 
     private GLFWListener callbacks;
-    private DragListener onDrag = new TurnCameraOnDrag();
-    private Consumer<Double> scrollListener = s -> vDist = (float) Math.min(vDist * ((ZOOM_SPEED * s) + 1f), maxDist);
+    private GLFWListener.MouseDragListener onDrag = new TurnCameraOnDrag();
 
     public PointCenteredCamera(Vector3f eye, Vector3f focus) {
         this.focus = focus;
@@ -77,7 +74,7 @@ public class PointCenteredCamera implements Camera {
         updatePosition(0);
         callbacks = game.callbacks();
         callbacks.onMouseDrag(onDrag);
-        callbacks.onMouseScroll(scrollListener);
+        callbacks.onMouseScroll(this);
     }
 
     @Override
@@ -123,7 +120,11 @@ public class PointCenteredCamera implements Camera {
         return Vectors.zVector();
     }
 
-    private class TurnCameraOnDrag extends DragListener {
+    public void mouseScrolled(double s) {
+        vDist = (float) Math.min(vDist * ((ZOOM_SPEED * s) + 1f), maxDist);
+    }
+
+    private class TurnCameraOnDrag extends GLFWListener.MouseDragListener {
         TurnCameraOnDrag() {
             super(GLFW_MOUSE_BUTTON_RIGHT);
         }
