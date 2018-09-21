@@ -7,6 +7,7 @@ import NG.GameState.GameState;
 import NG.Mods.MapGeneratorMod;
 import NG.Mods.Mod;
 import NG.Mods.TrackMod;
+import NG.ScreenOverlay.Frames.SFrameManager;
 import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
@@ -27,6 +28,7 @@ public class FreightGame implements Game {
     private final Settings settings;
     private final GLFWWindow window;
     private final GLFWListener inputHandler;
+    private final SFrameManager frameManager;
     private List<Mod> mods;
 
     private MapGeneratorMod mapGenerator;
@@ -51,6 +53,7 @@ public class FreightGame implements Game {
         renderer = new RenderLoop(settings.TARGET_FPS);
         gamestate = new GameState();
         inputHandler = new GLFWListener();
+        frameManager = new SFrameManager();
 
         // load mods
         mods = JarModReader.loadMods(Directory.mods);
@@ -63,6 +66,7 @@ public class FreightGame implements Game {
         camera.init(this);
         gamestate.init(this);
         inputHandler.init(this);
+        frameManager.init(this);
 
         // init mods
         for (Mod mod : mods) {
@@ -154,6 +158,11 @@ public class FreightGame implements Game {
     @Override
     public Version getVersion() {
         return new Version(0, 0);
+    }
+
+    @Override
+    public SFrameManager getFrameManager() {
+        return frameManager;
     }
 
     private class InvalidNumberOfModulesException extends Exception {

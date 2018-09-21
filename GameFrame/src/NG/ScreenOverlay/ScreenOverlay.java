@@ -7,6 +7,7 @@ import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
+import org.joml.Vector2ic;
 import org.joml.Vector3f;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
@@ -151,6 +152,11 @@ public final class ScreenOverlay implements HeadsUpDisplay {
         /** maps a position in world-space to a position on the screen */
         private final Function<Vector3f, Vector2f> mapper;
 
+        private final Color4f strokeColor = MENU_STROKE_COLOR;
+        private final int strokeWidth = MENU_STROKE_WIDTH;
+        private final Color4f textColor = Color4f.WHITE;
+        private final Color4f fillColor = MENU_FILL_COLOR;
+
         public final int windowWidth;
         public final int windowHeight;
         public final Vector3f cameraPosition;
@@ -176,6 +182,7 @@ public final class ScreenOverlay implements HeadsUpDisplay {
             this.yPrintRoll = printRollSize + yPrintRoll;
             this.xPrintRoll = xPrintRoll;
         }
+
 
         /**
          * @param worldPosition a position in world-space
@@ -210,24 +217,29 @@ public final class ScreenOverlay implements HeadsUpDisplay {
             return color;
         }
 
+        /** @see #rgba(float, float, float, float) */
         private NVGColor rgba(Color4f color) {
             return rgba(color.red, color.green, color.blue, color.alpha);
         }
 
         public void rectangle(int x, int y, int width, int height) {
-            rectangle(x, y, width, height, MENU_FILL_COLOR, MENU_STROKE_COLOR, MENU_STROKE_WIDTH);
+            rectangle(x, y, width, height, fillColor, strokeColor, strokeWidth);
         }
 
         public void rectangle(int x, int y, int width, int height, Color4f fillColor, Color4f strokeColor, int strokeWidth) {
             nvgBeginPath(vg);
             nvgRect(vg, x, y, width, height);
 
-            fill(fillColor);
-            stroke(strokeWidth, strokeColor);
+            setFill(fillColor);
+            setStroke(strokeWidth, strokeColor);
+        }
+
+        public void roundedRectangle(Vector2ic pos, Vector2ic dim, int indent) {
+            roundedRectangle(pos.x(), pos.y(), dim.x(), dim.y(), indent);
         }
 
         public void roundedRectangle(int x, int y, int width, int height, int indent) {
-            roundedRectangle(x, y, width, height, indent, MENU_FILL_COLOR, MENU_STROKE_COLOR, MENU_STROKE_WIDTH);
+            roundedRectangle(x, y, width, height, indent, fillColor, strokeColor, strokeWidth);
         }
 
         public void roundedRectangle(int x, int y, int width, int height, int indent, Color4f fillColor, Color4f strokeColor, int strokeWidth) {
@@ -249,7 +261,7 @@ public final class ScreenOverlay implements HeadsUpDisplay {
 
         /** @see #circle(int, int, int, Color4f, int, Color4f) */
         public void circle(int x, int y, int radius) {
-            circle(x, y, radius, MENU_FILL_COLOR, MENU_STROKE_WIDTH, MENU_STROKE_COLOR);
+            circle(x, y, radius, fillColor, strokeWidth, strokeColor);
         }
 
         /**
@@ -259,12 +271,12 @@ public final class ScreenOverlay implements HeadsUpDisplay {
             nvgBeginPath(vg);
             nvgCircle(vg, x, y, radius);
 
-            fill(fillColor);
-            stroke(strokeWidth, strokeColor);
+            setFill(fillColor);
+            setStroke(strokeWidth, strokeColor);
         }
 
         public void polygon(Vector2i... points) {
-            polygon(MENU_FILL_COLOR, MENU_STROKE_COLOR, MENU_STROKE_WIDTH, points);
+            polygon(fillColor, strokeColor, strokeWidth, points);
         }
 
         public void polygon(Color4f fillColor, Color4f strokeColor, int strokeWidth, Vector2i... points) {
@@ -275,8 +287,8 @@ public final class ScreenOverlay implements HeadsUpDisplay {
                 nvgLineTo(vg, point.x, point.y);
             }
 
-            fill(fillColor);
-            stroke(strokeWidth, strokeColor);
+            setFill(fillColor);
+            setStroke(strokeWidth, strokeColor);
         }
 
         /**
@@ -292,7 +304,7 @@ public final class ScreenOverlay implements HeadsUpDisplay {
                 nvgLineTo(vg, points[i++], points[i++]);
             }
 
-            stroke(strokeWidth, strokeColor);
+            setStroke(strokeWidth, strokeColor);
         }
 
         // non-shape defining functions
@@ -308,27 +320,19 @@ public final class ScreenOverlay implements HeadsUpDisplay {
         public void printRoll(String text) {
             int y = yPrintRoll + ((printRollSize + 5) * printRollEntry);
 
-            text(xPrintRoll, y, printRollSize, JFGFonts.LUCIDA_CONSOLE, NVG_ALIGN_LEFT, Color4f.WHITE, text);
+            text(xPrintRoll, y, printRollSize, JFGFonts.LUCIDA_CONSOLE, NVG_ALIGN_LEFT, textColor, text);
             printRollEntry++;
         }
 
-        private void fill(float red, float green, float blue, float alpha) {
-            nvgFillColor(vg, rgba(red, green, blue, alpha));
+        public void setFill(Color4f color) {
+            nvgFillColor(vg, rgba(color));
             nvgFill(vg);
         }
 
-        private void fill(Color4f color) {
-            fill(color.red, color.green, color.blue, color.alpha);
-        }
-
-        private void stroke(int width, float red, float green, float blue, float alpha) {
+        public void setStroke(int width, Color4f color) {
             nvgStrokeWidth(vg, width);
-            nvgStrokeColor(vg, rgba(red, green, blue, alpha));
+            nvgStrokeColor(vg, rgba(color));
             nvgStroke(vg);
-        }
-
-        private void stroke(int width, Color4f color) {
-            stroke(width, color.red, color.green, color.blue, color.alpha);
         }
 
         public void image(Path filename, int x, int y, int width, int height, float alpha) throws IOException {
