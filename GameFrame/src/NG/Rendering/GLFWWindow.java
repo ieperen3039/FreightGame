@@ -1,6 +1,8 @@
-package NG.Engine;
+package NG.Rendering;
 
 import NG.DataStructures.Color4f;
+import NG.Engine.Game;
+import NG.Engine.GameAspect;
 import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;

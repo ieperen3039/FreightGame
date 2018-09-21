@@ -2,6 +2,7 @@ package NG.ScreenOverlay;
 
 import NG.DataStructures.Color4f;
 import NG.Engine.Game;
+import NG.Engine.GameAspect;
 import NG.Tools.Logger;
 import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
@@ -33,9 +34,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 /**
  * @author Jorren & Geert
  */
-public final class ScreenOverlay implements HeadsUpDisplay {
-
-    private final Game game;
+public final class ScreenOverlay implements GameAspect {
     private long vg;
     private NVGColor color;
     private NVGPaint paint;
@@ -45,23 +44,14 @@ public final class ScreenOverlay implements HeadsUpDisplay {
     private final ByteBuffer[] fontBuffer = new ByteBuffer[JFGFonts.values().length];
     private Map<Path, Integer> imageBuffer = new HashMap<>();
 
-    private final Collection<Consumer<Painter>> menuDrawBuffer = new ArrayList<>();
-    private final Collection<Consumer<Painter>> hudDrawBuffer = new ArrayList<>();
-
-    private final Lock menuBufferLock = new ReentrantLock();
-    private final Lock hudBufferLock = new ReentrantLock();
-
-    public boolean isMenuMode() {
-        return game.menuMode();
-    }
+    private final Collection<Consumer<Painter>> drawBuffer = new ArrayList<>();
+    private final Lock drawBufferLock = new ReentrantLock();
 
     /**
-     * returns the Hud
      * @param game the game this plays in
      * @throws IOException If an error occures during the setup of the Hud.
      */
-    public ScreenOverlay(Game game) throws IOException {
-        this.game = game;
+    public void init(Game game) throws IOException {
 
         if (game.settings().ANTIALIAS > 0) {
             vg = nvgCreate(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
@@ -85,63 +75,41 @@ public final class ScreenOverlay implements HeadsUpDisplay {
         paint = NVGPaint.create();
     }
 
-    /**
-     * Create something for the hud to be drawn. Package the NanoVG drawObjects commands inside a {@link Consumer
-     * <Painter>} which will execute {@link Painter} commands once the Hud is ready to draw
-     * @param render The code for drawing inside the hud.
-     */
-    public void addMenuItem(Consumer<Painter> render) {
-        menuBufferLock.lock();
-        menuDrawBuffer.add(render);
-        menuBufferLock.unlock();
-    }
-
-    /**
-     * Remove an existing drawObjects handler from the Hud.
-     * @param render The handler to remove.
-     */
-    public void removeMenuItem(Consumer<Painter> render) {
-        menuBufferLock.lock();
-        try {
-            menuDrawBuffer.remove(render);
-        } finally {
-            menuBufferLock.unlock();
-        }
-    }
-
-    /** clear the menu drawBuffer */
-    public void removeMenuItem() {
-        menuBufferLock.lock();
-        menuDrawBuffer.clear();
-        menuBufferLock.unlock();
-    }
-
     @Override
+    public void cleanup() {
+        removeHudItem();
+    }
+
     public void addHudItem(Consumer<Painter> render) {
         if (render == null) return;
 
-        hudBufferLock.lock();
-        hudDrawBuffer.add(render);
-        hudBufferLock.unlock();
+        drawBufferLock.lock();
+        try {
+            drawBuffer.add(render);
+        } finally {
+            drawBufferLock.unlock();
+        }
     }
 
-    @Override
     public void removeHudItem(Consumer<Painter> render) {
         if (render == null) return;
 
-        hudBufferLock.lock();
+        drawBufferLock.lock();
         try {
-            hudDrawBuffer.remove(render);
+            drawBuffer.remove(render);
         } finally {
-            hudBufferLock.unlock();
+            drawBufferLock.unlock();
         }
     }
 
     /** clear the hud drawBuffer */
     public void removeHudItem() {
-        hudBufferLock.lock();
-        hudDrawBuffer.clear();
-        hudBufferLock.unlock();
+        drawBufferLock.lock();
+        try {
+            drawBuffer.clear();
+        } finally {
+            drawBufferLock.unlock();
+        }
     }
 
     public class Painter {
@@ -391,20 +359,11 @@ public final class ScreenOverlay implements HeadsUpDisplay {
         nvgBeginFrame(vg, windowWidth, windowHeight, 1);
 
         // Draw the right drawhandlers
-        if (isMenuMode()) {
-            menuBufferLock.lock();
-            try {
-                menuDrawBuffer.forEach(m -> m.accept(painter));
-            } finally {
-                menuBufferLock.unlock();
-            }
-        } else {
-            hudBufferLock.lock();
-            try {
-                hudDrawBuffer.forEach(m -> m.accept(painter));
-            } finally {
-                hudBufferLock.unlock();
-            }
+        drawBufferLock.lock();
+        try {
+            drawBuffer.forEach(m -> m.accept(painter));
+        } finally {
+            drawBufferLock.unlock();
         }
 
         // End NanoVG frame

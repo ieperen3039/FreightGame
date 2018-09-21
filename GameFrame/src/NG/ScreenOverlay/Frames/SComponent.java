@@ -54,16 +54,16 @@ public abstract class SComponent {
         position.set(x, y);
     }
 
-    public void setPosition(Vector2ic newPosition) {
-        position.set(newPosition);
-    }
-
-    public void setDimensions(Vector2ic newDimensions) {
-        dimensions.set(newDimensions);
-    }
-
-    public void setDimensions(int width, int height) {
+    public void setSize(int width, int height) {
         dimensions.set(width, height);
+    }
+
+    public final void setPosition(Vector2ic newPosition) {
+        setPosition(newPosition.x(), newPosition.y());
+    }
+
+    public final void setSize(Vector2ic newDimensions) {
+        setSize(newDimensions.x(), newDimensions.y());
     }
 
     // getters

@@ -8,7 +8,7 @@ package NG.Engine;
 public interface GameAspect {
     /**
      * Initialize the state of this object. You should not assume anything about the order of how other {@code
-     * GameModule}'s {@code init} methods have been called
+     * GameModule}'s {@code init} methods have been called.
      */
     void init(Game game) throws Exception;
 

@@ -20,7 +20,7 @@ public class BaseTracksMod implements TrackMod {
 
     @Override
     public void init(Game game) throws Version.MisMatchException {
-        game.getVersion().requireAtLeast(0, 0);
+        game.getVersionNumber().requireAtLeast(0, 0);
         types = Collections.singletonList(new RegularTrack());
         this.game = game;
     }

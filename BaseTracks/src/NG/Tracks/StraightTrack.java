@@ -73,7 +73,7 @@ public class StraightTrack implements TrackPiece {
 
     @Override
     public void draw(SGL gl) {
-        GameState gamestate = game.getGamestate();
+        GameState gamestate = game.state();
         Vector3f coord = gamestate.getPosition(startCoord);
 
         float trackSpacing = game.settings().TRACK_SPACING;

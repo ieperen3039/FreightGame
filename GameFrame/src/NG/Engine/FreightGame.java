@@ -3,11 +3,16 @@ package NG.Engine;
 import NG.ActionHandling.GLFWListener;
 import NG.Camera.Camera;
 import NG.Camera.PointCenteredCamera;
+import NG.GameState.GameLoop;
 import NG.GameState.GameState;
 import NG.Mods.MapGeneratorMod;
 import NG.Mods.Mod;
 import NG.Mods.TrackMod;
+import NG.Rendering.GLFWWindow;
+import NG.Rendering.RenderLoop;
+import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.Frames.SFrameManager;
+import NG.ScreenOverlay.ScreenOverlay;
 import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
@@ -23,15 +28,14 @@ import java.util.List;
 public class FreightGame implements Game {
     private final GameTimer time;
     private final Camera camera;
-    private final GameState gamestate;
+    private final GameLoop gameState;
     private final RenderLoop renderer;
+    private final ScreenOverlay overlay;
     private final Settings settings;
     private final GLFWWindow window;
     private final GLFWListener inputHandler;
     private final SFrameManager frameManager;
     private List<Mod> mods;
-
-    private MapGeneratorMod mapGenerator;
 
     public FreightGame() throws IOException {
         Logger.INFO.print("Starting the game...");
@@ -39,11 +43,12 @@ public class FreightGame implements Game {
                 // manual aligning will do the trick
                 "\n\tSystem OS:          " + System.getProperty("os.name") +
                 "\n\tJava VM:            " + System.getProperty("java.runtime.version") +
-                "\n\tFrame version:      " + getVersion() +
+                "\n\tFrame version:      " + getVersionNumber() +
                 "\n\tWorking directory:  " + Directory.currentDirectory() +
                 "\n\tMods directory:     " + Directory.mods.getPath()
         );
 
+        // these two are not GameAspects, and thus the init() rule does not apply
         settings = new Settings();
         time = new GameTimer();
 
@@ -51,7 +56,8 @@ public class FreightGame implements Game {
         camera = new PointCenteredCamera(new Vector3f(20, 20, 20), Vectors.zeroVector());
         window = new GLFWWindow(Settings.GAME_NAME, true);
         renderer = new RenderLoop(settings.TARGET_FPS);
-        gamestate = new GameState();
+        overlay = new ScreenOverlay();
+        gameState = new GameLoop(Settings.GAME_NAME, settings.TARGET_TPS);
         inputHandler = new GLFWListener();
         frameManager = new SFrameManager();
 
@@ -63,8 +69,9 @@ public class FreightGame implements Game {
         // init all fields
         window.init(this);
         renderer.init(this);
+        overlay.init(this);
         camera.init(this);
-        gamestate.init(this);
+        gameState.init(this);
         inputHandler.init(this);
         frameManager.init(this);
 
@@ -86,12 +93,26 @@ public class FreightGame implements Game {
 
         if (mod instanceof TrackMod) {
 //                 trackTypes.addAll(mod.getTypes()); or sth similar
+            Logger.DEBUG.print("Loaded " + mod.getModName() + " as TrackMod");
+
+        } else if (mod instanceof SFrameLookAndFeel) {
+            if (frameManager.getLookAndFeel() != null) {
+                throw new InvalidNumberOfModulesException(
+                        "Tried loading " + mod.getModName() + " while we already have a LookAndFeel Mod");
+            }
+
+            frameManager.setLookAndFeel((SFrameLookAndFeel) mod);
+            Logger.DEBUG.print("Loaded " + mod.getModName() + " as LookAndFeel");
 
         } else if (mod instanceof MapGeneratorMod) {
-            if (mapGenerator != null) throw new InvalidNumberOfModulesException(
-                    "Tried loading " + mod.getModName() + " while we already have a Map Generator Mod: " + mapGenerator);
+            if (gameState.hasMapGenerator()) {
+                throw new InvalidNumberOfModulesException(
+                        "Tried loading " + mod.getModName() + " while we already have a Map Generator Mod");
+            }
 
-            mapGenerator = (MapGeneratorMod) mod;
+            gameState.setMapGenerator((MapGeneratorMod) mod);
+            Logger.DEBUG.print("Loaded " + mod.getModName() + " as Map Generator");
+
         }
     }
 
@@ -99,6 +120,7 @@ public class FreightGame implements Game {
         Logger.INFO.print("Starting game...");
         init();
 
+        gameState.start();
         window.open();
         time.set(0);
         renderer.run();
@@ -110,7 +132,7 @@ public class FreightGame implements Game {
         window.cleanup();
         renderer.cleanup();
         camera.cleanup();
-        gamestate.cleanup();
+        gameState.cleanup();
         inputHandler.cleanup();
         mods.forEach(Mod::cleanup);
     }
@@ -126,13 +148,13 @@ public class FreightGame implements Game {
     }
 
     @Override
-    public GameState getGamestate() {
-        return gamestate;
+    public GameState state() {
+        return gameState;
     }
 
     @Override
-    public RenderLoop getRenderer() {
-        return renderer;
+    public ScreenOverlay painter() {
+        return overlay;
     }
 
     @Override
@@ -151,18 +173,18 @@ public class FreightGame implements Game {
     }
 
     @Override
-    public boolean menuMode() {
-        return time.isPaused();
-    }
-
-    @Override
-    public Version getVersion() {
+    public Version getVersionNumber() {
         return new Version(0, 0);
     }
 
     @Override
-    public SFrameManager getFrameManager() {
+    public SFrameManager frameManager() {
         return frameManager;
+    }
+
+    @Override
+    public void doAfterGameLoop(Runnable action) {
+        gameState.defer(action);
     }
 
     private class InvalidNumberOfModulesException extends Exception {

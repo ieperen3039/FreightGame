@@ -19,14 +19,17 @@ public class SFrameManager implements Consumer<ScreenOverlay.Painter>, GameAspec
     /** the first element in this list has focus */
     private Deque<SFrame> frames;
 
+    private SFrameLookAndFeel lookAndFeel;
+
     public SFrameManager() {
         this.frames = new ArrayDeque<>();
     }
 
     @Override
-    public void init(Game game) throws Exception {
+    public void init(Game game) {
         this.game = game;
         game.callbacks().onMouseButtonClick(this);
+        game.painter().addHudItem(this);
     }
 
 
@@ -46,6 +49,8 @@ public class SFrameManager implements Consumer<ScreenOverlay.Painter>, GameAspec
             frames.removeLast().dispose();
             frames.addFirst(frame);
         }
+
+        frame.setLookAndFeel(lookAndFeel);
     }
 
     public void focus(SFrame frame) {
@@ -70,5 +75,13 @@ public class SFrameManager implements Consumer<ScreenOverlay.Painter>, GameAspec
                 return; // only for top-most frame
             }
         }
+    }
+
+    public void setLookAndFeel(SFrameLookAndFeel lookAndFeel) {
+        this.lookAndFeel = lookAndFeel;
+    }
+
+    public SFrameLookAndFeel getLookAndFeel() {
+        return lookAndFeel;
     }
 }

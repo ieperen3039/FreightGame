@@ -1,10 +1,9 @@
 package NG.ActionHandling;
 
 import NG.DataStructures.Tracked.TrackedInteger;
-import NG.Engine.GLFWWindow;
 import NG.Engine.Game;
 import NG.Engine.GameAspect;
-import NG.ScreenOverlay.Frames.UIClickable;
+import NG.Rendering.GLFWWindow;
 import NG.Tools.Logger;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
@@ -27,25 +26,22 @@ public class GLFWListener implements GameAspect {
     private final Collection<MouseDragListener> mouseButtonDragListeners;
     private final Collection<MouseScrollListener> mouseScrollListeners;
 
-    private final Collection<UIClickable> uiClickListeners;
-
     public GLFWListener() {
         this.keyPressListeners = new ArrayList<>();
         this.keyReleaseListeners = new ArrayList<>();
         this.mouseAnyButtonClickListeners = new ArrayList<>();
         this.mouseButtonDragListeners = new ArrayList<>();
         this.mouseScrollListeners = new ArrayList<>();
-        this.uiClickListeners = new ArrayList<>();
     }
 
     @Override
     public void init(Game game) {
         GLFWWindow target = game.window();
 
-        target.registerListener(new KeyPress());
-        target.registerListener(new MouseButtonPress());
-        target.registerListener(new MouseScroll());
-        target.registerListener(new MouseMove());
+        target.registerListener(new KeyPressCallback());
+        target.registerListener(new MouseButtonPressCallback());
+        target.registerListener(new MouseScrollCallback());
+        target.registerListener(new MouseMoveCallback());
     }
 
     /**
@@ -70,13 +66,6 @@ public class GLFWListener implements GameAspect {
     }
 
     /**
-     * @param element an UI element where the user can click on
-     */
-    public void onElementClick(UIClickable element) {
-        uiClickListeners.add(element);
-    }
-
-    /**
      * registers a listener that tracks a mouse drag action
      * @param action see {@link MouseDragListener}
      */
@@ -90,21 +79,21 @@ public class GLFWListener implements GameAspect {
     public void onMouseScroll(MouseScrollListener action) {
         mouseScrollListeners.add(action);
     }
+
     /**
+     * tries to remove the given listener from all of the listener types. Even if the given listener is of multiple
+     * types, all of the mare removed.
      * @param listener a previously installed listener
-     * @return success
+     * @return true iff any listener has been removed
      */
+    @SuppressWarnings("SuspiciousMethodCalls")
     public boolean removeListener(Object listener) {
-        if (listener instanceof KeyPressListener) {
-            return keyPressListeners.remove(listener);
-
-        } else if (listener instanceof MouseButtonClickListener) {
-            return mouseAnyButtonClickListeners.remove(listener);
-        }// TODO finish this
-
-        // else this was not a listener
-        Logger.ASSERT.print("Request on removing a listener that was not of listener type");
-        return false;
+        boolean kp = keyPressListeners.remove(listener);
+        boolean kr = keyReleaseListeners.remove(listener);
+        boolean mc = mouseAnyButtonClickListeners.remove(listener);
+        boolean md = mouseButtonDragListeners.remove(listener);
+        boolean ms = mouseScrollListeners.remove(listener);
+        return kp || kr || mc || md || ms;
     }
 
     @Override
@@ -114,24 +103,24 @@ public class GLFWListener implements GameAspect {
         mouseAnyButtonClickListeners.clear();
         mouseButtonDragListeners.clear();
         mouseScrollListeners.clear();
-        uiClickListeners.clear();
 
         // GLFWWindow frees its own callbacks when cleaned up
     }
 
-    private class KeyPress extends GLFWKeyCallback {
+    private class KeyPressCallback extends GLFWKeyCallback {
         @Override
         public void invoke(long windowHandle, int keyCode, int scancode, int action, int mods) {
             if (keyCode < 0) return;
             if (action == GLFW_PRESS) {
                 keyPressListeners.forEach(l -> l.keyPressed(keyCode));
+
             } else if (action == GLFW_RELEASE) {
                 keyReleaseListeners.forEach(l -> l.keyReleased(keyCode));
             }
         }
     }
 
-    private class MouseButtonPress extends GLFWMouseButtonCallback {
+    private class MouseButtonPressCallback extends GLFWMouseButtonCallback {
         @Override
         public void invoke(long windowHandle, int button, int action, int mods) {
             if (action == GLFW_PRESS) {
@@ -146,20 +135,19 @@ public class GLFWListener implements GameAspect {
                 mouseAnyButtonClickListeners.forEach(l -> l.onClick(button, x, y));
 
             } else if (action == GLFW_RELEASE) {
-
                 mouseButtonDragListeners.forEach(l -> l.set(button, false));
             }
         }
     }
 
-    private class MouseScroll extends GLFWScrollCallback {
+    private class MouseScrollCallback extends GLFWScrollCallback {
         @Override
         public void invoke(long windowHandle, double xScroll, double yScroll) {
             mouseScrollListeners.forEach(l -> l.mouseScrolled(yScroll));
         }
     }
 
-    private class MouseMove extends GLFWCursorPosCallback {
+    private class MouseMoveCallback extends GLFWCursorPosCallback {
         private TrackedInteger x = new TrackedInteger(0);
         private TrackedInteger y = new TrackedInteger(0);
 

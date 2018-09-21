@@ -3,7 +3,9 @@ package NG.Engine;
 import NG.ActionHandling.GLFWListener;
 import NG.Camera.Camera;
 import NG.GameState.GameState;
+import NG.Rendering.GLFWWindow;
 import NG.ScreenOverlay.Frames.SFrameManager;
+import NG.ScreenOverlay.ScreenOverlay;
 import NG.Settings.Settings;
 
 /**
@@ -15,9 +17,9 @@ public interface Game {
 
     Camera camera();
 
-    GameState getGamestate();
+    GameState state();
 
-    RenderLoop getRenderer();
+    ScreenOverlay painter();
 
     Settings settings();
 
@@ -25,9 +27,13 @@ public interface Game {
 
     GLFWListener callbacks();
 
-    boolean menuMode();
+    Version getVersionNumber();
 
-    Version getVersion();
+    SFrameManager frameManager();
 
-    SFrameManager getFrameManager();
+    /**
+     * action is executed between two invocations of {@link AbstractGameLoop#update(float)} of the game loop.
+     * @param action an action that would otherwise interfere with the gameloop.
+     */
+    void doAfterGameLoop(Runnable action);
 }

@@ -3,7 +3,7 @@ package NG.Tools;
 import NG.DataStructures.Color4f;
 import NG.DataStructures.Material;
 import NG.DataStructures.MatrixStack.SGL;
-import NG.Shapes.BasicShapes;
+import NG.Rendering.Shapes.BasicShapes;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;

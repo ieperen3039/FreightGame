@@ -6,7 +6,6 @@ import NG.ScreenOverlay.ScreenOverlay;
  * @author Geert van Ieperen. Created on 21-9-2018.
  */
 public class SFiller extends SComponent {
-
     private final int minWidth;
     private final int minHeight;
 

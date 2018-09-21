@@ -1,19 +1,22 @@
-package NG.Engine;
+package NG.Rendering;
 
 import NG.DataStructures.MatrixStack.SGL;
 import NG.DataStructures.MatrixStack.ShaderUniformGL;
+import NG.Engine.AbstractGameLoop;
+import NG.Engine.Game;
+import NG.Engine.GameAspect;
 import NG.Settings.Settings;
 import NG.Shaders.PhongShader;
 import NG.Shaders.ShaderProgram;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
-public class RenderLoop extends AbstractGameLoop {
+public class RenderLoop extends AbstractGameLoop implements GameAspect {
     private List<ShaderProgram> shaders;
     private Game game;
 
@@ -29,9 +32,12 @@ public class RenderLoop extends AbstractGameLoop {
         this.game = game;
         int maxPointLights = game.settings().MAX_POINT_LIGHTS;
 
-        shaders = Arrays.asList(
-                new PhongShader(maxPointLights) // todo modular shaders
-        );
+        shaders = new ArrayList<>();
+        addShader(new PhongShader(maxPointLights));
+    }
+
+    private boolean addShader(ShaderProgram shader) {
+        return shaders.add(shader);
     }
 
     @Override
@@ -50,7 +56,7 @@ public class RenderLoop extends AbstractGameLoop {
             // GL object
             Settings s = game.settings();
             SGL gl = new ShaderUniformGL(shader, s.WINDOW_WIDTH, s.WINDOW_HEIGHT, game.camera(), true);
-            game.getGamestate().draw(gl);
+            game.state().draw(gl);
             shader.unbind();
         }
 

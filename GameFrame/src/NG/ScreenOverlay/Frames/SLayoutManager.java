@@ -45,9 +45,19 @@ public interface SLayoutManager {
     void invalidate();
 
     /**
-     * returns an iterable view of the loaded components
+     * @return an iterable view of the loaded components
      */
     Iterable<SComponent> getComponents();
+
+    /**
+     * @return the minimum width of the components together in this layout
+     */
+    int getMinimumWidth();
+
+    /**
+     * @return the minimum height of the components together in this layout
+     */
+    int getMinimumHeight();
 
     /**
      * places the components of the layout at the given position within the given dimensions. When this method returns,

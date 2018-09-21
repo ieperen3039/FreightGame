@@ -1,24 +1,33 @@
 package NG.ScreenOverlay.Frames;
 
 import NG.ScreenOverlay.ScreenOverlay;
-import org.joml.Vector2ic;
 
 /**
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
 public abstract class SContainer extends SComponent {
-    private SLayoutManager layout;
+    private final SLayoutManager layout;
 
+    /** when using the default constructor, you can use these values to denote the positions */
+    public static final int TOP = 0;
+    public static final int LEFT = 0;
+    public static final int MIDDLE = 1;
+    public static final int BOTTOM = 2;
+    public static final int RIGHT = 2;
+
+    /**
+     * a container that uses the given manager for its layout
+     * @param layout
+     */
     public SContainer(SLayoutManager layout) {
-        this();
         this.layout = layout;
     }
 
+    /**
+     * constructor for a container that uses a 3*3 grid layout
+     */
     public SContainer() {
-    }
-
-    public void setLayoutManager(SLayoutManager layout) {
-        this.layout = layout;
+        layout = new GridLayoutManager(3, 3);
     }
 
     /**
@@ -26,7 +35,7 @@ public abstract class SContainer extends SComponent {
      * @param x    the x grid position
      * @param y    the y grip position
      */
-    public void addComponent(int x, int y, SComponent comp) {
+    public void add(SComponent comp, int x, int y) {
         comp.setLookAndFeel(lookFeel);
         layout.add(comp, x, y);
     }
@@ -46,14 +55,18 @@ public abstract class SContainer extends SComponent {
     }
 
     @Override
-    public void setDimensions(Vector2ic newDimensions) {
-        super.setDimensions(newDimensions);
-        layout.invalidate();
+    public int minWidth() {
+        return layout.getMinimumWidth();
     }
 
     @Override
-    public void setDimensions(int width, int height) {
-        super.setDimensions(width, height);
+    public int minHeight() {
+        return layout.getMinimumHeight();
+    }
+
+    @Override
+    public void setSize(int width, int height) {
+        super.setSize(width, height);
         layout.invalidate();
     }
 }

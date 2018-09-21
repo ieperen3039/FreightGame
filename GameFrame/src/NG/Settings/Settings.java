@@ -16,4 +16,5 @@ public class Settings {
     public int MAX_POINT_LIGHTS = 20;
 
     public float TRACK_SPACING = 0.1f;
+    public int TARGET_TPS = 10;
 }

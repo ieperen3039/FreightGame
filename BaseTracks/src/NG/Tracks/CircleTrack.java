@@ -74,7 +74,7 @@ public class CircleTrack implements TrackPiece {
 
     @Override
     public void draw(SGL gl) {
-        GameState gamestate = game.getGamestate();
+        GameState gamestate = game.state();
         gl.translate(gamestate.getPosition(center));
 
         Vector2f coord = new Vector2f();

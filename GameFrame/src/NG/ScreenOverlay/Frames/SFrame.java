@@ -11,12 +11,12 @@ import NG.Tools.Logger;
 public class SFrame extends SContainer implements MouseAnyButtonClickListener {
     private final Game game;
     private boolean minimized;
+    private boolean isVisible = false;
 
-    public SFrame(Game game, int width, int height, SFrameLookAndFeel lookFeel) {
+    public SFrame(Game game, int width, int height) {
         super();
         this.game = game;
-        setDimensions(width, height);
-        setLookAndFeel(lookFeel);
+        setSize(width, height);
         game.callbacks().onMouseButtonClick(this);
     }
 
@@ -29,12 +29,14 @@ public class SFrame extends SContainer implements MouseAnyButtonClickListener {
     }
 
     public void requestFocus() {
-        game.getFrameManager().focus(this);
+        game.frameManager().focus(this);
     }
 
     @Override
     public void draw(ScreenOverlay.Painter painter) {
+        if (!isVisible) return;
         if (minimized) Logger.ASSERT.print("Drawing a minimized panel");
+
         lookFeel.drawRectangle(position, dimensions);
         drawChildren(painter);
     }
@@ -69,5 +71,9 @@ public class SFrame extends SContainer implements MouseAnyButtonClickListener {
 
     public void dispose() {
         game.callbacks().removeListener(this);
+    }
+
+    public void show() {
+        isVisible = true;
     }
 }
