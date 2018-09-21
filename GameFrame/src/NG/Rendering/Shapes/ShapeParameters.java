@@ -1,4 +1,4 @@
-package NG.Shapes;
+package NG.Rendering.Shapes;
 
 import NG.DataStructures.Pair;
 import NG.Tools.Directory;

@@ -12,7 +12,7 @@ public interface SLayoutManager {
 
     /**
      * adds a component to this layout manager. Every component that has been added must be returned by {@link
-     * #getComponents()} (but not necessarily in order)
+     * #getComponents()} (but not necessarily in order). Adding null values is not permitted.
      * @param comp the component to be added
      * @param x    the x grid position
      * @param y    the y grip position
@@ -22,7 +22,7 @@ public interface SLayoutManager {
 
     /**
      * adds a component to this layout manager, spanning multiple grid positions. Every component that has been added
-     * must be returned by {@link #getComponents()} (but not necessarily in order)
+     * must be returned by {@link #getComponents()} (but not necessarily in order). Adding null values is not permitted.
      * @param comp the component to be added
      * @param x    the x grid start position
      * @param xMax the x grid end position

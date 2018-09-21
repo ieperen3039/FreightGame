@@ -8,8 +8,8 @@ import static NG.ScreenOverlay.Frames.SContainer.*;
  * @author Geert van Ieperen. Created on 21-9-2018.
  */
 public class ExampleSFrame {
-    public static SFrame get(Game game, SFrameLookAndFeel lnf) {
-        SFrame frame = new SFrame(game, 200, 150, lnf);
+    public static SFrame get(Game game) {
+        SFrame frame = new SFrame(game, 200, 150);
 
         SPanel leftPanel = new SPanel(new GridLayoutManager(2, 2));
         leftPanel.setGrowPolicy(true);

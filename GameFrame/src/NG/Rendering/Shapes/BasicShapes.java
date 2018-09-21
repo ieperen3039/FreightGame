@@ -1,4 +1,4 @@
-package NG.Shapes;
+package NG.Rendering.Shapes;
 
 import NG.DataStructures.MatrixStack.Renderable;
 import NG.DataStructures.MatrixStack.SGL;

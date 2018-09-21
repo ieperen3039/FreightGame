@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Class-Path: ../lib/lwjgl-nanovg-3.1.2-natives-windows.jar ../lib/lwjgl
+ -nanovg-3.1.2.jar ../lib/joml-1.9.11.jar
+Main-Class: SimpleLFMod
+

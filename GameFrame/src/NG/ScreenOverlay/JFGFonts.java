@@ -38,7 +38,7 @@ public enum JFGFonts {
             awtFormat = Font.createFont(Font.TRUETYPE_FONT, file);
 
         } catch (IOException | FontFormatException e) {
-            Logger.ERROR.print("Error loading font " + name + " (" + path + "): " + e.getMessage());
+            Logger.ERROR.print("Error loading font " + name + ": " + e);
         }
     }
 

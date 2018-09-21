@@ -11,8 +11,8 @@ import org.joml.Vector2ic;
 public abstract class SComponent {
     protected SFrameLookAndFeel lookFeel;
 
-    protected Vector2i position;
-    protected Vector2i dimensions;
+    protected Vector2i position = new Vector2i();
+    protected Vector2i dimensions = new Vector2i();
 
     /**
      * @return minimum width of this component in pixels. The final width can be assumed to be at least this size unless

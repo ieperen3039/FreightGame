@@ -10,6 +10,8 @@ import NG.Mods.Mod;
 import NG.Mods.TrackMod;
 import NG.Rendering.GLFWWindow;
 import NG.Rendering.RenderLoop;
+import NG.ScreenOverlay.Frames.ExampleSFrame;
+import NG.ScreenOverlay.Frames.SFrame;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.Frames.SFrameManager;
 import NG.ScreenOverlay.ScreenOverlay;
@@ -38,7 +40,7 @@ public class FreightGame implements Game {
     private List<Mod> mods;
 
     public FreightGame() throws IOException {
-        Logger.INFO.print("Starting the game...");
+        Logger.INFO.print("Starting up the game engine...");
         Logger.DEBUG.print("General debug information: " +
                 // manual aligning will do the trick
                 "\n\tSystem OS:          " + System.getProperty("os.name") +
@@ -66,6 +68,7 @@ public class FreightGame implements Game {
     }
 
     private void init() throws Exception {
+        Logger.DEBUG.print("Initializing fields...");
         // init all fields
         window.init(this);
         renderer.init(this);
@@ -85,7 +88,12 @@ public class FreightGame implements Game {
             }
         }
 
-        Logger.INFO.print("Finished initialisation!\n");
+        SFrame frame = ExampleSFrame.get(this);
+        frameManager.addFrame(frame);
+        frame.show();
+//        gameState.generateMap();
+
+        Logger.INFO.print("Finished initialisation\n");
     }
 
     private void initMod(Mod mod) throws InvalidNumberOfModulesException, Version.MisMatchException {
@@ -93,37 +101,39 @@ public class FreightGame implements Game {
 
         if (mod instanceof TrackMod) {
 //                 trackTypes.addAll(mod.getTypes()); or sth similar
-            Logger.DEBUG.print("Loaded " + mod.getModName() + " as TrackMod");
+            Logger.DEBUG.print("Installed " + mod.getModName() + " as TrackMod");
 
         } else if (mod instanceof SFrameLookAndFeel) {
             if (frameManager.getLookAndFeel() != null) {
                 throw new InvalidNumberOfModulesException(
-                        "Tried loading " + mod.getModName() + " while we already have a LookAndFeel Mod");
+                        "Tried installing " + mod.getModName() + " while we already have a LookAndFeel Mod");
             }
 
             frameManager.setLookAndFeel((SFrameLookAndFeel) mod);
-            Logger.DEBUG.print("Loaded " + mod.getModName() + " as LookAndFeel");
+            Logger.DEBUG.print("Installed " + mod.getModName() + " as LookAndFeel mod");
 
         } else if (mod instanceof MapGeneratorMod) {
             if (gameState.hasMapGenerator()) {
                 throw new InvalidNumberOfModulesException(
-                        "Tried loading " + mod.getModName() + " while we already have a Map Generator Mod");
+                        "Tried installing " + mod.getModName() + " while we already have a Map Generator Mod");
             }
 
             gameState.setMapGenerator((MapGeneratorMod) mod);
-            Logger.DEBUG.print("Loaded " + mod.getModName() + " as Map Generator");
+            Logger.DEBUG.print("Installed " + mod.getModName() + " as Map Generator");
 
         }
     }
 
     public void root() throws Exception {
-        Logger.INFO.print("Starting game...");
         init();
+        Logger.INFO.print("Starting game...\n");
 
         gameState.start();
         window.open();
         time.set(0);
         renderer.run();
+
+        gameState.stopLoop();
 
         cleanup();
     }

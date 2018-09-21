@@ -111,7 +111,7 @@ public class JarModReader {
             }
         }
 
-        Logger.DEBUG.print(list.size() + " mods found");
+        Logger.DEBUG.print(list.size() + " mods found in " + jarFile.getName());
         return list;
     }
 
@@ -131,6 +131,7 @@ public class JarModReader {
 
         URLClassLoader modloader = new URLClassLoader(urls);
 
+        Logger.DEBUG.print("Start loading mods...");
         List<Mod> mods = new ArrayList<>();
         for (File jar : modJars) {
             try {
@@ -144,6 +145,8 @@ public class JarModReader {
                 Logger.WARN.print("Could not open " + jar);
             }
         }
+
+        Logger.INFO.print("Loaded " + mods.size() + " mods\n");
 
         modloader.close();
         return Collections.unmodifiableList(mods);

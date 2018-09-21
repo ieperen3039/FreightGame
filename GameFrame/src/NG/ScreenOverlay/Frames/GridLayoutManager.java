@@ -31,10 +31,10 @@ public class GridLayoutManager implements SLayoutManager {
         this.grid = new SComponent[xElts][yElts];
         this.xElts = xElts;
         this.yElts = yElts;
-        minRowHeight = new int[yElts];
         minColWidth = new int[xElts];
-        rowWantGrow = new boolean[xElts];
+        minRowHeight = new int[yElts];
         colWantGrow = new boolean[xElts];
+        rowWantGrow = new boolean[yElts];
     }
 
     /**
@@ -65,6 +65,7 @@ public class GridLayoutManager implements SLayoutManager {
                 if (comp.equals(col[y])) {
                     grid[x][y] = null;
                     changeChecker++;
+                    return;
                 }
             }
         }
@@ -75,7 +76,7 @@ public class GridLayoutManager implements SLayoutManager {
         int startChangeNr = changeChecker;
         nOfRowGrows = 0;
         nOfColGrows = 0;
-        rowWantGrow = new boolean[xElts];
+        rowWantGrow = new boolean[yElts];
         colWantGrow = new boolean[xElts];
         minRowHeight = new int[yElts];
         minColWidth = new int[xElts];
@@ -86,6 +87,8 @@ public class GridLayoutManager implements SLayoutManager {
 
             for (int y = 0; y < yElts; y++) {
                 SComponent elt = col[y];
+                if (elt == null) continue;
+
                 minRowHeight[y] = Math.max(elt.minHeight(), minRowHeight[y]);
                 minColWidth[x] = Math.max(elt.minWidth(), minColWidth[x]);
 
@@ -115,6 +118,24 @@ public class GridLayoutManager implements SLayoutManager {
     }
 
     @Override
+    public int getMinimumWidth() {
+        int min = 0;
+        for (int w : minColWidth) {
+            min += w;
+        }
+        return min;
+    }
+
+    @Override
+    public int getMinimumHeight() {
+        int min = 0;
+        for (int w : minRowHeight) {
+            min += w;
+        }
+        return min;
+    }
+
+    @Override
     public void setComponents(Vector2ic position, Vector2ic dimensions) {
         this.position.set(position);
         this.dimensions.set(dimensions);
@@ -124,8 +145,11 @@ public class GridLayoutManager implements SLayoutManager {
 
         for (int x = 0; x < xElts; x++) {
             for (int y = 0; y < yElts; y++) {
+                SComponent elt = grid[x][y];
+                if (elt == null) continue;
+
                 int xPixel = xPixels[x] + position.x();
-                grid[x][y].setPosition(xPixel, yPixels[y]);
+                elt.setPosition(xPixel, yPixels[y]);
             }
         }
     }
@@ -165,8 +189,12 @@ public class GridLayoutManager implements SLayoutManager {
 
     private class GridIterator implements Iterator<SComponent> {
         int startChangeNr = changeChecker;
-        int xCur = 0;
+        int xCur = -1;
         int yCur = 0;
+
+        GridIterator() {
+            progress();
+        }
 
         @Override
         public boolean hasNext() {
@@ -179,12 +207,18 @@ public class GridLayoutManager implements SLayoutManager {
                 throw new ConcurrentModificationException("Grid changed while iterating");
 
             SComponent retVal = grid[xCur][yCur];
-            xCur++;
-            if (xCur == xElts) {
-                xCur = 0;
-                yCur++;
-            }
+            progress();
             return retVal;
+        }
+
+        private void progress() {
+            do {
+                xCur++;
+                if (xCur == xElts) {
+                    xCur = 0;
+                    yCur++;
+                }
+            } while (hasNext() && grid[xCur][yCur] == null);
         }
     }
 }

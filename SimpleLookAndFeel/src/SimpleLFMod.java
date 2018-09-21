@@ -3,6 +3,8 @@ import NG.Engine.Game;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.Menu.MenuStyleSettings;
 import NG.ScreenOverlay.ScreenOverlay;
+import NG.Settings.Settings;
+import NG.Tools.Directory;
 import NG.Tools.Logger;
 import org.joml.Vector2ic;
 
@@ -25,7 +27,7 @@ public class SimpleLFMod implements SFrameLookAndFeel {
 
     @Override
     public void init(Game game) {
-        if (!game.getVersion().isLessThan(1, 0))
+        if (!game.getVersionNumber().isLessThan(1, 0))
             Logger.ASSERT.print("SLF may be outdated.");
     }
 
@@ -69,5 +71,11 @@ public class SimpleLFMod implements SFrameLookAndFeel {
     @Override
     public void cleanup() {
 
+    }
+
+    /** Default main method for Mods. */
+    public static void main(String[] args) {
+        System.out.println("This is a mod for the game " + Settings.GAME_NAME);
+        System.out.println("To use this mod, place this JAR file in folder " + Directory.mods.getFile());
     }
 }

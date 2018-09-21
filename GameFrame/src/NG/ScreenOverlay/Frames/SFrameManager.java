@@ -35,6 +35,7 @@ public class SFrameManager implements Consumer<ScreenOverlay.Painter>, GameAspec
 
     @Override
     public void accept(ScreenOverlay.Painter painter) {
+        lookAndFeel.setPainter(painter);
         Iterator<SFrame> itr = frames.descendingIterator();
 
         while (itr.hasNext()) {
@@ -43,6 +44,8 @@ public class SFrameManager implements Consumer<ScreenOverlay.Painter>, GameAspec
     }
 
     public void addFrame(SFrame frame) {
+        if (lookAndFeel == null) throw new IllegalStateException("Adding a frame while LookAndFeel is not set");
+
         boolean success = frames.offerFirst(frame);
         if (!success) {
             Logger.DEBUG.print("Too much subframes opened, removing the last one");

@@ -40,6 +40,14 @@ public abstract class SContainer extends SComponent {
         layout.add(comp, x, y);
     }
 
+    @Override
+    public void setLookAndFeel(SFrameLookAndFeel lfSet) {
+        for (SComponent comp : children()) {
+            comp.setLookAndFeel(lfSet);
+        }
+        super.setLookAndFeel(lfSet);
+    }
+
     protected Iterable<SComponent> children() {
         return layout.getComponents();
     }
