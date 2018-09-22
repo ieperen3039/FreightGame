@@ -10,8 +10,8 @@ import NG.Mods.Mod;
 import NG.Mods.TrackMod;
 import NG.Rendering.GLFWWindow;
 import NG.Rendering.RenderLoop;
+import NG.ScreenOverlay.Frames.Components.SFrame;
 import NG.ScreenOverlay.Frames.ExampleSFrame;
-import NG.ScreenOverlay.Frames.SFrame;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.Frames.SFrameManager;
 import NG.ScreenOverlay.ScreenOverlay;
@@ -87,10 +87,6 @@ public class FreightGame implements Game {
                 Logger.ERROR.print("Error while loading " + mod.getModName(), ex);
             }
         }
-
-        SFrame frame = ExampleSFrame.get(this);
-        frameManager.addFrame(frame);
-        frame.show();
 //        gameState.generateMap();
 
         Logger.INFO.print("Finished initialisation\n");
@@ -127,6 +123,10 @@ public class FreightGame implements Game {
     public void root() throws Exception {
         init();
         Logger.INFO.print("Starting game...\n");
+
+        SFrame frame = ExampleSFrame.get(this);
+        frameManager.addFrame(frame);
+        frame.setVisible(true);
 
         gameState.start();
         window.open();

@@ -1,6 +1,6 @@
-package NG.ScreenOverlay.Frames;
+package NG.ScreenOverlay.Frames.Components;
 
-import NG.ScreenOverlay.ScreenOverlay;
+import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
@@ -9,7 +9,7 @@ import org.joml.Vector2ic;
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
 public abstract class SComponent {
-    protected SFrameLookAndFeel lookFeel;
+    private boolean isVisible = true;
 
     protected Vector2i position = new Vector2i();
     protected Vector2i dimensions = new Vector2i();
@@ -27,10 +27,16 @@ public abstract class SComponent {
     public abstract int minHeight();
 
     /**
-     * @return true if this component should expand when possible. When false, the components will always be its minimum
-     *         size.
+     * @return true if this component should expand horizontally when possible. when false, the components should always be its minimum
+     *         width.
      */
-    public abstract boolean wantGrow();
+    public abstract boolean wantHorizontalGrow();
+
+    /**
+     * @return true if this component should expand horizontally when possible. When false, the components should always
+     *         be its minimum height.
+     */
+    public abstract boolean wantVerticalGrow();
 
     public boolean contains(Vector2i v) {
         return contains(v.x, v.y);
@@ -45,25 +51,14 @@ public abstract class SComponent {
         return false;
     }
 
-    // setters
-    public void setLookAndFeel(SFrameLookAndFeel lfSet) {
-        this.lookFeel = lfSet;
-    }
-
     public void setPosition(int x, int y) {
         position.set(x, y);
     }
 
     public void setSize(int width, int height) {
+        assert width >= 0 : "Negative width: " + width + " (height = " + height + ")";
+        assert height >= 0 : "Negative height: " + height + " (width = " + width + ")";
         dimensions.set(width, height);
-    }
-
-    public final void setPosition(Vector2ic newPosition) {
-        setPosition(newPosition.x(), newPosition.y());
-    }
-
-    public final void setSize(Vector2ic newDimensions) {
-        setSize(newDimensions.x(), newDimensions.y());
     }
 
     // getters
@@ -89,7 +84,15 @@ public abstract class SComponent {
 
     /**
      * Draw this component.
-     * @param painter The hud on which to drawObjects this element.
+     * @param design The element that provides functions for drawing
      */
-    public abstract void draw(ScreenOverlay.Painter painter);
+    public abstract void draw(SFrameLookAndFeel design);
+
+    protected void setVisibleFlag(boolean doVisible) {
+        isVisible = doVisible;
+    }
+
+    public boolean isVisible() {
+        return isVisible;
+    }
 }

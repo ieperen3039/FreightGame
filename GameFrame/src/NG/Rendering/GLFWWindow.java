@@ -129,6 +129,9 @@ public class GLFWWindow implements GameAspect {
         if (newWindow == NULL) {
             throw new RuntimeException("Failed to create the GLFW window");
         }
+        this.width = width;
+        this.height = height;
+
 //        glfwSetWindowIcon(newWindow, null); // TODO icon
 
         if (this.resizable) {

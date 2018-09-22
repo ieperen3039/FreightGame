@@ -3,6 +3,7 @@ package NG.ScreenOverlay.Frames;
 import NG.ActionHandling.MouseAnyButtonClickListener;
 import NG.Engine.Game;
 import NG.Engine.GameAspect;
+import NG.ScreenOverlay.Frames.Components.SFrame;
 import NG.ScreenOverlay.ScreenOverlay;
 import NG.Tools.Logger;
 
@@ -39,11 +40,19 @@ public class SFrameManager implements Consumer<ScreenOverlay.Painter>, GameAspec
         Iterator<SFrame> itr = frames.descendingIterator();
 
         while (itr.hasNext()) {
-            itr.next().draw(painter);
+            itr.next().draw(lookAndFeel);
         }
     }
 
     public void addFrame(SFrame frame) {
+        int width = game.window().getWidth();
+        int height = game.window().getHeight();
+        int xPos = width / 2 - frame.getWidth() / 2;
+        int yPos = height / 2 - frame.getHeight() / 2;
+        addFrame(frame, xPos, yPos);
+    }
+
+    public void addFrame(SFrame frame, int x, int y) {
         if (lookAndFeel == null) throw new IllegalStateException("Adding a frame while LookAndFeel is not set");
 
         boolean success = frames.offerFirst(frame);
@@ -53,6 +62,7 @@ public class SFrameManager implements Consumer<ScreenOverlay.Painter>, GameAspec
             frames.addFirst(frame);
         }
 
+        frame.setPosition(x, y);
         frame.setLookAndFeel(lookAndFeel);
     }
 

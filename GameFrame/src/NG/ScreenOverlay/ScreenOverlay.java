@@ -6,10 +6,7 @@ import NG.Engine.GameAspect;
 import NG.Tools.Logger;
 import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
-import org.joml.Vector2f;
-import org.joml.Vector2i;
-import org.joml.Vector2ic;
-import org.joml.Vector3f;
+import org.joml.*;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 
@@ -36,7 +33,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
  */
 public final class ScreenOverlay implements GameAspect {
     private long vg;
-    private NVGColor color;
+    private NVGColor nvgColorBuffer;
     private NVGPaint paint;
 
     /** fontbuffer MUST be a field */
@@ -70,7 +67,7 @@ public final class ScreenOverlay implements GameAspect {
             }
         }
 
-        color = NVGColor.create();
+        nvgColorBuffer = NVGColor.create();
         paint = NVGPaint.create();
     }
 
@@ -111,221 +108,6 @@ public final class ScreenOverlay implements GameAspect {
         }
     }
 
-    public class Painter {
-        private final int printRollSize;
-        private final int yPrintRoll;
-        private final int xPrintRoll;
-        private int printRollEntry = 0;
-        /** maps a position in world-space to a position on the screen */
-        private final Function<Vector3f, Vector2f> mapper;
-
-        private final Color4f strokeColor = MENU_STROKE_COLOR;
-        private final int strokeWidth = MENU_STROKE_WIDTH;
-        private final Color4f textColor = Color4f.WHITE;
-        private final Color4f fillColor = MENU_FILL_COLOR;
-
-        public final int windowWidth;
-        public final int windowHeight;
-        public final Vector3f cameraPosition;
-
-        /**
-         * @param windowWidth    width of this hud display iteration
-         * @param windowHeight   height of ''
-         * @param mapper         maps a world-space vector to relative position ([-1, 1], [-1, 1]) in the view.
-         * @param cameraPosition renderposition of camera in worldspace
-         * @param xPrintRoll     x position of where to start the printRoll
-         * @param yPrintRoll     y position of where to start the printRoll
-         * @param printRollSize  fontsize of printRoll
-         */
-        public Painter(
-                int windowWidth, int windowHeight, Function<Vector3f, Vector2f> mapper, Vector3f cameraPosition,
-                int xPrintRoll, int yPrintRoll, int printRollSize
-        ) {
-            this.windowWidth = windowWidth;
-            this.windowHeight = windowHeight;
-            this.mapper = mapper;
-            this.cameraPosition = cameraPosition;
-            this.printRollSize = printRollSize;
-            this.yPrintRoll = printRollSize + yPrintRoll;
-            this.xPrintRoll = xPrintRoll;
-        }
-
-
-        /**
-         * @param worldPosition a position in world-space
-         * @return the coordinates of this position as where they appear on the screen, possibly outside the borders.
-         */
-        public Vector2i positionOnScreen(Vector3f worldPosition) {
-            final Vector2f relativePosition = mapper.apply(worldPosition);
-            if (relativePosition == null) return null;
-
-            relativePosition.add(1f, -1f).mul(0.5f, -0.5f);
-
-            int x = (int) (relativePosition.x() * windowWidth);
-            int y = (int) (relativePosition.y() * windowHeight);
-            return new Vector2i(x, y);
-        }
-
-        /**
-         * Get an instance of NVGColor with the correct values. All color values are floating point numbers supposed to
-         * be between 0f and 1f.
-         * @param red   The red component.
-         * @param green The green component.
-         * @param blue  The blue component.
-         * @param alpha The alpha component.
-         * @return an instance of NVGColor.
-         */
-        public NVGColor rgba(float red, float green, float blue, float alpha) {
-            color.r(red);
-            color.g(green);
-            color.b(blue);
-            color.a(alpha);
-
-            return color;
-        }
-
-        /** @see #rgba(float, float, float, float) */
-        private NVGColor rgba(Color4f color) {
-            return rgba(color.red, color.green, color.blue, color.alpha);
-        }
-
-        public void rectangle(int x, int y, int width, int height) {
-            rectangle(x, y, width, height, fillColor, strokeColor, strokeWidth);
-        }
-
-        public void rectangle(int x, int y, int width, int height, Color4f fillColor, Color4f strokeColor, int strokeWidth) {
-            nvgBeginPath(vg);
-            nvgRect(vg, x, y, width, height);
-
-            setFill(fillColor);
-            setStroke(strokeWidth, strokeColor);
-        }
-
-        public void roundedRectangle(Vector2ic pos, Vector2ic dim, int indent) {
-            roundedRectangle(pos.x(), pos.y(), dim.x(), dim.y(), indent);
-        }
-
-        public void roundedRectangle(int x, int y, int width, int height, int indent) {
-            roundedRectangle(x, y, width, height, indent, fillColor, strokeColor, strokeWidth);
-        }
-
-        public void roundedRectangle(int x, int y, int width, int height, int indent, Color4f fillColor, Color4f strokeColor, int strokeWidth) {
-            int xMax = x + width;
-            int yMax = y + height;
-
-            polygon(
-                    fillColor, strokeColor, strokeWidth,
-                    new Vector2i(x + indent, y),
-                    new Vector2i(xMax - indent, y),
-                    new Vector2i(xMax, y + indent),
-                    new Vector2i(xMax, yMax - indent),
-                    new Vector2i(xMax - indent, yMax),
-                    new Vector2i(x + indent, yMax),
-                    new Vector2i(x, yMax - indent),
-                    new Vector2i(x, y + indent)
-            );
-        }
-
-        /** @see #circle(int, int, int, Color4f, int, Color4f) */
-        public void circle(int x, int y, int radius) {
-            circle(x, y, radius, fillColor, strokeWidth, strokeColor);
-        }
-
-        /**
-         * draws a circle. x and y are the circle middle. x, y and radius are in screen coordinates.
-         */
-        public void circle(int x, int y, int radius, Color4f fillColor, int strokeWidth, Color4f strokeColor) {
-            nvgBeginPath(vg);
-            nvgCircle(vg, x, y, radius);
-
-            setFill(fillColor);
-            setStroke(strokeWidth, strokeColor);
-        }
-
-        public void polygon(Vector2i... points) {
-            polygon(fillColor, strokeColor, strokeWidth, points);
-        }
-
-        public void polygon(Color4f fillColor, Color4f strokeColor, int strokeWidth, Vector2i... points) {
-            nvgBeginPath(vg);
-
-            nvgMoveTo(vg, points[points.length - 1].x, points[points.length - 1].y);
-            for (Vector2i point : points) {
-                nvgLineTo(vg, point.x, point.y);
-            }
-
-            setFill(fillColor);
-            setStroke(strokeWidth, strokeColor);
-        }
-
-        /**
-         * draw a line along the coordinates, when supplied in (x, y) pairs
-         * @param points (x, y) pairs of screen coordinates
-         */
-        public void line(int strokeWidth, Color4f strokeColor, int... points) {
-            nvgBeginPath(vg);
-
-            int i = 0;
-            nvgMoveTo(vg, points[i++], points[i++]);
-            while (i < points.length) {
-                nvgLineTo(vg, points[i++], points[i++]);
-            }
-
-            setStroke(strokeWidth, strokeColor);
-        }
-
-        // non-shape defining functions
-
-        public void text(int x, int y, float size, JFGFonts font, int align, Color4f color, String text) {
-            nvgFontSize(vg, size);
-            nvgFontFace(vg, font.name);
-            nvgTextAlign(vg, align);
-            nvgFillColor(vg, rgba(color));
-            nvgText(vg, x, y, text);
-        }
-
-        public void printRoll(String text) {
-            int y = yPrintRoll + ((printRollSize + 5) * printRollEntry);
-
-            text(xPrintRoll, y, printRollSize, JFGFonts.LUCIDA_CONSOLE, NVG_ALIGN_LEFT, textColor, text);
-            printRollEntry++;
-        }
-
-        public void setFill(Color4f color) {
-            nvgFillColor(vg, rgba(color));
-            nvgFill(vg);
-        }
-
-        public void setStroke(int width, Color4f color) {
-            nvgStrokeWidth(vg, width);
-            nvgStrokeColor(vg, rgba(color));
-            nvgStroke(vg);
-        }
-
-        public void image(Path filename, int x, int y, int width, int height, float alpha) throws IOException {
-            image(filename, x, y, width, height, 0f, alpha, NVG_IMAGE_GENERATE_MIPMAPS);
-        }
-
-        public void image(Path fileName, int x, int y, int width, int height, float angle, float alpha, int imageFlags) throws IOException {
-            int img = getImage(fileName, imageFlags);
-            NVGPaint p = nvgImagePattern(vg, x, y, width, height, angle, img, alpha, paint);
-
-            rectangle(x, y, width, height);
-
-            nvgFillPaint(vg, p);
-            nvgFill(vg);
-        }
-
-        private int getImage(Path filePath, int imageFlags) throws IOException {
-            if (imageBuffer.containsKey(filePath)) {
-                return imageBuffer.get(filePath);
-            }
-            ByteBuffer image = Toolbox.toByteBuffer(filePath);
-            int img = nvgCreateImageMem(vg, imageFlags, image);
-            imageBuffer.put(filePath, img);
-            return img;
-        }
-    }
 
     /**
      * @param windowWidth    width of the current window drawn on
@@ -371,5 +153,281 @@ public final class ScreenOverlay implements GameAspect {
         // restore window state
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_STENCIL_TEST);
+    }
+
+    public class Painter {
+        private final int printRollSize;
+        private final int yPrintRoll;
+        private final int xPrintRoll;
+        private int printRollEntry = 0;
+        /** maps a position in world-space to a position on the screen */
+        private final Function<Vector3f, Vector2f> mapper;
+
+        private Color4f fillColor = MENU_FILL_COLOR;
+        private Color4f strokeColor = MENU_STROKE_COLOR;
+        private int strokeWidth = MENU_STROKE_WIDTH;
+        private Color4f textColor = Color4f.WHITE;
+
+        public final int windowWidth;
+        public final int windowHeight;
+        public final Vector3fc cameraPosition;
+
+        /**
+         * @param windowWidth    width of this hud display iteration
+         * @param windowHeight   height of ''
+         * @param mapper         maps a world-space vector to relative position ([-1, 1], [-1, 1]) in the view.
+         * @param cameraPosition renderposition of camera in worldspace
+         * @param xPrintRoll     x position of where to start the printRoll
+         * @param yPrintRoll     y position of where to start the printRoll
+         * @param printRollSize  fontsize of printRoll
+         */
+        public Painter(
+                int windowWidth, int windowHeight, Function<Vector3f, Vector2f> mapper, Vector3fc cameraPosition,
+                int xPrintRoll, int yPrintRoll, int printRollSize
+        ) {
+            this.windowWidth = windowWidth;
+            this.windowHeight = windowHeight;
+            this.mapper = mapper;
+            this.cameraPosition = cameraPosition;
+            this.printRollSize = printRollSize;
+            this.yPrintRoll = printRollSize + yPrintRoll;
+            this.xPrintRoll = xPrintRoll;
+        }
+
+        /**
+         * Get an instance of NVGColor with the correct values. All nvgColorBuffer values are floating point numbers supposed to
+         * be between 0f and 1f.
+         * @param red   The red component.
+         * @param green The green component.
+         * @param blue  The blue component.
+         * @param alpha The alpha component.
+         * @return an instance of NVGColor.
+         */
+        private NVGColor rgba(float red, float green, float blue, float alpha) {
+            nvgColorBuffer.r(red);
+            nvgColorBuffer.g(green);
+            nvgColorBuffer.b(blue);
+            nvgColorBuffer.a(alpha);
+
+            return nvgColorBuffer;
+        }
+
+        /** @see #rgba(float, float, float, float) */
+        private NVGColor rgba(Color4f color) {
+            return rgba(color.red, color.green, color.blue, color.alpha);
+        }
+
+        /**
+         * sets the basic fill color of this painter to the given color
+         * @param fillColor a color, where the alpha value gives the opacity of the object
+         */
+        public void setFillColor(Color4f fillColor) {
+            this.fillColor = fillColor;
+            nvgFillColor(vg, rgba(fillColor));
+        }
+
+        /**
+         * sets the basic stroke syle of this painter
+         * @param color the color of the stroke, if alpha is less than 1, the edge of the fill underneath will be
+         *              visible
+         * @param width the width of the stroke in pixels
+         */
+        public void setStroke(Color4f color, int width) {
+            this.strokeColor = color;
+            this.strokeWidth = width;
+            nvgStrokeWidth(vg, width);
+            nvgStrokeColor(vg, rgba(color));
+        }
+
+        /**
+         * draws a rectangle using the basic fill and stroke style
+         * @see #rectangle(int, int, int, int, Color4f, Color4f, int)
+         */
+        public void rectangle(int x, int y, int width, int height) {
+            assert width >= 0 : "Negative width: " + width + " (height = " + height + ")";
+            assert height >= 0 : "Negative height: " + height + " (width = " + width + ")";
+
+            nvgBeginPath(vg);
+            nvgRect(vg, x, y, width, height);
+
+            nvgFill(vg);
+            nvgStroke(vg);
+        }
+
+        /**
+         * draws a rectangle on the given position with the given style. After this method call, the colors are reset to
+         * the basic colors
+         * @param x           the x position in pixels relative to the leftmost position on the GL frame
+         * @param y           the y position in pixels relative to the topmost position on the GL frame
+         * @param width       the width of this rectangle in pixels
+         * @param height      the height of this rectangle in pixels
+         * @param fillColor   the color used for the background of this rectangle
+         * @param strokeColor the color used for the line around this rectangle
+         * @param strokeWidth the width of the line around this rectangle
+         */
+        public void rectangle(int x, int y, int width, int height, Color4f fillColor, Color4f strokeColor, int strokeWidth) {
+            setFillColor(fillColor);
+            setStroke(strokeColor, strokeWidth);
+            rectangle(x, y, width, height);
+            resetColors();
+        }
+
+        /** resets the colors to the basic colors */
+        private void resetColors() {
+            setFillColor(fillColor);
+            setStroke(strokeColor, strokeWidth);
+        }
+
+        /**
+         * @param pos the position as (x, y) in pixels, measured from the top left
+         * @param dim the width and height as (width, height) of the rectangle
+         * @param indent the size of the part removed from the rectangle in pixels
+         */
+        public void roundedRectangle(Vector2ic pos, Vector2ic dim, int indent) {
+            roundedRectangle(pos.x(), pos.y(), dim.x(), dim.y(), indent);
+        }
+
+        /**
+         * @param x the x position in pixels relative to the leftmost position on the GL frame
+         * @param y the y position in pixels relative to the topmost position on the GL frame
+         * @param width the width of this rectangle in pixels
+         * @param height the height of this rectangle in pixels
+         * @param indent the size of the part removed from the rectangle in pixels
+         */
+        public void roundedRectangle(int x, int y, int width, int height, int indent) {
+            assert width > 0 : "Non-positive width: " + width + " (height = " + height + ")";
+            assert height > 0 : "Non-positive height: " + height + " (width = " + width + ")";
+
+            int xMax = x + width;
+            int yMax = y + height;
+
+            polygon(
+                    new Vector2i(x + indent, y),
+                    new Vector2i(xMax - indent, y),
+                    new Vector2i(xMax, y + indent),
+                    new Vector2i(xMax, yMax - indent),
+                    new Vector2i(xMax - indent, yMax),
+                    new Vector2i(x + indent, yMax),
+                    new Vector2i(x, yMax - indent),
+                    new Vector2i(x, y + indent)
+            );
+        }
+
+        /**
+         * @param x           the x position in pixels relative to the leftmost position on the GL frame
+         * @param y           the y position in pixels relative to the topmost position on the GL frame
+         * @param width       the width of this rectangle in pixels
+         * @param height      the height of this rectangle in pixels
+         * @param indent      the size of the part removed from the rectangle in pixels
+         * @param fillColor   the color used for the background of this rectangle
+         * @param strokeColor the color used for the line around this rectangle
+         * @param strokeWidth the width of the line around this rectangle
+         */
+        public void roundedRectangle(int x, int y, int width, int height, int indent, Color4f fillColor, Color4f strokeColor, int strokeWidth) {
+            setFillColor(fillColor);
+            setStroke(strokeColor, strokeWidth);
+            roundedRectangle(x, y, width, height, indent);
+            resetColors();
+        }
+
+        public void circle(int x, int y, int radius) {
+            nvgBeginPath(vg);
+            nvgCircle(vg, x, y, radius);
+
+            nvgFill(vg);
+            nvgStroke(vg);
+        }
+
+        public void polygon(Color4f fillColor, Color4f strokeColor, int strokeWidth, Vector2i... points) {
+            setFillColor(fillColor);
+            setStroke(strokeColor, strokeWidth);
+            polygon(points);
+            resetColors();
+        }
+
+        public void polygon(Vector2i... points) {
+            nvgBeginPath(vg);
+
+            nvgMoveTo(vg, points[points.length - 1].x, points[points.length - 1].y);
+            for (Vector2i point : points) {
+                nvgLineTo(vg, point.x, point.y);
+            }
+
+            nvgFill(vg);
+            nvgStroke(vg);
+        }
+
+        /**
+         * draw a line along the coordinates, when supplied in (x, y) pairs
+         * @param points (x, y) pairs of screen coordinates
+         */
+        public void line(int strokeWidth, Color4f strokeColor, Vector2i... points) {
+            setStroke(strokeColor, strokeWidth);
+            nvgBeginPath(vg);
+            nvgMoveTo(vg, points[0].x, points[0].y);
+
+            for (int i = 1; i < points.length; i++) {
+                nvgLineTo(vg, points[i].x, points[i].y);
+            }
+
+            nvgStroke(vg);
+            resetColors();
+        }
+
+        // non-shape defining functions
+
+        public void text(int x, int y, float size, JFGFonts font, int align, Color4f color, String text) {
+            nvgFontSize(vg, size);
+            nvgFontFace(vg, font.name);
+            nvgTextAlign(vg, align);
+            nvgFillColor(vg, rgba(color));
+            nvgText(vg, x, y, text);
+        }
+
+        public void printRoll(String text) {
+            int y = yPrintRoll + ((printRollSize + 5) * printRollEntry);
+
+            text(xPrintRoll, y, printRollSize, JFGFonts.LUCIDA_CONSOLE, NVG_ALIGN_LEFT, textColor, text);
+            printRollEntry++;
+        }
+
+        public void image(Path filename, int x, int y, int width, int height, float alpha) throws IOException {
+            image(filename, x, y, width, height, 0f, alpha, NVG_IMAGE_GENERATE_MIPMAPS);
+        }
+
+        public void image(Path fileName, int x, int y, int width, int height, float angle, float alpha, int imageFlags) throws IOException {
+            int img = getImage(fileName, imageFlags);
+            NVGPaint p = nvgImagePattern(vg, x, y, width, height, angle, img, alpha, paint);
+
+            rectangle(x, y, width, height);
+
+            nvgFillPaint(vg, p);
+            nvgFill(vg);
+        }
+
+        private int getImage(Path filePath, int imageFlags) throws IOException {
+            if (imageBuffer.containsKey(filePath)) {
+                return imageBuffer.get(filePath);
+            }
+            ByteBuffer image = Toolbox.toByteBuffer(filePath);
+            int img = nvgCreateImageMem(vg, imageFlags, image);
+            imageBuffer.put(filePath, img);
+            return img;
+        }
+
+        /**
+         * @param worldPosition a position in world-space
+         * @return the coordinates of this position as where they appear on the screen, possibly outside the borders.
+         */
+        public Vector2i positionOnScreen(Vector3f worldPosition) {
+            final Vector2f relativePosition = mapper.apply(worldPosition);
+            if (relativePosition == null) return null;
+
+            relativePosition.add(1f, -1f).mul(0.5f, -0.5f);
+
+            int x = (int) (relativePosition.x() * windowWidth);
+            int y = (int) (relativePosition.y() * windowHeight);
+            return new Vector2i(x, y);
+        }
     }
 }

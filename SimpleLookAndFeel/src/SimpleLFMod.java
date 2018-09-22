@@ -15,12 +15,12 @@ import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_CENTER;
  * @author Geert van Ieperen. Created on 21-9-2018.
  */
 public class SimpleLFMod implements SFrameLookAndFeel {
-    private static final int INDENT = 2;
-    private static final int STROKE_WIDTH = 2;
+    private static final int INDENT = 5;
+    private static final int STROKE_WIDTH = 3;
     private static final int TEXT_SIZE_LARGE = 12;
 
     private static final Color4f TEXT_COLOR = Color4f.BLACK;
-    private static final Color4f PANEL_COLOR = Color4f.WHITE;
+    private static final Color4f PANEL_COLOR = Color4f.TRANSPARENT_GREY;
     private static final Color4f STROKE_COLOR = Color4f.BLUE;
 
     private ScreenOverlay.Painter hud;
@@ -35,8 +35,8 @@ public class SimpleLFMod implements SFrameLookAndFeel {
     @Override
     public void setPainter(ScreenOverlay.Painter painter) {
         this.hud = painter;
-        painter.setFill(PANEL_COLOR);
-        painter.setStroke(STROKE_WIDTH, STROKE_COLOR);
+        painter.setFillColor(PANEL_COLOR);
+        painter.setStroke(STROKE_COLOR, STROKE_WIDTH);
     }
 
     @Override
@@ -55,6 +55,8 @@ public class SimpleLFMod implements SFrameLookAndFeel {
         int y = pos.y();
         int width = dim.x();
         int height = dim.y();
+        if (width == 0 || height == 0) return;
+
         hud.roundedRectangle(x, y, width, height, MenuStyleSettings.INDENT);
 
         hud.text(x + (width / 2), y + (height / 2) - (TEXT_SIZE_LARGE / 2),

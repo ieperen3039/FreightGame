@@ -1,6 +1,6 @@
-package NG.ScreenOverlay.Frames;
+package NG.ScreenOverlay.Frames.Components;
 
-import NG.ScreenOverlay.ScreenOverlay;
+import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 
 /**
  * @author Geert van Ieperen. Created on 21-9-2018.
@@ -25,11 +25,17 @@ public class SFiller extends SComponent {
     }
 
     @Override
-    public boolean wantGrow() {
+    public boolean wantHorizontalGrow() {
         return true;
     }
 
     @Override
-    public void draw(ScreenOverlay.Painter painter) {
+    public boolean wantVerticalGrow() {
+        return true;
+    }
+
+    @Override
+    public void draw(SFrameLookAndFeel design) {
+
     }
 }

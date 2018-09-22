@@ -1,9 +1,10 @@
-package NG.ScreenOverlay.Frames;
+package NG.ScreenOverlay.Frames.LayoutManagers;
 
-import NG.Tools.Logger;
+import NG.ScreenOverlay.Frames.Components.SComponent;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 
@@ -26,6 +27,12 @@ public class GridLayoutManager implements SLayoutManager {
 
     private Vector2i position = new Vector2i();
     private Vector2i dimensions = new Vector2i();
+    private int[] colSizes;
+    private int[] rowSizes;
+
+    GridLayoutManager() {
+        this(3, 3);
+    }
 
     public GridLayoutManager(int xElts, int yElts) {
         this.grid = new SComponent[xElts][yElts];
@@ -35,26 +42,39 @@ public class GridLayoutManager implements SLayoutManager {
         minRowHeight = new int[yElts];
         colWantGrow = new boolean[xElts];
         rowWantGrow = new boolean[yElts];
+        colSizes = new int[xElts];
+        rowSizes = new int[yElts];
     }
 
     /**
-     * adds a component to the grid.
+     * adds a component to the grid at the specified position
      * @param comp the component to be added
      * @param x    the x grid position
      * @param y    the y grip position
      * @throws IndexOutOfBoundsException if the given x and y fall outside the grid
      */
-    @Override
     public void add(SComponent comp, int x, int y) throws IndexOutOfBoundsException {
-        grid[x][y] = comp;
+        try {
+            grid[x][y] = comp;
+        } catch (IndexOutOfBoundsException e) {
+            throw new IndexOutOfBoundsException(String.format(
+                    "Tried adding component on position (%d, %d) while grid is of size [ %d x %d ]",
+                    x, y, xElts, yElts
+            ));
+        }
+
         changeChecker++;
-        invalidate();
     }
 
     @Override
-    public void add(SComponent comp, int x, int xMax, int y, int yMax) {
-        add(comp, x, y); // not supported (yet)
-        Logger.ASSERT.print(this.getClass().getName() + " does not support cross-grid elements");
+    public void add(SComponent comp, Object prop) {
+        if (prop instanceof Vector2ic) {
+            Vector2ic pos = (Vector2ic) prop;
+            add(comp, pos.x(), pos.y());
+
+        } else {
+            throw new IllegalArgumentException("prop must be an Vector2i instance, but was " + prop.getClass());
+        }
     }
 
     @Override
@@ -72,7 +92,7 @@ public class GridLayoutManager implements SLayoutManager {
     }
 
     @Override
-    public void invalidate() {
+    public void invalidateProperties() {
         int startChangeNr = changeChecker;
         nOfRowGrows = 0;
         nOfColGrows = 0;
@@ -87,33 +107,33 @@ public class GridLayoutManager implements SLayoutManager {
 
             for (int y = 0; y < yElts; y++) {
                 SComponent elt = col[y];
-                if (elt == null) continue;
+                if (elt == null || !elt.isVisible()) continue;
 
                 minRowHeight[y] = Math.max(elt.minHeight(), minRowHeight[y]);
                 minColWidth[x] = Math.max(elt.minWidth(), minColWidth[x]);
 
-                if (elt.wantGrow()) {
-                    if (!rowWantGrow[y]) { // we cant do this stateless
-                        rowWantGrow[y] = true;
-                        nOfRowGrows++;
-                    }
-                    if (!colWantGrow[x]) {
-                        colWantGrow[x] = true;
-                        nOfColGrows++;
-                    }
+                if (elt.wantVerticalGrow() && !rowWantGrow[y]) {
+                    rowWantGrow[y] = true;
+                    nOfRowGrows++;
+                }
+
+                if (elt.wantHorizontalGrow() && !colWantGrow[x]) {
+                    colWantGrow[x] = true;
+                    nOfColGrows++;
                 }
             }
         }
 
         // place components again in the previous dimensions
-        setComponents(position, dimensions);
+        placeComponents();
 
         // if something changed while restructuring, try again
-        if (startChangeNr != changeChecker) invalidate();
+        if (startChangeNr != changeChecker) invalidateProperties();
     }
 
     @Override
     public Iterable<SComponent> getComponents() {
+        if (grid.length == 0) return Collections.emptySet();
         return GridIterator::new;
     }
 
@@ -136,34 +156,47 @@ public class GridLayoutManager implements SLayoutManager {
     }
 
     @Override
-    public void setComponents(Vector2ic position, Vector2ic dimensions) {
+    public void setDimensions(Vector2ic position, Vector2ic dimensions) {
         this.position.set(position);
         this.dimensions.set(dimensions);
+    }
 
-        int[] xPixels = createLayoutDimension(minColWidth, nOfColGrows, colWantGrow, dimensions.x(), position.x());
-        int[] yPixels = createLayoutDimension(minRowHeight, nOfRowGrows, rowWantGrow, dimensions.y(), position.y());
+    @Override
+    public void placeComponents() {
+        colSizes = calculateDimensionSizes(minColWidth, nOfColGrows, colWantGrow, dimensions.x());
+        rowSizes = calculateDimensionSizes(minRowHeight, nOfRowGrows, rowWantGrow, dimensions.y());
 
+        int xPos = position.x;
         for (int x = 0; x < xElts; x++) {
+            int yPos = position.y;
             for (int y = 0; y < yElts; y++) {
                 SComponent elt = grid[x][y];
-                if (elt == null) continue;
 
-                int xPixel = xPixels[x] + position.x();
-                elt.setPosition(xPixel, yPixels[y]);
+                if (elt != null) {
+                    elt.setSize(colSizes[x], rowSizes[y]);
+                    elt.setPosition(xPos, yPos);
+                }
+
+                yPos += rowSizes[y];
             }
+            xPos += colSizes[x];
         }
     }
 
+    @Override
+    public Class<?> getPropertyClass() {
+        return Vector2ic.class;
+    }
+
     /**
-     * calculates the positions of the elements in one dimension
+     * calculates the positions of the elements in one dimension, relative to (0, 0)
      * @param minSizes     an array with all minimum sizes
      * @param nOfGrows     the number of trues in the {@code wantGrows} table
      * @param wantGrows    for each position, whether at least one element wants to grow
      * @param size         the size of the area where the elements can be placed in
-     * @param displacement the initial position of the area
      * @return a list of pixel positions that places the components according to the layout
      */
-    private static int[] createLayoutDimension(int[] minSizes, int nOfGrows, boolean[] wantGrows, int size, int displacement) {
+    static int[] calculateDimensionSizes(int[] minSizes, int nOfGrows, boolean[] wantGrows, int size) {
         int nOfElements = minSizes.length;
 
         int spareSize = size;
@@ -176,15 +209,30 @@ public class GridLayoutManager implements SLayoutManager {
             growValue = spareSize / nOfGrows;
         }
 
-        int[] pixels = new int[nOfElements];
-        pixels[0] = displacement;
-        for (int i = 0; i < nOfElements - 1; i++) {
+        int[] widths = new int[nOfElements];
+        for (int i = 0; i < nOfElements; i++) {
             int eltWidth = minSizes[i];
             if (wantGrows[i]) eltWidth += growValue;
-            pixels[i + 1] = pixels[i] + eltWidth;
+            widths[i] = eltWidth;
         }
 
-        return pixels;
+        return widths;
+    }
+
+    int[] getMinRowHeight() {
+        return minRowHeight;
+    }
+
+    int[] getMinColWidth() {
+        return minColWidth;
+    }
+
+    boolean[] getRowWantGrow() {
+        return rowWantGrow;
+    }
+
+    boolean[] getColWantGrow() {
+        return colWantGrow;
     }
 
     private class GridIterator implements Iterator<SComponent> {
