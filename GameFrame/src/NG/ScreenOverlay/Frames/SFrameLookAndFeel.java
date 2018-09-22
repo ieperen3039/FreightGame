@@ -1,8 +1,12 @@
 package NG.ScreenOverlay.Frames;
 
 import NG.Mods.Mod;
+import NG.ScreenOverlay.NGFonts;
 import NG.ScreenOverlay.ScreenOverlay;
 import org.joml.Vector2ic;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * a stateless mapping from abstract descriptions to drawings in NanoVG
@@ -32,13 +36,16 @@ public interface SFrameLookAndFeel extends Mod {
      */
     void drawButton(Vector2ic pos, Vector2ic dim, String text, boolean state);
 
+    void drawIconButton(Vector2ic pos, Vector2ic dim, Path icon, boolean state) throws IOException;
+
     /**
      * the position and dimension are hard bounds, the size can be adapted
      * @param pos  upper left position of the area where text may occur
      * @param dim  dimensions of the mentioned area
+     * @param text the displayed text
      * @param size the preferred font size of the text
      */
-    void drawTextArea(Vector2ic pos, Vector2ic dim, int size);
+    void drawText(Vector2ic pos, Vector2ic dim, String text, NGFonts.TextType size);
 
     /**
      * draw a marking to indicate that e.g. a textfield is selected.
@@ -46,4 +53,5 @@ public interface SFrameLookAndFeel extends Mod {
      * @param dim dimensions of the selection
      */
     void drawSelection(Vector2ic pos, Vector2ic dim);
+
 }

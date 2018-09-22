@@ -5,7 +5,7 @@ import NG.DataStructures.Color4f;
 
 import java.util.function.Supplier;
 
-import static NG.ScreenOverlay.JFGFonts.ORBITRON_MEDIUM;
+import static NG.ScreenOverlay.NGFonts.ORBITRON_MEDIUM;
 import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_CENTER;
 import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_TOP;
 

@@ -3,13 +3,13 @@ package NG.ScreenOverlay.Frames.Components;
 import NG.ActionHandling.MouseAnyButtonClickListener;
 import NG.Engine.Game;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
-import NG.Tools.Logger;
 import org.joml.Vector2i;
 
 /**
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
 public class SFrame extends SContainer implements MouseAnyButtonClickListener {
+    static final int FRAME_TITLE_BAR_SIZE = 50;
     private final Game game;
     private boolean minimized;
 
@@ -20,9 +20,9 @@ public class SFrame extends SContainer implements MouseAnyButtonClickListener {
         game.callbacks().onMouseButtonClick(this);
 
         SPanel upperBar = new SPanel(5, 1);
-        SPanel exit = new SPanel(50, 50, false);
+        SComponent exit = new SFrameCloseButton(this);
         upperBar.add(exit, new Vector2i(4, 0));
-        SPanel minimize = new SPanel(50, 50, false);
+        SComponent minimize = new SButton("M", () -> setMinimized(true), FRAME_TITLE_BAR_SIZE, FRAME_TITLE_BAR_SIZE);
         upperBar.add(minimize, new Vector2i(3, 0));
         SComponent title = new STextArea("Title", true);
         upperBar.add(title, new Vector2i(1, 0));
@@ -69,7 +69,6 @@ public class SFrame extends SContainer implements MouseAnyButtonClickListener {
     public void draw(SFrameLookAndFeel design) {
         if (!isVisible()) return;
         if (minimized) {
-            Logger.ASSERT.print("Drawing a minimized panel");
             // todo minimized panel
 
         } else {

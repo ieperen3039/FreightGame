@@ -4,9 +4,9 @@ import NG.ScreenOverlay.ScreenOverlay;
 
 import java.util.function.Consumer;
 
-import static NG.ScreenOverlay.JFGFonts.ORBITRON_MEDIUM;
 import static NG.ScreenOverlay.Menu.MenuStyleSettings.TEXT_COLOR;
 import static NG.ScreenOverlay.Menu.MenuStyleSettings.TEXT_SIZE_LARGE;
+import static NG.ScreenOverlay.NGFonts.ORBITRON_MEDIUM;
 import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_CENTER;
 
 /**

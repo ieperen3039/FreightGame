@@ -38,7 +38,7 @@ public final class ScreenOverlay implements GameAspect {
 
     /** fontbuffer MUST be a field */
     @SuppressWarnings("FieldCanBeLocal")
-    private final ByteBuffer[] fontBuffer = new ByteBuffer[JFGFonts.values().length];
+    private final ByteBuffer[] fontBuffer = new ByteBuffer[NGFonts.values().length];
     private Map<Path, Integer> imageBuffer = new HashMap<>();
 
     private final Collection<Consumer<Painter>> drawBuffer = new ArrayList<>();
@@ -59,7 +59,7 @@ public final class ScreenOverlay implements GameAspect {
             throw new IOException("Could not initialize NanoVG");
         }
 
-        JFGFonts[] fonts = JFGFonts.values();
+        NGFonts[] fonts = NGFonts.values();
         for (int i = 0; i < fonts.length; i++) {
             fontBuffer[i] = fonts[i].asByteBuffer();
             if (nvgCreateFontMem(vg, fonts[i].name, fontBuffer[i], 1) == -1) {
@@ -376,7 +376,7 @@ public final class ScreenOverlay implements GameAspect {
 
         // non-shape defining functions
 
-        public void text(int x, int y, float size, JFGFonts font, int align, Color4f color, String text) {
+        public void text(int x, int y, float size, NGFonts font, int align, Color4f color, String text) {
             nvgFontSize(vg, size);
             nvgFontFace(vg, font.name);
             nvgTextAlign(vg, align);
@@ -387,7 +387,7 @@ public final class ScreenOverlay implements GameAspect {
         public void printRoll(String text) {
             int y = yPrintRoll + ((printRollSize + 5) * printRollEntry);
 
-            text(xPrintRoll, y, printRollSize, JFGFonts.LUCIDA_CONSOLE, NVG_ALIGN_LEFT, textColor, text);
+            text(xPrintRoll, y, printRollSize, NGFonts.LUCIDA_CONSOLE, NVG_ALIGN_LEFT, textColor, text);
             printRollEntry++;
         }
 

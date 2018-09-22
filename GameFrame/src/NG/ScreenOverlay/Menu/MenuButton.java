@@ -2,8 +2,8 @@ package NG.ScreenOverlay.Menu;
 
 import NG.ScreenOverlay.ScreenOverlay;
 
-import static NG.ScreenOverlay.JFGFonts.ORBITRON_MEDIUM;
 import static NG.ScreenOverlay.Menu.MenuStyleSettings.*;
+import static NG.ScreenOverlay.NGFonts.ORBITRON_MEDIUM;
 import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_CENTER;
 
 /**

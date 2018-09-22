@@ -15,7 +15,7 @@ import static NG.Tools.Directory.fonts;
 /**
  * @author Geert van Ieperen. Created on 23-8-2018.
  */
-public enum JFGFonts {
+public enum NGFonts {
     ORBITRON_REGULAR(fonts, "Orbitron", "Orbitron-Regular.ttf"),
     ORBITRON_MEDIUM(fonts, "Orbitron", "Orbitron-Medium.ttf"),
     ORBITRON_BOLD(fonts, "Orbitron", "Orbitron-Bold.ttf"),
@@ -27,7 +27,7 @@ public enum JFGFonts {
     private ByteBuffer byteFormat;
     private Font awtFormat;
 
-    JFGFonts(Directory dir, String... filepath) {
+    NGFonts(Directory dir, String... filepath) {
         this.name = toString().toLowerCase().replace("_", " ");
         this.source = dir.getPath(filepath).toString();
         File file = fonts.getFile(filepath);
@@ -50,4 +50,7 @@ public enum JFGFonts {
         return awtFormat.deriveFont(size);
     }
 
+    public enum TextType {
+        TITLE, ACCENT, REGULAR, FANCY, TOOLTIP, RED, FLOATING
+    }
 }

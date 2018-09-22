@@ -1,10 +1,7 @@
 package NG.Tools;
 
 import java.io.PrintStream;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -172,10 +169,18 @@ public enum Logger {
             case INFO:
                 out.accept(prefix + ": " + concatenate(s));
                 break;
+            case ASSERT:
             case WARN:
             case ERROR:
-            case ASSERT:
                 err.accept(prefix + ": " + concatenate(s));
+
+                // let's do a fancy stream
+                if (this == ERROR) Arrays.stream(s)
+                        .filter(e -> e instanceof Exception)
+                        .map(e -> (Exception) e)
+                        .flatMap(e -> Arrays.stream(e.getStackTrace()))
+                        .map(StackTraceElement::toString)
+                        .forEach(err);
                 break;
         }
     }

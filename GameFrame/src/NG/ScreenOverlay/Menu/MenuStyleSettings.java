@@ -1,7 +1,7 @@
 package NG.ScreenOverlay.Menu;
 
 import NG.DataStructures.Color4f;
-import NG.ScreenOverlay.JFGFonts;
+import NG.ScreenOverlay.NGFonts;
 
 import static NG.DataStructures.Color4f.BLACK;
 
@@ -10,7 +10,7 @@ import static NG.DataStructures.Color4f.BLACK;
  */
 public final class MenuStyleSettings {
 
-    public static final JFGFonts FONT = JFGFonts.LUCIDA_CONSOLE;
+    public static final NGFonts FONT = NGFonts.LUCIDA_CONSOLE;
     public static final int TEXT_SIZE_SMALL = 20;
     public static final int TEXT_SIZE_MED = 20;
     public static final int TEXT_SIZE_LARGE = 30;

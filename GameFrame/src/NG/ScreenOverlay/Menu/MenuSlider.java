@@ -1,6 +1,6 @@
 package NG.ScreenOverlay.Menu;
 
-import NG.ScreenOverlay.JFGFonts;
+import NG.ScreenOverlay.NGFonts;
 import NG.ScreenOverlay.ScreenOverlay;
 import NG.Tools.Logger;
 import org.lwjgl.glfw.GLFW;
@@ -39,7 +39,7 @@ public class MenuSlider extends MenuClickable {
         hud.roundedRectangle(x + MENU_STROKE_WIDTH / 2, y + MENU_STROKE_WIDTH / 2,
                 (int) ((width - MENU_STROKE_WIDTH) * Math.max(value, 0.05f)), height - MENU_STROKE_WIDTH, INDENT,
                 MenuStyleSettings.SLIDER_FILL_COLOR, MENU_STROKE_COLOR, 0);
-        hud.text(x + width / 2, y + MenuStyleSettings.TEXT_SIZE_LARGE + 10, MenuStyleSettings.TEXT_SIZE_LARGE, JFGFonts.ORBITRON_MEDIUM, NVG_ALIGN_CENTER,
+        hud.text(x + width / 2, y + MenuStyleSettings.TEXT_SIZE_LARGE + 10, MenuStyleSettings.TEXT_SIZE_LARGE, NGFonts.ORBITRON_MEDIUM, NVG_ALIGN_CENTER,
                 MenuStyleSettings.TEXT_COLOR, String.format("%1$s: %2$d%%", text, (int) ((value * 100) >= 1 ? value * 100 : 1)));
     }
 
