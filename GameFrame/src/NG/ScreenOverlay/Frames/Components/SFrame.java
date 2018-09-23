@@ -1,23 +1,20 @@
 package NG.ScreenOverlay.Frames.Components;
 
-import NG.ActionHandling.MouseAnyButtonClickListener;
-import NG.Engine.Game;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
+import NG.ScreenOverlay.Frames.SFrameManager;
 import org.joml.Vector2i;
 
 /**
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
-public class SFrame extends SContainer implements MouseAnyButtonClickListener {
+public class SFrame extends SContainer {
     static final int FRAME_TITLE_BAR_SIZE = 50;
-    private final Game game;
     private boolean minimized;
+    private SFrameManager frameManager;
 
-    public SFrame(Game game, int width, int height) {
+    public SFrame(int width, int height) {
         super(5, 5, false);
-        this.game = game;
         setVisibleFlag(false);
-        game.callbacks().onMouseButtonClick(this);
 
         SPanel upperBar = new SPanel(5, 1);
         SComponent exit = new SFrameCloseButton(this);
@@ -61,8 +58,12 @@ public class SFrame extends SContainer implements MouseAnyButtonClickListener {
         return minimized;
     }
 
+    /**
+     * requests focus of the frameManager.
+     * @throws NullPointerException if no frame-manager has been set
+     */
     public void requestFocus() {
-        game.frameManager().focus(this);
+        frameManager.focus(this);
     }
 
     @Override
@@ -70,6 +71,7 @@ public class SFrame extends SContainer implements MouseAnyButtonClickListener {
         if (!isVisible()) return;
         if (minimized) {
             // todo minimized panel
+//            design.drawMinimized();
 
         } else {
             design.drawRectangle(position, dimensions);
@@ -79,15 +81,16 @@ public class SFrame extends SContainer implements MouseAnyButtonClickListener {
 
     @Override
     public void onClick(int button, int x, int y) {
-        for (SComponent c : children()) {
-            if (c instanceof MouseAnyButtonClickListener && c.contains(x, y)) {
-                MouseAnyButtonClickListener clickListener = (MouseAnyButtonClickListener) c;
-                clickListener.onClick(button, x - c.getX(), y - c.getY());
+        requestFocus();
+
+        for (SComponent component : children()) {
+            if (component.contains(x, y)) {
+                int xr = x - component.getX();
+                int yr = y - component.getY();
+                component.onClick(button, xr, yr);
                 return;
             }
         }
-
-        requestFocus();
     }
 
     @Override
@@ -106,7 +109,10 @@ public class SFrame extends SContainer implements MouseAnyButtonClickListener {
     }
 
     public void dispose() {
-        game.callbacks().removeListener(this);
         setVisibleFlag(false);
+    }
+
+    public void setManager(SFrameManager frameManager) {
+        this.frameManager = frameManager;
     }
 }

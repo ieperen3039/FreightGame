@@ -3,7 +3,7 @@ package NG.ActionHandling;
 import static org.lwjgl.glfw.GLFW.*;
 
 /**
- * An helper-interface to separate the button clicks in methods
+ * An helper-interface to separate the button clicks into methods
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
 public interface MouseButtonClickListener extends MouseAnyButtonClickListener {

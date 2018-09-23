@@ -1,5 +1,6 @@
 package NG.ScreenOverlay.Frames.Components;
 
+import NG.ActionHandling.MouseAnyButtonClickListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
@@ -8,7 +9,7 @@ import org.joml.Vector2ic;
  * The S stands for Sub-
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
-public abstract class SComponent {
+public abstract class SComponent implements MouseAnyButtonClickListener {
     private boolean isVisible = true;
 
     protected Vector2i position = new Vector2i();
@@ -31,6 +32,16 @@ public abstract class SComponent {
      *         width.
      */
     public abstract boolean wantHorizontalGrow();
+
+    /**
+     * is executed whenever the user clicks <i>on</i> this component.
+     * @param button the button number
+     * @param x      the x position relative to {@link #getX()}
+     * @param y      the y position relative to {@link #getY()}
+     */
+    @Override
+    public void onClick(int button, int x, int y) {
+    }
 
     /**
      * @return true if this component should expand horizontally when possible. When false, the components should always

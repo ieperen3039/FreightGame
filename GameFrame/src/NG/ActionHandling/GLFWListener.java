@@ -4,14 +4,12 @@ import NG.DataStructures.Tracked.TrackedInteger;
 import NG.Engine.Game;
 import NG.Engine.GameAspect;
 import NG.Rendering.GLFWWindow;
-import NG.Tools.Logger;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import org.lwjgl.glfw.GLFWScrollCallback;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -23,15 +21,17 @@ public class GLFWListener implements GameAspect {
     private final Collection<KeyPressListener> keyPressListeners;
     private final Collection<KeyReleaseListener> keyReleaseListeners;
     private final Collection<MouseAnyButtonClickListener> mouseAnyButtonClickListeners;
-    private final Collection<MouseDragListener> mouseButtonDragListeners;
+    private final Map<Integer, Collection<MouseMoveListener>> mouseDragListeners;
     private final Collection<MouseScrollListener> mouseScrollListeners;
+    private final Set<Integer> clickedButtons;
 
     public GLFWListener() {
         this.keyPressListeners = new ArrayList<>();
         this.keyReleaseListeners = new ArrayList<>();
         this.mouseAnyButtonClickListeners = new ArrayList<>();
-        this.mouseButtonDragListeners = new ArrayList<>();
+        this.mouseDragListeners = new HashMap<>();
         this.mouseScrollListeners = new ArrayList<>();
+        this.clickedButtons = new HashSet<>();
     }
 
     @Override
@@ -66,11 +66,12 @@ public class GLFWListener implements GameAspect {
     }
 
     /**
-     * registers a listener that tracks a mouse drag action
-     * @param action see {@link MouseDragListener}
+     * registers a listener that tracks a mouse drag action with the given button
+     * @param button the button to listen to
+     * @param action see {@link MouseMoveListener}
      */
-    public void onMouseDrag(MouseDragListener action) {
-        mouseButtonDragListeners.add(action);
+    public void onMouseDrag(Integer button, MouseMoveListener action) {
+        mouseDragListeners.computeIfAbsent(button, ArrayList::new).add(action);
     }
 
     /**
@@ -81,8 +82,8 @@ public class GLFWListener implements GameAspect {
     }
 
     /**
-     * tries to remove the given listener from all of the listener types. Even if the given listener is of multiple
-     * types, all of the mare removed.
+     * tries to remove the given listener from all of the listener types, except for mouse move listeners. Even if the
+     * given listener is of multiple types, all of them are removed.
      * @param listener a previously installed listener
      * @return true iff any listener has been removed
      */
@@ -91,9 +92,30 @@ public class GLFWListener implements GameAspect {
         boolean kp = keyPressListeners.remove(listener);
         boolean kr = keyReleaseListeners.remove(listener);
         boolean mc = mouseAnyButtonClickListeners.remove(listener);
-        boolean md = mouseButtonDragListeners.remove(listener);
         boolean ms = mouseScrollListeners.remove(listener);
-        return kp || kr || mc || md || ms;
+
+        return kp || kr || mc || ms;
+    }
+
+    /**
+     * tries to remove the given drag listener with the given button from the list of drag listeners. If button is null,
+     * it will search all drag listeners and remove the first one found.
+     * @param button the button where the listener is listening to, or null if this is unknown
+     * @param leaver the listener to remove
+     * @return true if one listener has been removed
+     */
+    public boolean removeMouseDragListener(Integer button, MouseMoveListener leaver) {
+        if (button != null) {
+            Collection<MouseMoveListener> list = mouseDragListeners.get(button);
+            if (list == null) return true;
+            return list.remove(leaver);
+
+        } else {
+            for (Collection<MouseMoveListener> list : mouseDragListeners.values()) {
+                if (list.remove(leaver)) return true;
+            }
+            return false;
+        }
     }
 
     @Override
@@ -101,7 +123,7 @@ public class GLFWListener implements GameAspect {
         keyPressListeners.clear();
         keyReleaseListeners.clear();
         mouseAnyButtonClickListeners.clear();
-        mouseButtonDragListeners.clear();
+        mouseDragListeners.clear();
         mouseScrollListeners.clear();
 
         // GLFWWindow frees its own callbacks when cleaned up
@@ -124,18 +146,17 @@ public class GLFWListener implements GameAspect {
         @Override
         public void invoke(long windowHandle, int button, int action, int mods) {
             if (action == GLFW_PRESS) {
-                mouseButtonDragListeners.forEach(l -> l.set(button, true));
-
                 double[] xBuf = new double[1];
                 double[] yBuf = new double[1];
                 glfwGetCursorPos(windowHandle, xBuf, yBuf);
                 int x = (int) xBuf[0];
                 int y = (int) yBuf[0];
 
+                clickedButtons.add(button);
                 mouseAnyButtonClickListeners.forEach(l -> l.onClick(button, x, y));
 
             } else if (action == GLFW_RELEASE) {
-                mouseButtonDragListeners.forEach(l -> l.set(button, false));
+                clickedButtons.remove(button);
             }
         }
     }
@@ -162,54 +183,11 @@ public class GLFWListener implements GameAspect {
             int xDelta = x.difference();
             int yDelta = y.difference();
 
-            for (MouseDragListener listener : mouseButtonDragListeners) {
-                if (listener.isPressed()) listener.mouseDragged(xDelta, yDelta);
-            }
-        }
-    }
-
-    /**
-     * @author Geert van Ieperen. Created on 20-9-2018.
-     */
-    public abstract static class MouseDragListener {
-        private final int targetButton;
-        private boolean isPressed;
-
-        public MouseDragListener(int targetButton) {
-            this.targetButton = targetButton;
-        }
-
-        /** is called when a mouse button is pressed */
-        public abstract void buttonPressed();
-
-        /** is called when a mouse button is released */
-        public abstract void buttonReleased();
-
-        /**
-         * between calls of button pressed and button released for the same button, this is called with the mouse
-         * coordinates for each of the buttons separately
-         */
-        public abstract void mouseDragged(int xPos, int yPos);
-
-        /** returns true if the button is currently held */
-        public boolean isPressed() {
-            return isPressed;
-        }
-
-        /** activate a button press or button release */
-        private void set(int button, boolean press) {
-            if (button != targetButton) return;
-
-            if (press == isPressed) {
-                Logger.ASSERT.print("Set button of drag listener to " + press + " while already in that state");
-                return;
-            }
-
-            isPressed = press;
-            if (press) {
-                buttonPressed();
-            } else {
-                buttonReleased();
+            for (Integer button : clickedButtons) {
+                Collection<MouseMoveListener> list = mouseDragListeners.get(button);
+                if (list != null) {
+                    list.forEach(l -> l.mouseMoved(xDelta, yDelta));
+                }
             }
         }
     }

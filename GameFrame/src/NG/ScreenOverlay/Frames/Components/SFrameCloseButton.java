@@ -1,12 +1,11 @@
 package NG.ScreenOverlay.Frames.Components;
 
-import NG.ActionHandling.MouseButtonClickListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 
 /**
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SFrameCloseButton extends SComponent implements MouseButtonClickListener {
+public class SFrameCloseButton extends SClickable {
     private final Runnable action;
     private boolean state = false;
 
@@ -53,11 +52,6 @@ public class SFrameCloseButton extends SComponent implements MouseButtonClickLis
 
     @Override
     public void onRightClick() {
-
-    }
-
-    @Override
-    public void onMiddleButtonClick() {
 
     }
 }

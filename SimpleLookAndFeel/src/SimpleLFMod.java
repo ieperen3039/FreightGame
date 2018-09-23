@@ -29,13 +29,14 @@ public class SimpleLFMod implements SFrameLookAndFeel {
     private static final Color4f TEXT_COLOR = Color4f.BLACK;
     private static final Color4f PANEL_COLOR = Color4f.WHITE;
     private static final Color4f STROKE_COLOR = Color4f.BLUE;
+    private static final Color4f BUTTON_COLOR = Color4f.GREY;
 
     private ScreenOverlay.Painter hud;
 
     @Override
     public void init(Game game) {
         if (!game.getVersionNumber().isLessThan(1, 0))
-            Logger.ASSERT.print("SLF is ugly, please install something better");
+            Logger.ASSERT.print("SLF is ugly. please install something better");
     }
 
 
@@ -66,11 +67,11 @@ public class SimpleLFMod implements SFrameLookAndFeel {
 
     @Override
     public void drawButton(Vector2ic pos, Vector2ic dim, String text, boolean state) {
+        Color4f color = BUTTON_COLOR;
         if (state) {
-            hud.roundedRectangle(pos.x(), pos.y(), dim.x(), dim.y(), BUTTON_INDENT, PANEL_COLOR.darken(0.5f), STROKE_COLOR, STROKE_WIDTH);
-        } else {
-            hud.roundedRectangle(pos, dim, BUTTON_INDENT);
+            color = color.darken(0.5f);
         }
+        hud.roundedRectangle(pos.x(), pos.y(), dim.x(), dim.y(), BUTTON_INDENT, color, STROKE_COLOR, STROKE_WIDTH);
         drawText(pos, dim, text, NGFonts.TextType.ACCENT);
     }
 
@@ -79,7 +80,7 @@ public class SimpleLFMod implements SFrameLookAndFeel {
         Color4f buttonColor = Color4f.WHITE;
         int iconDisplace = 10;
 
-        if (state) buttonColor.darken(0.5f);
+        if (state) buttonColor = buttonColor.darken(0.5f);
         hud.roundedRectangle(pos.x(), pos.y(), dim.x(), dim.y(), BUTTON_INDENT, buttonColor, STROKE_COLOR, STROKE_WIDTH);
         Vector2i iconSize = new Vector2i(dim).sub(iconDisplace, iconDisplace);
         Vector2i iconPos = new Vector2i(pos).add(iconDisplace / 2, iconDisplace / 2);

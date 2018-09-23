@@ -53,8 +53,6 @@ public class SFrameManager implements Consumer<ScreenOverlay.Painter>, GameAspec
     }
 
     public void addFrame(SFrame frame, int x, int y) {
-        if (lookAndFeel == null) throw new IllegalStateException("Adding a frame while LookAndFeel is not set");
-
         boolean success = frames.offerFirst(frame);
         if (!success) {
             Logger.DEBUG.print("Too much subframes opened, removing the last one");
@@ -62,8 +60,8 @@ public class SFrameManager implements Consumer<ScreenOverlay.Painter>, GameAspec
             frames.addFirst(frame);
         }
 
+        frame.setManager(this);
         frame.setPosition(x, y);
-        frame.setLookAndFeel(lookAndFeel);
     }
 
     public void focus(SFrame frame) {

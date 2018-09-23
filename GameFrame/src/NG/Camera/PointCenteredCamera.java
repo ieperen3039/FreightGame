@@ -1,13 +1,14 @@
 package NG.Camera;
 
 import NG.ActionHandling.GLFWListener;
+import NG.ActionHandling.MouseMoveListener;
 import NG.ActionHandling.MouseScrollListener;
 import NG.Engine.Game;
 import NG.Tools.Vectors;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 
 /**
  * The standard camera that rotates using dragging. Some of the code originates from the RobotRace sample code provided by the TU Eindhoven
@@ -34,7 +35,7 @@ public class PointCenteredCamera implements Camera, MouseScrollListener {
     private float vDist = 10f;
 
     private GLFWListener callbacks;
-    private GLFWListener.MouseDragListener onDrag = new TurnCameraOnDrag();
+    private MouseMoveListener onDrag = new TurnCameraOnDrag();
 
     public PointCenteredCamera(Vector3f eye, Vector3f focus) {
         this.focus = focus;
@@ -73,7 +74,7 @@ public class PointCenteredCamera implements Camera, MouseScrollListener {
     public void init(Game game) {
         updatePosition(0);
         callbacks = game.callbacks();
-        callbacks.onMouseDrag(onDrag);
+        callbacks.onMouseDrag(GLFW_MOUSE_BUTTON_LEFT, onDrag);
         callbacks.onMouseScroll(this);
     }
 
@@ -124,26 +125,15 @@ public class PointCenteredCamera implements Camera, MouseScrollListener {
         vDist = (float) Math.min(vDist * ((ZOOM_SPEED * s) + 1f), maxDist);
     }
 
-    private class TurnCameraOnDrag extends GLFWListener.MouseDragListener {
+    private class TurnCameraOnDrag implements MouseMoveListener {
         TurnCameraOnDrag() {
-            super(GLFW_MOUSE_BUTTON_RIGHT);
         }
 
-        @Override
-        public void buttonPressed() {
-
-        }
-
-        @Override
-        public void buttonReleased() {
-
-        }
-
-        public void mouseDragged(int deltaX, int deltaY) {
+        public void mouseMoved(int xDelta, int yDelta) {
             int s = 1;
 
-            theta += deltaY * DRAG_PIXEL_TO_RADIAN * s;
-            phi += deltaX * DRAG_PIXEL_TO_RADIAN * s;
+            theta += yDelta * DRAG_PIXEL_TO_RADIAN * s;
+            phi += xDelta * DRAG_PIXEL_TO_RADIAN * s;
 
             theta = Math.max(THETA_MIN, Math.min(THETA_MAX, theta));
             phi = phi % PHI_MAX;

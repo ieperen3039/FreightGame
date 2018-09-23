@@ -1,28 +1,40 @@
 package NG.ScreenOverlay.Frames.Components;
 
-import NG.ActionHandling.MouseButtonClickListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 
 /**
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SButton extends SComponent implements MouseButtonClickListener {
+public class SButton extends SClickable {
+    private final Runnable leftClickAction;
+    private final Runnable rightClickAction;
     private final int minHeight;
     private final int minWidth;
-    private final Runnable action;
 
     private String text;
-    private boolean state = false;
+    private boolean isPressed = false;
+    private boolean vtGrow = false;
+    private boolean hzGrow = false;
 
     public SButton(String text, Runnable action) {
         this(text, action, 0, 0);
     }
 
     public SButton(String text, Runnable action, int minHeight, int minWidth) {
+        this(text, action, null, minHeight, minWidth);
+    }
+
+    public SButton(String text, Runnable onLeftClick, Runnable onRightClick, int minHeight, int minWidth) {
+        leftClickAction = onLeftClick;
+        rightClickAction = onRightClick;
         this.minHeight = minHeight;
         this.minWidth = minWidth;
-        this.action = action;
         this.text = text;
+    }
+
+    public void setGrowthPolicy(boolean horizontal, boolean vertical) {
+        hzGrow = horizontal;
+        vtGrow = vertical;
     }
 
     @Override
@@ -37,32 +49,29 @@ public class SButton extends SComponent implements MouseButtonClickListener {
 
     @Override
     public boolean wantHorizontalGrow() {
-        return false;
+        return hzGrow;
     }
 
     @Override
     public boolean wantVerticalGrow() {
-        return false;
+        return vtGrow;
     }
 
     @Override
     public void draw(SFrameLookAndFeel design) {
-        design.drawButton(position, dimensions, text, state);
+        design.drawButton(position, dimensions, text, isPressed);
+        isPressed = false;
     }
 
     @Override
     public void onLeftClick() {
-        state = true;
-        action.run();
+        leftClickAction.run();
+        isPressed = true;
     }
 
     @Override
     public void onRightClick() {
-
-    }
-
-    @Override
-    public void onMiddleButtonClick() {
-
+        rightClickAction.run();
+        isPressed = true;
     }
 }

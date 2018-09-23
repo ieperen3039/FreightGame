@@ -124,7 +124,7 @@ public class FreightGame implements Game {
         init();
         Logger.INFO.print("Starting game...\n");
 
-        SFrame frame = ExampleSFrame.get(this);
+        SFrame frame = ExampleSFrame.get();
         frameManager.addFrame(frame);
         frame.setVisible(true);
 
