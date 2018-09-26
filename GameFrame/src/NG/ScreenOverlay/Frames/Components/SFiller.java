@@ -1,6 +1,7 @@
 package NG.ScreenOverlay.Frames.Components;
 
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
+import org.joml.Vector2ic;
 
 /**
  * @author Geert van Ieperen. Created on 21-9-2018.
@@ -35,7 +36,7 @@ public class SFiller extends SComponent {
     }
 
     @Override
-    public void draw(SFrameLookAndFeel design) {
+    public void draw(SFrameLookAndFeel design, Vector2ic offset) {
 
     }
 }

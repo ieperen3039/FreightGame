@@ -3,6 +3,8 @@ package NG.ScreenOverlay.Frames.Components;
 import NG.ScreenOverlay.Frames.LayoutManagers.GridLayoutManager;
 import NG.ScreenOverlay.Frames.LayoutManagers.SLayoutManager;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
+import org.joml.Vector2i;
+import org.joml.Vector2ic;
 
 /**
  * @author Geert van Ieperen. Created on 20-9-2018.
@@ -52,7 +54,8 @@ public class SPanel extends SContainer {
      * (0, 0) and a no-growth policy
      */
     public SPanel() {
-        this(0, 0, false);
+        this.minimumWidth = 0;
+        this.minimumHeight = 0;
     }
 
     /**
@@ -87,9 +90,10 @@ public class SPanel extends SContainer {
     }
 
     @Override
-    public void draw(SFrameLookAndFeel lookFeel) {
+    public void draw(SFrameLookAndFeel lookFeel, Vector2ic offset) {
         if (getWidth() == 0 || getHeight() == 0) return;
-        lookFeel.drawRectangle(position, dimensions);
-        drawChildren(lookFeel);
+        Vector2i scPos = new Vector2i(position).add(offset);
+        lookFeel.drawRectangle(scPos, dimensions);
+        drawChildren(lookFeel, scPos);
     }
 }

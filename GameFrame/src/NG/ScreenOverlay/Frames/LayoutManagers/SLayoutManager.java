@@ -58,8 +58,8 @@ public interface SLayoutManager {
 
     /**
      * sets the dimensions where the layout is drawn. This does not invalidate the layout.
-     * @param position   the position of the top left corner of the
-     * @param dimensions the width and height of the are to draw
+     * @param position   the position of the top left corner of the field where the objects should be placed
+     * @param dimensions the width and height of the area to draw
      */
     void setDimensions(Vector2ic position, Vector2ic dimensions);
 

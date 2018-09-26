@@ -1,15 +1,21 @@
 package NG.ScreenOverlay.Frames.Components;
 
+import NG.ActionHandling.MouseAnyClickListener;
+import NG.ActionHandling.MouseReleaseListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
+import org.joml.Vector2i;
+import org.joml.Vector2ic;
+
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 
 /**
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SFrameCloseButton extends SClickable {
+public class SCloseButton extends SComponent implements MouseReleaseListener, MouseAnyClickListener {
     private final Runnable action;
     private boolean state = false;
 
-    public SFrameCloseButton(SFrame frame) {
+    public SCloseButton(SFrame frame) {
         this.action = frame::dispose;
     }
 
@@ -34,8 +40,9 @@ public class SFrameCloseButton extends SClickable {
     }
 
     @Override
-    public void draw(SFrameLookAndFeel design) {
-        design.drawButton(position, dimensions, "X", state);
+    public void draw(SFrameLookAndFeel design, Vector2ic offset) {
+        Vector2i scPos = new Vector2i(position).add(offset);
+        design.drawButton(scPos, dimensions, "X", state);
 
 //        try {
 //            design.drawIconButton(position, dimensions, null, state);
@@ -45,13 +52,15 @@ public class SFrameCloseButton extends SClickable {
     }
 
     @Override
-    public void onLeftClick() {
+    public void onClick(int button, int x, int y) {
         state = true;
-        action.run();
     }
 
     @Override
-    public void onRightClick() {
-
+    public void onRelease(int button, int x, int y) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT) {
+            state = false;
+            action.run();
+        }
     }
 }

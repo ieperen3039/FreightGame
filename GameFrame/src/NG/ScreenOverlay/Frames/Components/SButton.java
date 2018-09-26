@@ -1,13 +1,24 @@
 package NG.ScreenOverlay.Frames.Components;
 
+import NG.ActionHandling.MouseAnyClickListener;
+import NG.ActionHandling.MouseReleaseListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
+import NG.Tools.Logger;
+import org.joml.Vector2i;
+import org.joml.Vector2ic;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
 /**
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SButton extends SClickable {
-    private final Runnable leftClickAction;
-    private final Runnable rightClickAction;
+public class SButton extends SComponent implements MouseAnyClickListener, MouseReleaseListener {
+    private Collection<Runnable> leftClickListeners = new ArrayList<>();
+    private Collection<Runnable> rightClickListeners = new ArrayList<>();
     private final int minHeight;
     private final int minWidth;
 
@@ -16,20 +27,24 @@ public class SButton extends SClickable {
     private boolean vtGrow = false;
     private boolean hzGrow = false;
 
+    public SButton(int minWidth, int minHeight, String text) {
+        this.minHeight = minHeight;
+        this.minWidth = minWidth;
+        this.text = text;
+    }
+
     public SButton(String text, Runnable action) {
         this(text, action, 0, 0);
     }
 
-    public SButton(String text, Runnable action, int minHeight, int minWidth) {
-        this(text, action, null, minHeight, minWidth);
+    public SButton(String text, Runnable action, int minWidth, int minHeight) {
+        this(minWidth, minHeight, text);
+        leftClickListeners.add(action);
     }
 
-    public SButton(String text, Runnable onLeftClick, Runnable onRightClick, int minHeight, int minWidth) {
-        leftClickAction = onLeftClick;
-        rightClickAction = onRightClick;
-        this.minHeight = minHeight;
-        this.minWidth = minWidth;
-        this.text = text;
+    public SButton(String text, Runnable onLeftClick, Runnable onRightClick, int minWidth, int minHeight) {
+        this(text, onLeftClick, minWidth, minHeight);
+        rightClickListeners.add(onRightClick);
     }
 
     public void setGrowthPolicy(boolean horizontal, boolean vertical) {
@@ -57,21 +72,48 @@ public class SButton extends SClickable {
         return vtGrow;
     }
 
+    public void addLeftClickListener(Runnable action) {
+        leftClickListeners.add(action);
+    }
+
+    public void addRightClickListeners(Runnable action) {
+        rightClickListeners.add(action);
+    }
+
     @Override
-    public void draw(SFrameLookAndFeel design) {
-        design.drawButton(position, dimensions, text, isPressed);
+    public void draw(SFrameLookAndFeel design, Vector2ic offset) {
+        Vector2i scPos = new Vector2i(position).add(offset);
+        design.drawButton(scPos, dimensions, text, isPressed);
+    }
+
+    @Override
+    public void onClick(int button, int x, int y) {
+        isPressed = true;
+    }
+
+    @Override
+    public void onRelease(int button, int x, int y) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT) {
+            leftClickListeners.forEach(Runnable::run);
+
+        } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+            rightClickListeners.forEach(Runnable::run);
+        } else {
+            Logger.DEBUG.print("button clicked with " + button + " which has no action");
+        }
         isPressed = false;
     }
 
-    @Override
-    public void onLeftClick() {
-        leftClickAction.run();
-        isPressed = true;
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 
     @Override
-    public void onRightClick() {
-        rightClickAction.run();
-        isPressed = true;
+    public String toString() {
+        return this.getClass().getSimpleName() + " (" + getText() + ")";
     }
 }

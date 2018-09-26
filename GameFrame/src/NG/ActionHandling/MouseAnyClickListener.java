@@ -3,7 +3,7 @@ package NG.ActionHandling;
 /**
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
-public interface MouseAnyButtonClickListener {
+public interface MouseAnyClickListener {
     /**
      * whenever the user clicks, this event is fired
      * @param button the button number

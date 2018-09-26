@@ -1,13 +1,13 @@
 package NG.ScreenOverlay.Menu;
 
-import NG.ActionHandling.MouseAnyButtonClickListener;
+import NG.ActionHandling.MouseAnyClickListener;
 import NG.ScreenOverlay.UIElement;
 import org.lwjgl.glfw.GLFW;
 
 /**
  * @author Jorren Hendriks.
  */
-public abstract class MenuClickable extends UIElement implements MouseAnyButtonClickListener {
+public abstract class MenuClickable extends UIElement implements MouseAnyClickListener {
     public MenuClickable(int width, int height) {
         super(width, height);
     }

@@ -1,6 +1,6 @@
 package NG.ScreenOverlay.Menu;
 
-import NG.ActionHandling.MouseAnyButtonClickListener;
+import NG.ActionHandling.MouseAnyClickListener;
 import NG.Engine.Game;
 import NG.Engine.GameAspect;
 import NG.ScreenOverlay.ScreenOverlay;
@@ -15,7 +15,7 @@ import java.util.function.Consumer;
  * @author Geert van Ieperen
  */
 
-public abstract class HudMenu implements Consumer<ScreenOverlay.Painter>, GameAspect, MouseAnyButtonClickListener {
+public abstract class HudMenu implements Consumer<ScreenOverlay.Painter>, GameAspect, MouseAnyClickListener {
     private UIElement[] activeElements;
     private Game game;
 

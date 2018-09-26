@@ -6,7 +6,7 @@ import static org.lwjgl.glfw.GLFW.*;
  * An helper-interface to separate the button clicks into methods
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
-public interface MouseButtonClickListener extends MouseAnyButtonClickListener {
+public interface MouseClickListener extends MouseAnyClickListener {
     @Override
     default void onClick(int button, int x, int y) {
         switch (button) {

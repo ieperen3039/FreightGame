@@ -1,24 +1,31 @@
 package NG.ScreenOverlay.Frames;
 
-import NG.ActionHandling.MouseAnyButtonClickListener;
+import NG.ActionHandling.GLFWListener;
+import NG.ActionHandling.MouseAnyClickListener;
+import NG.ActionHandling.MouseMoveListener;
+import NG.ActionHandling.MouseReleaseListener;
 import NG.Engine.Game;
 import NG.Engine.GameAspect;
+import NG.ScreenOverlay.Frames.Components.SComponent;
 import NG.ScreenOverlay.Frames.Components.SFrame;
 import NG.ScreenOverlay.ScreenOverlay;
 import NG.Tools.Logger;
+import org.joml.Vector2i;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.function.Consumer;
 
 /**
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
-public class SFrameManager implements Consumer<ScreenOverlay.Painter>, GameAspect, MouseAnyButtonClickListener {
+public class SFrameManager implements GameAspect, MouseAnyClickListener, MouseReleaseListener, MouseMoveListener {
     private Game game;
     /** the first element in this list has focus */
     private Deque<SFrame> frames;
+    private int dragButton = 0;
+    private MouseMoveListener dragListener = null;
+    private MouseReleaseListener releaseListener = null;
 
     private SFrameLookAndFeel lookAndFeel;
 
@@ -29,18 +36,20 @@ public class SFrameManager implements Consumer<ScreenOverlay.Painter>, GameAspec
     @Override
     public void init(Game game) {
         this.game = game;
-        game.callbacks().onMouseButtonClick(this);
-        game.painter().addHudItem(this);
+        GLFWListener callbacks = game.callbacks();
+        callbacks.onMouseButtonClick(this);
+        callbacks.onMouseMove(this);
+        callbacks.onMouseRelease(this);
+        game.painter().addHudItem(this::draw);
     }
 
-
-    @Override
-    public void accept(ScreenOverlay.Painter painter) {
+    public void draw(ScreenOverlay.Painter painter) {
+        frames.removeIf(SFrame::isDisposed);
         lookAndFeel.setPainter(painter);
-        Iterator<SFrame> itr = frames.descendingIterator();
 
+        Iterator<SFrame> itr = frames.descendingIterator();
         while (itr.hasNext()) {
-            itr.next().draw(lookAndFeel);
+            itr.next().draw(lookAndFeel, new Vector2i());
         }
     }
 
@@ -71,28 +80,61 @@ public class SFrameManager implements Consumer<ScreenOverlay.Painter>, GameAspec
         frames.addFirst(frame);
     }
 
-    @Override
-    public void cleanup() {
-        game.callbacks().removeListener(this);
-        frames.forEach(SFrame::dispose);
-    }
-
-    @Override
-    public void onClick(int button, int x, int y) {
-        for (SFrame frame : frames) {
-            if (frame.contains(x, y)) {
-                focus(frame);
-                frame.onClick(button, x - frame.getX(), y - frame.getY());
-                return; // only for top-most frame
-            }
-        }
-    }
-
     public void setLookAndFeel(SFrameLookAndFeel lookAndFeel) {
         this.lookAndFeel = lookAndFeel;
     }
 
     public SFrameLookAndFeel getLookAndFeel() {
         return lookAndFeel;
+    }
+
+    @Override
+    public void cleanup() {
+        game.callbacks().removeListener(this);
+        frames.forEach(SFrame::dispose);
+        frames.clear();
+    }
+
+    @Override
+    public void onClick(int button, int x, int y) {
+        if (dragListener != null) return;
+
+        for (SFrame frame : frames) {
+            if (frame.contains(x, y)) {
+                focus(frame);
+                int xr = x - frame.getX();
+                int yr = y - frame.getY();
+                SComponent comp = frame.getComponentAt(xr, yr);
+                Logger.DEBUG.print("Clicked on " + comp);
+
+                if (comp instanceof MouseAnyClickListener) {
+                    MouseAnyClickListener cl = (MouseAnyClickListener) comp;
+                    // by def. of mouseAnyClickListener, give screen coordinates
+                    cl.onClick(button, x, y);
+                }
+                dragListener = (comp instanceof MouseMoveListener) ? (MouseMoveListener) comp : null;
+                releaseListener = (comp instanceof MouseReleaseListener) ? (MouseReleaseListener) comp : null;
+                dragButton = button;
+
+                return; // only for top-most frame
+            }
+        }
+    }
+
+    @Override
+    public void onRelease(int button, int x, int y) {
+        if (button != dragButton) return;
+
+        dragListener = null;
+        if (releaseListener != null) {
+            releaseListener.onRelease(button, x, y);
+            releaseListener = null;
+        }
+    }
+
+    @Override
+    public void mouseMoved(int xDelta, int yDelta) {
+        if (dragListener == null) return;
+        dragListener.mouseMoved(xDelta, yDelta);
     }
 }

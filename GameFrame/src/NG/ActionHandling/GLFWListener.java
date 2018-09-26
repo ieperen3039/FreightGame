@@ -20,17 +20,22 @@ import static org.lwjgl.glfw.GLFW.*;
 public class GLFWListener implements GameAspect {
     private final Collection<KeyPressListener> keyPressListeners;
     private final Collection<KeyReleaseListener> keyReleaseListeners;
-    private final Collection<MouseAnyButtonClickListener> mouseAnyButtonClickListeners;
-    private final Map<Integer, Collection<MouseMoveListener>> mouseDragListeners;
+    private final Collection<MouseAnyClickListener> mouseClickListeners;
+    private final Collection<MouseReleaseListener> mouseReleaseListeners;
     private final Collection<MouseScrollListener> mouseScrollListeners;
+    private final Collection<MouseMoveListener> mouseMotionListeners;
+
     private final Set<Integer> clickedButtons;
+    private final Map<Integer, Collection<MouseMoveListener>> mouseDragListeners;
 
     public GLFWListener() {
         this.keyPressListeners = new ArrayList<>();
         this.keyReleaseListeners = new ArrayList<>();
-        this.mouseAnyButtonClickListeners = new ArrayList<>();
-        this.mouseDragListeners = new HashMap<>();
+        this.mouseClickListeners = new ArrayList<>();
+        this.mouseReleaseListeners = new ArrayList<>();
         this.mouseScrollListeners = new ArrayList<>();
+        this.mouseMotionListeners = new ArrayList<>();
+        this.mouseDragListeners = new HashMap<>();
         this.clickedButtons = new HashSet<>();
     }
 
@@ -61,8 +66,16 @@ public class GLFWListener implements GameAspect {
     /**
      * @param action upon mouse click, receives the {@link org.lwjgl.glfw.GLFW} mouse button that is pressed
      */
-    public void onMouseButtonClick(MouseAnyButtonClickListener action) {
-        mouseAnyButtonClickListeners.add(action);
+    public void onMouseButtonClick(MouseAnyClickListener action) {
+        mouseClickListeners.add(action);
+    }
+
+    public void onMouseRelease(MouseReleaseListener action) {
+        mouseReleaseListeners.add(action);
+    }
+
+    public void onMouseMove(MouseMoveListener listener) {
+        mouseMotionListeners.add(listener);
     }
 
     /**
@@ -91,10 +104,12 @@ public class GLFWListener implements GameAspect {
     public boolean removeListener(Object listener) {
         boolean kp = keyPressListeners.remove(listener);
         boolean kr = keyReleaseListeners.remove(listener);
-        boolean mc = mouseAnyButtonClickListeners.remove(listener);
+        boolean mc = mouseClickListeners.remove(listener);
+        boolean mr = mouseReleaseListeners.remove(listener);
         boolean ms = mouseScrollListeners.remove(listener);
+        boolean mm = mouseMotionListeners.remove(listener);
 
-        return kp || kr || mc || ms;
+        return kp || kr || mc || mr || ms || mm;
     }
 
     /**
@@ -122,7 +137,7 @@ public class GLFWListener implements GameAspect {
     public void cleanup() {
         keyPressListeners.clear();
         keyReleaseListeners.clear();
-        mouseAnyButtonClickListeners.clear();
+        mouseClickListeners.clear();
         mouseDragListeners.clear();
         mouseScrollListeners.clear();
 
@@ -145,18 +160,19 @@ public class GLFWListener implements GameAspect {
     private class MouseButtonPressCallback extends GLFWMouseButtonCallback {
         @Override
         public void invoke(long windowHandle, int button, int action, int mods) {
-            if (action == GLFW_PRESS) {
-                double[] xBuf = new double[1];
-                double[] yBuf = new double[1];
-                glfwGetCursorPos(windowHandle, xBuf, yBuf);
-                int x = (int) xBuf[0];
-                int y = (int) yBuf[0];
+            double[] xBuf = new double[1];
+            double[] yBuf = new double[1];
+            glfwGetCursorPos(windowHandle, xBuf, yBuf);
+            int x = (int) xBuf[0];
+            int y = (int) yBuf[0];
 
+            if (action == GLFW_PRESS) {
                 clickedButtons.add(button);
-                mouseAnyButtonClickListeners.forEach(l -> l.onClick(button, x, y));
+                mouseClickListeners.forEach(l -> l.onClick(button, x, y));
 
             } else if (action == GLFW_RELEASE) {
                 clickedButtons.remove(button);
+                mouseReleaseListeners.forEach(l -> l.onRelease(button, x, y));
             }
         }
     }
@@ -182,6 +198,8 @@ public class GLFWListener implements GameAspect {
 
             int xDelta = x.difference();
             int yDelta = y.difference();
+
+            mouseMotionListeners.forEach(l -> l.mouseMoved(xDelta, yDelta));
 
             for (Integer button : clickedButtons) {
                 Collection<MouseMoveListener> list = mouseDragListeners.get(button);
