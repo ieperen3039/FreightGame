@@ -1,12 +1,13 @@
 package NG.Tracks;
 
+import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.Game;
 import NG.Engine.Version;
-import NG.Mods.TrackMod;
-import NG.Settings.Settings;
-import NG.Tools.Directory;
+import NG.GameState.GameState;
+import NG.Tools.Toolbox;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
+import org.joml.Vector3f;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,13 +17,13 @@ import java.util.List;
  */
 public class BaseTracksMod implements TrackMod {
     private List<TrackType> types;
-    private Game game;
+    private float trackSpacing;
 
     @Override
     public void init(Game game) throws Version.MisMatchException {
         game.getVersionNumber().requireAtLeast(0, 0);
+        trackSpacing = game.settings().TRACK_SPACING;
         types = Collections.singletonList(new RegularTrack());
-        this.game = game;
     }
 
     @Override
@@ -40,6 +41,11 @@ public class BaseTracksMod implements TrackMod {
         return types;
     }
 
+    @Override
+    public Version getVersionNumber() {
+        return new Version(0, 0);
+    }
+
     private class RegularTrack implements TrackType {
         @Override
         public String getTypeName() {
@@ -47,24 +53,40 @@ public class BaseTracksMod implements TrackMod {
         }
 
         @Override
-        public TrackPiece createNew(Vector2fc startCoord, Vector2fc startDirection, Vector2fc endCoord) {
-            if (endCoord.sub(startCoord, new Vector2f()).angle(startDirection) < 0.01f) {
-                return new StraightTrack(game, startCoord, endCoord);
-            } else {
-                return new CircleTrack(game, startCoord, startDirection, endCoord);
-            }
+        public void drawCircle(SGL gl, Vector2fc center, float radius, float startRadian, float endRadian, GameState gameState) {
+            Vector2f coord = new Vector2f();
+            float pieceRad = (trackSpacing / radius);
 
+            for (float p = startRadian; p < endRadian; p += pieceRad) {
+                gl.pushMatrix();
+                {
+                    coord.set((float) Math.sin(p), (float) Math.cos(p)).mul(radius);
+                    coord.add(center);
+
+                    Vector3f position = gameState.getPosition(coord);
+                    gl.translate(position);
+                    Toolbox.drawAxisFrame(gl);
+                }
+                gl.popMatrix();
+            }
         }
 
         @Override
-        public TrackPiece concept(Vector2fc startPosition, Vector2fc startDirection, Vector2fc endPoint) {
-            return createNew(startPosition, startDirection, endPoint);
-        }
-    }
+        public void drawStraight(SGL gl, Vector2fc startCoord, float length, Vector2fc direction, GameState gameState) {
+            Vector2f coord = new Vector2f();
 
-    /** Default main method for Mods. */
-    public static void main(String[] args) {
-        System.out.println("This is a mod for the game " + Settings.GAME_NAME);
-        System.out.println("To use this mod, place this JAR file in folder " + Directory.mods.getFile());
+            for (int l = 0; l < length; l += trackSpacing) {
+                gl.pushMatrix();
+                {
+                    coord.set(direction).mul(l);
+                    coord.add(startCoord);
+
+                    Vector3f position = gameState.getPosition(coord);
+                    gl.translate(position);
+                    Toolbox.drawAxisFrame(gl);
+                }
+                gl.popMatrix();
+            }
+        }
     }
 }

@@ -2,8 +2,6 @@ package NG.Tracks;
 
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.Game;
-import NG.GameState.GameState;
-import NG.Tools.Toolbox;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 
@@ -11,17 +9,19 @@ import org.joml.Vector2fc;
  * @author Geert van Ieperen. Created on 18-9-2018.
  */
 public class CircleTrack implements TrackPiece {
+    private final Game game;
+    private final TrackMod.TrackType type;
 
+    /** middle of the circle describing the track */
     private final Vector2fc center;
     /** polar coordinates of the track piece */
     private final float startRadian;
     private final float endRadian;
     private final float radius;
 
-    private final Game game;
-
-    public CircleTrack(Game game, Vector2fc startPosition, Vector2fc startDirection, Vector2fc endPoint) {
+    public CircleTrack(Game game, Vector2fc startPosition, Vector2fc startDirection, Vector2fc endPoint, TrackMod.TrackType type) {
         this.game = game;
+        this.type = type;
 
         Vector2f startToCenter = new Vector2f(startDirection).perpendicular();
         Vector2f startToEnd = new Vector2f(endPoint).sub(startPosition);
@@ -74,21 +74,7 @@ public class CircleTrack implements TrackPiece {
 
     @Override
     public void draw(SGL gl) {
-        GameState gamestate = game.state();
-        gl.translate(gamestate.getPosition(center));
-
-        Vector2f coord = new Vector2f();
-        float pieceRad = (game.settings().TRACK_SPACING / radius);
-        for (float p = startRadian; p < endRadian; p += pieceRad) {
-            gl.pushMatrix();
-            {
-                coord.set((float) Math.sin(p), (float) Math.cos(p));
-                coord.mul(radius);
-                gl.translate(gamestate.getPosition(coord));
-                Toolbox.drawAxisFrame(gl);
-            }
-            gl.popMatrix();
-        }
+        type.drawCircle(gl, center, radius, startRadian, endRadian, game.state());
     }
 }
 
