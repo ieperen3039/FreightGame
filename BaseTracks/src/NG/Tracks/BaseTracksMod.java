@@ -3,7 +3,7 @@ package NG.Tracks;
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.Game;
 import NG.Engine.Version;
-import NG.GameState.GameState;
+import NG.GameState.GameMap;
 import NG.Tools.Toolbox;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
@@ -53,7 +53,7 @@ public class BaseTracksMod implements TrackMod {
         }
 
         @Override
-        public void drawCircle(SGL gl, Vector2fc center, float radius, float startRadian, float endRadian, GameState gameState) {
+        public void drawCircle(SGL gl, Vector2fc center, float radius, float startRadian, float endRadian, GameMap map) {
             Vector2f coord = new Vector2f();
             float pieceRad = (trackSpacing / radius);
 
@@ -63,7 +63,7 @@ public class BaseTracksMod implements TrackMod {
                     coord.set((float) Math.sin(p), (float) Math.cos(p)).mul(radius);
                     coord.add(center);
 
-                    Vector3f position = gameState.getPosition(coord);
+                    Vector3f position = map.getPosition(coord);
                     gl.translate(position);
                     Toolbox.drawAxisFrame(gl);
                 }
@@ -72,7 +72,7 @@ public class BaseTracksMod implements TrackMod {
         }
 
         @Override
-        public void drawStraight(SGL gl, Vector2fc startCoord, float length, Vector2fc direction, GameState gameState) {
+        public void drawStraight(SGL gl, Vector2fc startCoord, Vector2fc direction, float length, GameMap map) {
             Vector2f coord = new Vector2f();
 
             for (int l = 0; l < length; l += trackSpacing) {
@@ -81,7 +81,7 @@ public class BaseTracksMod implements TrackMod {
                     coord.set(direction).mul(l);
                     coord.add(startCoord);
 
-                    Vector3f position = gameState.getPosition(coord);
+                    Vector3f position = map.getPosition(coord);
                     gl.translate(position);
                     Toolbox.drawAxisFrame(gl);
                 }

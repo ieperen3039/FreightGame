@@ -2,11 +2,11 @@ package NG.Engine;
 
 import NG.ActionHandling.GLFWListener;
 import NG.Camera.Camera;
+import NG.GameState.GameMap;
 import NG.GameState.GameState;
 import NG.Mods.Mod;
 import NG.Rendering.GLFWWindow;
-import NG.ScreenOverlay.Frames.SFrameManager;
-import NG.ScreenOverlay.ScreenOverlay;
+import NG.ScreenOverlay.Frames.GUIManager;
 import NG.Settings.Settings;
 
 import java.util.Collection;
@@ -22,7 +22,7 @@ public interface Game {
 
     GameState state();
 
-    ScreenOverlay painter();
+    GameMap map();
 
     Settings settings();
 
@@ -30,7 +30,7 @@ public interface Game {
 
     GLFWListener callbacks();
 
-    SFrameManager frameManager();
+    GUIManager gui();
 
     Version getVersionNumber();
 

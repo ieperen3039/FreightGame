@@ -5,6 +5,8 @@ import NG.DataStructures.MatrixStack.ShaderUniformGL;
 import NG.Engine.AbstractGameLoop;
 import NG.Engine.Game;
 import NG.Engine.GameAspect;
+import NG.GameState.GameState;
+import NG.ScreenOverlay.ScreenOverlay;
 import NG.Settings.Settings;
 import NG.Shaders.PhongShader;
 import NG.Shaders.ShaderProgram;
@@ -13,11 +15,14 @@ import NG.Tools.Toolbox;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public class RenderLoop extends AbstractGameLoop implements GameAspect {
+    private final ScreenOverlay overlay;
+
     private List<ShaderProgram> shaders;
     private Game game;
 
@@ -27,11 +32,13 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
      */
     public RenderLoop(int targetTps) {
         super("Renderloop", targetTps);
+        overlay = new ScreenOverlay();
     }
 
     public void init(Game game) throws IOException {
         this.game = game;
         int maxPointLights = game.settings().MAX_POINT_LIGHTS;
+        overlay.init(game);
 
         shaders = new ArrayList<>();
         addShader(new PhongShader(maxPointLights));
@@ -54,6 +61,7 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
         game.camera().updatePosition(deltaTime); // real-time deltatime
 
 
+        GameState world = game.state();
         for (ShaderProgram shader : shaders) {
             // shader uniforms
             shader.bind();
@@ -61,11 +69,12 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
 
             // GL object
             SGL gl = new ShaderUniformGL(shader, sett.WINDOW_WIDTH, sett.WINDOW_HEIGHT, game.camera(), true);
-            game.state().draw(gl);
+
+            world.draw(gl);
             shader.unbind();
         }
 
-        game.painter().draw(sett.WINDOW_WIDTH, sett.WINDOW_HEIGHT, 10, 10, 12);
+        overlay.draw(sett.WINDOW_WIDTH, sett.WINDOW_HEIGHT, 10, 10, 12);
 
         // update window
         game.window().update();
@@ -80,4 +89,7 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
         shaders.forEach(ShaderProgram::cleanup);
     }
 
+    public void addHudItem(Consumer<ScreenOverlay.Painter> draw) {
+
+    }
 }

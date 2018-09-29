@@ -106,7 +106,7 @@ public abstract class SContainer extends SComponent {
     }
 
     @Override
-    public void setVisibleFlag(boolean doVisible) {
+    protected void setVisibleFlag(boolean doVisible) {
         super.setVisibleFlag(doVisible);
         if (doVisible) layout.invalidateProperties();
     }

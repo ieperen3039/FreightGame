@@ -74,7 +74,7 @@ public class CircleTrack implements TrackPiece {
 
     @Override
     public void draw(SGL gl) {
-        type.drawCircle(gl, center, radius, startRadian, endRadian, game.state());
+        type.drawCircle(gl, center, radius, startRadian, endRadian, game.map());
     }
 }
 

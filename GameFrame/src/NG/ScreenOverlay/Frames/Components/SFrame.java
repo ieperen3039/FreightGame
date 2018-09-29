@@ -1,7 +1,7 @@
 package NG.ScreenOverlay.Frames.Components;
 
+import NG.ScreenOverlay.Frames.GUIManager;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
-import NG.ScreenOverlay.Frames.SFrameManager;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
@@ -12,7 +12,7 @@ public class SFrame extends SContainer {
     static final int FRAME_TITLE_BAR_SIZE = 50;
     private final String title;
     private boolean minimized;
-    private SFrameManager frameManager;
+    private GUIManager frameManager;
     private boolean isDisposed = false;
     private final SPanel middlePanel;
 
@@ -27,10 +27,10 @@ public class SFrame extends SContainer {
         setVisibleFlag(false);
 
         SPanel upperBar = makeUpperBar(title);
-        add(upperBar, NORTH);
+        super.add(upperBar, NORTH);
 
         middlePanel = new SPanel();
-        add(middlePanel, MIDDLE);
+        super.add(middlePanel, MIDDLE);
 
         setSize(width, height);
     }
@@ -42,10 +42,10 @@ public class SFrame extends SContainer {
     public SFrame(String title) {
         this.title = title;
         STextArea titleBar = new STextArea(title, true);
-        add(titleBar, NORTH);
+        super.add(titleBar, NORTH);
 
         middlePanel = new SPanel();
-        add(middlePanel, MIDDLE);
+        super.add(middlePanel, MIDDLE);
     }
 
     private SPanel makeUpperBar(String frameTitle) {
@@ -137,7 +137,7 @@ public class SFrame extends SContainer {
         setVisibleFlag(false);
     }
 
-    public void setManager(SFrameManager frameManager) {
+    public void setManager(GUIManager frameManager) {
         this.frameManager = frameManager;
     }
 

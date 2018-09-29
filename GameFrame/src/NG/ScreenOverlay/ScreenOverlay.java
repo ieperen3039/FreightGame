@@ -22,7 +22,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static NG.ScreenOverlay.Menu.MenuStyleSettings.*;
 import static org.lwjgl.nanovg.NanoVG.*;
 import static org.lwjgl.nanovg.NanoVGGL3.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -163,9 +162,9 @@ public final class ScreenOverlay implements GameAspect {
         /** maps a position in world-space to a position on the screen */
         private final Function<Vector3f, Vector2f> mapper;
 
-        private Color4f fillColor = MENU_FILL_COLOR;
-        private Color4f strokeColor = MENU_STROKE_COLOR;
-        private int strokeWidth = MENU_STROKE_WIDTH;
+        private Color4f fillColor = Color4f.WHITE;
+        private Color4f strokeColor = Color4f.WHITE;
+        private int strokeWidth = 1;
         private Color4f textColor = Color4f.WHITE;
 
         public final int windowWidth;

@@ -1,7 +1,7 @@
 package NG.Tracks;
 
 import NG.DataStructures.MatrixStack.SGL;
-import NG.GameState.GameState;
+import NG.GameState.GameMap;
 import NG.Mods.Mod;
 import org.joml.Vector2fc;
 
@@ -19,14 +19,33 @@ public interface TrackMod extends Mod {
     List<TrackType> getTypes();
 
     interface TrackType {
-        /**
-         * @return a name that represents the track created by this class's {@link #createNew(Vector2fc, Vector2fc,
-         *         Vector2fc)} method
-         */
+
+        /** @return a name for this track */
         String getTypeName();
 
-        void drawCircle(SGL gl, Vector2fc center, float radius, float startRadian, float endRadian, GameState gameState);
+        /**
+         * draw a partially circular track on the given parameters.
+         * @param gl          the object for drawing
+         * @param center      the center of the circle, given as a (x, y) coordinate
+         * @param radius      the radius of the circle where the track lies on
+         * @param startRadian the angle in radian where the circle part starts
+         * @param endRadian   the angle in radians where the circle part ends. Note that if endRadian is less than
+         *                    startRadian, the track goes clockwise.
+         * @param map         the map that provides information about the terrain, e.g. with {@link
+         *                    GameMap#getHeightAt(Vector2fc)}
+         */
+        void drawCircle(SGL gl, Vector2fc center, float radius, float startRadian, float endRadian, GameMap map);
 
-        void drawStraight(SGL gl, Vector2fc startCoord, float length, Vector2fc direction, GameState gameState);
+        /**
+         * draw a partially circular track on the given parameters.
+         * @param gl         the object for drawing
+         * @param startCoord the coordinate where this track origins from
+         * @param direction  the normalized direction of where the track goes to
+         * @param length     the length of the track, such that (startCoord + (direction * length) == endCoord) where
+         *                   endCoord is the end of this line of tracks
+         * @param map        the map that provides information about the terrain, e.g. with {@link
+         *                   GameMap#getHeightAt(Vector2fc)}
+         */
+        void drawStraight(SGL gl, Vector2fc startCoord, Vector2fc direction, float length, GameMap map);
     }
 }

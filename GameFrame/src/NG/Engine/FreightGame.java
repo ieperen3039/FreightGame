@@ -3,15 +3,14 @@ package NG.Engine;
 import NG.ActionHandling.GLFWListener;
 import NG.Camera.Camera;
 import NG.Camera.PointCenteredCamera;
-import NG.GameState.GameLoop;
-import NG.GameState.GameState;
-import NG.Mods.MapGeneratorMod;
+import NG.GameState.*;
 import NG.Mods.Mod;
 import NG.Rendering.GLFWWindow;
 import NG.Rendering.RenderLoop;
+import NG.ScreenOverlay.Frames.GUIManager;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.Frames.SFrameManager;
-import NG.ScreenOverlay.ScreenOverlay;
+import NG.ScreenOverlay.MainMenu;
 import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
@@ -31,13 +30,16 @@ public class FreightGame implements Game {
     private final GameTimer time;
     private final Camera camera;
     private final GameLoop gameState;
+    private final GameMap gameMap;
     private final RenderLoop renderer;
-    private final ScreenOverlay overlay;
     private final Settings settings;
     private final GLFWWindow window;
     private final GLFWListener inputHandler;
-    private final SFrameManager frameManager;
+    private final GUIManager frameManager;
+
     private List<Mod> mods;
+    private MapGeneratorMod mapGenerator;
+    private MainMenu mainMenu;
 
     public FreightGame() throws IOException {
         Logger.INFO.print("Starting up the game engine...");
@@ -58,8 +60,8 @@ public class FreightGame implements Game {
         camera = new PointCenteredCamera(new Vector3f(20, 20, 20), Vectors.zeroVector());
         window = new GLFWWindow(Settings.GAME_NAME, true);
         renderer = new RenderLoop(settings.TARGET_FPS);
-        overlay = new ScreenOverlay();
         gameState = new GameLoop(Settings.GAME_NAME, settings.TARGET_TPS);
+        gameMap = new HeightMap();
         inputHandler = new GLFWListener();
         frameManager = new SFrameManager();
 
@@ -72,11 +74,15 @@ public class FreightGame implements Game {
         // init all fields
         window.init(this);
         renderer.init(this);
-        overlay.init(this);
         camera.init(this);
         gameState.init(this);
         inputHandler.init(this);
         frameManager.init(this);
+        gameMap.init(this);
+
+        renderer.addHudItem(frameManager::draw);
+        mainMenu = new MainMenu(this, renderer::stopLoop);
+        frameManager.addFrame(mainMenu);
 
         // init mods
         for (Mod mod : mods) {
@@ -88,11 +94,7 @@ public class FreightGame implements Game {
             }
         }
 
-        // check for precense of modules
-        if (!gameState.hasMapGenerator())
-            throw new InvalidNumberOfModulesException("No map generator has been supplied");
-
-        if (frameManager.getLookAndFeel() == null)
+        if (!frameManager.hasLookAndFeel())
             throw new InvalidNumberOfModulesException("No LookAndFeel mod has been supplied");
 
         Logger.INFO.print("Finished initialisation\n");
@@ -106,22 +108,13 @@ public class FreightGame implements Game {
             Logger.DEBUG.print("Installed " + mod.getModName() + " as TrackMod");
 
         } else if (mod instanceof SFrameLookAndFeel) {
-            if (frameManager.getLookAndFeel() != null) {
+            if (frameManager.hasLookAndFeel()) {
                 throw new InvalidNumberOfModulesException(
                         "Tried installing " + mod.getModName() + " while we already have a LookAndFeel Mod");
             }
 
             frameManager.setLookAndFeel((SFrameLookAndFeel) mod);
             Logger.DEBUG.print("Installed " + mod.getModName() + " as LookAndFeel mod");
-
-        } else if (mod instanceof MapGeneratorMod) {
-            if (gameState.hasMapGenerator()) {
-                throw new InvalidNumberOfModulesException(
-                        "Tried installing " + mod.getModName() + " while we already have a Map Generator Mod");
-            }
-
-            gameState.setMapGenerator((MapGeneratorMod) mod);
-            Logger.DEBUG.print("Installed " + mod.getModName() + " as map generator");
 
         }
     }
@@ -131,11 +124,9 @@ public class FreightGame implements Game {
         Logger.INFO.print("Starting game...\n");
 
         // show main menu
+        mainMenu.setVisible(true);
         window.open();
-        time.set(0);
         renderer.run();
-
-        gameState.stopLoop();
 
         cleanup();
     }
@@ -165,8 +156,8 @@ public class FreightGame implements Game {
     }
 
     @Override
-    public ScreenOverlay painter() {
-        return overlay;
+    public GameMap map() {
+        return gameMap;
     }
 
     @Override
@@ -190,7 +181,7 @@ public class FreightGame implements Game {
     }
 
     @Override
-    public SFrameManager frameManager() {
+    public GUIManager gui() {
         return frameManager;
     }
 

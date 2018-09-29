@@ -5,10 +5,8 @@ import NG.ActionHandling.MouseAnyClickListener;
 import NG.ActionHandling.MouseMoveListener;
 import NG.ActionHandling.MouseReleaseListener;
 import NG.Engine.Game;
-import NG.Engine.GameAspect;
 import NG.ScreenOverlay.Frames.Components.SComponent;
 import NG.ScreenOverlay.Frames.Components.SFrame;
-import NG.ScreenOverlay.MainMenu;
 import NG.ScreenOverlay.ScreenOverlay;
 import NG.Tools.Logger;
 import org.joml.Vector2i;
@@ -20,7 +18,7 @@ import java.util.Iterator;
 /**
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
-public class SFrameManager implements GameAspect, MouseAnyClickListener, MouseReleaseListener, MouseMoveListener {
+public class SFrameManager implements GUIManager {
     private Game game;
     /** the first element in this list has focus */
     private Deque<SFrame> frames;
@@ -41,12 +39,9 @@ public class SFrameManager implements GameAspect, MouseAnyClickListener, MouseRe
         callbacks.onMouseButtonClick(this);
         callbacks.onMouseMove(this);
         callbacks.onMouseRelease(this);
-        game.painter().addHudItem(this::draw);
-
-        // at start, always show main menu
-        frames.add(new MainMenu(game));
     }
 
+    @Override
     public void draw(ScreenOverlay.Painter painter) {
         frames.removeIf(SFrame::isDisposed);
         lookAndFeel.setPainter(painter);
@@ -57,6 +52,7 @@ public class SFrameManager implements GameAspect, MouseAnyClickListener, MouseRe
         }
     }
 
+    @Override
     public void addFrame(SFrame frame) {
         int width = game.window().getWidth();
         int height = game.window().getHeight();
@@ -65,6 +61,7 @@ public class SFrameManager implements GameAspect, MouseAnyClickListener, MouseRe
         addFrame(frame, xPos, yPos);
     }
 
+    @Override
     public void addFrame(SFrame frame, int x, int y) {
         boolean success = frames.offerFirst(frame);
         if (!success) {
@@ -77,6 +74,7 @@ public class SFrameManager implements GameAspect, MouseAnyClickListener, MouseRe
         frame.setPosition(x, y);
     }
 
+    @Override
     public void focus(SFrame frame) {
         frames.remove(frame);
         // even if the frame was not opened, show it
@@ -84,12 +82,14 @@ public class SFrameManager implements GameAspect, MouseAnyClickListener, MouseRe
         frames.addFirst(frame);
     }
 
+    @Override
     public void setLookAndFeel(SFrameLookAndFeel lookAndFeel) {
         this.lookAndFeel = lookAndFeel;
     }
 
-    public SFrameLookAndFeel getLookAndFeel() {
-        return lookAndFeel;
+    @Override
+    public boolean hasLookAndFeel() {
+        return lookAndFeel != null;
     }
 
     @Override

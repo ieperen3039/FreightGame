@@ -75,6 +75,6 @@ public class StraightTrack implements TrackPiece {
 
     @Override
     public void draw(SGL gl) {
-        type.drawStraight(gl, startCoord, length, direction, game.state());
+        type.drawStraight(gl, startCoord, direction, length, game.map());
     }
 }
