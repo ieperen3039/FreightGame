@@ -8,6 +8,7 @@ import NG.Engine.Game;
 import NG.Engine.GameAspect;
 import NG.ScreenOverlay.Frames.Components.SComponent;
 import NG.ScreenOverlay.Frames.Components.SFrame;
+import NG.ScreenOverlay.MainMenu;
 import NG.ScreenOverlay.ScreenOverlay;
 import NG.Tools.Logger;
 import org.joml.Vector2i;
@@ -41,6 +42,9 @@ public class SFrameManager implements GameAspect, MouseAnyClickListener, MouseRe
         callbacks.onMouseMove(this);
         callbacks.onMouseRelease(this);
         game.painter().addHudItem(this::draw);
+
+        // at start, always show main menu
+        frames.add(new MainMenu(game));
     }
 
     public void draw(ScreenOverlay.Painter painter) {

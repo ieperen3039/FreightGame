@@ -1,5 +1,6 @@
 import NG.DataStructures.Color4f;
 import NG.Engine.Game;
+import NG.Engine.Version;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.NGFonts;
 import NG.ScreenOverlay.ScreenOverlay;
@@ -30,6 +31,7 @@ public class SimpleLFMod implements SFrameLookAndFeel {
     private static final Color4f PANEL_COLOR = Color4f.WHITE;
     private static final Color4f STROKE_COLOR = Color4f.BLUE;
     private static final Color4f BUTTON_COLOR = Color4f.GREY;
+    private Color4f SELECTION_COLOR = Color4f.TRANSPARENT_GREY;
 
     private ScreenOverlay.Painter hud;
 
@@ -49,7 +51,7 @@ public class SimpleLFMod implements SFrameLookAndFeel {
 
     @Override
     public void drawSelection(Vector2ic pos, Vector2ic dim) {
-        hud.rectangle(pos.x(), pos.y(), dim.x(), dim.y(), Color4f.INVISIBLE, STROKE_COLOR, 1);
+        hud.rectangle(pos.x(), pos.y(), dim.x(), dim.y(), SELECTION_COLOR, Color4f.INVISIBLE, 1);
     }
 
     @Override
@@ -106,5 +108,10 @@ public class SimpleLFMod implements SFrameLookAndFeel {
     public static void main(String[] args) {
         System.out.println("This is a mod for the game " + Settings.GAME_NAME);
         System.out.println("To use this mod, place this JAR file in folder " + Directory.mods.getFile());
+    }
+
+    @Override
+    public Version getVersionNumber() {
+        return new Version(0, 0);
     }
 }

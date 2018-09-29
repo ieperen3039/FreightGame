@@ -8,6 +8,7 @@ import NG.Engine.GameAspect;
 import NG.Settings.Settings;
 import NG.Shaders.PhongShader;
 import NG.Shaders.ShaderProgram;
+import NG.Tools.Toolbox;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,6 +43,8 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
 
     @Override
     protected void update(float deltaTime) {
+        Toolbox.checkGLError();
+
         Settings sett = game.settings();
 
         // current time
@@ -49,6 +52,7 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
 
         // camera
         game.camera().updatePosition(deltaTime); // real-time deltatime
+
 
         for (ShaderProgram shader : shaders) {
             // shader uniforms
@@ -67,7 +71,7 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
         game.window().update();
 
         // loop clean
-
+        Toolbox.checkGLError();
         if (game.window().shouldClose()) stopLoop();
     }
 

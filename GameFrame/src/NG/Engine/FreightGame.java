@@ -7,11 +7,8 @@ import NG.GameState.GameLoop;
 import NG.GameState.GameState;
 import NG.Mods.MapGeneratorMod;
 import NG.Mods.Mod;
-import NG.Mods.TrackMod;
 import NG.Rendering.GLFWWindow;
 import NG.Rendering.RenderLoop;
-import NG.ScreenOverlay.Frames.Components.SFrame;
-import NG.ScreenOverlay.Frames.ExampleSFrame;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.Frames.SFrameManager;
 import NG.ScreenOverlay.ScreenOverlay;
@@ -19,9 +16,12 @@ import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
+import NG.Tracks.TrackMod;
 import org.joml.Vector3f;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -50,7 +50,7 @@ public class FreightGame implements Game {
                 "\n\tMods directory:     " + Directory.mods.getPath()
         );
 
-        // these two are not GameAspects, and thus the init() rule does not apply
+        // these two are not GameAspects, and thus the init() rule does not apply.
         settings = new Settings();
         time = new GameTimer();
 
@@ -68,7 +68,7 @@ public class FreightGame implements Game {
     }
 
     private void init() throws Exception {
-        Logger.DEBUG.print("Initializing fields...");
+        Logger.DEBUG.print("Initializing...");
         // init all fields
         window.init(this);
         renderer.init(this);
@@ -87,7 +87,13 @@ public class FreightGame implements Game {
                 Logger.ERROR.print("Error while loading " + mod.getModName(), ex);
             }
         }
-//        gameState.generateMap();
+
+        // check for precense of modules
+        if (!gameState.hasMapGenerator())
+            throw new InvalidNumberOfModulesException("No map generator has been supplied");
+
+        if (frameManager.getLookAndFeel() == null)
+            throw new InvalidNumberOfModulesException("No LookAndFeel mod has been supplied");
 
         Logger.INFO.print("Finished initialisation\n");
     }
@@ -115,7 +121,7 @@ public class FreightGame implements Game {
             }
 
             gameState.setMapGenerator((MapGeneratorMod) mod);
-            Logger.DEBUG.print("Installed " + mod.getModName() + " as Map Generator");
+            Logger.DEBUG.print("Installed " + mod.getModName() + " as map generator");
 
         }
     }
@@ -124,11 +130,7 @@ public class FreightGame implements Game {
         init();
         Logger.INFO.print("Starting game...\n");
 
-        SFrame frame = ExampleSFrame.get();
-        frameManager.addFrame(frame);
-        frame.setVisible(true);
-
-        gameState.start();
+        // show main menu
         window.open();
         time.set(0);
         renderer.run();
@@ -193,8 +195,22 @@ public class FreightGame implements Game {
     }
 
     @Override
+    public Collection<Mod> modList() {
+        return Collections.unmodifiableList(mods);
+    }
+
     public void doAfterGameLoop(Runnable action) {
         gameState.defer(action);
+    }
+
+    @Override
+    public Mod getModByName(String name) {
+        for (Mod mod : mods) {
+            if (mod.getModName().equals(name)) {
+                return mod;
+            }
+        }
+        return null;
     }
 
     private class InvalidNumberOfModulesException extends Exception {

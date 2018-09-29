@@ -6,46 +6,51 @@ import NG.Engine.Game;
 import NG.Entities.Entity;
 import NG.Entities.MovingEntity;
 import NG.Mods.MapGeneratorMod;
+import NG.ScreenOverlay.Frames.Components.SFiller;
+import NG.ScreenOverlay.Frames.Components.SFrame;
+import NG.ScreenOverlay.Frames.Components.SProgressBar;
 import NG.Tools.Toolbox;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
+import static NG.ScreenOverlay.Frames.Components.SContainer.*;
+
 /**
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
 public class GameLoop extends AbstractGameLoop implements GameState {
-    public static final float WORLD_SECTION_SIZE = 16f;
     private final List<Entity> dynamicEntities;
-    private List<Entity> worldObjects;
     private MapGeneratorMod mapGenerator;
     private Deque<Runnable> postUpdateActionQueue;
     private int mapGeneratorSeed;
+    private Game game;
 
     public GameLoop(String gameName, int targetTps) {
         super("Gameloop " + gameName, targetTps);
         this.dynamicEntities = new ArrayList<>();
-        this.worldObjects = new ArrayList<>();
         postUpdateActionQueue = new ConcurrentLinkedDeque<>();
     }
 
     @Override
     public void init(Game game) {
+        this.game = game;
     }
 
     /**
-     * Adds an entity to the gameloop in a synchronized fashion. Thanks to the reentrant mechanism, this may also be
-     * executed by a deferred action.
+     * Adds an entity to the gameloop in a synchronized fashion.
      * @param entity the new entity, with only its constructor called
      * @see #defer(Runnable)
      */
     @Override
     public void addEntity(MovingEntity entity) {
-        // #synchronisation
+        // Thanks to the reentrant mechanism, this may also be executed by a deferred action.
         defer(() -> dynamicEntities.add(entity));
     }
 
@@ -55,6 +60,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     public void update(float deltaTime) {
         runPostUpdateActions();
 
+        mapGenerator.getWorldEntities().forEach(Entity::update);
         dynamicEntities.forEach(Entity::update);
 
         runPostUpdateActions();
@@ -63,7 +69,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     @Override
     public synchronized void draw(SGL gl) {
         Toolbox.drawAxisFrame(gl);
-        worldObjects.forEach(entity -> entity.draw(gl));
+        mapGenerator.getWorldEntities().forEach(entity -> entity.draw(gl));
         dynamicEntities.forEach(entity -> entity.draw(gl));
     }
 
@@ -97,7 +103,17 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         if (!hasMapGenerator()) throw new IllegalStateException("No map generator has been loaded");
 
         mapGeneratorSeed = seed;
-        new Thread(() -> mapGenerator.generateNew(seed), "Map generator thread").start();
+
+        SFrame frame = new SFrame("Generating map...", 500, 200);
+        frame.add(new SFiller(), NORTHEAST);
+        frame.add(new SProgressBar(400, 50, mapGenerator::getProgress), MIDDLE);
+        frame.add(new SFiller(), SOUTHWEST);
+        game.frameManager().addFrame(frame);
+
+        new Thread(() -> {
+            mapGenerator.generateNew(seed, 2, 2);
+            frame.dispose();
+        }, "Map generator thread").start();
     }
 
     public synchronized void defer(Runnable action) {
@@ -114,10 +130,20 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     @Override
     public void cleanup() {
         dynamicEntities.clear();
-        worldObjects.clear();
+        mapGenerator.cleanup();
     }
 
     public int getMapSeed() {
         return mapGeneratorSeed;
+    }
+
+    @Override
+    public void writeToFile(DataOutput out) {
+
+    }
+
+    @Override
+    public void readFromFile(DataInput in) {
+
     }
 }

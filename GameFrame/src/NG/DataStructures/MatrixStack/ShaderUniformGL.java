@@ -31,11 +31,11 @@ public class ShaderUniformGL implements SGL {
     private final boolean isometric;
 
     /**
-     * @param shader
-     * @param windowWidth
-     * @param windowHeight
-     * @param viewpoint
-     * @param isometric
+     * @param shader the shader to use for rendering
+     * @param windowWidth the width of the viewport in pixels
+     * @param windowHeight the height of the viewport in pixels
+     * @param viewpoint the camera that defines eye position, focus and up vector
+     * @param isometric when true, no perspective transformation is used. This results in a retro tycoon style
      */
     public ShaderUniformGL(ShaderProgram shader, int windowWidth, int windowHeight, Camera viewpoint, boolean isometric) {
         this.isometric = isometric;
@@ -84,7 +84,7 @@ public class ShaderUniformGL implements SGL {
     }
 
     @Override
-    public void draw(Renderable object) {
+    public void render(Mesh object) {
         shader.setProjectionMatrix(viewProjectionMatrix);
         shader.setModelMatrix(modelMatrix);
         modelMatrix.normal(normalMatrix);

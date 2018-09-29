@@ -18,7 +18,7 @@ import java.util.List;
 public class ShapeParameters {
     public List<Vector3f> vertices;
     public List<Vector3f> normals;
-    public List<Mesh.Face> faces;
+    public List<FlatMesh.Face> faces;
     public final String name;
 
     /**
@@ -92,7 +92,7 @@ public class ShapeParameters {
     /**
      * for storage of vertex-indices face == plane
      */
-    private static Mesh.Face makeFace(String... tokens) {
+    private static FlatMesh.Face makeFace(String... tokens) {
         int nOfTokens = tokens.length - 1;
         int[] vert = new int[nOfTokens];
         int[] norm = new int[nOfTokens];
@@ -102,7 +102,7 @@ public class ShapeParameters {
             norm[i] = c.right;
         }
 
-        return new Mesh.Face(vert, norm);
+        return new FlatMesh.Face(vert, norm);
     }
 
     /**

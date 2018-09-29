@@ -111,7 +111,8 @@ public class JarModReader {
             }
         }
 
-        Logger.DEBUG.print(list.size() + " mods found in " + jarFile.getName());
+        int nOfMods = list.size();
+        Logger.DEBUG.printf("%d %s found in %s", nOfMods, (nOfMods == 1) ? "mod" : "mods", jarFile.getName());
         return list;
     }
 

@@ -53,5 +53,4 @@ public interface SFrameLookAndFeel extends Mod {
      * @param dim dimensions of the selection
      */
     void drawSelection(Vector2ic pos, Vector2ic dim);
-
 }

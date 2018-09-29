@@ -3,10 +3,13 @@ package NG.Engine;
 import NG.ActionHandling.GLFWListener;
 import NG.Camera.Camera;
 import NG.GameState.GameState;
+import NG.Mods.Mod;
 import NG.Rendering.GLFWWindow;
 import NG.ScreenOverlay.Frames.SFrameManager;
 import NG.ScreenOverlay.ScreenOverlay;
 import NG.Settings.Settings;
+
+import java.util.Collection;
 
 /**
  *
@@ -27,13 +30,11 @@ public interface Game {
 
     GLFWListener callbacks();
 
-    Version getVersionNumber();
-
     SFrameManager frameManager();
 
-    /**
-     * action is executed between two invocations of {@link AbstractGameLoop#update(float)} of the game loop.
-     * @param action an action that would otherwise interfere with the gameloop.
-     */
-    void doAfterGameLoop(Runnable action);
+    Version getVersionNumber();
+
+    Collection<Mod> modList();
+
+    Mod getModByName(String name);
 }

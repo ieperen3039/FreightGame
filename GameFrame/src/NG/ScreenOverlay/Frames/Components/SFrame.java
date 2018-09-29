@@ -14,7 +14,14 @@ public class SFrame extends SContainer {
     private boolean minimized;
     private SFrameManager frameManager;
     private boolean isDisposed = false;
+    private final SPanel middlePanel;
 
+    /**
+     * creates a new SFrame
+     * @param title
+     * @param width
+     * @param height
+     */
     public SFrame(String title, int width, int height) {
         this.title = title;
         setVisibleFlag(false);
@@ -22,10 +29,23 @@ public class SFrame extends SContainer {
         SPanel upperBar = makeUpperBar(title);
         add(upperBar, NORTH);
 
-        SPanel middle = new SPanel();
-        add(middle, MIDDLE);
+        middlePanel = new SPanel();
+        add(middlePanel, MIDDLE);
 
         setSize(width, height);
+    }
+
+    /**
+     * creates the main menu panel, which has a fixed size, does not have panel manipulation and
+     * @param title
+     */
+    public SFrame(String title) {
+        this.title = title;
+        STextArea titleBar = new STextArea(title, true);
+        add(titleBar, NORTH);
+
+        middlePanel = new SPanel();
+        add(middlePanel, MIDDLE);
     }
 
     private SPanel makeUpperBar(String frameTitle) {
@@ -43,7 +63,7 @@ public class SFrame extends SContainer {
 
     @Override
     public void add(SComponent comp, Object prop) {
-        super.add(comp, prop);
+        middlePanel.add(comp, prop);
     }
 
     /**

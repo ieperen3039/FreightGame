@@ -1,6 +1,7 @@
 package NG.GameState;
 
 import NG.DataStructures.MatrixStack.SGL;
+import NG.DataStructures.Storable;
 import NG.Engine.FreightGame;
 import NG.Engine.GameAspect;
 import NG.Entities.MovingEntity;
@@ -10,9 +11,9 @@ import org.joml.Vector3f;
 /**
  * @author Geert van Ieperen. Created on 21-9-2018.
  */
-public interface GameState extends GameAspect {
+public interface GameState extends GameAspect, Storable {
     /**
-     * adds an entity to the game on a thread-safe way.
+     * adds an entity to the game in a thread-safe way.
      * @param entity the new entity, with only its constructor called
      */
     void addEntity(MovingEntity entity);

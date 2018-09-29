@@ -15,6 +15,10 @@ public class SFiller extends SComponent {
         this.minHeight = minHeight;
     }
 
+    public SFiller() {
+        this(0, 0);
+    }
+
     @Override
     public int minWidth() {
         return minWidth;
@@ -37,6 +41,5 @@ public class SFiller extends SComponent {
 
     @Override
     public void draw(SFrameLookAndFeel design, Vector2ic offset) {
-
     }
 }

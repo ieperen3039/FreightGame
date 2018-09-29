@@ -11,7 +11,7 @@ import org.joml.Vector3fc;
  */
 public interface SGL extends MatrixStack {
 
-    void draw(Renderable object);
+    void render(Mesh object);
 
     void setLight(Vector3fc pos, Color4f lightColor);
 

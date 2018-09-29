@@ -1,15 +1,28 @@
 package NG.Engine;
 
+import NG.DataStructures.Storable;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 /**
  * @author Geert van Ieperen. Created on 19-9-2018.
  */
-public class Version implements Comparable<Version> {
+public class Version implements Comparable<Version>, Storable {
     private final int major;
     private final int minor;
 
     public Version(int major, int minor) {
         this.major = major;
         this.minor = minor;
+    }
+
+    public static Version getFromInputStream(DataInput in) throws IOException {
+        if (in.readChar() != 'v')
+            throw new IOException("Wrong data, expected a version number");
+
+        return new Version(in.readInt(), in.readInt());
     }
 
     public int major() {
@@ -41,6 +54,21 @@ public class Version implements Comparable<Version> {
     @Override
     public String toString() {
         return major + "." + minor;
+    }
+
+    @Override
+    public void writeToFile(DataOutput out) throws IOException {
+        out.writeChar('v');
+        out.writeInt(major);
+        out.writeInt(minor);
+    }
+
+    @Override
+    public void readFromFile(DataInput in) throws IOException {
+        if (in.readChar() != 'v')
+            throw new IOException("Wrong data, expected a version number");
+
+        in.skipBytes(2 * Integer.BYTES);
     }
 
     public static class MisMatchException extends Exception {

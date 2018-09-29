@@ -30,7 +30,7 @@ public final class Toolbox {
     public static final double PHI = 1.6180339887498948;
 
     private static final float ROUNDINGERROR = 1E-6F;
-    public static final float CURSOR_WIDTH = 0.05f;
+    public static final float CURSOR_SIZE = 0.05f;
 
     /**
      * Draws the x-axis (red), y-axis (green), z-axis (blue), and origin (yellow).
@@ -46,16 +46,16 @@ public final class Toolbox {
         gl.pushMatrix();
         {
             gl.setMaterial(mat, Color4f.BLUE);
-            gl.draw(BasicShapes.ARROW);
+            gl.render(BasicShapes.ARROW);
             gl.rotate((float) Math.toRadians(90), 0f, 1f, 0f);
             gl.setMaterial(mat, Color4f.RED);
-            gl.draw(BasicShapes.ARROW);
+            gl.render(BasicShapes.ARROW);
             gl.rotate((float) Math.toRadians(-90), 1f, 0f, 0f);
             gl.setMaterial(mat, Color4f.GREEN);
-            gl.draw(BasicShapes.ARROW);
+            gl.render(BasicShapes.ARROW);
             gl.scale(0.2f);
             gl.setMaterial(mat, Color4f.WHITE);
-            gl.draw(BasicShapes.CUBE);
+            gl.render(BasicShapes.CUBE);
         }
         gl.popMatrix();
     }
@@ -66,24 +66,24 @@ public final class Toolbox {
         gl.setMaterial(mat, Color4f.BLUE);
         gl.pushMatrix();
         {
-            gl.scale(1, CURSOR_WIDTH, CURSOR_WIDTH);
-            gl.draw(BasicShapes.CUBE);
+            gl.scale(1, CURSOR_SIZE, CURSOR_SIZE);
+            gl.render(BasicShapes.CUBE);
         }
         gl.popMatrix();
 
         gl.setMaterial(mat, Color4f.RED);
         gl.pushMatrix();
         {
-            gl.scale(CURSOR_WIDTH, 1, CURSOR_WIDTH);
-            gl.draw(BasicShapes.CUBE);
+            gl.scale(CURSOR_SIZE, 1, CURSOR_SIZE);
+            gl.render(BasicShapes.CUBE);
         }
         gl.popMatrix();
 
         gl.setMaterial(mat, Color4f.GREEN);
         gl.pushMatrix();
         {
-            gl.scale(CURSOR_WIDTH, CURSOR_WIDTH, 1);
-            gl.draw(BasicShapes.CUBE);
+            gl.scale(CURSOR_SIZE, CURSOR_SIZE, 1);
+            gl.render(BasicShapes.CUBE);
         }
         gl.popMatrix();
     }
@@ -136,7 +136,7 @@ public final class Toolbox {
     }
 
     /**
-     * call System.exit and tells who did it, unless DEBUG is false
+     * call System.exit and tells who did it
      */
     public static void exitJava() {
         try {
@@ -155,10 +155,10 @@ public final class Toolbox {
     }
 
     /**
-     * performs an incremental insertion-sort on (preferably nearly-sorted) the given array
+     * performs an incremental insertion-sort on (preferably nearly-sorted) the given array.
+     * modifies items
      * @param items the array to sort
      * @param map   maps a moving source to the value to be sorted upon
-     * @modifies items
      */
     public static <Type> void insertionSort(Type[] items, Function<Type, Float> map) {
         // iterate incrementally over the array
@@ -190,9 +190,9 @@ public final class Toolbox {
         return val1 + ((val2 - val1) * random.nextFloat());
     }
 
-    /** transforms a double to an int, by drawing a random variable for the remainder */
+    /** transforms a floating point value to an integer value, by drawing a random variable for the remainder */
     public static int randomToInt(float value) {
-        return (int) (value + random.nextFloat());
+        return random.nextBoolean() ? (int) value : (int) value + 1;
     }
 
     public static float instantPreserveFraction(float rotationPreserveFactor, float deltaTime) {
@@ -357,5 +357,16 @@ public final class Toolbox {
 
         buffer.flip();
         return buffer;
+    }
+
+    /**
+     * @return the greatest common integer diviser of a and b.
+     */
+    public static int gcd(int a, int b) {
+        return b == 0 ? a : gcd(b, a % b);
+    }
+
+    public static float interpolate(float a, float b, float fraction) {
+        return ((b - a) * fraction) + a;
     }
 }
