@@ -162,8 +162,8 @@ public final class ScreenOverlay implements GameAspect {
         /** maps a position in world-space to a position on the screen */
         private final Function<Vector3f, Vector2f> mapper;
 
-        private Color4f fillColor = Color4f.WHITE;
-        private Color4f strokeColor = Color4f.WHITE;
+        private Color4f fillColor;
+        private Color4f strokeColor;
         private int strokeWidth = 1;
         private Color4f textColor = Color4f.WHITE;
 
@@ -202,7 +202,7 @@ public final class ScreenOverlay implements GameAspect {
          * @param alpha The alpha component.
          * @return an instance of NVGColor.
          */
-        private NVGColor rgba(float red, float green, float blue, float alpha) {
+        private NVGColor toBuffer(float red, float green, float blue, float alpha) {
             nvgColorBuffer.r(red);
             nvgColorBuffer.g(green);
             nvgColorBuffer.b(blue);
@@ -211,18 +211,18 @@ public final class ScreenOverlay implements GameAspect {
             return nvgColorBuffer;
         }
 
-        /** @see #rgba(float, float, float, float) */
-        private NVGColor rgba(Color4f color) {
-            return rgba(color.red, color.green, color.blue, color.alpha);
+        /** @see #toBuffer(float, float, float, float) */
+        private NVGColor toBuffer(Color4f color) {
+            return toBuffer(color.red, color.green, color.blue, color.alpha);
         }
 
         /**
          * sets the basic fill color of this painter to the given color
-         * @param fillColor a color, where the alpha value gives the opacity of the object
+         * @param color a color, where the alpha value gives the opacity of the object
          */
-        public void setFillColor(Color4f fillColor) {
-            this.fillColor = fillColor;
-            nvgFillColor(vg, rgba(fillColor));
+        public void setFillColor(Color4f color) {
+            this.fillColor = color;
+            nvgFillColor(vg, toBuffer(color));
         }
 
         /**
@@ -232,10 +232,10 @@ public final class ScreenOverlay implements GameAspect {
          * @param width the width of the stroke in pixels
          */
         public void setStroke(Color4f color, int width) {
-            this.strokeColor = color;
             this.strokeWidth = width;
+            this.strokeColor = color;
             nvgStrokeWidth(vg, width);
-            nvgStrokeColor(vg, rgba(color));
+            nvgStrokeColor(vg, toBuffer(color));
         }
 
         /**
@@ -265,16 +265,21 @@ public final class ScreenOverlay implements GameAspect {
          * @param strokeWidth the width of the line around this rectangle
          */
         public void rectangle(int x, int y, int width, int height, Color4f fillColor, Color4f strokeColor, int strokeWidth) {
-            setFillColor(fillColor);
-            setStroke(strokeColor, strokeWidth);
+            nvgFillColor(vg, toBuffer(fillColor));
+            nvgStrokeColor(vg, toBuffer(strokeColor));
+            nvgStrokeWidth(vg, strokeWidth);
             rectangle(x, y, width, height);
-            resetColors();
+            restoreColors();
         }
 
-        /** resets the colors to the basic colors */
-        private void resetColors() {
-            setFillColor(fillColor);
-            setStroke(strokeColor, strokeWidth);
+        /**
+         * resets the colors to the colors given using {@link #setFillColor(Color4f)} and {@link #setStroke(Color4f,
+         * int)}
+         */
+        private void restoreColors() {
+            nvgFillColor(vg, toBuffer(fillColor));
+            nvgStrokeWidth(vg, strokeWidth);
+            nvgStrokeColor(vg, toBuffer(strokeColor));
         }
 
         /**
@@ -323,10 +328,11 @@ public final class ScreenOverlay implements GameAspect {
          * @param strokeWidth the width of the line around this rectangle
          */
         public void roundedRectangle(int x, int y, int width, int height, int indent, Color4f fillColor, Color4f strokeColor, int strokeWidth) {
-            setFillColor(fillColor);
-            setStroke(strokeColor, strokeWidth);
+            nvgFillColor(vg, toBuffer(fillColor));
+            nvgStrokeColor(vg, toBuffer(strokeColor));
+            nvgStrokeWidth(vg, strokeWidth);
             roundedRectangle(x, y, width, height, indent);
-            resetColors();
+            restoreColors();
         }
 
         public void circle(int x, int y, int radius) {
@@ -338,10 +344,11 @@ public final class ScreenOverlay implements GameAspect {
         }
 
         public void polygon(Color4f fillColor, Color4f strokeColor, int strokeWidth, Vector2i... points) {
-            setFillColor(fillColor);
-            setStroke(strokeColor, strokeWidth);
+            nvgFillColor(vg, toBuffer(fillColor));
+            nvgStrokeColor(vg, toBuffer(strokeColor));
+            nvgStrokeWidth(vg, strokeWidth);
             polygon(points);
-            resetColors();
+            restoreColors();
         }
 
         public void polygon(Vector2i... points) {
@@ -357,11 +364,12 @@ public final class ScreenOverlay implements GameAspect {
         }
 
         /**
-         * draw a line along the coordinates, when supplied in (x, y) pairs
+         * draw a line along the given coordinates
          * @param points (x, y) pairs of screen coordinates
          */
         public void line(int strokeWidth, Color4f strokeColor, Vector2i... points) {
-            setStroke(strokeColor, strokeWidth);
+            nvgStrokeColor(vg, toBuffer(strokeColor));
+            nvgStrokeWidth(vg, strokeWidth);
             nvgBeginPath(vg);
             nvgMoveTo(vg, points[0].x, points[0].y);
 
@@ -370,19 +378,22 @@ public final class ScreenOverlay implements GameAspect {
             }
 
             nvgStroke(vg);
-            resetColors();
+            restoreColors();
         }
 
-        // non-shape defining functions
+        // non-shape functions
 
         public void text(int x, int y, float size, NGFonts font, int align, Color4f color, String text) {
             nvgFontSize(vg, size);
             nvgFontFace(vg, font.name);
             nvgTextAlign(vg, align);
-            nvgFillColor(vg, rgba(color));
+            nvgFillColor(vg, toBuffer(color));
             nvgText(vg, x, y, text);
+
+            nvgFillColor(vg, toBuffer(fillColor));
         }
 
+        /** for debugging purposes. Prints the given text in the upper left corner of the screen */
         public void printRoll(String text) {
             int y = yPrintRoll + ((printRollSize + 5) * printRollEntry);
 

@@ -108,10 +108,7 @@ public abstract class SContainer extends SComponent {
     @Override
     protected void setVisibleFlag(boolean doVisible) {
         super.setVisibleFlag(doVisible);
-        if (doVisible) {
-            layout.invalidateProperties();
-            layout.placeComponents();
-        }
+        if (doVisible) invalidateLayout();
     }
 
     @Override
@@ -126,15 +123,14 @@ public abstract class SContainer extends SComponent {
         invalidateDimensions();
     }
 
+    protected void invalidateLayout() {
+        layout.invalidateProperties();
+        invalidateDimensions();
+    }
+
     protected void invalidateDimensions() {
         setLayoutDimensions();
         if (isVisible()) layout.placeComponents();
-    }
-
-    protected void invalidateLayout() {
-        layout.invalidateProperties();
-        setLayoutDimensions();
-        layout.placeComponents();
     }
 
     private void setLayoutDimensions() {

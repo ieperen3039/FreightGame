@@ -70,7 +70,7 @@ public class SFrame extends SComponent {
      */
     public void setMainPanel(SContainer comp) {
         middlePanel = comp;
-        middlePanel.setPosition(0, FRAME_TITLE_BAR_SIZE);
+        middlePanel.setPosition(0, upperBar.getHeight());
     }
 
     /**
@@ -199,13 +199,13 @@ public class SFrame extends SComponent {
 
     private void invalidateDimensions() {
         upperBar.setSize(getWidth(), FRAME_TITLE_BAR_SIZE);
-        middlePanel.setSize(getWidth(), getHeight() - FRAME_TITLE_BAR_SIZE);
+        middlePanel.setSize(getWidth(), getHeight() - upperBar.getHeight());
         middlePanel.invalidateDimensions();
     }
 
     public void invalidateLayout() {
         upperBar.setSize(getWidth(), FRAME_TITLE_BAR_SIZE);
-        middlePanel.setSize(getWidth(), getHeight() - FRAME_TITLE_BAR_SIZE);
+        middlePanel.setSize(getWidth(), getHeight() - upperBar.getHeight());
         middlePanel.invalidateLayout();
     }
 

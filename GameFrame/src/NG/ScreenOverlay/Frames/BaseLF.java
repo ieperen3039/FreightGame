@@ -68,9 +68,8 @@ public class BaseLF implements SFrameLookAndFeel {
     @Override
     public void drawButton(Vector2ic pos, Vector2ic dim, String text, boolean state) {
         Color4f color = BUTTON_COLOR;
-        if (state) {
-            color = color.darken(0.5f);
-        }
+        if (state) color = color.darken(0.5f);
+
         hud.roundedRectangle(pos.x(), pos.y(), dim.x(), dim.y(), BUTTON_INDENT, color, STROKE_COLOR, STROKE_WIDTH);
         drawText(pos, dim, text, NGFonts.TextType.ACCENT);
     }
@@ -78,9 +77,9 @@ public class BaseLF implements SFrameLookAndFeel {
     @Override
     public void drawIconButton(Vector2ic pos, Vector2ic dim, Path icon, boolean state) throws IOException {
         Color4f buttonColor = Color4f.WHITE;
+        if (state) buttonColor = buttonColor.darken(0.5f);
         int iconDisplace = 10;
 
-        if (state) buttonColor = buttonColor.darken(0.5f);
         hud.roundedRectangle(pos.x(), pos.y(), dim.x(), dim.y(), BUTTON_INDENT, buttonColor, STROKE_COLOR, STROKE_WIDTH);
         Vector2i iconSize = new Vector2i(dim).sub(iconDisplace, iconDisplace);
         Vector2i iconPos = new Vector2i(pos).add(iconDisplace / 2, iconDisplace / 2);

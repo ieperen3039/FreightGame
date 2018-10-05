@@ -12,11 +12,11 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
 public class SCloseButton extends SComponent implements MouseReleaseListener, MouseAnyClickListener {
-    private final Runnable action;
+    private final SFrame frame;
     private boolean state = false;
 
     public SCloseButton(SFrame frame) {
-        this.action = frame::dispose;
+        this.frame = frame;
     }
 
     @Override
@@ -53,14 +53,16 @@ public class SCloseButton extends SComponent implements MouseReleaseListener, Mo
 
     @Override
     public void onClick(int button, int x, int y) {
-        state = true;
+        if (button == GLFW_MOUSE_BUTTON_LEFT) state = true;
     }
 
     @Override
     public void onRelease(int button, int x, int y) {
-        if (button == GLFW_MOUSE_BUTTON_LEFT) {
-            state = false;
-            action.run();
-        }
+        if (button == GLFW_MOUSE_BUTTON_LEFT) frame.dispose();
+    }
+
+    @Override
+    public String toString() {
+        return "SCloseButton";
     }
 }
