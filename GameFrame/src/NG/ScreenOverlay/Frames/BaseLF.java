@@ -1,11 +1,10 @@
+package NG.ScreenOverlay.Frames;
+
 import NG.DataStructures.Color4f;
 import NG.Engine.Game;
 import NG.Engine.Version;
-import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.NGFonts;
 import NG.ScreenOverlay.ScreenOverlay;
-import NG.Settings.Settings;
-import NG.Tools.Directory;
 import NG.Tools.Logger;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
@@ -20,7 +19,7 @@ import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_MIDDLE;
 /**
  * @author Geert van Ieperen. Created on 21-9-2018.
  */
-public class SimpleLFMod implements SFrameLookAndFeel {
+public class BaseLF implements SFrameLookAndFeel {
     private static final int INDENT = 5;
     private static final int BUTTON_INDENT = 8;
     private static final int STROKE_WIDTH = 2;
@@ -37,10 +36,9 @@ public class SimpleLFMod implements SFrameLookAndFeel {
 
     @Override
     public void init(Game game) {
-        if (!game.getVersionNumber().isLessThan(1, 0))
+        if (!game.getVersionNumber().isLessThan(2, 0))
             Logger.ASSERT.print("SLF is ugly. please install something better");
     }
-
 
     @Override
     public void setPainter(ScreenOverlay.Painter painter) {
@@ -61,7 +59,7 @@ public class SimpleLFMod implements SFrameLookAndFeel {
         int width = dim.x();
         int height = dim.y();
 
-        hud.text(x + (width / 2), y + (height / 2) - (TEXT_SIZE_LARGE / 2),
+        hud.text(x + (width / 2), y + (height / 2),
                 TEXT_SIZE_LARGE, ORBITRON_MEDIUM, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, TEXT_COLOR,
                 text
         );
@@ -102,12 +100,6 @@ public class SimpleLFMod implements SFrameLookAndFeel {
     @Override
     public String getModName() {
         return "SLF";
-    }
-
-    /** Default main method for Mods. */
-    public static void main(String[] args) {
-        System.out.println("This is a mod for the game " + Settings.GAME_NAME);
-        System.out.println("To use this mod, place this JAR file in folder " + Directory.mods.getFile());
     }
 
     @Override

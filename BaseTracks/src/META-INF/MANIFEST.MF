@@ -1,4 +1,0 @@
-Manifest-Version: 1.0
-Class-Path: ../lib/joml-1.9.11.jar
-Main-Class: NG.Tracks.BaseTracksMod
-

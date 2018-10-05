@@ -6,6 +6,7 @@ import NG.Engine.Game;
 import NG.Rendering.Shapes.FlatMesh;
 import NG.ScreenOverlay.Frames.Components.SFiller;
 import NG.ScreenOverlay.Frames.Components.SFrame;
+import NG.ScreenOverlay.Frames.Components.SPanel;
 import NG.ScreenOverlay.Frames.Components.SProgressBar;
 import NG.Tools.Toolbox;
 import org.joml.Vector2fc;
@@ -39,9 +40,11 @@ public class HeightMap implements GameMap {
     @Override
     public void generateNew(MapGeneratorMod mapGenerator) {
         SFrame frame = new SFrame("Generating map...", 500, 200);
-        frame.add(new SFiller(), NORTHEAST);
-        frame.add(new SProgressBar(400, 50, () -> (mapGenerator.heightmapProgress() / 2 + meshProgress)), MIDDLE);
-        frame.add(new SFiller(), SOUTHWEST);
+        SPanel panel = new SPanel();
+        panel.add(new SFiller(), NORTHEAST);
+        panel.add(new SProgressBar(400, 50, () -> (mapGenerator.heightmapProgress() / 2 + meshProgress)), MIDDLE);
+        panel.add(new SFiller(), SOUTHWEST);
+        frame.setMainPanel(panel);
         frame.setVisible(true);
         game.gui().addFrame(frame);
 
@@ -53,6 +56,7 @@ public class HeightMap implements GameMap {
 
     private void generate(MapGeneratorMod mapGenerator) {
         meshProgress = 0f;
+        edgeLength = mapGenerator.getEdgeLength();
 
         // height map generation
         heightmap = mapGenerator.generateHeightMap();

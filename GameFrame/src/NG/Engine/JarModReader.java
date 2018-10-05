@@ -125,6 +125,11 @@ public class JarModReader {
      */
     public static List<Mod> loadMods(Directory dir) throws IOException {
         File[] modJars = dir.getFiles();
+        if (modJars == null) {
+            Logger.ERROR.print("No mods found in " + dir);
+            return Collections.emptyList();
+        }
+
         URL[] urls = new URL[modJars.length];
         for (int i = 0; i < modJars.length; i++) {
             urls[i] = modJars[i].toURI().toURL();

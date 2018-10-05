@@ -12,12 +12,12 @@ public class SExtendedTextArea extends STextArea implements MouseAnyClickListene
     private MouseAnyClickListener clickListener;
     private MouseReleaseListener releaseListener;
 
-    public SExtendedTextArea(String frameTitle, boolean doGrowInWidth) {
-        super(frameTitle, doGrowInWidth);
+    public SExtendedTextArea(String frameTitle, int minHeight, boolean doGrowInWidth) {
+        super(frameTitle, minHeight, doGrowInWidth);
     }
 
     public SExtendedTextArea(STextArea source) {
-        super(source.getText(), source.wantHorizontalGrow());
+        this(source.getText(), 20, source.wantHorizontalGrow());
     }
 
     @Override

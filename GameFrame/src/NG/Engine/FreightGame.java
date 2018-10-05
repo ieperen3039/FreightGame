@@ -7,6 +7,7 @@ import NG.GameState.*;
 import NG.Mods.Mod;
 import NG.Rendering.GLFWWindow;
 import NG.Rendering.RenderLoop;
+import NG.ScreenOverlay.Frames.BaseLF;
 import NG.ScreenOverlay.Frames.GUIManager;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.Frames.SFrameManager;
@@ -19,7 +20,6 @@ import NG.Tracks.TrackMod;
 import org.joml.Vector3f;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -94,8 +94,11 @@ public class FreightGame implements Game {
             }
         }
 
-        if (!frameManager.hasLookAndFeel())
-            throw new InvalidNumberOfModulesException("No LookAndFeel mod has been supplied");
+        if (!frameManager.hasLookAndFeel()) {
+            BaseLF lookAndFeel = new BaseLF();
+            lookAndFeel.init(this);
+            frameManager.setLookAndFeel(lookAndFeel);
+        }
 
         Logger.INFO.print("Finished initialisation\n");
     }
@@ -186,7 +189,7 @@ public class FreightGame implements Game {
     }
 
     @Override
-    public Collection<Mod> modList() {
+    public List<Mod> modList() {
         return Collections.unmodifiableList(mods);
     }
 

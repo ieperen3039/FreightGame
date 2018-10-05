@@ -10,13 +10,15 @@ import org.joml.Vector2ic;
  */
 public class STextArea extends SComponent {
     private final boolean doGrowInWidth;
-    private final NGFonts.TextType textSize;
+    private final NGFonts.TextType textType;
     private String text;
+    private int height;
 
-    public STextArea(String text, boolean doGrowInWidth) {
+    public STextArea(String text, int minHeight, boolean doGrowInWidth) {
         this.text = text;
+        this.height = minHeight;
         this.doGrowInWidth = doGrowInWidth;
-        textSize = NGFonts.TextType.REGULAR;
+        textType = NGFonts.TextType.REGULAR;
     }
 
     @Override
@@ -26,7 +28,7 @@ public class STextArea extends SComponent {
 
     @Override
     public int minHeight() {
-        return 0;
+        return height;
     }
 
     @Override
@@ -42,7 +44,7 @@ public class STextArea extends SComponent {
     @Override
     public void draw(SFrameLookAndFeel design, Vector2ic offset) {
         Vector2i scPos = new Vector2i(position).add(offset);
-        design.drawText(scPos, dimensions, text, textSize);
+        design.drawText(scPos, dimensions, text, textType);
     }
 
     public String getText() {

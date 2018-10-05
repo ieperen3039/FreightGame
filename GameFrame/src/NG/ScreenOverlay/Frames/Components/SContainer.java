@@ -57,7 +57,7 @@ public abstract class SContainer extends SComponent {
      */
     public void add(SComponent comp, Object prop) {
         layout.add(comp, prop);
-        if (isVisible()) layout.invalidateProperties();
+        if (isVisible()) invalidateLayout();
     }
 
     /**
@@ -97,18 +97,21 @@ public abstract class SContainer extends SComponent {
 
     @Override
     public int minWidth() {
-        return layout.getMinimumWidth();
+        return layout.getMinimumWidth() + (INNER_BORDER * 2);
     }
 
     @Override
     public int minHeight() {
-        return layout.getMinimumHeight();
+        return layout.getMinimumHeight() + (INNER_BORDER * 2);
     }
 
     @Override
     protected void setVisibleFlag(boolean doVisible) {
         super.setVisibleFlag(doVisible);
-        if (doVisible) layout.invalidateProperties();
+        if (doVisible) {
+            layout.invalidateProperties();
+            layout.placeComponents();
+        }
     }
 
     @Override
@@ -129,8 +132,9 @@ public abstract class SContainer extends SComponent {
     }
 
     protected void invalidateLayout() {
-        setLayoutDimensions();
         layout.invalidateProperties();
+        setLayoutDimensions();
+        layout.placeComponents();
     }
 
     private void setLayoutDimensions() {

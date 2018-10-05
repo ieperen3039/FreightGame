@@ -45,7 +45,7 @@ public final class ScreenOverlay implements GameAspect {
 
     /**
      * @param game the game this plays in
-     * @throws IOException If an error occures during the setup of the Hud.
+     * @throws IOException If an error occurs during the setup of the Hud.
      */
     public void init(Game game) throws IOException {
         if (game.settings().ANTIALIAS > 0) {

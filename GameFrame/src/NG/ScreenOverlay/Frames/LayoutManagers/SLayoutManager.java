@@ -30,8 +30,8 @@ public interface SLayoutManager {
     void remove(SComponent comp);
 
     /**
-     * invalidates the properties of the components, and thus the state of the layout manager. This also invokes {@link
-     * #placeComponents()}
+     * invalidates the properties of the components, and thus the state of the layout manager. After returning, call {@link
+     * #placeComponents()} to let the new layout have effect
      */
     void invalidateProperties();
 

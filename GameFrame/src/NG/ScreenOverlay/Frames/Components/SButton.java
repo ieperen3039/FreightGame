@@ -33,10 +33,6 @@ public class SButton extends SComponent implements MouseAnyClickListener, MouseR
         this.text = text;
     }
 
-    public SButton(String text, Runnable action) {
-        this(text, action, 0, 0);
-    }
-
     public SButton(String text, Runnable action, int minWidth, int minHeight) {
         this(minWidth, minHeight, text);
         leftClickListeners.add(action);
@@ -82,6 +78,8 @@ public class SButton extends SComponent implements MouseAnyClickListener, MouseR
 
     @Override
     public void draw(SFrameLookAndFeel design, Vector2ic offset) {
+        if (dimensions.x == 0 || dimensions.y == 0) return;
+
         Vector2i scPos = new Vector2i(position).add(offset);
         design.drawButton(scPos, dimensions, text, isPressed);
     }

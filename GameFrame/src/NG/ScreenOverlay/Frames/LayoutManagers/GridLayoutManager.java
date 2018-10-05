@@ -27,8 +27,6 @@ public class GridLayoutManager implements SLayoutManager {
 
     private Vector2i position = new Vector2i();
     private Vector2i dimensions = new Vector2i();
-    private int[] colSizes;
-    private int[] rowSizes;
 
     GridLayoutManager() {
         this(3, 3);
@@ -42,8 +40,6 @@ public class GridLayoutManager implements SLayoutManager {
         minRowHeight = new int[yElts];
         colWantGrow = new boolean[xElts];
         rowWantGrow = new boolean[yElts];
-        colSizes = new int[xElts];
-        rowSizes = new int[yElts];
     }
 
     /**
@@ -163,8 +159,8 @@ public class GridLayoutManager implements SLayoutManager {
 
     @Override
     public void placeComponents() {
-        colSizes = calculateDimensionSizes(minColWidth, nOfColGrows, colWantGrow, dimensions.x());
-        rowSizes = calculateDimensionSizes(minRowHeight, nOfRowGrows, rowWantGrow, dimensions.y());
+        int[] colSizes = calculateDimensionSizes(minColWidth, nOfColGrows, colWantGrow, dimensions.x());
+        int[] rowSizes = calculateDimensionSizes(minRowHeight, nOfRowGrows, rowWantGrow, dimensions.y());
 
         int xPos = position.x;
         for (int x = 0; x < xElts; x++) {

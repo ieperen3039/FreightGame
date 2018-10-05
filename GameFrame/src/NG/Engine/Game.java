@@ -9,7 +9,7 @@ import NG.Rendering.GLFWWindow;
 import NG.ScreenOverlay.Frames.GUIManager;
 import NG.Settings.Settings;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  *
@@ -34,7 +34,7 @@ public interface Game {
 
     Version getVersionNumber();
 
-    Collection<Mod> modList();
+    List<Mod> modList();
 
     Mod getModByName(String name);
 }

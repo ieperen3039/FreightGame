@@ -1,5 +1,8 @@
 package NG.Tools;
 
+import org.joml.Vector2ic;
+import org.joml.Vector3fc;
+
 import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -44,6 +47,14 @@ public enum Logger {
         for (int i = 0; i < x.length; i++) {
             if (x[i] == null)
                 x[i] = "null";
+            if (x[i] instanceof Vector3fc) {
+                Vector3fc v = (Vector3fc) x[i];
+                x[i] = String.format("(%1.3f, %1.3f, %1.3f),", v.x(), v.y(), v.z());
+            }
+            if (x[i] instanceof Vector2ic) {
+                Vector2ic v = (Vector2ic) x[i];
+                x[i] = String.format("(%d, %d),", v.x(), v.y());
+            }
         }
         StringBuilder s = new StringBuilder(x[0].toString());
         for (int i = 1; i < x.length; i++) {

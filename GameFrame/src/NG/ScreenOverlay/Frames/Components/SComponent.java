@@ -70,13 +70,17 @@ public abstract class SComponent {
     }
 
     public void setSize(int width, int height) {
+        int newWidth = Math.max(width, minWidth());
+        int newHeight = Math.max(height, minHeight());
+
         assert width >= 0 : "Negative width: " + width + " (height = " + height + ")";
         assert height >= 0 : "Negative height: " + height + " (width = " + width + ")";
-        dimensions.set(width, height);
+
+        dimensions.set(newWidth, newHeight);
     }
 
     public void addToSize(int xDelta, int yDelta) {
-        dimensions.add(xDelta, yDelta);
+        setSize(dimensions.x + xDelta, dimensions.y + yDelta);
     }
 
     // getters

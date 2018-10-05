@@ -58,6 +58,7 @@ public class SFrameManager implements GUIManager {
         int height = game.window().getHeight();
         int xPos = width / 2 - frame.getWidth() / 2;
         int yPos = height / 2 - frame.getHeight() / 2;
+
         addFrame(frame, xPos, yPos);
     }
 

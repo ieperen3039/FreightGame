@@ -90,6 +90,6 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
     }
 
     public void addHudItem(Consumer<ScreenOverlay.Painter> draw) {
-
+        overlay.addHudItem(draw);
     }
 }
