@@ -33,6 +33,7 @@ public class GridLayoutManager implements SLayoutManager {
     }
 
     public GridLayoutManager(int xElts, int yElts) {
+        assert xElts > 0 && yElts > 0 : "A grid without room for items is not allowed";
         this.grid = new SComponent[xElts][yElts];
         this.xElts = xElts;
         this.yElts = yElts;
@@ -88,7 +89,7 @@ public class GridLayoutManager implements SLayoutManager {
     }
 
     @Override
-    public void invalidateProperties() {
+    public void recalculateProperties() {
         int startChangeNr = changeChecker;
         nOfRowGrows = 0;
         nOfColGrows = 0;
@@ -120,11 +121,8 @@ public class GridLayoutManager implements SLayoutManager {
             }
         }
 
-        // place components again in the previous dimensions
-        placeComponents();
-
         // if something changed while restructuring, try again
-        if (startChangeNr != changeChecker) invalidateProperties();
+        if (startChangeNr != changeChecker) recalculateProperties();
     }
 
     @Override

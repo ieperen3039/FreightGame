@@ -2,16 +2,16 @@ package NG.ScreenOverlay.Frames.Components;
 
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.NGFonts;
-import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
 /**
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
 public class STextArea extends SComponent {
+    protected final NGFonts.TextType textType;
+    protected String text;
+
     private final boolean doGrowInWidth;
-    private final NGFonts.TextType textType;
-    private String text;
     private int height;
 
     public STextArea(String text, int minHeight, boolean doGrowInWidth) {
@@ -42,9 +42,8 @@ public class STextArea extends SComponent {
     }
 
     @Override
-    public void draw(SFrameLookAndFeel design, Vector2ic offset) {
-        Vector2i scPos = new Vector2i(position).add(offset);
-        design.drawText(scPos, dimensions, text, textType);
+    public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
+        design.drawText(screenPosition, dimensions, text, textType, true);
     }
 
     public String getText() {

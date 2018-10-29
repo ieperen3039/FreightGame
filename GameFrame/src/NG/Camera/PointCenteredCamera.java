@@ -80,7 +80,7 @@ public class PointCenteredCamera implements Camera, MouseScrollListener {
 
     @Override
     public void cleanup() {
-        callbacks.removeListener(onDrag);
+        callbacks.removeMouseDragListener(GLFW_MOUSE_BUTTON_LEFT, onDrag);
     }
 
     /**

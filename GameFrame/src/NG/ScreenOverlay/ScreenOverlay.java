@@ -299,8 +299,7 @@ public final class ScreenOverlay implements GameAspect {
          * @param indent the size of the part removed from the rectangle in pixels
          */
         public void roundedRectangle(int x, int y, int width, int height, int indent) {
-            assert width > 0 : "Non-positive width: " + width + " (height = " + height + ")";
-            assert height > 0 : "Non-positive height: " + height + " (width = " + width + ")";
+            assert width > 0 && height > 0 : String.format("Non-positive dimensions: height = %d, width = %d", height, width);
 
             int xMax = x + width;
             int yMax = y + height;

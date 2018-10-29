@@ -5,6 +5,7 @@ import NG.DataStructures.MatrixStack.ShaderUniformGL;
 import NG.Engine.AbstractGameLoop;
 import NG.Engine.Game;
 import NG.Engine.GameAspect;
+import NG.GameState.GameMap;
 import NG.GameState.GameState;
 import NG.ScreenOverlay.ScreenOverlay;
 import NG.Settings.Settings;
@@ -61,7 +62,8 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
         game.camera().updatePosition(deltaTime); // real-time deltatime
 
 
-        GameState world = game.state();
+        GameMap world = game.map();
+        GameState entities = game.state();
         for (ShaderProgram shader : shaders) {
             // shader uniforms
             shader.bind();
@@ -71,6 +73,7 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
             SGL gl = new ShaderUniformGL(shader, sett.WINDOW_WIDTH, sett.WINDOW_HEIGHT, game.camera(), true);
 
             world.draw(gl);
+            entities.draw(gl);
             shader.unbind();
         }
 

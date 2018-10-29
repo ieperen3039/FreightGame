@@ -3,7 +3,6 @@ package NG.ScreenOverlay.Frames.Components;
 import NG.ActionHandling.MouseAnyClickListener;
 import NG.ActionHandling.MouseReleaseListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
-import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
@@ -40,8 +39,7 @@ public class SCloseButton extends SComponent implements MouseReleaseListener, Mo
     }
 
     @Override
-    public void draw(SFrameLookAndFeel design, Vector2ic offset) {
-        Vector2i scPos = new Vector2i(position).add(offset);
+    public void draw(SFrameLookAndFeel design, Vector2ic scPos) {
         design.drawButton(scPos, dimensions, "X", state);
 
 //        try {

@@ -2,7 +2,6 @@ package NG.ScreenOverlay.Frames.Components;
 
 import NG.ActionHandling.MouseAnyClickListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
-import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
 /**
@@ -54,15 +53,13 @@ public class SToggleButton extends SComponent implements MouseAnyClickListener {
     }
 
     @Override
-    public void draw(SFrameLookAndFeel design, Vector2ic offset) {
+    public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
         if (dimensions.x == 0 || dimensions.y == 0) return;
-
-        Vector2i scPos = new Vector2i(position).add(offset);
-        design.drawButton(scPos, dimensions, text, state);
+        design.drawButton(screenPosition, dimensions, text, state);
     }
 
     @Override
-    public void onClick(int button, int x, int y) {
+    public void onClick(int button, int xSc, int ySc) {
         // setState(!getState());
         state = !state;
     }

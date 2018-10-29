@@ -16,7 +16,7 @@ public class GridLayoutManagerTest extends GridLayoutManager {
     public void minimumInvalidationTest() {
         add(new SPanel(10, 10, 0, 0, false, true), 0, 0);
         add(new SPanel(15, 15, 1, 2, false, false), 1, 1);
-        super.invalidateProperties();
+        super.recalculateProperties();
         super.placeComponents();
 
         System.out.println("cols = " + Arrays.toString(getMinColWidth()) + " | " + "colGrow = " + Arrays.toString(getColWantGrow()));
@@ -54,7 +54,7 @@ public class GridLayoutManagerTest extends GridLayoutManager {
         add(panelGrow, 0, 1);
         add(panel2, 1, 1);
 
-        super.invalidateProperties();
+        super.recalculateProperties();
 
         final Vector2i pos = new Vector2i(100, 50);
         final Vector2i dim = new Vector2i(200, 400);

@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
-public class FreightGame implements Game {
+public class FreightGame implements Game, ModLoader {
     private final GameTimer time;
     private final Camera camera;
     private final GameLoop gameState;
@@ -36,10 +36,10 @@ public class FreightGame implements Game {
     private final GLFWWindow window;
     private final GLFWListener inputHandler;
     private final GUIManager frameManager;
-
-    private List<Mod> mods;
-    private MapGeneratorMod mapGenerator;
     private MainMenu mainMenu;
+
+    private List<Mod> allMods;
+    private List<Mod> activeMods = Collections.emptyList();
 
     public FreightGame() throws IOException {
         Logger.INFO.print("Starting up the game engine...");
@@ -66,7 +66,7 @@ public class FreightGame implements Game {
         frameManager = new SFrameManager();
 
         // load mods
-        mods = JarModReader.loadMods(Directory.mods);
+        allMods = JarModReader.loadMods(Directory.mods);
     }
 
     private void init() throws Exception {
@@ -81,45 +81,60 @@ public class FreightGame implements Game {
         gameMap.init(this);
 
         renderer.addHudItem(frameManager::draw);
-        mainMenu = new MainMenu(this, renderer::stopLoop);
+        mainMenu = new MainMenu(this, this, renderer::stopLoop);
         frameManager.addFrame(mainMenu);
 
-        // init mods
-        for (Mod mod : mods) {
-            try {
-                initMod(mod);
-
-            } catch (Version.MisMatchException | InvalidNumberOfModulesException ex) {
-                Logger.ERROR.print("Error while loading " + mod.getModName(), ex);
-            }
-        }
-
-        if (!frameManager.hasLookAndFeel()) {
-            BaseLF lookAndFeel = new BaseLF();
-            lookAndFeel.init(this);
-            frameManager.setLookAndFeel(lookAndFeel);
-        }
+        BaseLF lookAndFeel = new BaseLF();
+        lookAndFeel.init(this);
+        frameManager.setLookAndFeel(lookAndFeel);
 
         Logger.INFO.print("Finished initialisation\n");
     }
 
-    private void initMod(Mod mod) throws InvalidNumberOfModulesException, Version.MisMatchException {
-        mod.init(this);
+    @Override
+    public void initMods(List<Mod> mods) {
+        assert activeMods.isEmpty();
+        activeMods = mods;
 
-        if (mod instanceof TrackMod) {
-//                 trackTypes.addAll(mod.getTypes()); or sth similar
-            Logger.DEBUG.print("Installed " + mod.getModName() + " as TrackMod");
+        // init mods
+        for (Mod mod : mods) {
+            try {
+                mod.init(this);
+                identifyModule(mod);
 
-        } else if (mod instanceof SFrameLookAndFeel) {
+            } catch (Exception ex) {
+                Logger.ERROR.print("Error while loading " + mod.getModName(), ex);
+            }
+        }
+    }
+
+    private void identifyModule(Mod target) throws IllegalNumberOfModulesException {
+        if (target instanceof TrackMod) {
+            //                 trackTypes.addAll(mod.getTypes()); or sth similar
+            Logger.DEBUG.print("Installed " + target.getModName() + " as TrackMod");
+
+        } else if (target instanceof SFrameLookAndFeel) {
             if (frameManager.hasLookAndFeel()) {
-                throw new InvalidNumberOfModulesException(
-                        "Tried installing " + mod.getModName() + " while we already have a LookAndFeel Mod");
+                throw new IllegalNumberOfModulesException(
+                        "Tried installing " + target.getModName() + " while we already have a LookAndFeel Mod");
             }
 
-            frameManager.setLookAndFeel((SFrameLookAndFeel) mod);
-            Logger.DEBUG.print("Installed " + mod.getModName() + " as LookAndFeel mod");
-
+            frameManager.setLookAndFeel((SFrameLookAndFeel) target);
+            Logger.DEBUG.print("Installed " + target.getModName() + " as LookAndFeel mod");
         }
+    }
+
+    public MapGeneratorMod getMapGenerator() {
+        return (MapGeneratorMod) activeMods.stream()
+                .filter(m -> m instanceof MapGeneratorMod)
+                .findAny()
+                .orElse(null);
+    }
+
+    @Override
+    public void cleanMods() {
+        activeMods.forEach(Mod::cleanup);
+        activeMods.clear();
     }
 
     public void root() throws Exception {
@@ -131,6 +146,7 @@ public class FreightGame implements Game {
         window.open();
         renderer.run();
 
+        cleanMods();
         cleanup();
     }
 
@@ -140,7 +156,6 @@ public class FreightGame implements Game {
         camera.cleanup();
         gameState.cleanup();
         inputHandler.cleanup();
-        mods.forEach(Mod::cleanup);
     }
 
     @Override
@@ -189,8 +204,8 @@ public class FreightGame implements Game {
     }
 
     @Override
-    public List<Mod> modList() {
-        return Collections.unmodifiableList(mods);
+    public List<Mod> allMods() {
+        return Collections.unmodifiableList(allMods);
     }
 
     public void doAfterGameLoop(Runnable action) {
@@ -199,7 +214,7 @@ public class FreightGame implements Game {
 
     @Override
     public Mod getModByName(String name) {
-        for (Mod mod : mods) {
+        for (Mod mod : allMods) {
             if (mod.getModName().equals(name)) {
                 return mod;
             }
@@ -207,9 +222,8 @@ public class FreightGame implements Game {
         return null;
     }
 
-    private class InvalidNumberOfModulesException extends Exception {
-        public InvalidNumberOfModulesException(String message) {
-            super(message);
-        }
+    @Override
+    public void startGame() {
     }
+
 }

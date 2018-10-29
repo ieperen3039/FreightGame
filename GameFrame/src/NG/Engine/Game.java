@@ -4,18 +4,16 @@ import NG.ActionHandling.GLFWListener;
 import NG.Camera.Camera;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
-import NG.Mods.Mod;
 import NG.Rendering.GLFWWindow;
 import NG.ScreenOverlay.Frames.GUIManager;
 import NG.Settings.Settings;
-
-import java.util.List;
 
 /**
  *
  * @author Geert van Ieperen. Created on 16-9-2018.
  */
 public interface Game {
+
     GameTimer timer();
 
     Camera camera();
@@ -33,8 +31,4 @@ public interface Game {
     GUIManager gui();
 
     Version getVersionNumber();
-
-    List<Mod> modList();
-
-    Mod getModByName(String name);
 }

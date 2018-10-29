@@ -2,8 +2,12 @@ package NG.ScreenOverlay.Frames.Components;
 
 import NG.ScreenOverlay.Frames.LayoutManagers.GridLayoutManager;
 import NG.ScreenOverlay.Frames.LayoutManagers.SLayoutManager;
+import NG.ScreenOverlay.Frames.LayoutManagers.SingleElementLayout;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import org.joml.Vector2i;
+import org.joml.Vector2ic;
+import org.joml.Vector4i;
+import org.joml.Vector4ic;
 
 /**
  * @author Geert van Ieperen. Created on 20-9-2018.
@@ -13,28 +17,13 @@ public abstract class SContainer extends SComponent {
     public static final int OUTER_BORDER = 4;
     private final SLayoutManager layout;
 
-    /** when using the default constructor, you can use these values to denote the positions */
-    public static final Object NORTH = new Vector2i(1, 0);
-    public static final Object EAST = new Vector2i(2, 1);
-    public static final Object SOUTH = new Vector2i(1, 2);
-    public static final Object WEST = new Vector2i(0, 1);
-    public static final Object NORTHEAST = new Vector2i(2, 0);
-    public static final Object SOUTHEAST = new Vector2i(2, 2);
-    public static final Object MORTHWEST = new Vector2i(0, 0);
-    public static final Object SOUTHWEST = new Vector2i(0, 2);
-    public static final Object MIDDLE = new Vector2i(1, 1);
-
-    protected boolean wantHzGrow;
-    protected boolean wantVtGrow;
-
-    public SContainer() {
-        this(new GridLayoutManager(3, 3), false, false);
-    }
+    private boolean wantHzGrow;
+    private boolean wantVtGrow;
 
     /**
      * a container that uses the given manager for its layout
      */
-    public SContainer(SLayoutManager layout, boolean growHorizontal, boolean growVertical) {
+    SContainer(SLayoutManager layout, boolean growHorizontal, boolean growVertical) {
         this.layout = layout;
         this.wantHzGrow = growHorizontal;
         this.wantVtGrow = growVertical;
@@ -51,45 +40,57 @@ public abstract class SContainer extends SComponent {
     }
 
     /**
-     * @param comp the component to be added
-     * @param prop the property instance accepted by the current layout manager
-     * @see #getLayoutPropertyClass()
+     * a wrapper for a target component, to have it behave as a container with one value being itself
+     * @param target the component to wrap
+     * @return the target as a container object
      */
-    public void add(SComponent comp, Object prop) {
-        layout.add(comp, prop);
-        if (isVisible()) invalidateLayout();
+    public static SContainer singleton(SComponent target) {
+        final SContainer c = new SContainer(new SingleElementLayout(), false, false) {
+            @Override
+            public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
+                drawChildren(design, screenPosition);
+            }
+        };
+        c.add(target, null);
+
+        return c;
     }
 
     /**
-     * @return the class of properties accepted by this container's {@link #add(SComponent, Object)} method
+     * @param comp the component to be added
+     * @param prop the property instance accepted by the current layout manager
      */
-    public Class<?> getLayoutPropertyClass() {
-        return layout.getPropertyClass();
+    public void add(SComponent comp, Object prop) {
+        layout.add(comp, prop);
+        comp.setParent(this);
+        invalidateLayout();
     }
 
-    protected Iterable<SComponent> children() {
+    private Iterable<SComponent> children() {
         return layout.getComponents();
     }
 
     public void removeComponent(SComponent comp) {
         layout.remove(comp);
+        invalidateLayout();
     }
 
-    protected void drawChildren(SFrameLookAndFeel lookFeel, Vector2i offset) {
+    void drawChildren(SFrameLookAndFeel lookFeel, Vector2ic offset) {
         for (SComponent component : children()) {
-            if (component.isVisible()) {
-                component.draw(lookFeel, offset);
+            if (component.isVisible() && component.getWidth() != 0 && component.getHeight() != 0) {
+                Vector2i scPos = new Vector2i(component.position).add(offset);
+                component.draw(lookFeel, scPos);
             }
         }
     }
 
     @Override
-    SComponent locate(int x, int y) {
+    public SComponent getComponentAt(int xRel, int yRel) {
         for (SComponent component : children()) {
-            if (component.isVisible() && component.contains(x, y)) {
-                int xr = x - component.getX();
-                int yr = y - component.getY();
-                return component.locate(xr, yr);
+            if (component.isVisible() && component.contains(xRel, yRel)) {
+                int xr = xRel - component.getX();
+                int yr = yRel - component.getY();
+                return component.getComponentAt(xr, yr);
             }
         }
         return this;
@@ -97,46 +98,49 @@ public abstract class SContainer extends SComponent {
 
     @Override
     public int minWidth() {
+        if (!layoutIsValid()) layout.recalculateProperties();
         return layout.getMinimumWidth() + (INNER_BORDER * 2);
     }
 
     @Override
     public int minHeight() {
+        if (!layoutIsValid()) layout.recalculateProperties();
         return layout.getMinimumHeight() + (INNER_BORDER * 2);
-    }
-
-    @Override
-    protected void setVisibleFlag(boolean doVisible) {
-        super.setVisibleFlag(doVisible);
-        if (doVisible) invalidateLayout();
-    }
-
-    @Override
-    public void setSize(int width, int height) {
-        super.setSize(width, height);
-        invalidateDimensions();
     }
 
     @Override
     public void addToSize(int xDelta, int yDelta) {
         super.addToSize(xDelta, yDelta);
-        invalidateDimensions();
+        invalidateLayout();
     }
 
-    protected void invalidateLayout() {
-        layout.invalidateProperties();
-        invalidateDimensions();
-    }
+    @Override
+    public void validateLayout() {
+        if (layoutIsValid()) return;
 
-    protected void invalidateDimensions() {
-        setLayoutDimensions();
-        if (isVisible()) layout.placeComponents();
-    }
-
-    private void setLayoutDimensions() {
-        Vector2i displacement = new Vector2i(INNER_BORDER, INNER_BORDER);
-        Vector2i newDim = new Vector2i(dimensions).sub(2 * INNER_BORDER, 2 * INNER_BORDER);
+        // first restructure this container
+        layout.recalculateProperties();
+        Vector4ic border = getBorderSize();
+        Vector2i displacement = new Vector2i(border.x(), border.y());
+        Vector2i newDim = new Vector2i(dimensions).sub(border.x() + border.z(), border.y() + border.w());
         layout.setDimensions(displacement, newDim);
+        layout.placeComponents();
+
+        // then restructure the children
+        for (SComponent child : children()) {
+            child.validateLayout();
+        }
+
+        super.validateLayout();
+    }
+
+    /**
+     * Gives the desired border sizes for this container, as (lesser x, lesser y, greater x, greater y)
+     * @return a vector with the border sizes as (x1, y1, x2, y2).
+     * @see #invalidateLayout()
+     */
+    protected Vector4ic getBorderSize() {
+        return new Vector4i(INNER_BORDER, INNER_BORDER, INNER_BORDER, INNER_BORDER);
     }
 
     /**
@@ -168,4 +172,5 @@ public abstract class SContainer extends SComponent {
         }
         return false;
     }
+
 }

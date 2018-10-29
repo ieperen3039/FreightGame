@@ -41,10 +41,9 @@ public class SProgressBar extends SComponent {
     }
 
     @Override
-    public void draw(SFrameLookAndFeel design, Vector2ic offset) {
-        Vector2i pos = new Vector2i(position).add(offset);
-        design.drawRectangle(pos, dimensions);
+    public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
+        design.drawRectangle(screenPosition, dimensions);
         Vector2i bar = new Vector2i(dimensions.x, (int) (dimensions.y * progress.get()));
-        design.drawSelection(pos, bar);
+        design.drawSelection(screenPosition, bar);
     }
 }

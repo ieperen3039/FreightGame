@@ -13,8 +13,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import static NG.ScreenOverlay.NGFonts.ORBITRON_MEDIUM;
-import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_CENTER;
-import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_MIDDLE;
+import static org.lwjgl.nanovg.NanoVG.*;
 
 /**
  * @author Geert van Ieperen. Created on 21-9-2018.
@@ -53,16 +52,35 @@ public class BaseLF implements SFrameLookAndFeel {
     }
 
     @Override
-    public void drawText(Vector2ic pos, Vector2ic dim, String text, NGFonts.TextType size) {
+    public void drawDropDown(Vector2ic pos, Vector2ic dim, String value, boolean isOpened) {
+        drawRectangle(pos, dim);
+        drawText(pos, dim, value, NGFonts.TextType.REGULAR, true);
+    }
+
+    @Override
+    public void drawText(Vector2ic pos, Vector2ic dim, String text, NGFonts.TextType size, boolean center) {
         int x = pos.x();
         int y = pos.y();
         int width = dim.x();
         int height = dim.y();
 
-        hud.text(x + (width / 2), y + (height / 2),
-                TEXT_SIZE_LARGE, ORBITRON_MEDIUM, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, TEXT_COLOR,
-                text
-        );
+        if (center) {
+            hud.text(x + (width / 2), y + (height / 2),
+                    TEXT_SIZE_LARGE, ORBITRON_MEDIUM, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, TEXT_COLOR,
+                    text
+            );
+        } else {
+            hud.text(x, y,
+                    TEXT_SIZE_LARGE, ORBITRON_MEDIUM, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, TEXT_COLOR,
+                    text
+            );
+        }
+    }
+
+    @Override
+    public void drawInputField(Vector2ic pos, Vector2ic dim, String text, NGFonts.TextType size, int cursor) {
+        hud.rectangle(pos.x(), pos.y(), dim.x(), dim.y(), Color4f.WHITE, Color4f.BLACK, STROKE_WIDTH);
+        drawText(pos, dim, text, size, false);
     }
 
     @Override
@@ -71,7 +89,7 @@ public class BaseLF implements SFrameLookAndFeel {
         if (state) color = color.darken(0.5f);
 
         hud.roundedRectangle(pos.x(), pos.y(), dim.x(), dim.y(), BUTTON_INDENT, color, STROKE_COLOR, STROKE_WIDTH);
-        drawText(pos, dim, text, NGFonts.TextType.ACCENT);
+        drawText(pos, dim, text, NGFonts.TextType.ACCENT, true);
     }
 
     @Override

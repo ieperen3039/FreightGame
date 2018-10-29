@@ -9,11 +9,9 @@ import NG.ScreenOverlay.Frames.Components.SComponent;
 import NG.ScreenOverlay.Frames.Components.SFrame;
 import NG.ScreenOverlay.ScreenOverlay;
 import NG.Tools.Logger;
-import org.joml.Vector2i;
+import org.joml.Vector2ic;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * @author Geert van Ieperen. Created on 20-9-2018.
@@ -25,6 +23,8 @@ public class SFrameManager implements GUIManager {
     private int dragButton = 0;
     private MouseMoveListener dragListener = null;
     private MouseReleaseListener releaseListener = null;
+
+    private SComponent modalSection;
 
     private SFrameLookAndFeel lookAndFeel;
 
@@ -48,12 +48,24 @@ public class SFrameManager implements GUIManager {
 
         Iterator<SFrame> itr = frames.descendingIterator();
         while (itr.hasNext()) {
-            itr.next().draw(lookAndFeel, new Vector2i());
+            final SFrame f = itr.next();
+
+            if (f.isVisible()) {
+                f.validateLayout();
+                f.draw(lookAndFeel, f.getPosition());
+            }
+        }
+
+        if (modalSection != null) {
+            modalSection.validateLayout();
+            modalSection.draw(lookAndFeel, modalSection.getScreenPosition());
         }
     }
 
     @Override
     public void addFrame(SFrame frame) {
+        frame.validateLayout();
+
         int width = game.window().getWidth();
         int height = game.window().getHeight();
         int xPos = width / 2 - frame.getWidth() / 2;
@@ -77,9 +89,15 @@ public class SFrameManager implements GUIManager {
 
     @Override
     public void focus(SFrame frame) {
-        frames.remove(frame);
+        if (frame.isDisposed())
+            throw new NoSuchElementException(frame + " is disposed");
+
+        boolean success = frames.remove(frame);
+        if (!success)
+            throw new NoSuchElementException(frame + " was not part of the window");
+
         // even if the frame was not opened, show it
-        frame.setMinimized(false);
+        frame.setVisible(true);
         frames.addFirst(frame);
     }
 
@@ -94,6 +112,11 @@ public class SFrameManager implements GUIManager {
     }
 
     @Override
+    public void setModalListener(SComponent listener) {
+        modalSection = listener;
+    }
+
+    @Override
     public void cleanup() {
         game.callbacks().removeListener(this);
         frames.forEach(SFrame::dispose);
@@ -101,24 +124,38 @@ public class SFrameManager implements GUIManager {
     }
 
     @Override
-    public void onClick(int button, int x, int y) {
+    public void onClick(int button, int xSc, int ySc) {
         if (dragListener != null) return;
 
-        for (SFrame frame : frames) {
-            if (frame.contains(x, y)) {
-                focus(frame);
-                int xr = x - frame.getX();
-                int yr = y - frame.getY();
-                SComponent comp = frame.getComponentAt(xr, yr);
-                Logger.DEBUG.print("Clicked on " + comp);
+        if (modalSection != null) {
+            MouseRelativeClickListener asListener = (MouseRelativeClickListener) modalSection;
+            Vector2ic modalPosition = modalSection.getScreenPosition();
+            asListener.onClick(button, xSc - modalPosition.x(), ySc - modalPosition.y());
+            modalSection = null;
+            return;
+        }
 
-                if (comp instanceof MouseAnyClickListener) {
-                    MouseAnyClickListener cl = (MouseAnyClickListener) comp;
-                    // by def. of mouseAnyClickListener, give screen coordinates
-                    cl.onClick(button, x, y);
+        for (SFrame frame : frames) {
+            if (frame.isVisible() && frame.contains(xSc, ySc)) {
+                focus(frame);
+                int xr = xSc - frame.getX();
+                int yr = ySc - frame.getY();
+                SComponent component = frame.getComponentAt(xr, yr);
+                Logger.DEBUG.print("Clicked on " + component);
+
+                if (component instanceof MouseAnyClickListener) {
+                    MouseAnyClickListener cl = (MouseAnyClickListener) component;
+                    // by def. of MouseAnyClickListener, give screen coordinates
+                    cl.onClick(button, xSc, ySc);
+
+                } else if (component instanceof MouseRelativeClickListener) {
+                    MouseRelativeClickListener cl = (MouseRelativeClickListener) component;
+                    // by def. of MouseRelativeClickListener, give relative coordinates
+                    Vector2ic pos = Optional.<Vector2ic>of(component.getScreenPosition()).orElseThrow();
+                    cl.onClick(button, pos.x(), pos.y());
                 }
-                dragListener = (comp instanceof MouseMoveListener) ? (MouseMoveListener) comp : null;
-                releaseListener = (comp instanceof MouseReleaseListener) ? (MouseReleaseListener) comp : null;
+                dragListener = (component instanceof MouseMoveListener) ? (MouseMoveListener) component : null;
+                releaseListener = (component instanceof MouseReleaseListener) ? (MouseReleaseListener) component : null;
                 dragButton = button;
 
                 return; // only for top-most frame
@@ -127,12 +164,12 @@ public class SFrameManager implements GUIManager {
     }
 
     @Override
-    public void onRelease(int button, int x, int y) {
+    public void onRelease(int button, int xSc, int ySc) {
         if (button != dragButton) return;
 
         dragListener = null;
         if (releaseListener != null) {
-            releaseListener.onRelease(button, x, y);
+            releaseListener.onRelease(button, xSc, ySc);
             releaseListener = null;
         }
     }

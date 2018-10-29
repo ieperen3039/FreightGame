@@ -1,48 +1,39 @@
 package NG.ScreenOverlay.Frames.Components;
 
 import NG.ScreenOverlay.Frames.GUIManager;
+import NG.ScreenOverlay.Frames.LayoutManagers.SingleElementLayout;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
+import org.joml.Vector4i;
+import org.joml.Vector4ic;
 
 /**
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
-public class SFrame extends SComponent {
+public class SFrame extends SContainer {
     public static final int INNER_BORDER = 4;
     public static final int OUTER_BORDER = 4;
 
     public static final int FRAME_TITLE_BAR_SIZE = 50;
     private final String title;
+    protected GUIManager guiManager;
     private boolean minimized;
-    private GUIManager frameManager;
+    private SContainer upperBar;
     private boolean isDisposed = false;
-    private SContainer middlePanel;
-    private SComponent upperBar;
 
-    /**
-     * creates a new SFrame
-     * @param title
-     * @param width
-     * @param height
-     */
     public SFrame(String title, int width, int height) {
         this(title, width, height, true);
     }
 
-    /**
-     * @param title
-     * @param width
-     * @param height
-     * @param editable
-     */
     public SFrame(String title, int width, int height, boolean editable) {
+        super(new SingleElementLayout(), false, false);
         this.title = title;
-        setVisibleFlag(false);
 
-        upperBar = editable ? makeUpperBar(title) : new STextArea(title, FRAME_TITLE_BAR_SIZE, true);
-        middlePanel = new SPanel();
+        upperBar = editable ? makeUpperBar(title) : SContainer.singleton(new STextArea(title, FRAME_TITLE_BAR_SIZE, true));
+        upperBar.setParent(this);
 
+        setMainPanel(new SPanel());
         setSize(width, height);
     }
 
@@ -69,34 +60,15 @@ public class SFrame extends SComponent {
      * @param comp the new middle component
      */
     public void setMainPanel(SContainer comp) {
-        middlePanel = comp;
-        middlePanel.setPosition(0, upperBar.getHeight());
+        add(comp, null);
+        comp.setPosition(0, upperBar.getHeight());
     }
 
     /**
-     * sets the visibility of this frame. This also invalidates the layout of this frame
-     * @param visible if false, the frame is not rendered. If true, the frame is rendered at its position (possibly
-     *                outside the viewport though).
+     * sets the size of this frame to the minimum as a call to {@code setSize(minWidth(), minHeight())}
      */
-    public void setVisible(boolean visible) {
-        setVisibleFlag(visible);
-        invalidateLayout();
-    }
-
     public void pack() {
         setSize(minWidth(), minHeight());
-    }
-
-    /**
-     * sets the visibility of the specified component in this frame. If the component is not part of this frame, the
-     * results are undetermined.
-     * @param component  a component in this frame
-     * @param setVisible if false, it will appear as if the component was removed from this frame. If true, it will be
-     *                   there as if it always have been.
-     */
-    public void setVisibilityOf(SComponent component, boolean setVisible) {
-        component.setVisibleFlag(setVisible);
-        invalidateLayout();
     }
 
     public void setMinimized(boolean minimized) {
@@ -108,15 +80,15 @@ public class SFrame extends SComponent {
     }
 
     /**
-     * requests focus of the frameManager.
+     * requests focus of the guiManager.
      * @throws NullPointerException if no frame-manager has been set
      */
     public void requestFocus() {
-        frameManager.focus(this);
+        guiManager.focus(this);
     }
 
     @Override
-    public void draw(SFrameLookAndFeel design, Vector2ic offset) {
+    public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
         if (!isVisible()) return;
         if (minimized) {
             // todo minimized panel
@@ -124,38 +96,20 @@ public class SFrame extends SComponent {
 
         } else {
             // take offset into account for consistency.
-            Vector2i scPos = new Vector2i(position).add(offset);
-
-            design.drawRectangle(scPos, dimensions);
-            upperBar.draw(design, scPos);
-
-            if (middlePanel.isVisible()) {
-                middlePanel.draw(design, scPos);
-            }
+            design.drawRectangle(screenPosition, dimensions);
+            upperBar.draw(design, screenPosition);
+            drawChildren(design, screenPosition);
         }
     }
 
     @Override
     public int minWidth() {
-        return Math.max(middlePanel.minWidth(), upperBar.minWidth());
+        return Math.max(super.minWidth(), upperBar.minWidth());
     }
 
     @Override
     public int minHeight() {
-        return middlePanel.minHeight() + upperBar.minHeight();
-    }
-
-    public void dispose() {
-        isDisposed = true;
-        setVisibleFlag(false);
-    }
-
-    public void setManager(GUIManager frameManager) {
-        this.frameManager = frameManager;
-    }
-
-    public SComponent getComponentAt(int x, int y) {
-        return locate(x, y);
+        return super.minHeight() + upperBar.minHeight();
     }
 
     @Override
@@ -163,50 +117,65 @@ public class SFrame extends SComponent {
         return "SFrame (" + title + ")";
     }
 
-    public boolean isDisposed() {
-        return isDisposed;
+    @Override
+    public SComponent getComponentAt(int xRel, int yRel) {
+        if (upperBar.contains(xRel, yRel)) {
+            return upperBar.getComponentAt(xRel, yRel);
+        }
+        return super.getComponentAt(xRel, yRel);
     }
 
     @Override
-    SComponent locate(int x, int y) {
-        if (upperBar.contains(x, y)) {
-            return upperBar.locate(x, y);
-        }
-        if (middlePanel.isVisible() && middlePanel.contains(x, y)) {
-            int yr = y - middlePanel.getY();
-            return middlePanel.locate(x, yr);
-        }
-        return this;
-    }
-
-    @Override
-    protected void setVisibleFlag(boolean doVisible) {
-        super.setVisibleFlag(doVisible);
-        if (doVisible) invalidateLayout();
+    public Vector2ic getScreenPosition() {
+        return getPosition();
     }
 
     @Override
     public void setSize(int width, int height) {
         super.setSize(width, height);
-        invalidateDimensions();
+        upperBar.setSize(getWidth(), FRAME_TITLE_BAR_SIZE);
+        invalidateLayout();
     }
 
     @Override
     public void addToSize(int xDelta, int yDelta) {
+        upperBar.setSize(getWidth(), FRAME_TITLE_BAR_SIZE);
         super.addToSize(xDelta, yDelta);
-        invalidateDimensions();
     }
 
-    private void invalidateDimensions() {
+    @Override
+    public void validateLayout() {
+        if (layoutIsValid()) return;
+        dimensions.x = Math.max(dimensions.x, minWidth());
+        dimensions.y = Math.max(dimensions.y, minHeight());
+
         upperBar.setSize(getWidth(), FRAME_TITLE_BAR_SIZE);
-        middlePanel.setSize(getWidth(), getHeight() - upperBar.getHeight());
-        middlePanel.invalidateDimensions();
+        upperBar.validateLayout();
+        super.validateLayout();
     }
 
-    public void invalidateLayout() {
-        upperBar.setSize(getWidth(), FRAME_TITLE_BAR_SIZE);
-        middlePanel.setSize(getWidth(), getHeight() - upperBar.getHeight());
-        middlePanel.invalidateLayout();
+    @Override
+    protected Vector4ic getBorderSize() {
+        return new Vector4i(INNER_BORDER, INNER_BORDER + upperBar.getHeight(), INNER_BORDER, INNER_BORDER);
+    }
+
+    /**
+     * removes this component and release any resources used
+     */
+    public void dispose() {
+        this.setVisible(false);
+        isDisposed = true;
+    }
+
+    public void setManager(GUIManager frameManager) {
+        this.guiManager = frameManager;
+    }
+
+    /**
+     * @return true if {@link #dispose()} has been successfully called
+     */
+    public boolean isDisposed() {
+        return isDisposed;
     }
 
     @Override

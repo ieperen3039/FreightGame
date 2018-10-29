@@ -4,9 +4,7 @@ import NG.ScreenOverlay.Frames.Components.SComponent;
 import org.joml.Vector2ic;
 
 /**
- * a layout manager does much the same as an {@link java.awt.LayoutManager}: it lays the components in a layout. Main
- * difference is that adding new items always happens in a grid (like the {@link java.awt.GridLayout} and {@link
- * java.awt.GridBagLayout}).
+ * a layout manager with the same purpose as an {@link java.awt.LayoutManager}: it lays the components in a nice order.
  * @author Geert van Ieperen. Created on 21-9-2018.
  */
 public interface SLayoutManager {
@@ -18,7 +16,7 @@ public interface SLayoutManager {
      * @param comp the component to be added
      * @param prop the properties that describe position, policies etc.
      * @see #remove(SComponent)
-     * @see #invalidateProperties()
+     * @see #recalculateProperties()
      */
     void add(SComponent comp, Object prop);
 
@@ -33,7 +31,7 @@ public interface SLayoutManager {
      * invalidates the properties of the components, and thus the state of the layout manager. After returning, call {@link
      * #placeComponents()} to let the new layout have effect
      */
-    void invalidateProperties();
+    void recalculateProperties();
 
     /**
      * places the components of the layout at the previously set dimensions. When this method returns, all components
@@ -47,11 +45,13 @@ public interface SLayoutManager {
     Iterable<SComponent> getComponents();
 
     /**
+     * The returned value is only valid after a call to {@link #recalculateProperties()}
      * @return the minimum width of the components together in this layout
      */
     int getMinimumWidth();
 
     /**
+     * The returned value is only valid after a call to {@link #recalculateProperties()}
      * @return the minimum height of the components together in this layout
      */
     int getMinimumHeight();

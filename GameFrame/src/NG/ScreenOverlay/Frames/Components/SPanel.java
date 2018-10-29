@@ -10,6 +10,17 @@ import org.joml.Vector2ic;
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
 public class SPanel extends SContainer {
+
+    /** when using the default constructor, you can use these values to denote the positions */
+    public static final Object NORTH = new Vector2i(1, 0);
+    public static final Object EAST = new Vector2i(2, 1);
+    public static final Object SOUTH = new Vector2i(1, 2);
+    public static final Object WEST = new Vector2i(0, 1);
+    public static final Object NORTHEAST = new Vector2i(2, 0);
+    public static final Object SOUTHEAST = new Vector2i(2, 2);
+    public static final Object MORTHWEST = new Vector2i(0, 0);
+    public static final Object SOUTHWEST = new Vector2i(0, 2);
+    public static final Object MIDDLE = new Vector2i(1, 1);
     private final int minimumWidth;
     private final int minimumHeight;
 
@@ -54,6 +65,7 @@ public class SPanel extends SContainer {
      * (0, 0) and a no-growth policy
      */
     public SPanel() {
+        super(new GridLayoutManager(3, 3), false, false);
         this.minimumWidth = 0;
         this.minimumHeight = 0;
     }
@@ -90,10 +102,11 @@ public class SPanel extends SContainer {
     }
 
     @Override
-    public void draw(SFrameLookAndFeel lookFeel, Vector2ic offset) {
-        if (getWidth() == 0 || getHeight() == 0) return;
-        Vector2i scPos = new Vector2i(position).add(offset);
-        lookFeel.drawRectangle(scPos, dimensions);
-        drawChildren(lookFeel, scPos);
+    public void draw(SFrameLookAndFeel lookFeel, Vector2ic screenPosition) {
+        assert getWidth() > 0 && getHeight() > 0 :
+                String.format("Non-positive dimensions of %s: width = %d, height = %d", this, getWidth(), getHeight());
+
+        lookFeel.drawRectangle(screenPosition, dimensions);
+        drawChildren(lookFeel, screenPosition);
     }
 }

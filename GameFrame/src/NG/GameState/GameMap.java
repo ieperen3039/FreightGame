@@ -10,7 +10,7 @@ import org.joml.Vector3f;
  */
 public interface GameMap extends GameAspect {
     /**
-     * generate a map using the provided generator. This method runs the generation algorithm in a separate thread
+     * generate a map using the provided generator. This method should be run in a separate thread
      * @param mapGenerator the generator to use for this map.
      */
     void generateNew(MapGeneratorMod mapGenerator);

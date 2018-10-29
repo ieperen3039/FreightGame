@@ -2,7 +2,6 @@ package NG.ScreenOverlay.Frames.Components;
 
 import NG.ActionHandling.MouseMoveListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
-import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
 /**
@@ -41,10 +40,8 @@ public class SDragEdge extends SComponent implements MouseMoveListener {
     }
 
     @Override
-    public void draw(SFrameLookAndFeel design, Vector2ic offset) {
-        Vector2i pos = new Vector2i(position).add(offset);
-
-        design.drawButton(pos, dimensions, "+", false);
+    public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
+        design.drawButton(screenPosition, dimensions, "+", false);
     }
 
     @Override

@@ -13,9 +13,8 @@ import org.joml.Vector2fc;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
-
-import static NG.ScreenOverlay.Frames.Components.SContainer.*;
 
 /**
  * @author Geert van Ieperen. Created on 27-9-2018.
@@ -25,15 +24,16 @@ public class HeightMap implements GameMap {
 
     private Game game;
     private float[][] heightmap;
+    private final Collection<Mesh> meshOfTheWorld = new CopyOnWriteArrayList<>();
 
-    private Collection<Mesh> meshOfTheWorld = null;
     private int edgeLength;
 
     private Collection<Supplier<? extends Mesh>> preparedMeshes = new ArrayList<>();
     private float meshProgress;
+    private boolean hasNewWorld;
 
     @Override
-    public void init(Game game) throws Exception {
+    public void init(Game game) {
         this.game = game;
     }
 
@@ -41,17 +41,15 @@ public class HeightMap implements GameMap {
     public void generateNew(MapGeneratorMod mapGenerator) {
         SFrame frame = new SFrame("Generating map...", 500, 200);
         SPanel panel = new SPanel();
-        panel.add(new SFiller(), NORTHEAST);
-        panel.add(new SProgressBar(400, 50, () -> (mapGenerator.heightmapProgress() / 2 + meshProgress)), MIDDLE);
-        panel.add(new SFiller(), SOUTHWEST);
+        panel.add(new SFiller(), SPanel.NORTHEAST);
+        panel.add(new SProgressBar(400, 50, () -> (mapGenerator.heightmapProgress() / 2 + meshProgress)), SPanel.MIDDLE);
+        panel.add(new SFiller(), SPanel.SOUTHWEST);
         frame.setMainPanel(panel);
         frame.setVisible(true);
         game.gui().addFrame(frame);
 
-        new Thread(() -> {
-            generate(mapGenerator);
-            frame.dispose();
-        }, "Map generator thread").start();
+        generate(mapGenerator);
+        frame.dispose();
     }
 
     private void generate(MapGeneratorMod mapGenerator) {
@@ -78,10 +76,13 @@ public class HeightMap implements GameMap {
             }
         }
 
+        hasNewWorld = true;
         meshProgress = 1f;
     }
 
     private Collection<Mesh> generateMeshes() {
+        assert hasNewWorld;
+
         Collection<Mesh> worlAsMeshes = new ArrayList<>(preparedMeshes.size());
         for (Supplier<? extends Mesh> preparedMesh : preparedMeshes) {
             Mesh mesh = preparedMesh.get();
@@ -114,8 +115,10 @@ public class HeightMap implements GameMap {
 
     @Override
     public void draw(SGL gl) {
-        if (meshOfTheWorld == null) {
-            meshOfTheWorld = generateMeshes();
+        if (hasNewWorld) {
+            hasNewWorld = false;
+            meshOfTheWorld.clear();
+            meshOfTheWorld.addAll(generateMeshes());
         }
 
         meshOfTheWorld.forEach(gl::render);

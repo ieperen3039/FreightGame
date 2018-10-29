@@ -4,7 +4,6 @@ import NG.ActionHandling.MouseAnyClickListener;
 import NG.ActionHandling.MouseReleaseListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.Tools.Logger;
-import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
 import java.util.ArrayList;
@@ -27,14 +26,14 @@ public class SButton extends SComponent implements MouseAnyClickListener, MouseR
     private boolean vtGrow = false;
     private boolean hzGrow = false;
 
-    public SButton(int minWidth, int minHeight, String text) {
+    public SButton(String text, int minWidth, int minHeight) {
         this.minHeight = minHeight;
         this.minWidth = minWidth;
         this.text = text;
     }
 
     public SButton(String text, Runnable action, int minWidth, int minHeight) {
-        this(minWidth, minHeight, text);
+        this(text, minWidth, minHeight);
         leftClickListeners.add(action);
     }
 
@@ -77,20 +76,17 @@ public class SButton extends SComponent implements MouseAnyClickListener, MouseR
     }
 
     @Override
-    public void draw(SFrameLookAndFeel design, Vector2ic offset) {
-        if (dimensions.x == 0 || dimensions.y == 0) return;
-
-        Vector2i scPos = new Vector2i(position).add(offset);
-        design.drawButton(scPos, dimensions, text, isPressed);
+    public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
+        design.drawButton(screenPosition, dimensions, text, isPressed);
     }
 
     @Override
-    public void onClick(int button, int x, int y) {
+    public void onClick(int button, int xSc, int ySc) {
         isPressed = true;
     }
 
     @Override
-    public void onRelease(int button, int x, int y) {
+    public void onRelease(int button, int xSc, int ySc) {
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
             leftClickListeners.forEach(Runnable::run);
 

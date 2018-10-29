@@ -12,14 +12,14 @@ import java.util.Collection;
 public class SaveFile {
     private static final String INITIAL_DATA = "Freight Game SaveFile";
 
-    public void write(Game game, String name) throws IOException {
+    public void write(Game game, String name, ModLoader modLoader) throws IOException {
         FileOutputStream fileOut = new FileOutputStream(name);
         DataOutputStream out = new DataOutputStream(fileOut);
 
         out.writeUTF(INITIAL_DATA);
         game.getVersionNumber().writeToFile(out);
 
-        Collection<Mod> listOfMods = game.modList();
+        Collection<Mod> listOfMods = modLoader.allMods();
         out.writeInt(listOfMods.size());
 
         for (Mod mod : listOfMods) {

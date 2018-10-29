@@ -8,7 +8,7 @@ import static org.lwjgl.glfw.GLFW.*;
  */
 public interface MouseClickListener extends MouseAnyClickListener {
     @Override
-    default void onClick(int button, int x, int y) {
+    default void onClick(int button, int xSc, int ySc) {
         switch (button) {
             case GLFW_MOUSE_BUTTON_LEFT:
                 onLeftClick();

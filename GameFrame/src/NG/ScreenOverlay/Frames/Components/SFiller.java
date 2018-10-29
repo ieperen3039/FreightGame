@@ -40,6 +40,6 @@ public class SFiller extends SComponent {
     }
 
     @Override
-    public void draw(SFrameLookAndFeel design, Vector2ic offset) {
+    public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
     }
 }

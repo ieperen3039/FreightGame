@@ -7,8 +7,8 @@ public interface MouseAnyClickListener {
     /**
      * whenever the user clicks, this event is fired
      * @param button the button number
-     * @param x      the x position on the screen
-     * @param y      the y position on the screen
+     * @param xSc      the x position on the screen
+     * @param ySc      the y position on the screen
      */
-    void onClick(int button, int x, int y);
+    void onClick(int button, int xSc, int ySc);
 }

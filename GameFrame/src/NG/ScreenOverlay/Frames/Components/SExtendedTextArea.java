@@ -1,15 +1,15 @@
 package NG.ScreenOverlay.Frames.Components;
 
-import NG.ActionHandling.MouseAnyClickListener;
 import NG.ActionHandling.MouseMoveListener;
 import NG.ActionHandling.MouseReleaseListener;
+import NG.ScreenOverlay.Frames.MouseRelativeClickListener;
 
 /**
  * @author Geert van Ieperen. Created on 25-9-2018.
  */
-public class SExtendedTextArea extends STextArea implements MouseAnyClickListener, MouseMoveListener, MouseReleaseListener {
+public class SExtendedTextArea extends STextArea implements MouseRelativeClickListener, MouseMoveListener, MouseReleaseListener {
     private MouseMoveListener dragListener;
-    private MouseAnyClickListener clickListener;
+    private MouseRelativeClickListener clickListener;
     private MouseReleaseListener releaseListener;
 
     public SExtendedTextArea(String frameTitle, int minHeight, boolean doGrowInWidth) {
@@ -21,9 +21,9 @@ public class SExtendedTextArea extends STextArea implements MouseAnyClickListene
     }
 
     @Override
-    public void onClick(int button, int x, int y) {
+    public void onClick(int button, int xRel, int yRel) {
         if (clickListener == null) return;
-        clickListener.onClick(button, x, y);
+        clickListener.onClick(button, xRel, yRel);
     }
 
     @Override
@@ -33,16 +33,16 @@ public class SExtendedTextArea extends STextArea implements MouseAnyClickListene
     }
 
     @Override
-    public void onRelease(int button, int x, int y) {
+    public void onRelease(int button, int xSc, int ySc) {
         if (releaseListener == null) return;
-        releaseListener.onRelease(button, x, y);
+        releaseListener.onRelease(button, xSc, ySc);
     }
 
     public void setDragListener(MouseMoveListener dragListener) {
         this.dragListener = dragListener;
     }
 
-    public void setClickListener(MouseAnyClickListener clickListener) {
+    public void setClickListener(MouseRelativeClickListener clickListener) {
         this.clickListener = clickListener;
     }
 
