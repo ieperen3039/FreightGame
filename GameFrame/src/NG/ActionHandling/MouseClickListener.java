@@ -1,30 +1,14 @@
 package NG.ActionHandling;
 
-import static org.lwjgl.glfw.GLFW.*;
-
 /**
- * An helper-interface to separate the button clicks into methods
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
-public interface MouseClickListener extends MouseAnyClickListener {
-    @Override
-    default void onClick(int button, int xSc, int ySc) {
-        switch (button) {
-            case GLFW_MOUSE_BUTTON_LEFT:
-                onLeftClick();
-                break;
-            case GLFW_MOUSE_BUTTON_RIGHT:
-                onRightClick();
-                break;
-            case GLFW_MOUSE_BUTTON_MIDDLE:
-                onMiddleButtonClick();
-                break;
-        }
-    }
-
-    void onLeftClick();
-
-    void onRightClick();
-
-    void onMiddleButtonClick();
+public interface MouseClickListener {
+    /**
+     * whenever the user clicks, this event is fired
+     * @param button the button number
+     * @param xSc    the x position on the screen
+     * @param ySc    the y position on the screen
+     */
+    void onClick(int button, int xSc, int ySc);
 }

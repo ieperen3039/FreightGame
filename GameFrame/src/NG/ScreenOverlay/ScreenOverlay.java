@@ -48,7 +48,7 @@ public final class ScreenOverlay implements GameAspect {
      * @throws IOException If an error occurs during the setup of the Hud.
      */
     public void init(Game game) throws IOException {
-        if (game.settings().ANTIALIAS > 0) {
+        if (game.settings().ANTIALIAS_LEVEL > 0) {
             vg = nvgCreate(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
         } else {
             vg = nvgCreate(NVG_STENCIL_STROKES);

@@ -15,6 +15,6 @@ public interface GameAspect {
     /**
      * destroy any resources used by this object. The effects of this method should be invertible with the {@link
      * #init(Game)} method
-     */// TODO do we really want this invertible principle?
+     */
     void cleanup();
 }

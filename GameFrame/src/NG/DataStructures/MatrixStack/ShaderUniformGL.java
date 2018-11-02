@@ -3,6 +3,7 @@ package NG.DataStructures.MatrixStack;
 import NG.Camera.Camera;
 import NG.DataStructures.Color4f;
 import NG.DataStructures.Material;
+import NG.Settings.Settings;
 import NG.Shaders.ShaderProgram;
 import NG.Tools.Toolbox;
 import org.joml.*;
@@ -16,9 +17,6 @@ import static org.lwjgl.opengl.GL11.*;
  */
 public class ShaderUniformGL implements SGL {
     private static final int MAX_POINT_LIGHTS = 1;
-    private static final float FOV = 0.3f;
-    private static final float Z_NEAR = 0.1f;
-    private static final float Z_FAR = 100;
 
     private Stack<Matrix4f> matrixStack;
 
@@ -68,9 +66,9 @@ public class ShaderUniformGL implements SGL {
 
         if (isometric) {
             float visionSize = camera.vectorToFocus().length();
-            vpMatrix.orthoSymmetric(aspectRatio * visionSize, visionSize, Z_NEAR, Z_FAR);
+            vpMatrix.orthoSymmetric(aspectRatio * visionSize, visionSize, Settings.Z_NEAR, Settings.Z_FAR);
         } else {
-            vpMatrix.setPerspective(FOV, aspectRatio, Z_NEAR, Z_FAR);
+            vpMatrix.setPerspective(Settings.FOV, aspectRatio, Settings.Z_NEAR, Settings.Z_FAR);
         }
 
         // set the view

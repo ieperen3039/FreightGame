@@ -3,7 +3,10 @@ package NG.Engine;
 import NG.ActionHandling.GLFWListener;
 import NG.Camera.Camera;
 import NG.Camera.PointCenteredCamera;
-import NG.GameState.*;
+import NG.GameState.GameLoop;
+import NG.GameState.GameMap;
+import NG.GameState.GameState;
+import NG.GameState.HeightMap;
 import NG.Mods.Mod;
 import NG.Rendering.GLFWWindow;
 import NG.Rendering.RenderLoop;
@@ -12,6 +15,7 @@ import NG.ScreenOverlay.Frames.GUIManager;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.Frames.SFrameManager;
 import NG.ScreenOverlay.MainMenu;
+import NG.ScreenOverlay.ToolBar;
 import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
@@ -93,7 +97,7 @@ public class FreightGame implements Game, ModLoader {
 
     @Override
     public void initMods(List<Mod> mods) {
-        assert activeMods.isEmpty();
+        assert activeMods.isEmpty() : "Already mods loaded";
         activeMods = mods;
 
         // init mods
@@ -122,13 +126,6 @@ public class FreightGame implements Game, ModLoader {
             frameManager.setLookAndFeel((SFrameLookAndFeel) target);
             Logger.DEBUG.print("Installed " + target.getModName() + " as LookAndFeel mod");
         }
-    }
-
-    public MapGeneratorMod getMapGenerator() {
-        return (MapGeneratorMod) activeMods.stream()
-                .filter(m -> m instanceof MapGeneratorMod)
-                .findAny()
-                .orElse(null);
     }
 
     @Override
@@ -224,6 +221,19 @@ public class FreightGame implements Game, ModLoader {
 
     @Override
     public void startGame() {
+        mainMenu.setVisible(false);
+        ToolBar toolBar = new ToolBar(this);
+        toolBar.addButton("Exit", this::stopGame);
+        toolBar.addButton("$$$", () -> {
+        });
+        frameManager.setToolBar(toolBar);
+        gameState.start();
+    }
+
+    private void stopGame() {
+        gameState.stopLoop();
+        frameManager.setToolBar(null);
+        mainMenu.setVisible(true);
     }
 
 }

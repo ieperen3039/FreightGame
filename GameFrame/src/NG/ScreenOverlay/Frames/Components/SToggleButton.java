@@ -1,13 +1,13 @@
 package NG.ScreenOverlay.Frames.Components;
 
-import NG.ActionHandling.MouseAnyClickListener;
+import NG.ActionHandling.MouseClickListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import org.joml.Vector2ic;
 
 /**
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SToggleButton extends SComponent implements MouseAnyClickListener {
+public class SToggleButton extends SComponent implements MouseClickListener {
     private final int minHeight;
     private final int minWidth;
     private boolean vtGrow = false;

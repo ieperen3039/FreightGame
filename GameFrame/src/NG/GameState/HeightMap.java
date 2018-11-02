@@ -63,13 +63,14 @@ public class HeightMap implements GameMap {
         int ySize = heightmap[0].length;
         float meshPStep = 1f / (xSize * ySize);
 
-        // make mesh size divisible by both x and y
-        int adaptedMeshSize = Toolbox.gcd(xSize, Toolbox.gcd(ySize, MESH_SIZE_UPPER_BOUND));
+        int adaptedMeshSize = MESH_SIZE_UPPER_BOUND;
 
         for (int xStart = 0; xStart < xSize; xStart += adaptedMeshSize) {
             for (int yStart = 0; yStart < ySize; yStart += adaptedMeshSize) {
+                int xEnd = Math.min(xStart + adaptedMeshSize, xSize - 1);
+                int yEnd = Math.min(yStart + adaptedMeshSize, xSize - 1);
                 preparedMeshes.add(
-                        FlatMesh.meshFromHeightmap(heightmap, xStart, xStart + adaptedMeshSize, yStart, yStart + adaptedMeshSize, edgeLength)
+                        FlatMesh.meshFromHeightmap(heightmap, xStart, xEnd, yStart, yEnd, edgeLength)
                 );
 
                 meshProgress += meshPStep;
@@ -116,9 +117,10 @@ public class HeightMap implements GameMap {
     @Override
     public void draw(SGL gl) {
         if (hasNewWorld) {
-            hasNewWorld = false;
             meshOfTheWorld.clear();
-            meshOfTheWorld.addAll(generateMeshes());
+            Collection<Mesh> meshes = generateMeshes();
+            meshOfTheWorld.addAll(meshes);
+            hasNewWorld = false;
         }
 
         meshOfTheWorld.forEach(gl::render);

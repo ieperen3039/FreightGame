@@ -43,11 +43,6 @@ public class MainMenu extends SFrame {
 
         SButton newGame = new SButton("Start new game", this::showNewGame, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
         buttons.add(newGame, onTop());
-
-        SButton dummy = new SButton("Nothing", () -> {
-        }, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
-        buttons.add(dummy, onTop());
-
         SButton exitGame = new SButton("Exit game", exitGameAction, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
         buttons.add(exitGame, onBot());
 
@@ -95,20 +90,20 @@ public class MainMenu extends SFrame {
         // add mod buttons
         SContainer modPanel = new SPanel(1, nOfMods);
         Vector2i pos = new Vector2i(0, -1);
-        for (int i = 0; i < modList.size(); i++) {
-            Mod mod = modList.get(i);
+        for (Mod mod : modList) {
+            if (mod instanceof MapGeneratorMod) continue;
             SToggleButton button = new SToggleButton(mod.getModName(), BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
-            toggleList.add(i, button, mod);
+            toggleList.add(button, mod);
             modPanel.add(button, pos.add(0, 1));
         }
         mainPanel.add(modPanel, mpos.add(0, 1));
 
         // generator selection
-        List<String> modNames = modList.stream()
+        List<String> generatorNames = modList.stream()
                 .filter(m -> m instanceof MapGeneratorMod)
                 .map(Mod::getModName)
                 .collect(Collectors.toList());
-        SDropDown generatorSelector = new SDropDown(game, modNames);
+        SDropDown generatorSelector = new SDropDown(game, generatorNames);
         mainPanel.add(generatorSelector, mpos.add(0, 1));
 
         // generate button
@@ -119,6 +114,7 @@ public class MainMenu extends SFrame {
         newGameFrame.setMainPanel(mainPanel);
         newGameFrame.pack();
 
+        // start game action
         generate.addLeftClickListener(() -> {
             try {
                 int selected = generatorSelector.getSelectedIndex();
@@ -130,7 +126,7 @@ public class MainMenu extends SFrame {
                 generatorMod.setYSize(Integer.parseInt(ySize));
 
                 List<Mod> targets = new ArrayList<>();
-                for (int i = 0; i < nOfMods; i++) {
+                for (int i = 0; i < toggleList.size(); i++) {
                     if (toggleList.left(i).getState()) {
                         Mod mod = toggleList.right(i);
 
@@ -149,6 +145,7 @@ public class MainMenu extends SFrame {
                 game.map().generateNew(generatorMod);
 
                 modLoader.startGame();
+                newGameFrame.setVisible(false);
 
             } catch (IllegalNumberOfModulesException e) {
                 notice.setText(e.getMessage());
@@ -166,4 +163,5 @@ public class MainMenu extends SFrame {
     private Vector2i onBot() {
         return bottomButtonPos.sub(0, 1);
     }
+
 }

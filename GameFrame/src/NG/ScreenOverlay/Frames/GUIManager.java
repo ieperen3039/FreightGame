@@ -1,17 +1,19 @@
 package NG.ScreenOverlay.Frames;
 
-import NG.ActionHandling.MouseAnyClickListener;
+import NG.ActionHandling.MouseClickListener;
 import NG.ActionHandling.MouseMoveListener;
 import NG.ActionHandling.MouseReleaseListener;
 import NG.Engine.GameAspect;
 import NG.ScreenOverlay.Frames.Components.SComponent;
 import NG.ScreenOverlay.Frames.Components.SFrame;
 import NG.ScreenOverlay.ScreenOverlay;
+import NG.ScreenOverlay.ToolBar;
 
 /**
  * @author Geert van Ieperen. Created on 29-9-2018.
  */
-public interface GUIManager extends GameAspect, MouseAnyClickListener, MouseReleaseListener, MouseMoveListener {
+public interface GUIManager extends GameAspect, MouseClickListener, MouseReleaseListener, MouseMoveListener {
+
     /** draws every frome, starting from the last to most previously focussed. */
     void draw(ScreenOverlay.Painter painter);
 
@@ -36,13 +38,27 @@ public interface GUIManager extends GameAspect, MouseAnyClickListener, MouseRele
      */
     void focus(SFrame frame);
 
+    /**
+     * sets the appearance of the frames on the next drawing cycles to the given object. This overrides any previous
+     * setting.
+     * @param lookAndFeel any look-and-feel provider.
+     */
     void setLookAndFeel(SFrameLookAndFeel lookAndFeel);
 
+    /**
+     * @return false iff no call to {@link #setLookAndFeel(SFrameLookAndFeel)} has occurred.
+     */
     boolean hasLookAndFeel();
 
     /**
-     * the next click action is instead redirected to the given listener.
+     * The next click action is redirected to the given listener instead of being processed by the frames. This is reset after such click occurs.
      * @param listener a listener that receives the button and screen positions of the next click exactly once.
      */
     void setModalListener(SComponent listener);
+
+    /**
+     * sets the toolbar of the screen to the given object. Overwrites the current setting.
+     * @param toolBar any toolbar, or null to remove the toolbar
+     */
+    void setToolBar(ToolBar toolBar);
 }

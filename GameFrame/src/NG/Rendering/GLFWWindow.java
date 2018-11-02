@@ -84,9 +84,9 @@ public class GLFWWindow implements GameAspect {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-        if (settings.ANTIALIAS > 0) {
-            glfwWindowHint(GLFW_STENCIL_BITS, settings.ANTIALIAS);
-            glfwWindowHint(GLFW_SAMPLES, settings.ANTIALIAS);
+        if (settings.ANTIALIAS_LEVEL > 0) {
+            glfwWindowHint(GLFW_STENCIL_BITS, settings.ANTIALIAS_LEVEL);
+            glfwWindowHint(GLFW_SAMPLES, settings.ANTIALIAS_LEVEL);
         }
 
         window = getWindow(settings.WINDOW_WIDTH, settings.WINDOW_HEIGHT);

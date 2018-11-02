@@ -1,6 +1,6 @@
 package NG.ScreenOverlay.Frames.Components;
 
-import NG.ActionHandling.MouseAnyClickListener;
+import NG.ActionHandling.MouseClickListener;
 import NG.ActionHandling.MouseReleaseListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import org.joml.Vector2ic;
@@ -10,7 +10,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 /**
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SCloseButton extends SComponent implements MouseReleaseListener, MouseAnyClickListener {
+public class SCloseButton extends SComponent implements MouseReleaseListener, MouseClickListener {
     private final SFrame frame;
     private boolean state = false;
 

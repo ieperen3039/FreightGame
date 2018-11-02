@@ -1,14 +1,14 @@
 package NG.ScreenOverlay.Frames.Components;
 
 import NG.ActionHandling.KeyPressListener;
-import NG.ActionHandling.MouseAnyClickListener;
+import NG.ActionHandling.MouseClickListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import org.joml.Vector2ic;
 
 /**
  * @author Geert van Ieperen. Created on 5-10-2018.
  */
-public class STextInput extends STextArea implements MouseAnyClickListener, KeyPressListener {
+public class STextInput extends STextArea implements MouseClickListener, KeyPressListener {
     public STextInput(int minHeight, boolean doGrowInWidth) {
         super("", minHeight, doGrowInWidth);
     }

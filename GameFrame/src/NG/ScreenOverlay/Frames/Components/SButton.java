@@ -1,6 +1,6 @@
 package NG.ScreenOverlay.Frames.Components;
 
-import NG.ActionHandling.MouseAnyClickListener;
+import NG.ActionHandling.MouseClickListener;
 import NG.ActionHandling.MouseReleaseListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.Tools.Logger;
@@ -15,7 +15,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 /**
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SButton extends SComponent implements MouseAnyClickListener, MouseReleaseListener {
+public class SButton extends SComponent implements MouseClickListener, MouseReleaseListener {
     private Collection<Runnable> leftClickListeners = new ArrayList<>();
     private Collection<Runnable> rightClickListeners = new ArrayList<>();
     private final int minHeight;

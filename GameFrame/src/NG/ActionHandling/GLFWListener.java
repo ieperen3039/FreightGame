@@ -20,7 +20,7 @@ import static org.lwjgl.glfw.GLFW.*;
 public class GLFWListener implements GameAspect {
     private final Collection<KeyPressListener> keyPressListeners;
     private final Collection<KeyReleaseListener> keyReleaseListeners;
-    private final Collection<MouseAnyClickListener> mouseClickListeners;
+    private final Collection<MouseClickListener> mouseClickListeners;
     private final Collection<MouseReleaseListener> mouseReleaseListeners;
     private final Collection<MouseScrollListener> mouseScrollListeners;
     private final Collection<MouseMoveListener> mouseMotionListeners;
@@ -66,7 +66,7 @@ public class GLFWListener implements GameAspect {
     /**
      * @param action upon mouse click, receives the {@link org.lwjgl.glfw.GLFW} mouse button that is pressed
      */
-    public void onMouseButtonClick(MouseAnyClickListener action) {
+    public void onMouseButtonClick(MouseClickListener action) {
         mouseClickListeners.add(action);
     }
 
