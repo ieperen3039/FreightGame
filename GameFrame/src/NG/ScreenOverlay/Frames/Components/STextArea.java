@@ -8,6 +8,7 @@ import org.joml.Vector2ic;
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
 public class STextArea extends SComponent {
+    public static final int LETTER_WIDTH = 15;
     protected final NGFonts.TextType textType;
     protected String text;
 
@@ -23,7 +24,7 @@ public class STextArea extends SComponent {
 
     @Override
     public int minWidth() {
-        return 0;
+        return text.length() * LETTER_WIDTH;
     }
 
     @Override

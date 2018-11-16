@@ -3,7 +3,6 @@ package NG.DataStructures.MatrixStack;
 import NG.Camera.Camera;
 import NG.DataStructures.Color4f;
 import NG.DataStructures.Material;
-import NG.Settings.Settings;
 import NG.Shaders.ShaderProgram;
 import NG.Tools.Toolbox;
 import org.joml.*;
@@ -26,7 +25,6 @@ public class ShaderUniformGL implements SGL {
 
     private ShaderProgram shader;
     private int nextLightIndex = 0;
-    private final boolean isometric;
 
     /**
      * @param shader the shader to use for rendering
@@ -36,7 +34,6 @@ public class ShaderUniformGL implements SGL {
      * @param isometric when true, no perspective transformation is used. This results in a retro tycoon style
      */
     public ShaderUniformGL(ShaderProgram shader, int windowWidth, int windowHeight, Camera viewpoint, boolean isometric) {
-        this.isometric = isometric;
         this.shader = shader;
 
         matrixStack = new Stack<>();
@@ -50,35 +47,11 @@ public class ShaderUniformGL implements SGL {
         Toolbox.checkGLError();
 
         modelMatrix = new Matrix4f();
-        viewProjectionMatrix = getProjection(windowWidth, windowHeight, viewpoint);
+        viewProjectionMatrix = SGL.getProjection(windowWidth, windowHeight, viewpoint, isometric);
 
         for (int i = 0; i < MAX_POINT_LIGHTS; i++) {
             shader.setPointLight(i, new Vector3f(), Color4f.INVISIBLE);
         }
-    }
-
-    private Matrix4f getProjection(float windowWidth, float windowHeight, Camera camera) {
-        Matrix4f vpMatrix = new Matrix4f();
-
-
-        // Set the projection.
-        float aspectRatio = windowWidth / windowHeight;
-
-        if (isometric) {
-            float visionSize = camera.vectorToFocus().length();
-            vpMatrix.orthoSymmetric(aspectRatio * visionSize, visionSize, Settings.Z_NEAR, Settings.Z_FAR);
-        } else {
-            vpMatrix.setPerspective(Settings.FOV, aspectRatio, Settings.Z_NEAR, Settings.Z_FAR);
-        }
-
-        // set the view
-        vpMatrix.lookAt(
-                camera.getEye(),
-                camera.getFocus(),
-                camera.getUpVector()
-        );
-
-        return vpMatrix;
     }
 
     @Override

@@ -76,6 +76,11 @@ public class CircleTrack implements TrackPiece {
     public void draw(SGL gl) {
         type.drawCircle(gl, center, radius, startRadian, endRadian, game.map());
     }
+
+    @Override
+    public void onClick(int button) {
+
+    }
 }
 
 /* derivation of radius calculation

@@ -1,8 +1,5 @@
 package NG.ScreenOverlay.Frames;
 
-import NG.ActionHandling.MouseClickListener;
-import NG.ActionHandling.MouseMoveListener;
-import NG.ActionHandling.MouseReleaseListener;
 import NG.Engine.GameAspect;
 import NG.ScreenOverlay.Frames.Components.SComponent;
 import NG.ScreenOverlay.Frames.Components.SFrame;
@@ -12,7 +9,7 @@ import NG.ScreenOverlay.ToolBar;
 /**
  * @author Geert van Ieperen. Created on 29-9-2018.
  */
-public interface GUIManager extends GameAspect, MouseClickListener, MouseReleaseListener, MouseMoveListener {
+public interface GUIManager extends GameAspect, ClickHandler {
 
     /** draws every frome, starting from the last to most previously focussed. */
     void draw(ScreenOverlay.Painter painter);
@@ -61,4 +58,5 @@ public interface GUIManager extends GameAspect, MouseClickListener, MouseRelease
      * @param toolBar any toolbar, or null to remove the toolbar
      */
     void setToolBar(ToolBar toolBar);
+
 }

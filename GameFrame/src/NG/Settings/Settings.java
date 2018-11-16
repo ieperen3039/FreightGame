@@ -7,9 +7,9 @@ package NG.Settings;
 public class Settings {
     public static final String GAME_NAME = "Freight Game"; // laaaaame
     public boolean DEBUG = true;
+    public int TARGET_TPS = 10;
 
     public static int TOOL_BAR_HEIGHT = 80;
-
 
     public int TARGET_FPS = 60;
     public boolean V_SYNC = true;
@@ -20,7 +20,9 @@ public class Settings {
     public static float Z_FAR = 2000;
     public int MAX_POINT_LIGHTS = 20;
     public int ANTIALIAS_LEVEL = 1;
+    public static boolean ISOMETRIC_VIEW = true;
+
+    public static int STATION_RANGE = 5;
 
     public float TRACK_SPACING = 0.1f;
-    public int TARGET_TPS = 10;
 }

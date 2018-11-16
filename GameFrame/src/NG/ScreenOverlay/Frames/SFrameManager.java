@@ -17,7 +17,7 @@ import java.util.*;
 /**
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
-public class SFrameManager implements GUIManager {
+public class SFrameManager implements GUIManager, MouseReleaseListener, MouseMoveListener {
     private Game game;
     /** the first element in this list has focus */
     private Deque<SFrame> frames;
@@ -38,7 +38,6 @@ public class SFrameManager implements GUIManager {
     public void init(Game game) {
         this.game = game;
         GLFWListener callbacks = game.callbacks();
-        callbacks.onMouseButtonClick(this);
         callbacks.onMouseMove(this);
         callbacks.onMouseRelease(this);
     }
@@ -133,8 +132,8 @@ public class SFrameManager implements GUIManager {
     }
 
     @Override
-    public void onClick(int button, int xSc, int ySc) {
-        if (dragListener != null) return;
+    public boolean processClick(int button, int xSc, int ySc) {
+        if (dragListener != null) return true;
         dragButton = button;
 
         if (modalSection != null) {
@@ -142,7 +141,7 @@ public class SFrameManager implements GUIManager {
             Vector2ic modalPosition = modalSection.getScreenPosition();
             asListener.onClick(button, xSc - modalPosition.x(), ySc - modalPosition.y());
             modalSection = null;
-            return;
+            return true;
         }
 
         if (toolBar.isPresent()) {
@@ -150,6 +149,7 @@ public class SFrameManager implements GUIManager {
             if (bar.contains(xSc, ySc)) {
                 bar.onClick(button, xSc, ySc);
                 releaseListener = bar;
+                return true;
             }
         }
 
@@ -175,9 +175,11 @@ public class SFrameManager implements GUIManager {
                 dragListener = (component instanceof MouseMoveListener) ? (MouseMoveListener) component : null;
                 releaseListener = (component instanceof MouseReleaseListener) ? (MouseReleaseListener) component : null;
 
-                return; // only for top-most frame
+                return true; // only for top-most frame
             }
         }
+
+        return false;
     }
 
     @Override

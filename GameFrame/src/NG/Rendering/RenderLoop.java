@@ -70,7 +70,7 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
             shader.setUniforms(game);
 
             // GL object
-            SGL gl = new ShaderUniformGL(shader, sett.WINDOW_WIDTH, sett.WINDOW_HEIGHT, game.camera(), true);
+            SGL gl = new ShaderUniformGL(shader, sett.WINDOW_WIDTH, sett.WINDOW_HEIGHT, game.camera(), Settings.ISOMETRIC_VIEW);
 
             world.draw(gl);
             entities.draw(gl);

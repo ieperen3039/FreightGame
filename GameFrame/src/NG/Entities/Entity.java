@@ -9,4 +9,6 @@ public interface Entity {
     void update();
 
     void draw(SGL gl);
+
+    void onClick(int button);
 }

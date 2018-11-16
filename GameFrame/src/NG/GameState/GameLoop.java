@@ -6,6 +6,8 @@ import NG.Engine.Game;
 import NG.Entities.Entity;
 import NG.Entities.MovingEntity;
 import NG.Tools.Toolbox;
+import org.joml.Vector3fc;
+import org.joml.Vector4f;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -78,6 +80,29 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         }
     }
 
+    @Override
+    public Entity getEntityByRay(Vector4f from, Vector4f to) {
+        return null;
+    }
+
+    @Override
+    public List<Storage> getIndustriesByRange(Vector3fc position, int range) {
+        final int rangeSq = range * range;
+        List<Storage> industries = new ArrayList<>();
+
+        //TODO efficiency
+        for (Entity entity : dynamicEntities) {
+            if (entity instanceof Storage) {
+                Storage industry = (Storage) entity;
+                if (industry.getPosition().distanceSquared(position) < rangeSq) {
+                    industries.add(industry);
+                }
+            }
+        }
+
+        return industries;
+    }
+
     /** defer is sync'd with {@link #runPostUpdateActions()} */
     public synchronized void defer(Runnable action) {
         postUpdateActionQueue.offer(action);
@@ -103,5 +128,11 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     @Override
     public void readFromFile(DataInput in) {
 
+    }
+
+    @Override
+    public boolean processClick(int button, int xSc, int ySc) {
+        // TODO allow a listener that catches any click
+        return false;
     }
 }

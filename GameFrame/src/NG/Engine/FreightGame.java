@@ -3,6 +3,8 @@ package NG.Engine;
 import NG.ActionHandling.GLFWListener;
 import NG.Camera.Camera;
 import NG.Camera.PointCenteredCamera;
+import NG.DataStructures.MatrixStack.SGL;
+import NG.Entities.Entity;
 import NG.GameState.GameLoop;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
@@ -20,8 +22,11 @@ import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
+import NG.Tracks.BuildMenu;
 import NG.Tracks.TrackMod;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -83,6 +88,8 @@ public class FreightGame implements Game, ModLoader {
         inputHandler.init(this);
         frameManager.init(this);
         gameMap.init(this);
+
+        inputHandler.onMouseButtonClick(this::onClick);
 
         renderer.addHudItem(frameManager::draw);
         mainMenu = new MainMenu(this, this, renderer::stopLoop);
@@ -224,8 +231,9 @@ public class FreightGame implements Game, ModLoader {
         mainMenu.setVisible(false);
         ToolBar toolBar = new ToolBar(this);
         toolBar.addButton("Exit", this::stopGame);
-        toolBar.addButton("$$$", () -> {
-        });
+        toolBar.addButton("$$$", () -> Logger.INFO.print("( $$ _ $$) =8|$$$|"));
+        toolBar.addSeparator();
+        toolBar.addButton("B", () -> frameManager.addFrame(new BuildMenu()));
         frameManager.setToolBar(toolBar);
         gameState.start();
     }
@@ -236,4 +244,15 @@ public class FreightGame implements Game, ModLoader {
         mainMenu.setVisible(true);
     }
 
+    private void onClick(int button, int x, int y) {
+        if (frameManager.processClick(button, x, y)) return;
+        if (gameState.processClick(button, x, y)) return;
+
+        Matrix4f projection = SGL.getProjection(window.getWidth(), window.getHeight(), camera, Settings.ISOMETRIC_VIEW);
+        Vector4f from = projection.transform(new Vector4f(x, y, 1, 0));
+        Vector4f to = projection.transform(new Vector4f(x, y, -1, 0));
+
+        Entity target = gameState.getEntityByRay(from, to);
+        if (target != null) target.onClick(button);
+    }
 }
