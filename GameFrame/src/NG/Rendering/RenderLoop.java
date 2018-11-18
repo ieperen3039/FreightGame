@@ -53,8 +53,6 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
     protected void update(float deltaTime) {
         Toolbox.checkGLError();
 
-        Settings sett = game.settings();
-
         // current time
         game.timer().updateRenderTime();
 
@@ -64,20 +62,24 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
 
         GameMap world = game.map();
         GameState entities = game.state();
+        int windowWidth = game.window().getWidth();
+        int window_height = game.window().getHeight();
+
         for (ShaderProgram shader : shaders) {
             // shader uniforms
             shader.bind();
             shader.setUniforms(game);
 
             // GL object
-            SGL gl = new ShaderUniformGL(shader, sett.WINDOW_WIDTH, sett.WINDOW_HEIGHT, game.camera(), Settings.ISOMETRIC_VIEW);
+            SGL gl = new ShaderUniformGL(shader, windowWidth, window_height, game.camera(), Settings.ISOMETRIC_VIEW);
 
+            entities.drawLights(gl);
             world.draw(gl);
             entities.draw(gl);
             shader.unbind();
         }
 
-        overlay.draw(sett.WINDOW_WIDTH, sett.WINDOW_HEIGHT, 10, 10, 12);
+        overlay.draw(windowWidth, window_height, 10, 10, 12);
 
         // update window
         game.window().update();

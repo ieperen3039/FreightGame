@@ -22,6 +22,7 @@ struct Material
 };
 
 const int MAX_POINT_LIGHTS = 20;
+const float MIN_LIGHT_INTENSITY = 0.001;
 
 uniform float specularPower;
 uniform Material material;
@@ -38,7 +39,14 @@ vec4 speculrC;
 vec3 calculateLighting(vec3 P, vec3 N, vec3 eye, PointLight light){
     vec3 result = vec3(0.0, 0.0, 0.0);
 
-	vec3 lightDirection = normalize(light.mPosition.xyz - P); //vector towards light source
+    vec3 vecToLight = light.mPosition.xyz - P;
+    float distance = length(vecToLight);
+    if ((light.intensity / distance) < MIN_LIGHT_INTENSITY) {
+        return vec3(0.0, 0.0, 0.0);
+    }
+
+	vec3 lightDirection = vecToLight / distance;
+
     // diffuse component
     float intensity = max(0.0, dot(N, lightDirection));
     result += intensity * light.color * material.diffuse.xyz;
@@ -51,7 +59,8 @@ vec3 calculateLighting(vec3 P, vec3 N, vec3 eye, PointLight light){
     //float shine = pow( max(0.0, dot(N, HalfAngle) ), mat.shininess );
     result += pow(shine, specularPower) * light.color;
 
-	return result;
+    // falloff
+	return result / distance;
 }
 
 void main()

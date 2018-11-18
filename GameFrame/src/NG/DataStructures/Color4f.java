@@ -87,7 +87,7 @@ public class Color4f {
         red = source.red;
         green = source.green;
         blue = source.blue;
-        alpha = intensity;
+        alpha = cap(intensity);
     }
 
     public Color4f(float[] values) {

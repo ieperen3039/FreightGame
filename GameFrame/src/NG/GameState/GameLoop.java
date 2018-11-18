@@ -1,10 +1,11 @@
 package NG.GameState;
 
+import NG.DataStructures.Color4f;
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.AbstractGameLoop;
 import NG.Engine.Game;
 import NG.Entities.Entity;
-import NG.Entities.MovingEntity;
+import NG.Rendering.Light;
 import NG.Tools.Toolbox;
 import org.joml.Vector3fc;
 import org.joml.Vector4f;
@@ -22,7 +23,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
 public class GameLoop extends AbstractGameLoop implements GameState {
-    private final List<Entity> dynamicEntities;
+    private final List<Entity> entities;
+    private final List<Light> lights;
+
     private Deque<Runnable> postUpdateActionQueue;
     private Game game;
 
@@ -30,10 +33,12 @@ public class GameLoop extends AbstractGameLoop implements GameState {
 
     public GameLoop(String gameName, int targetTps) {
         super("Gameloop " + gameName, targetTps);
-        this.dynamicEntities = new ArrayList<>();
-        postUpdateActionQueue = new ConcurrentLinkedDeque<>();
+        this.entities = new ArrayList<>();
+        this.lights = new ArrayList<>();
+        this.postUpdateActionQueue = new ConcurrentLinkedDeque<>();
+        this.drawLock = new ReentrantLock();
 
-        drawLock = new ReentrantLock();
+        lights.add(new Light(100, 100, 10, Color4f.YELLOW, 0.5f));
     }
 
     @Override
@@ -47,12 +52,12 @@ public class GameLoop extends AbstractGameLoop implements GameState {
      * @see #defer(Runnable)
      */
     @Override
-    public void addEntity(MovingEntity entity) {
+    public void addEntity(Entity entity) {
         // Thanks to the reentrant mechanism, this may also be executed by a deferred action.
         defer(() -> {
             drawLock.lock();
             try {
-                dynamicEntities.add(entity);
+                entities.add(entity);
             } finally {
                 drawLock.unlock();
             }
@@ -64,7 +69,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
      */
     public void update(float deltaTime) {
         runPostUpdateActions();
-        dynamicEntities.forEach(Entity::update);
+        entities.forEach(Entity::update);
         runPostUpdateActions();
     }
 
@@ -73,7 +78,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         drawLock.lock();
         try {
             Toolbox.drawAxisFrame(gl);
-            dynamicEntities.forEach(entity -> entity.draw(gl));
+            entities.forEach(entity -> entity.draw(gl));
 
         } finally {
             drawLock.unlock();
@@ -91,7 +96,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         List<Storage> industries = new ArrayList<>();
 
         //TODO efficiency
-        for (Entity entity : dynamicEntities) {
+        for (Entity entity : entities) {
             if (entity instanceof Storage) {
                 Storage industry = (Storage) entity;
                 if (industry.getPosition().distanceSquared(position) < rangeSq) {
@@ -101,6 +106,13 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         }
 
         return industries;
+    }
+
+    @Override
+    public void drawLights(SGL gl) {
+        for (Light light : lights) {
+            light.draw(gl);
+        }
     }
 
     /** defer is sync'd with {@link #runPostUpdateActions()} */
@@ -118,7 +130,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     @Override
     public void cleanup() {
         stopLoop(); // possibly this did not happen
-        dynamicEntities.clear();
+        entities.clear();
     }
 
     @Override

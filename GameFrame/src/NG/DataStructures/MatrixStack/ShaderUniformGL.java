@@ -73,7 +73,10 @@ public class ShaderUniformGL implements SGL {
     @Override
     public void setMaterial(Material material, Color4f color) {
         // TODO set material
-        shader.setMaterial(color, Color4f.WHITE, 10);
+        Color4f baseColor = material.baseColor.overlay(color);
+        Color4f specular = material.specular.overlay(color);
+
+        shader.setMaterial(baseColor, specular, material.reflectance);
     }
 
     @Override

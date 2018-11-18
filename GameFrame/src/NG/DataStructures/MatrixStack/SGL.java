@@ -21,7 +21,7 @@ public interface SGL extends MatrixStack {
     void render(Mesh object);
 
     /**
-     * sets a light in the scene for this frame only
+     * sets a light in the scene for this frame only. Only affects objects drawn after this light.
      * @param pos        the position of the light
      * @param lightColor the color of the light, where alpha determines the brightness
      */
