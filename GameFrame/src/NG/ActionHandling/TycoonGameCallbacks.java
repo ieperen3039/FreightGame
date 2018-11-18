@@ -15,6 +15,7 @@ import static org.lwjgl.glfw.GLFW.*;
  */
 public class TycoonGameCallbacks implements GameAspect, KeyMouseCallbacks {
     private final Collection<KeyPressListener> keyPressListeners = new ArrayList<>();
+    private final Collection<KeyReleaseListener> keyReleaseListeners = new ArrayList<>();
     private final Collection<MousePositionListener> mousePositionListeners = new ArrayList<>();
 
     private KeyTypeListener keyTypeListener = null;
@@ -45,12 +46,18 @@ public class TycoonGameCallbacks implements GameAspect, KeyMouseCallbacks {
     }
 
     @Override
+    public void addKeyReleaseListener(KeyReleaseListener listener) {
+        keyReleaseListeners.add(listener);
+    }
+
+    @Override
     @SuppressWarnings("SuspiciousMethodCalls")
     public boolean removeListener(Object listener) {
         boolean mp = mousePositionListeners.remove(listener);
         boolean kp = keyPressListeners.remove(listener);
+        boolean kr = keyReleaseListeners.remove(listener);
 
-        return mp || kp;
+        return mp || kp || kr;
     }
 
     /**
@@ -90,7 +97,13 @@ public class TycoonGameCallbacks implements GameAspect, KeyMouseCallbacks {
         public void invoke(long window, int keyCode, int scanCode, int action, int mods) {
             if (keyCode < 0) return;
             if (action == GLFW_PRESS) {
-                keyPressListeners.forEach(l -> l.keyPressed(keyCode));
+                for (KeyPressListener l : keyPressListeners) {
+                    l.keyPressed(keyCode);
+                }
+            } else if (action == GLFW_RELEASE) {
+                for (KeyReleaseListener l : keyReleaseListeners) {
+                    l.keyReleased(keyCode);
+                }
             }
         }
     }

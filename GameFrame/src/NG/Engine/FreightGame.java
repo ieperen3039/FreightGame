@@ -67,7 +67,7 @@ public class FreightGame implements Game, ModLoader {
         time = new GameTimer();
 
 //        camera = new StaticCamera(Vectors.zeroVector(), Vectors.zVector());
-        camera = new TycoonFixedCamera(new Vector3f(), 20);
+        camera = new TycoonFixedCamera(new Vector3f(), 100);
         window = new GLFWWindow(Settings.GAME_NAME, true);
         renderer = new RenderLoop(settings.TARGET_FPS);
         gameState = new GameLoop(Settings.GAME_NAME, settings.TARGET_TPS);

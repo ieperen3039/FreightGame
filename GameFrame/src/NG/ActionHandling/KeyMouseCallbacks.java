@@ -14,6 +14,8 @@ public interface KeyMouseCallbacks {
      */
     void addKeyPressListener(KeyPressListener listener);
 
+    void addKeyReleaseListener(KeyReleaseListener listener);
+
     /**
      * Try to remove the given listener from all of the listener types, except for mouse move listeners. Even if the
      * given listener is of multiple types, all of them are removed.
