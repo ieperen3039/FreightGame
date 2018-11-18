@@ -17,42 +17,27 @@ import static org.lwjgl.glfw.GLFW.*;
  * A mapping from lambda functions to GLFW callbacks
  * @author Geert van Ieperen. Created on 16-9-2018.
  */
-public class GLFWListener implements GameAspect {
-    private final Collection<KeyPressListener> keyPressListeners;
-    private final Collection<KeyReleaseListener> keyReleaseListeners;
-    private final Collection<MouseClickListener> mouseClickListeners;
-    private final Collection<MouseReleaseListener> mouseReleaseListeners;
-    private final Collection<MouseScrollListener> mouseScrollListeners;
-    private final Collection<MouseMoveListener> mouseMotionListeners;
+public class GenericListeners implements GameAspect {
+    private final Collection<KeyPressListener> keyPressListeners = new ArrayList<>();
+    private final Collection<KeyReleaseListener> keyReleaseListeners = new ArrayList<>();
+    private final Collection<MouseClickListener> mouseClickListeners = new ArrayList<>();
+    private final Collection<MouseReleaseListener> mouseReleaseListeners = new ArrayList<>();
+    private final Collection<MouseScrollListener> mouseScrollListeners = new ArrayList<>();
+    private final Collection<MouseMoveListener> mouseMotionListeners = new ArrayList<>();
 
-    private final Set<Integer> clickedButtons;
-    private final Map<Integer, Collection<MouseMoveListener>> mouseDragListeners;
-
-    public GLFWListener() {
-        this.keyPressListeners = new ArrayList<>();
-        this.keyReleaseListeners = new ArrayList<>();
-        this.mouseClickListeners = new ArrayList<>();
-        this.mouseReleaseListeners = new ArrayList<>();
-        this.mouseScrollListeners = new ArrayList<>();
-        this.mouseMotionListeners = new ArrayList<>();
-        this.mouseDragListeners = new HashMap<>();
-        this.clickedButtons = new HashSet<>();
-    }
+    private final Set<Integer> clickedButtons = new HashSet<>();
+    private final Map<Integer, Collection<MouseMoveListener>> mouseDragListeners = new HashMap<>();
 
     @Override
     public void init(Game game) {
         GLFWWindow target = game.window();
-
-        target.registerListener(new KeyPressCallback());
-        target.registerListener(new MouseButtonPressCallback());
-        target.registerListener(new MouseScrollCallback());
-        target.registerListener(new MouseMoveCallback());
+        target.setCallbacks(new KeyPressCallback(), new MouseButtonPressCallback(), new MouseMoveCallback(), new MouseScrollCallback());
     }
 
     /**
      * @param action upon key press, receives the {@link org.lwjgl.glfw.GLFW} key that is pressed
      */
-    public void onKeyPress(KeyPressListener action) {
+    public void addKeyPressListener(KeyPressListener action) {
         keyPressListeners.add(action);
     }
 
@@ -180,7 +165,7 @@ public class GLFWListener implements GameAspect {
     private class MouseScrollCallback extends GLFWScrollCallback {
         @Override
         public void invoke(long windowHandle, double xScroll, double yScroll) {
-            mouseScrollListeners.forEach(l -> l.mouseScrolled(yScroll));
+            mouseScrollListeners.forEach(l -> l.mouseScrolled((float) yScroll));
         }
     }
 

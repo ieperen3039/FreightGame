@@ -5,5 +5,9 @@ package NG.ActionHandling;
  */
 @FunctionalInterface
 public interface KeyPressListener {
+    /**
+     * is called when a key is pressed
+     * @param keyCode
+     */
     void keyPressed(int keyCode);
 }

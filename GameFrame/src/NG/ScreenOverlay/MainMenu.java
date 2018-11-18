@@ -8,7 +8,6 @@ import NG.GameState.MapGeneratorMod;
 import NG.Mods.Mod;
 import NG.ScreenOverlay.Frames.Components.*;
 import NG.Tools.Logger;
-import NG.Tools.Vectors;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 
@@ -74,8 +73,7 @@ public class MainMenu extends SFrame {
 
         // set camera to middle of map
         Vector3f cameraFocus = new Vector3f(xSize / 2, ySize / 2, 0);
-        Vector3f cameraEye = cameraFocus.add(10, 10, 10, new Vector3f());
-        game.camera().set(cameraEye, cameraFocus, Vectors.zVector());
+        game.camera().setFocus(cameraFocus);
 
         // start
         modLoader.startGame();
@@ -178,7 +176,7 @@ public class MainMenu extends SFrame {
                 // set camera to middle of map
                 Vector3f cameraFocus = new Vector3f(xSize / 2, ySize / 2, 0);
                 Vector3f cameraEye = cameraFocus.add(10, 10, 10, new Vector3f());
-                game.camera().set(cameraEye, cameraFocus, Vectors.zVector());
+                game.camera().setFocus(cameraFocus);
 
                 // start
                 modLoader.startGame();

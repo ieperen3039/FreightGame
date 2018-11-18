@@ -3,6 +3,7 @@ package NG.GameState;
 import NG.Engine.Game;
 import NG.Engine.Version;
 import NG.Tools.Toolbox;
+import org.joml.SimplexNoise;
 
 /**
  * @author Geert van Ieperen. Created on 27-9-2018.
@@ -22,6 +23,11 @@ public class FlatMapGenerator implements MapGeneratorMod {
     @Override
     public float[][] generateHeightMap() {
         float[][] map = new float[width][height];
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                map[x][y] = SimplexNoise.noise(x, y);
+            }
+        }
         progress = 1;
         return map;
     }

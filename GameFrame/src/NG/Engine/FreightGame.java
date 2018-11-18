@@ -1,8 +1,9 @@
 package NG.Engine;
 
-import NG.ActionHandling.GLFWListener;
+import NG.ActionHandling.KeyMouseCallbacks;
+import NG.ActionHandling.TycoonGameCallbacks;
 import NG.Camera.Camera;
-import NG.Camera.PointCenteredCamera;
+import NG.Camera.TycoonFixedCamera;
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Entities.Entity;
 import NG.GameState.GameLoop;
@@ -21,7 +22,6 @@ import NG.ScreenOverlay.ToolBar;
 import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
-import NG.Tools.Vectors;
 import NG.Tracks.BuildMenu;
 import NG.Tracks.TrackMod;
 import org.joml.Matrix4f;
@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * A game of planning and making money.
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public class FreightGame implements Game, ModLoader {
@@ -43,7 +44,7 @@ public class FreightGame implements Game, ModLoader {
     private final RenderLoop renderer;
     private final Settings settings;
     private final GLFWWindow window;
-    private final GLFWListener inputHandler;
+    private final TycoonGameCallbacks inputHandler;
     private final GUIManager frameManager;
     private MainMenu mainMenu;
 
@@ -66,12 +67,12 @@ public class FreightGame implements Game, ModLoader {
         time = new GameTimer();
 
 //        camera = new StaticCamera(Vectors.zeroVector(), Vectors.zVector());
-        camera = new PointCenteredCamera(new Vector3f(20, 20, 20), Vectors.zeroVector());
+        camera = new TycoonFixedCamera(new Vector3f(), 20);
         window = new GLFWWindow(Settings.GAME_NAME, true);
         renderer = new RenderLoop(settings.TARGET_FPS);
         gameState = new GameLoop(Settings.GAME_NAME, settings.TARGET_TPS);
         gameMap = new HeightMap();
-        inputHandler = new GLFWListener();
+        inputHandler = new TycoonGameCallbacks();
         frameManager = new SFrameManager();
 
         // load mods
@@ -89,7 +90,9 @@ public class FreightGame implements Game, ModLoader {
         frameManager.init(this);
         gameMap.init(this);
 
-        inputHandler.onMouseButtonClick(this::onClick);
+        inputHandler.setMouseClickListener(this::onClick);
+        inputHandler.setMouseReleaseListener(frameManager);
+        inputHandler.setScrollListener(this::onScroll);
 
         renderer.addHudItem(frameManager::draw);
         mainMenu = new MainMenu(this, this, renderer::stopLoop);
@@ -135,12 +138,6 @@ public class FreightGame implements Game, ModLoader {
         }
     }
 
-    @Override
-    public void cleanMods() {
-        activeMods.forEach(Mod::cleanup);
-        activeMods.clear();
-    }
-
     public void root() throws Exception {
         init();
         Logger.INFO.print("Starting game...\n");
@@ -154,12 +151,22 @@ public class FreightGame implements Game, ModLoader {
         cleanup();
     }
 
-    private void cleanup() {
-        window.cleanup();
-        renderer.cleanup();
-        camera.cleanup();
-        gameState.cleanup();
-        inputHandler.cleanup();
+    @Override
+    public void startGame() {
+        mainMenu.setVisible(false);
+        ToolBar toolBar = new ToolBar(this);
+        toolBar.addButton("Exit", this::stopGame);
+        toolBar.addButton("$$$", () -> Logger.INFO.print("You are given one (1) arbitrary value(s)"));
+        toolBar.addSeparator();
+        toolBar.addButton("B", () -> frameManager.addFrame(new BuildMenu()));
+        frameManager.setToolBar(toolBar);
+        gameState.start();
+    }
+
+    private void stopGame() {
+        gameState.stopLoop();
+        frameManager.setToolBar(null);
+        mainMenu.setVisible(true);
     }
 
     @Override
@@ -193,7 +200,7 @@ public class FreightGame implements Game, ModLoader {
     }
 
     @Override
-    public GLFWListener callbacks() {
+    public KeyMouseCallbacks callbacks() {
         return inputHandler;
     }
 
@@ -212,7 +219,7 @@ public class FreightGame implements Game, ModLoader {
         return Collections.unmodifiableList(allMods);
     }
 
-    public void doAfterGameLoop(Runnable action) {
+    public void doAfterGameTick(Runnable action) {
         gameState.defer(action);
     }
 
@@ -226,24 +233,6 @@ public class FreightGame implements Game, ModLoader {
         return null;
     }
 
-    @Override
-    public void startGame() {
-        mainMenu.setVisible(false);
-        ToolBar toolBar = new ToolBar(this);
-        toolBar.addButton("Exit", this::stopGame);
-        toolBar.addButton("$$$", () -> Logger.INFO.print("( $$ _ $$) =8|$$$|"));
-        toolBar.addSeparator();
-        toolBar.addButton("B", () -> frameManager.addFrame(new BuildMenu()));
-        frameManager.setToolBar(toolBar);
-        gameState.start();
-    }
-
-    private void stopGame() {
-        gameState.stopLoop();
-        frameManager.setToolBar(null);
-        mainMenu.setVisible(true);
-    }
-
     private void onClick(int button, int x, int y) {
         if (frameManager.processClick(button, x, y)) return;
         if (gameState.processClick(button, x, y)) return;
@@ -254,5 +243,23 @@ public class FreightGame implements Game, ModLoader {
 
         Entity target = gameState.getEntityByRay(from, to);
         if (target != null) target.onClick(button);
+    }
+
+    private void onScroll(float value) {
+        camera.mouseScrolled(value);
+    }
+
+    private void cleanup() {
+        window.cleanup();
+        renderer.cleanup();
+        camera.cleanup();
+        gameState.cleanup();
+        inputHandler.cleanup();
+    }
+
+    @Override
+    public void cleanMods() {
+        activeMods.forEach(Mod::cleanup);
+        activeMods.clear();
     }
 }

@@ -1,6 +1,6 @@
 package NG.Camera;
 
-import NG.Engine.Game;
+import NG.ActionHandling.MouseScrollListener;
 import NG.Engine.GameAspect;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -8,13 +8,7 @@ import org.joml.Vector3fc;
 /**
  * @author Geert van Ieperen created on 29-10-2017.
  */
-public interface Camera extends GameAspect {
-
-    /**
-     * initialize the camera and its fields
-     */
-    void init(Game game);
-
+public interface Camera extends GameAspect, MouseScrollListener {
     /**
      * a copy of the direction vector of the eye of the camera to the focus of the camera.
      * @return {@link #getEye()}.to({@link #getFocus()}) The length of this vector may differ by implementation
@@ -36,5 +30,6 @@ public interface Camera extends GameAspect {
     /** a copy of the direction of up, the length of this vector is undetermined. */
     Vector3fc getUpVector();
 
-    void set(Vector3fc eye, Vector3fc focus, Vector3fc up);
+    /** sets the current state of the camera to return the given values for eye, focus and up */
+    void setFocus(Vector3fc focus);
 }

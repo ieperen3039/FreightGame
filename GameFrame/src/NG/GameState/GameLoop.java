@@ -117,6 +117,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
 
     @Override
     public void cleanup() {
+        stopLoop(); // possibly this did not happen
         dynamicEntities.clear();
     }
 

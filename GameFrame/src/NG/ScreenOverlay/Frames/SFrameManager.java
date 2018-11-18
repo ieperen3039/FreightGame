@@ -1,9 +1,10 @@
 package NG.ScreenOverlay.Frames;
 
-import NG.ActionHandling.GLFWListener;
+import NG.ActionHandling.KeyMouseCallbacks;
 import NG.ActionHandling.MouseClickListener;
 import NG.ActionHandling.MouseMoveListener;
 import NG.ActionHandling.MouseReleaseListener;
+import NG.DataStructures.Tracked.TrackedInteger;
 import NG.Engine.Game;
 import NG.ScreenOverlay.Frames.Components.SComponent;
 import NG.ScreenOverlay.Frames.Components.SFrame;
@@ -17,13 +18,15 @@ import java.util.*;
 /**
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
-public class SFrameManager implements GUIManager, MouseReleaseListener, MouseMoveListener {
+public class SFrameManager implements GUIManager {
     private Game game;
     /** the first element in this list has focus */
     private Deque<SFrame> frames;
     private int dragButton = 0;
     private MouseMoveListener dragListener = null;
     private MouseReleaseListener releaseListener = null;
+    private TrackedInteger cameraXPos = new TrackedInteger(0);
+    private TrackedInteger cameraYPos = new TrackedInteger(0);
 
     private SComponent modalSection;
 
@@ -37,9 +40,8 @@ public class SFrameManager implements GUIManager, MouseReleaseListener, MouseMov
     @Override
     public void init(Game game) {
         this.game = game;
-        GLFWListener callbacks = game.callbacks();
-        callbacks.onMouseMove(this);
-        callbacks.onMouseRelease(this);
+        KeyMouseCallbacks callbacks = game.callbacks();
+        callbacks.addMousePositionListener(this);
     }
 
     @Override
@@ -172,7 +174,15 @@ public class SFrameManager implements GUIManager, MouseReleaseListener, MouseMov
                     Vector2ic pos = component.getScreenPosition();
                     cl.onClick(button, xSc - pos.x(), ySc - pos.y());
                 }
-                dragListener = (component instanceof MouseMoveListener) ? (MouseMoveListener) component : null;
+
+                if (component instanceof MouseMoveListener) {
+                    dragListener = (MouseMoveListener) component;
+                    cameraXPos.update(xSc);
+                    cameraYPos.update(ySc);
+                } else {
+                    dragListener = null;
+                }
+
                 releaseListener = (component instanceof MouseReleaseListener) ? (MouseReleaseListener) component : null;
 
                 return true; // only for top-most frame
@@ -194,8 +204,13 @@ public class SFrameManager implements GUIManager, MouseReleaseListener, MouseMov
     }
 
     @Override
-    public void mouseMoved(int xDelta, int yDelta) {
+    public void mouseMoved(int xPos, int yPos) {
         if (dragListener == null) return;
+
+        cameraXPos.update(xPos);
+        cameraYPos.update(yPos);
+        int xDelta = cameraXPos.difference();
+        int yDelta = cameraYPos.difference();
         dragListener.mouseMoved(xDelta, yDelta);
     }
 }

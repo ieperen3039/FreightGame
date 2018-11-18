@@ -313,28 +313,6 @@ public class GLFWWindow implements GameAspect {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
 
-    /**
-     * Register a listener for window events.
-     * @param callback The callback function which is called on event firing.
-     */
-    public void registerListener(Object callback) {
-        if (callback instanceof GLFWKeyCallbackI) {
-            glfwSetKeyCallback(window, (GLFWKeyCallbackI) callback);
-
-        } else if (callback instanceof GLFWMouseButtonCallbackI) {
-            glfwSetMouseButtonCallback(window, (GLFWMouseButtonCallbackI) callback);
-
-        } else if (callback instanceof GLFWCursorPosCallbackI) {
-            glfwSetCursorPosCallback(window, (GLFWCursorPosCallbackI) callback);
-
-        } else if (callback instanceof GLFWScrollCallbackI) {
-            glfwSetScrollCallback(window, (GLFWScrollCallbackI) callback);
-
-        } else {
-            Logger.ERROR.print("Could not register callback " + callback);
-        }
-    }
-
     public void setFullScreen() {
         GLFWVidMode vidmode = glfwGetVideoMode(primaryMonitor);
         glfwSetWindowMonitor(window, primaryMonitor, 0, 0, vidmode.width(), vidmode.height(), game.settings().TARGET_FPS);
@@ -388,5 +366,18 @@ public class GLFWWindow implements GameAspect {
         setClearColor(color4f.red, color4f.green, color4f.blue, color4f.alpha);
     }
 
+    /**
+     * Sets the callbacks to the given listeners. The values that are null are skipped.
+     */
+    public void setCallbacks(GLFWKeyCallbackI key, GLFWMouseButtonCallbackI mousePress, GLFWCursorPosCallbackI mouseMove, GLFWScrollCallbackI mouseScroll) {
+        if (key != null) glfwSetKeyCallback(window, key);
+        if (mousePress != null) glfwSetMouseButtonCallback(window, mousePress);
+        if (mouseMove != null) glfwSetCursorPosCallback(window, mouseMove);
+        if (mouseScroll != null) glfwSetScrollCallback(window, mouseScroll);
+    }
+
+    public void setTextCallback(GLFWCharCallbackI input) {
+        glfwSetCharCallback(window, input);
+    }
 }
 

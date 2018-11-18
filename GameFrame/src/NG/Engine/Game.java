@@ -1,6 +1,6 @@
 package NG.Engine;
 
-import NG.ActionHandling.GLFWListener;
+import NG.ActionHandling.KeyMouseCallbacks;
 import NG.Camera.Camera;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
@@ -26,7 +26,7 @@ public interface Game {
 
     GLFWWindow window();
 
-    GLFWListener callbacks();
+    KeyMouseCallbacks callbacks();
 
     GUIManager gui();
 
