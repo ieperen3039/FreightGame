@@ -36,4 +36,5 @@ public interface Camera extends GameAspect {
     /** a copy of the direction of up, the length of this vector is undetermined. */
     Vector3fc getUpVector();
 
+    void set(Vector3fc eye, Vector3fc focus, Vector3fc up);
 }

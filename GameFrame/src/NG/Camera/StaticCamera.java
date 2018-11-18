@@ -5,6 +5,7 @@ import NG.ActionHandling.KeyPressListener;
 import NG.Engine.Game;
 import NG.Settings.KeyBinding;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 /**
  * @author Geert van Ieperen created on 22-12-2017. a camera that doesn't move
@@ -56,6 +57,13 @@ public class StaticCamera implements Camera, KeyPressListener {
     @Override
     public Vector3f getUpVector() {
         return up;
+    }
+
+    @Override
+    public void set(Vector3fc eye, Vector3fc focus, Vector3fc up) {
+        this.eye.set(eye);
+        this.focus.set(focus);
+        this.up.set(up);
     }
 
     @Override

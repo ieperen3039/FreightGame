@@ -22,7 +22,8 @@ public interface GameMap extends GameAspect {
     float getHeightAt(Vector2fc position);
 
     /**
-     * maps a 2D map coordinate to a 3D position. \result.x == mapCoord.x && result.y == mapCoord.y
+     * maps a 2D map coordinate to a 3D position.
+     * <p>{@code \result.x == mapCoord.x && result.y == mapCoord.y}</p>
      * @param mapCoord a 2D map coordinate
      * @return the 2D coordinate mapped to the surface of the inital map (or with z == 0 if no map is loaded)
      */

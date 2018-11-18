@@ -8,7 +8,9 @@ import NG.GameState.MapGeneratorMod;
 import NG.Mods.Mod;
 import NG.ScreenOverlay.Frames.Components.*;
 import NG.Tools.Logger;
+import NG.Tools.Vectors;
 import org.joml.Vector2i;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +45,8 @@ public class MainMenu extends SFrame {
 
         SButton newGame = new SButton("Start new game", this::showNewGame, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
         buttons.add(newGame, onTop());
+        SButton justStart = new SButton("Start Testworld", this::testWorld, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
+        buttons.add(justStart, onTop());
         SButton exitGame = new SButton("Exit game", exitGameAction, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
         buttons.add(exitGame, onBot());
 
@@ -52,6 +56,30 @@ public class MainMenu extends SFrame {
         buttons.add(new SFiller(), new Vector2i(2, mid.y));
 
         setMainPanel(buttons);
+    }
+
+    private void testWorld() {
+        int xSize = 200;
+        int ySize = 200;
+
+        // random map
+        MapGeneratorMod mapGenerator = modLoader.allMods().stream()
+                .filter(m -> m instanceof MapGeneratorMod)
+                .findAny()
+                .map(m -> (MapGeneratorMod) m)
+                .orElseThrow();
+        mapGenerator.setXSize(xSize);
+        mapGenerator.setYSize(ySize);
+        game.map().generateNew(mapGenerator);
+
+        // set camera to middle of map
+        Vector3f cameraFocus = new Vector3f(xSize / 2, ySize / 2, 0);
+        Vector3f cameraEye = cameraFocus.add(10, 10, 10, new Vector3f());
+        game.camera().set(cameraEye, cameraFocus, Vectors.zVector());
+
+        // start
+        modLoader.startGame();
+        newGameFrame.setVisible(false);
     }
 
     private void showNewGame() {
@@ -93,6 +121,7 @@ public class MainMenu extends SFrame {
         for (Mod mod : modList) {
             if (mod instanceof MapGeneratorMod) continue;
             SToggleButton button = new SToggleButton(mod.getModName(), BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
+            button.setGrowthPolicy(true, false);
             toggleList.add(button, mod);
             modPanel.add(button, pos.add(0, 1));
         }
@@ -117,14 +146,16 @@ public class MainMenu extends SFrame {
         // start game action
         generate.addLeftClickListener(() -> {
             try {
+                // get and install map generator
                 int selected = generatorSelector.getSelectedIndex();
                 MapGeneratorMod generatorMod = (MapGeneratorMod) modList.get(selected);
 
-                final String xSize = xSizeSelector.getSelected();
-                generatorMod.setXSize(Integer.parseInt(xSize));
-                final String ySize = ySizeSelector.getSelected();
-                generatorMod.setYSize(Integer.parseInt(ySize));
+                int xSize = Integer.parseInt(xSizeSelector.getSelected());
+                int ySize = Integer.parseInt(ySizeSelector.getSelected());
+                generatorMod.setXSize(xSize);
+                generatorMod.setYSize(ySize);
 
+                // install selected mods
                 List<Mod> targets = new ArrayList<>();
                 for (int i = 0; i < toggleList.size(); i++) {
                     if (toggleList.left(i).getState()) {
@@ -144,6 +175,12 @@ public class MainMenu extends SFrame {
                 if (targets.isEmpty()) throw new IllegalNumberOfModulesException("No mods selected");
                 game.map().generateNew(generatorMod);
 
+                // set camera to middle of map
+                Vector3f cameraFocus = new Vector3f(xSize / 2, ySize / 2, 0);
+                Vector3f cameraEye = cameraFocus.add(10, 10, 10, new Vector3f());
+                game.camera().set(cameraEye, cameraFocus, Vectors.zVector());
+
+                // start
                 modLoader.startGame();
                 newGameFrame.setVisible(false);
 

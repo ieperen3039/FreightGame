@@ -8,7 +8,10 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.FloatBuffer;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 import java.util.function.Supplier;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -95,7 +98,7 @@ public class FlatMesh implements Mesh {
      * @param yEnd      the the highest y index to consider, inclusive.
      * @param edgeSize  the distance between two vertices in real coordinates. Multiplying a virtual coordinate with
      *                  this value gives the real coordinate.
-     * @return a mesh of the heightmap, using quads
+     * @return a mesh of the heightmap, using quads, positioned in absolute coordinates. (no transformation is needed)
      */
     public static Supplier<FlatMesh> meshFromHeightmap(float[][] heightmap, int xStart, int xEnd, int yStart, int yEnd, float edgeSize) {
         int nOfXFaces = xEnd - xStart;
@@ -106,11 +109,11 @@ public class FlatMesh implements Mesh {
         List<Vector3f> vertices = new ArrayList<>(nOfVertices);
         List<Vector3f> normals = new ArrayList<>(nOfVertices);
 
-        for (int x = xStart; x <= xEnd; x++) {
-            for (int y = yStart; y <= yEnd; y++) {
+        for (int y = yStart; y <= yEnd; y++) {
+            for (int x = xStart; x <= xEnd; x++) {
                 Vector3f vertex = new Vector3f(
-                        (x - xStart) * edgeSize,
-                        (y - yStart) * edgeSize,
+                        x * edgeSize,
+                        y * edgeSize,
                         heightmap[x][y]
                 );
                 vertices.add(vertex);
@@ -127,28 +130,26 @@ public class FlatMesh implements Mesh {
 
         // faces
         int nOfQuads = nOfXFaces * nOfYFaces;
-        Face[] faces = new Face[2 * nOfQuads];
+        int arrayXSize = xEnd - xStart + 1;
+        List<Face> faces = new ArrayList<>(nOfQuads);
 
-        for (int i = 0; i < nOfQuads; i++) {
-            faces[i] = new Face(
-                    new int[]{i, i + 1, i + nOfXFaces},
-                    new int[]{i, i + 1, i + nOfXFaces}
-            );
-            faces[i + nOfQuads] = new Face(
-                    new int[]{i + nOfXFaces, i + 1, i + nOfXFaces + 1},
-                    new int[]{i + nOfXFaces, i + 1, i + nOfXFaces + 1}
-            );
+        for (int y = 0; y < nOfYFaces; y++) {
+            for (int x = 0; x < nOfXFaces; x++) {
+                int left = y * arrayXSize + x;
+                int right = (y + 1) * arrayXSize + x;
+
+                faces.add(new Face(
+                        new int[]{left, right + 1, left + 1},
+                        new int[]{left, right + 1, left + 1}
+                ));
+                faces.add(new Face(
+                        new int[]{left, right, right + 1},
+                        new int[]{left, right, right + 1}
+                ));
+            }
         }
-//        Face[] faces = new Face[nOfQuads];
-//
-//        for (int i = 0; i < faces.length; i++) {
-//            faces[i] = new Face(
-//                    new int[]{i, i + 1, i + nOfXFaces + 1, i + nOfXFaces},
-//                    new int[]{i, i + 1, i + nOfXFaces + 1, i + nOfXFaces}
-//            );
-//        }
 
-        return createDelayed(vertices, normals, Arrays.asList(faces));
+        return createDelayed(vertices, normals, faces);
     }
 
     private static void readFaceVertex(Face face, List<Vector3f> posList, int faceNumber, float[] posArr) {
