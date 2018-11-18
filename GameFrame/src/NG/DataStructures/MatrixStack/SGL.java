@@ -14,12 +14,33 @@ import org.joml.Vector3fc;
  */
 public interface SGL extends MatrixStack {
 
+    /**
+     * instructs the graphical card to render the specified mesh
+     * @param object
+     */
     void render(Mesh object);
 
+    /**
+     * sets a light in the scene for this frame only
+     * @param pos        the position of the light
+     * @param lightColor the color of the light, where alpha determines the brightness
+     */
     void setLight(Vector3fc pos, Color4f lightColor);
 
+    /**
+     * sets the surface properties for the next meshes to the specified material, of which the color is blended into the
+     * material.
+     * @param material the new material properties
+     * @param color    a color transformation. The alpha value determines how much of the color is blended into the
+     *                 material
+     */
     void setMaterial(Material material, Color4f color);
 
+    /**
+     * sets the surface properties for the next meshes to the specified material. The results is equal to {@code
+     * setMaterial(material, Color4f.WHITE)}.
+     * @param material the new material properties
+     */
     default void setMaterial(Material material) {
         setMaterial(material, Color4f.WHITE);
     }
@@ -36,11 +57,15 @@ public interface SGL extends MatrixStack {
     Vector2f getPositionOnScreen(Vector3fc vertex);
 
     /**
-     * Objects should call GPU calls only in their render method. this render method may only be called by a GL2 object,
-     * to prevent drawing calls while the GPU is not initialized. For this reason, the Painter constructor is
-     * protected.
+     * Objects should use GPU calls only in their render method. To prevent invalid uses of the {@link
+     * Mesh#render(Painter)} object, a Painter object is required to call that render method.
      */
     class Painter {
+        /**
+         * Objects should call GPU calls only in their render method. This render method may only be called by a GL2
+         * object, to prevent drawing calls while the GPU is not initialized. For this reason, the Painter constructor
+         * is protected.
+         */
         protected Painter() {
         }
     }

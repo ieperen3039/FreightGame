@@ -57,8 +57,14 @@ public interface MatrixStack {
      */
     Vector3f getDirection(Vector3f v);
 
+    /**
+     * stores the current state of the transformations on a stack
+     */
     void pushMatrix();
 
+    /**
+     * restores the current state of the transformations to the top of the stack
+     */
     void popMatrix();
 
     /**
@@ -68,22 +74,34 @@ public interface MatrixStack {
         rotate(angle, axis.x(), axis.y(), axis.z());
     }
 
+    /**
+     * @see #rotate(float, float, float, float)
+     */
     void rotate(Quaternionf rotation);
 
+    /**
+     * @see #translate(float, float, float)
+     */
     default void translate(Vector3fc v) {
         translate(v.x(), v.y(), v.z());
     }
 
+    /**
+     * scale uniformly in all directions with the given factor
+     */
     default void scale(float s) {
         if (s != 1) scale(s, s, s);
     }
 
+    /**
+     * @see #scale(float, float, float)
+     */
     default void scale(Vector3fc s) {
         scale(s.x(), s.y(), s.z());
     }
 
     /**
-     * the transformation resulting from preTransformation will be applied before applying the current transformation
+     * Applies an affine transformation.
      * @param postTransformation some affine matrix
      */
     void multiplyAffine(Matrix4f postTransformation);

@@ -135,7 +135,7 @@ public class ShaderUniformGL implements SGL {
 
     @Override
     public void multiplyAffine(Matrix4f postTransformation) {
-        modelMatrix.mul(postTransformation);
+        modelMatrix.mulAffine(postTransformation);
     }
 
     @Override
