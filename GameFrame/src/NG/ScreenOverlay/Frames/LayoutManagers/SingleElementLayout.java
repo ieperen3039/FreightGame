@@ -7,6 +7,7 @@ import org.joml.Vector2ic;
 import java.util.Collections;
 
 /**
+ * A layout with only one element
  * @author Geert van Ieperen. Created on 29-10-2018.
  */
 public class SingleElementLayout implements SLayoutManager {

@@ -11,6 +11,7 @@ import java.util.Collection;
 import static org.lwjgl.glfw.GLFW.*;
 
 /**
+ * A callback handler specialized on a tycoon-game
  * @author Geert van Ieperen. Created on 18-11-2018.
  */
 public class TycoonGameCallbacks implements GameAspect, KeyMouseCallbacks {

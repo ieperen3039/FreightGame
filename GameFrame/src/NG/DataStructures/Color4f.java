@@ -7,6 +7,7 @@ import org.joml.Vector4f;
 import java.nio.FloatBuffer;
 
 /**
+ * An immutable representation of colors. Includes an opacity value (the alpha value) and a set of predefined colors.
  * @author Geert van Ieperen created on 21-11-2017.
  */
 public class Color4f {

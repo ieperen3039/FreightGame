@@ -1,6 +1,7 @@
 package NG.DataStructures;
 
 /**
+ * A collection representing material properties, for entities.
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public enum Material {

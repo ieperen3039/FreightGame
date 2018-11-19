@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 /**
- * optimized version of {@code List<Pair<L, R>>} instances. This list does not permit null values
+ * Optimized version of {@code List<Pair<L, R>>} instances. This list does not permit null values
  * @author Geert van Ieperen created on 29-6-2018.
  */
 public class PairList<L, R> extends AbstractList<Pair<L, R>> {

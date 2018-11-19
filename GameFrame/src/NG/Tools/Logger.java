@@ -10,12 +10,12 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * A logger class that has its levels reflected in enum constants
- * The order of the constants reflect the order of level
+ * A logger class that has its levels reflected in enum constants.
  * @author Geert van Ieperen created on 2-6-2018.
+ * @see #DEBUG
  */
 public enum Logger {
-    // order matters!
+    // The order of the constants reflect the order of level
     /** for any information about the internal functioning */
     DEBUG,
     /** for errors caused by a break of assumptions in internal, where the game still could continue */
@@ -82,8 +82,9 @@ public enum Logger {
     }
 
     /**
-     * adds a line to the online output roll
-     * @param source
+     * Text resutling from the given supplier is presented somewhere on the screen of this program, likely a
+     * debug-screen.
+     * @param source a source of text, queried every frame
      */
     public static void printOnline(Supplier<String> source) {
         if (source == null) {
@@ -203,15 +204,26 @@ public enum Logger {
         printFrom(2, s);
     }
 
+    /**
+     * prints the arguments according to the given format in Locale US.
+     * @param format a format string
+     * @see String#format(String, Object...)
+     */
     public void printf(String format, Object... arguments) {
         printFrom(2, String.format(Locale.US, format, arguments));
     }
 
+    /**
+     * adds a newline if this logger is enabled
+     */
     public void newLine() {
         if (enabled) out.accept("");
     }
 
+    /**
+     * @return the error logger as a printstream
+     */
     public PrintStream getPrintStream() {
-        return System.err;
+        return System.err; // TODO mapping (lambda -> PrintStream)
     }
 }

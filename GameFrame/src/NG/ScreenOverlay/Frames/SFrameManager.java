@@ -16,6 +16,8 @@ import org.joml.Vector2ic;
 import java.util.*;
 
 /**
+ * Objects of this class can manage an in-game window system that is behaviourally similar to classes in the {@link
+ * javax.swing} package. New {@link SFrame} objects can be added using {@link #addFrame(SFrame)}.
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
 public class SFrameManager implements GUIManager {

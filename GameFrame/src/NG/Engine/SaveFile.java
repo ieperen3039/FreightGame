@@ -7,12 +7,13 @@ import java.io.*;
 import java.util.Collection;
 
 /**
+ * A file that stores the gaemstate of the given Game
  * @author Geert van Ieperen. Created on 28-9-2018.
  */
 public class SaveFile {
     private static final String INITIAL_DATA = "Freight Game SaveFile";
 
-    public void write(Game game, String name, ModLoader modLoader) throws IOException {
+    public static void write(Game game, String name, ModLoader modLoader) throws IOException {
         FileOutputStream fileOut = new FileOutputStream(name);
         DataOutputStream out = new DataOutputStream(fileOut);
 
@@ -30,7 +31,7 @@ public class SaveFile {
         game.state().writeToFile(out);
     }
 
-    public void read(Game game, String name) throws IOException {
+    public static void read(Game game, String name) throws IOException {
         FileInputStream fileIn = new FileInputStream(name);
         DataInputStream in = new DataInputStream(fileIn);
 

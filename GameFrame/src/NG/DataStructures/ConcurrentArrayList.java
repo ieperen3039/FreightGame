@@ -1,9 +1,6 @@
 package NG.DataStructures;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Spliterator;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -11,6 +8,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
+ * An {@link ArrayList} wrapper that uses a {@link ReadWriteLock} for access. An alternative of {@link
+ * java.util.Collections#synchronizedList(List)} of arrayLists
  * @author Geert van Ieperen created on 1-3-2018.
  */
 @SuppressWarnings("NullableProblems")
@@ -141,36 +140,26 @@ public class ConcurrentArrayList<T> implements Collection<T> {
 
     @Override
     public Spliterator<T> spliterator() {
+        return copy().spliterator();
+    }
+
+    public ArrayList<T> copy() {
         readLock.lock();
         try {
-            return copy().spliterator();
+            return new ArrayList<>(list);
         } finally {
             readLock.unlock();
         }
-    }
-
-    private ArrayList<T> copy() {
-        return new ArrayList<>(list);
     }
 
     @Override
     public Stream<T> parallelStream() {
-        readLock.lock();
-        try {
-            return copy().parallelStream();
-        } finally {
-            readLock.unlock();
-        }
+        return copy().parallelStream();
     }
 
     @Override
     public Stream<T> stream() {
-        readLock.lock();
-        try {
-            return copy().stream();
-        } finally {
-            readLock.unlock();
-        }
+        return copy().stream();
     }
 
     @Override

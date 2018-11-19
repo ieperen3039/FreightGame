@@ -8,7 +8,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A timedQueue that uses ArrayDeque for implementation. Includes synchronized adding and deletion. Items added to the
+ * A {@link TimedQueue} that uses ArrayDeque for implementation. Includes synchronized adding and deletion. Items added to the
  * queue with a timestamp less than the previous addition will cause the previous value to be removed
  * @author Geert van Ieperen created on 13-12-2017.
  */

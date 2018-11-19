@@ -1,6 +1,7 @@
 package NG.ActionHandling;
 
 /**
+ * A class that allows binding callbacks of key and mouse listeners.
  * @author Geert van Ieperen. Created on 18-11-2018.
  */
 public interface KeyMouseCallbacks {

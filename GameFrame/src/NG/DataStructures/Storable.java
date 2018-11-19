@@ -3,7 +3,10 @@ package NG.DataStructures;
 import java.io.*;
 
 /**
+ * An Object of this type can be written to file using a {@link DataOutput} and read from that file using a {@link
+ * DataInput}
  * @author Geert van Ieperen. Created on 28-9-2018.
+ * @see AsExternalizable
  */
 public interface Storable {
     /**

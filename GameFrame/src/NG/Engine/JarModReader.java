@@ -17,69 +17,10 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
+ * A utility class for dynamic loading of JAR files on runtime
  * @author Geert van Ieperen. Created on 19-9-2018.
  */
-public class JarModReader {
-
-    /**
-     * Scans a JAR file for .class-files and load all classes found. Return a list of loaded classes
-     * @param file   JAR-file which should be searched for .class-files
-     * @param loader
-     * @return Returns all found class-files with their full-name as a List of Strings
-     * @throws IOException              If during processing of the Jar-file an error occurred
-     * @throws IllegalArgumentException If either the provided file is null, does not exist or is no Jar file
-     */
-    private static List<Class<?>> loadClassesFromJar(File file, ClassLoader loader) throws IOException, IllegalArgumentException, ClassNotFoundException {
-        if (file == null || !file.exists())
-            throw new IllegalArgumentException("Invalid filename: " + file);
-
-        if (!file.getName().endsWith(".jar")) {
-            throw new IllegalArgumentException("Provided file was not a jar file: " + file);
-        }
-
-        // get a classloader and load all provided classes
-        List<Class<?>> implementations = new ArrayList<>();
-        try (JarFile jarFile = new JarFile(file)) {
-            Enumeration<JarEntry> entries = jarFile.entries();
-
-            while (entries.hasMoreElements()) {
-                String fileName = entries.nextElement().getName();
-                if (!fileName.endsWith(".class")) continue;
-
-                // load all classes
-                Class<?> aClass = loadClass(loader, fileName);
-                implementations.add(aClass);
-            }
-        }
-
-        return implementations;
-    }
-
-    /**
-     * loads a class given by filename.
-     * @param loader   a classloader, or null for the Booststrap loader
-     * @param fileName a file pointing to a .class file
-     * @return the loaded class
-     * @throws ClassNotFoundException if the class cannot be located
-     */
-    private static Class<?> loadClass(ClassLoader loader, String fileName) throws ClassNotFoundException {
-        String classFile = fileName.substring(0, fileName.lastIndexOf(".class"));
-
-        if (classFile.contains("/"))
-            classFile = classFile.replaceAll("/", ".");
-        if (classFile.contains("\\"))
-            classFile = classFile.replaceAll("\\\\", ".");
-
-        Class<?> clazz;
-        // now try to load the class
-        if (loader == null)
-            clazz = Class.forName(classFile);
-        else
-            clazz = Class.forName(classFile, true, loader);
-
-        Logger.DEBUG.print("Loaded class " + classFile);
-        return clazz;
-    }
+public final class JarModReader {
 
     /**
      * loads a jarfile, returning all {@link Mod} instances
@@ -156,5 +97,65 @@ public class JarModReader {
 
         modloader.close();
         return Collections.unmodifiableList(mods);
+    }
+
+    /**
+     * Scans a JAR file for .class-files and load all classes found. Return a list of loaded classes
+     * @param file   JAR-file which should be searched for .class-files
+     * @param loader
+     * @return Returns all found class-files with their full-name as a List of Strings
+     * @throws IOException              If during processing of the Jar-file an error occurred
+     * @throws IllegalArgumentException If either the provided file is null, does not exist or is no Jar file
+     */
+    private static List<Class<?>> loadClassesFromJar(File file, ClassLoader loader) throws IOException, IllegalArgumentException, ClassNotFoundException {
+        if (file == null || !file.exists())
+            throw new IllegalArgumentException("Invalid filename: " + file);
+
+        if (!file.getName().endsWith(".jar")) {
+            throw new IllegalArgumentException("Provided file was not a jar file: " + file);
+        }
+
+        // get a classloader and load all provided classes
+        List<Class<?>> implementations = new ArrayList<>();
+        try (JarFile jarFile = new JarFile(file)) {
+            Enumeration<JarEntry> entries = jarFile.entries();
+
+            while (entries.hasMoreElements()) {
+                String fileName = entries.nextElement().getName();
+                if (!fileName.endsWith(".class")) continue;
+
+                // load all classes
+                Class<?> aClass = loadClass(loader, fileName);
+                implementations.add(aClass);
+            }
+        }
+
+        return implementations;
+    }
+
+    /**
+     * loads a class given by filename.
+     * @param loader   a classloader, or null for the Booststrap loader
+     * @param fileName a file pointing to a .class file
+     * @return the loaded class
+     * @throws ClassNotFoundException if the class cannot be located
+     */
+    public static Class<?> loadClass(ClassLoader loader, String fileName) throws ClassNotFoundException {
+        String classFile = fileName.substring(0, fileName.lastIndexOf(".class"));
+
+        if (classFile.contains("/"))
+            classFile = classFile.replaceAll("/", ".");
+        if (classFile.contains("\\"))
+            classFile = classFile.replaceAll("\\\\", ".");
+
+        Class<?> clazz;
+        // now try to load the class
+        if (loader == null)
+            clazz = Class.forName(classFile);
+        else
+            clazz = Class.forName(classFile, true, loader);
+
+        Logger.DEBUG.print("Loaded class " + classFile);
+        return clazz;
     }
 }

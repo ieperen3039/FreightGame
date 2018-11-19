@@ -9,9 +9,9 @@ import java.util.function.Supplier;
 
 
 /**
+ * A general-purpose game loop that allows concurrent control on a process. This object starts in a paused state, and
+ * can be started by a call to {@link Thread#start()} followed by a call to {@link #unPause()}.
  * @author Geert van Ieperen recreated on 29-10-2019
- *         <p>
- *         a general-purpose game loop also usable for rendering
  */
 public abstract class AbstractGameLoop extends Thread {
     private float targetDeltaMillis;

@@ -6,6 +6,7 @@ import org.joml.Vector2ic;
 /**
  * a layout manager with the same purpose as an {@link java.awt.LayoutManager}: it lays the components in a nice order.
  * @author Geert van Ieperen. Created on 21-9-2018.
+ * @see GridLayoutManager
  */
 public interface SLayoutManager {
 

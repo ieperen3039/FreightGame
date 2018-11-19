@@ -9,6 +9,7 @@ import NG.ScreenOverlay.ScreenOverlay;
 import NG.ScreenOverlay.ToolBar;
 
 /**
+ * A class that manages frames of a game. New {@link SFrame} objects can be added using {@link #addFrame(SFrame)}
  * @author Geert van Ieperen. Created on 29-9-2018.
  */
 public interface GUIManager extends GameAspect, ClickHandler, MouseReleaseListener, MousePositionListener {

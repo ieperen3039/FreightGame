@@ -4,8 +4,8 @@ package NG.Engine;
 import NG.DataStructures.Tracked.TrackedFloat;
 
 /**
- * a class that harbours a gameloop timer and a render timer, upon retrieving either of these timers, they are updated
- * with a modifiable in-game time.
+ * A combination of a gameloop timer and a render timer. The timers are updated on calls to {@link #updateGameTime()}
+ * and {@link #updateRenderTime()}
  */
 @SuppressWarnings("WeakerAccess")
 public class GameTimer {

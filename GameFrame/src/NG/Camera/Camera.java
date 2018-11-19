@@ -6,7 +6,10 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 /**
+ * A camera class manages movement and position of the camera. The actual implementation of creating the perspective
+ * matrix is done based onthe values of {@link #getEye()}, {@link #getFocus()} and {@link #getUpVector()}
  * @author Geert van Ieperen created on 29-10-2017.
+ * @see TycoonFixedCamera
  */
 public interface Camera extends GameAspect, MouseScrollListener {
     /**

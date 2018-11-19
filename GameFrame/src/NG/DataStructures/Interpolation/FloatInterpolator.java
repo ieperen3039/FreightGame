@@ -1,4 +1,4 @@
-package NG.Interpolation;
+package NG.DataStructures.Interpolation;
 
 /**
  * @author Geert van Ieperen created on 15-12-2017.

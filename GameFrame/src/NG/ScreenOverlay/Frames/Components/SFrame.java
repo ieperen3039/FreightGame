@@ -9,6 +9,8 @@ import org.joml.Vector4i;
 import org.joml.Vector4ic;
 
 /**
+ * A Frame object similar to {@link javax.swing.JFrame} objects. The {@link #setMainPanel(SContainer)} can be used for
+ * full control over the contents of the SFrame.
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
 public class SFrame extends SContainer {
@@ -60,7 +62,7 @@ public class SFrame extends SContainer {
      * @param comp the new middle component
      */
     public void setMainPanel(SContainer comp) {
-        add(comp, null);
+        add(comp, null); // single element layout
         comp.setPosition(0, upperBar.getHeight());
     }
 

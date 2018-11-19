@@ -1,4 +1,4 @@
-package NG.Interpolation;
+package NG.DataStructures.Interpolation;
 
 import NG.DataStructures.BlockingTimedArrayQueue;
 

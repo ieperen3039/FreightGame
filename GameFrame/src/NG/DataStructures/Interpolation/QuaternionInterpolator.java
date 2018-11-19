@@ -1,4 +1,4 @@
-package NG.Interpolation;
+package NG.DataStructures.Interpolation;
 
 import org.joml.Quaternionf;
 

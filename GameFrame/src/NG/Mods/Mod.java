@@ -23,5 +23,6 @@ public interface Mod extends GameAspect {
         return getClass().getSimpleName();
     }
 
+    /** The current version of this mod */
     Version getVersionNumber();
 }

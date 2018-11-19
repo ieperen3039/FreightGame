@@ -10,13 +10,14 @@ import org.joml.Vector2f;
 import org.joml.Vector3fc;
 
 /**
+ * This is a stripped down version of a {@link org.lwjgl.opengl.GL} object.
  * @author Geert van Ieperen created on 15-11-2017.
  */
 public interface SGL extends MatrixStack {
 
     /**
      * instructs the graphical card to render the specified mesh
-     * @param object
+     * @param object A Mesh that has not been disposed.
      */
     void render(Mesh object);
 
