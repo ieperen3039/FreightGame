@@ -1,7 +1,10 @@
 package NG.Shaders;
 
 import NG.DataStructures.Color4f;
-import org.joml.*;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+import org.joml.Vector3fc;
+import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 
 import java.io.FileInputStream;
@@ -190,18 +193,6 @@ public abstract class AbstractShader implements ShaderProgram {
      */
     protected void setUniform(String uniformName, Vector4f value) {
         glUniform4f(uniforms.get(uniformName), value.x, value.y, value.z, value.w);
-    }
-
-    /**
-     * Set the value of a certain PointLight shader uniform
-     * @param uniformName The name of the uniform.
-     * @param mPosition   position in modelSpace
-     * @param color       the light color with its intensity as alpha value
-     */
-    protected void setPointLightUniform(String uniformName, Vector3f mPosition, Color4f color) {
-        setUniform(uniformName + ".color", color.rawVector3f());
-        setUniform(uniformName + ".mPosition", mPosition);
-        setUniform(uniformName + ".intensity", color.alpha);
     }
 
     /**

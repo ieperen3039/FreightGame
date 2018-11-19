@@ -8,8 +8,9 @@ import org.joml.SimplexNoise;
 /**
  * @author Geert van Ieperen. Created on 27-9-2018.
  */
-public class FlatMapGenerator implements MapGeneratorMod {
+public class SimpleMapGenerator implements MapGeneratorMod {
     public static final int EDGDE_LENGTH = 1;
+    private static final float PRIMARY_DENSITY = 0.1f;
     private int progress = 0;
     private int seed;
     private int width;
@@ -25,7 +26,7 @@ public class FlatMapGenerator implements MapGeneratorMod {
         float[][] map = new float[width][height];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                map[x][y] = SimplexNoise.noise(x, y);
+                map[x][y] = SimplexNoise.noise(PRIMARY_DENSITY * x, PRIMARY_DENSITY * y);
             }
         }
         progress = 1;

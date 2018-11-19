@@ -11,4 +11,39 @@ public interface Mesh {
     void render(SGL.Painter lock);
 
     void dispose();
+
+    /**
+     * a record class to describe a plane by indices
+     */
+    class Face {
+        public int[] vert;
+        public int[] norm;
+
+        /**
+         * a description of a plane, with the indices of the vertices and normals given. The indices should refer to a
+         * list of vertices and normals that belong to a list of faces where this face is part of.
+         */
+        public Face(int[] vertices, int[] normals) {
+            vert = vertices;
+            norm = normals;
+        }
+
+        /**
+         * a description of a plane, with the indices of the vertices and normals given. The indices should refer to a
+         * list of vertices and normals that belong to a list of faces where this face is part of.
+         */
+        public Face(int[] vertices, int nInd) {
+            int faceSize = vertices.length;
+
+            vert = vertices;
+            norm = new int[faceSize];
+            for (int i = 0; i < faceSize; i++) {
+                norm[i] = nInd;
+            }
+        }
+
+        public int size() {
+            return vert.length;
+        }
+    }
 }

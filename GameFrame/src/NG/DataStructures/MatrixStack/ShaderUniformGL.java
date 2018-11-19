@@ -50,7 +50,7 @@ public class ShaderUniformGL implements SGL {
         viewProjectionMatrix = SGL.getProjection(windowWidth, windowHeight, viewpoint, isometric);
 
         for (int i = 0; i < MAX_POINT_LIGHTS; i++) {
-            shader.setPointLight(i, new Vector3f(), Color4f.INVISIBLE);
+            shader.setPointLight(i, new Vector4f(), Color4f.INVISIBLE);
         }
     }
 
@@ -64,15 +64,14 @@ public class ShaderUniformGL implements SGL {
     }
 
     @Override
-    public void setLight(Vector3fc pos, Color4f lightColor) {
-        Vector3f mPosition = new Vector3f(pos);
-        mPosition.mulPosition(modelMatrix);
-        shader.setPointLight(nextLightIndex++, mPosition, lightColor);
+    public void setLight(Color4f lightColor, Vector4fc position) {
+        Vector4f mPos = new Vector4f(position);
+        mPos.mul(modelMatrix);
+        shader.setPointLight(nextLightIndex++, mPos, lightColor);
     }
 
     @Override
     public void setMaterial(Material material, Color4f color) {
-        // TODO set material
         Color4f baseColor = material.baseColor.overlay(color);
         Color4f specular = material.specular.overlay(color);
 

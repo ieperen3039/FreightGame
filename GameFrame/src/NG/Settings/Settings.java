@@ -19,7 +19,7 @@ public class Settings {
     public static float FOV = 0.3f;
     public static float Z_NEAR = 1f;
     public static float Z_FAR = 5000;
-    public int MAX_POINT_LIGHTS = 20;
+    public int MAX_POINT_LIGHTS = 16;
     public int ANTIALIAS_LEVEL = 1;
     public static boolean ISOMETRIC_VIEW = false;
     public final float CAMERA_ZOOM_SPEED = -0.1f;

@@ -8,6 +8,7 @@ import NG.Shaders.ShaderProgram;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3fc;
+import org.joml.Vector4fc;
 
 /**
  * This is a stripped down version of a {@link org.lwjgl.opengl.GL} object.
@@ -23,10 +24,10 @@ public interface SGL extends MatrixStack {
 
     /**
      * sets a light in the scene for this frame only. Only affects objects drawn after this light.
-     * @param pos        the position of the light
      * @param lightColor the color of the light, where alpha determines the brightness
+     * @param position the position, where the w component is 0 for an infinitely far light
      */
-    void setLight(Vector3fc pos, Color4f lightColor);
+    void setLight(Color4f lightColor, Vector4fc position);
 
     /**
      * sets the surface properties for the next meshes to the specified material, of which the color is blended into the

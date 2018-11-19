@@ -4,7 +4,7 @@ import NG.DataStructures.Color4f;
 import NG.Engine.Game;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 /**
  * @author Geert van Ieperen created on 7-1-2018.
@@ -38,7 +38,7 @@ public interface ShaderProgram {
      * @param mPosition   the position in model-space (worldspace)
      * @param color       the color of the light, with alpha as intensity
      */
-    void setPointLight(int lightNumber, Vector3f mPosition, Color4f color);
+    void setPointLight(int lightNumber, Vector4f mPosition, Color4f color);
 
     void setProjectionMatrix(Matrix4f viewProjectionMatrix);
 
