@@ -1,9 +1,11 @@
 package NG.GameState;
 
+import NG.DataStructures.Color4f;
+import NG.DataStructures.Material;
 import NG.DataStructures.MatrixStack.Mesh;
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.Game;
-import NG.Rendering.Shapes.AbstractMesh;
+import NG.Rendering.Shapes.FlatMesh;
 import NG.ScreenOverlay.Frames.Components.SFiller;
 import NG.ScreenOverlay.Frames.Components.SFrame;
 import NG.ScreenOverlay.Frames.Components.SPanel;
@@ -70,7 +72,7 @@ public class HeightMap implements GameMap {
                 int xEnd = Math.min(xStart + adaptedMeshSize, xSize - 1);
                 int yEnd = Math.min(yStart + adaptedMeshSize, xSize - 1);
                 preparedMeshes.add(
-                        AbstractMesh.meshFromHeightmap(heightmap, xStart, xEnd, yStart, yEnd, edgeLength)
+                        FlatMesh.meshFromHeightmap(heightmap, xStart, xEnd, yStart, yEnd, edgeLength)
                 );
 
                 meshProgress += meshPStep;
@@ -123,6 +125,7 @@ public class HeightMap implements GameMap {
             hasNewWorld = false;
         }
 
+        gl.setMaterial(Material.ROUGH, new Color4f(0, 0.5f, 0));
         meshOfTheWorld.forEach(gl::render);
     }
 

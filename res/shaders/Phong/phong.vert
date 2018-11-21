@@ -9,7 +9,6 @@ layout (location = 1) in vec3 vertexNormal;
 out vec3 mVertexNormal;
 // position of the vertex
 out vec3 mVertexPosition;
-out float cameraDistance;
 
 uniform vec3 cameraPosition;
 uniform mat4 modelMatrix;
@@ -23,6 +22,4 @@ void main() {
 
 	mVertexNormal = normalize(normalMatrix * vertexNormal);
     mVertexPosition = mPosition.xyz;
-
-    cameraDistance = length(mVertexPosition - cameraPosition);
 }

@@ -7,6 +7,7 @@ import NG.Engine.Game;
 import NG.Entities.Entity;
 import NG.Rendering.Light;
 import NG.Tools.Toolbox;
+import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.joml.Vector4f;
 
@@ -38,7 +39,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         this.postUpdateActionQueue = new ConcurrentLinkedDeque<>();
         this.drawLock = new ReentrantLock();
 
-        lights.add(new Light(100, 100, 10, Color4f.YELLOW, 0.5f));
+        lights.add(new Light(new Vector3f(1, 1, 2), new Color4f(1, 1, 0.8f), 0.2f, true));
     }
 
     @Override

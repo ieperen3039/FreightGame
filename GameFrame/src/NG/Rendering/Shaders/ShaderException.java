@@ -1,4 +1,4 @@
-package NG.Shaders;
+package NG.Rendering.Shaders;
 
 /**
  * @author Geert van Ieperen created on 15-11-2017.

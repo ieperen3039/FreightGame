@@ -34,10 +34,12 @@ vec3 calcSurface(Light light, vec3 vNorm, vec3 unitToLight, vec3 eye){
     if (intensity != 0.0) {
         result += intensity * light.color * material.diffuse.xyz;
 
-        vec3 virtualLightPosition = normalize(-reflect(unitToLight, vNorm));
+        // specular
+        vec3 lightReflect = reflect(unitToLight, vNorm);
+        vec3 virtualLightPosition = normalize(-lightReflect);
         float linearSpec = max(0.0, dot(virtualLightPosition, normalize(eye)));
         float shine = pow(linearSpec, material.reflectance);
-        result += shine * shine * light.color;
+        result += shine * shine * light.color * material.specular.xyz * material.specular.w;
     }
 
     return result;

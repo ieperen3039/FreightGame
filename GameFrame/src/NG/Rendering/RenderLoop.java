@@ -7,10 +7,10 @@ import NG.Engine.Game;
 import NG.Engine.GameAspect;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
+import NG.Rendering.Shaders.PhongShader;
+import NG.Rendering.Shaders.ShaderProgram;
 import NG.ScreenOverlay.ScreenOverlay;
 import NG.Settings.Settings;
-import NG.Shaders.PhongShader;
-import NG.Shaders.ShaderProgram;
 import NG.Tools.Toolbox;
 
 import java.io.IOException;

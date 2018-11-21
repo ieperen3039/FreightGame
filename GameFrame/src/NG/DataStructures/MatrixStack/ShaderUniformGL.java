@@ -3,7 +3,7 @@ package NG.DataStructures.MatrixStack;
 import NG.Camera.Camera;
 import NG.DataStructures.Color4f;
 import NG.DataStructures.Material;
-import NG.Shaders.ShaderProgram;
+import NG.Rendering.Shaders.ShaderProgram;
 import NG.Tools.Toolbox;
 import org.joml.*;
 
@@ -73,9 +73,7 @@ public class ShaderUniformGL implements SGL {
     @Override
     public void setMaterial(Material material, Color4f color) {
         Color4f baseColor = material.baseColor.overlay(color);
-        Color4f specular = material.specular.overlay(color);
-
-        shader.setMaterial(baseColor, specular, material.reflectance);
+        shader.setMaterial(baseColor, material.specular, material.reflectance);
     }
 
     @Override

@@ -12,7 +12,7 @@ public enum BasicShapes implements Mesh {
     INV_CUBE("inverseCube.obj"),
     CUBE("cube.obj");
 
-    private final AbstractMesh shape;
+    private final FlatMesh shape;
 
     BasicShapes(String... path) {
         ShapeParameters pars = new ShapeParameters(path);

@@ -1,4 +1,4 @@
-package NG.Shaders;
+package NG.Rendering.Shaders;
 
 import NG.DataStructures.Color4f;
 import NG.Engine.Game;
