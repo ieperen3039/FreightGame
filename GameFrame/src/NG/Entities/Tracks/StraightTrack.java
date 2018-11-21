@@ -1,4 +1,4 @@
-package NG.Tracks;
+package NG.Entities.Tracks;
 
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.Game;

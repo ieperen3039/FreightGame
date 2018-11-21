@@ -1,4 +1,4 @@
-package NG.Tracks;
+package NG.Entities.Tracks;
 
 import NG.Entities.Entity;
 import org.joml.Vector2fc;

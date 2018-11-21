@@ -1,4 +1,4 @@
-package NG.Tracks;
+package NG.Entities.Tracks;
 
 import NG.ScreenOverlay.Frames.Components.SButton;
 import NG.ScreenOverlay.Frames.Components.SFrame;
