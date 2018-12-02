@@ -82,7 +82,7 @@ public interface SGL extends MatrixStack {
      * @return a projection matrix, such that modelspace vectors multiplied with this matrix will be transformed to
      *         viewspace.
      */
-    static Matrix4f getProjection(float windowWidth, float windowHeight, Camera camera, boolean isometric) {
+    static Matrix4f getViewProjection(float windowWidth, float windowHeight, Camera camera, boolean isometric) {
         Matrix4f vpMatrix = new Matrix4f();
 
         // Set the projection.

@@ -47,7 +47,7 @@ public class ShaderUniformGL implements SGL {
         Toolbox.checkGLError();
 
         modelMatrix = new Matrix4f();
-        viewProjectionMatrix = SGL.getProjection(windowWidth, windowHeight, viewpoint, isometric);
+        viewProjectionMatrix = SGL.getViewProjection(windowWidth, windowHeight, viewpoint, isometric);
 
         for (int i = 0; i < MAX_POINT_LIGHTS; i++) {
             shader.setPointLight(i, new Vector4f(), Color4f.INVISIBLE);

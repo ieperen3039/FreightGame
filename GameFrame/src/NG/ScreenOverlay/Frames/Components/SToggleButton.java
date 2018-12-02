@@ -1,13 +1,17 @@
 package NG.ScreenOverlay.Frames.Components;
 
-import NG.ActionHandling.MouseClickListener;
+import NG.ActionHandling.MouseRelativeClickListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import org.joml.Vector2ic;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SToggleButton extends SComponent implements MouseClickListener {
+public class SToggleButton extends SComponent implements MouseRelativeClickListener {
     private final int minHeight;
     private final int minWidth;
     private boolean vtGrow = false;
@@ -15,6 +19,7 @@ public class SToggleButton extends SComponent implements MouseClickListener {
     private String text;
 
     private boolean state;
+    private List<Consumer<Boolean>> stateChangeListeners = new ArrayList<>();
 
     public SToggleButton(String text, int minWidth, int minHeight, boolean initial) {
         this.minHeight = minHeight;
@@ -62,6 +67,11 @@ public class SToggleButton extends SComponent implements MouseClickListener {
     public void onClick(int button, int xSc, int ySc) {
         // setState(!getState());
         state = !state;
+        stateChangeListeners.forEach(s -> s.accept(state));
+    }
+
+    public void addStateChangeListener(Consumer<Boolean> action) {
+        stateChangeListeners.add(action);
     }
 
     public boolean getState() {

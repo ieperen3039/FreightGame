@@ -23,12 +23,12 @@ public class BaseLF implements SFrameLookAndFeel {
     private static final int BUTTON_INDENT = 8;
     private static final int STROKE_WIDTH = 2;
     private static final int TEXT_SIZE_LARGE = 24;
-    private static final int BORDER = 3;
 
     private static final Color4f TEXT_COLOR = Color4f.BLACK;
     private static final Color4f PANEL_COLOR = Color4f.WHITE;
     private static final Color4f STROKE_COLOR = Color4f.BLUE;
     private static final Color4f BUTTON_COLOR = Color4f.GREY;
+    private static final Color4f TOOLBAR_COLOR = Color4f.WHITE;
     private Color4f SELECTION_COLOR = Color4f.TRANSPARENT_GREY;
 
     private ScreenOverlay.Painter hud;
@@ -55,6 +55,11 @@ public class BaseLF implements SFrameLookAndFeel {
     public void drawDropDown(Vector2ic pos, Vector2ic dim, String value, boolean isOpened) {
         drawRectangle(pos, dim);
         drawText(pos, dim, value, NGFonts.TextType.REGULAR, true);
+    }
+
+    @Override
+    public void drawToolbar(int height) {
+        hud.rectangle(0, 0, hud.windowWidth, height, TOOLBAR_COLOR, Color4f.INVISIBLE, 0);
     }
 
     @Override

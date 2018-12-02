@@ -86,4 +86,10 @@ public interface SFrameLookAndFeel extends Mod {
      * @param isOpened if true, the options are shown below this component
      */
     void drawDropDown(Vector2ic pos, Vector2ic dim, String value, boolean isOpened);
+
+    /**
+     * Draw a rectangle on the top of the screen
+     * @param height height of the bar in pixels
+     */
+    void drawToolbar(int height);
 }

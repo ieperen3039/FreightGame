@@ -5,18 +5,18 @@ import NG.ActionHandling.KeyReleaseListener;
 import NG.ActionHandling.MousePositionListener;
 import NG.Engine.Game;
 import NG.Settings.KeyBinding;
+import NG.Settings.Settings;
 import NG.Tools.Vectors;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import static NG.Camera.MoveDirection.*;
+import static NG.Camera.TycoonFixedCamera.MoveDirection.*;
 
 /**
  * @author Geert van Ieperen. Created on 18-11-2018.
  */
 public class TycoonFixedCamera implements Camera, MousePositionListener, KeyPressListener, KeyReleaseListener {
     private static final int SCREEN_MOVE_MINIMUM_PIXELS = 50;
-    private static final float ZOOM_SPEED = 0.1f;
     private static final float SCROLL_SPEED = 0.02f;
     public static final float ROTATION_MODIFIER = 1f;
     private final Vector3f focus = new Vector3f();
@@ -34,14 +34,14 @@ public class TycoonFixedCamera implements Camera, MousePositionListener, KeyPres
     @Override
     public void init(Game game) {
         this.game = game;
-        game.callbacks().addMousePositionListener(this);
-        game.callbacks().addKeyPressListener(this);
-        game.callbacks().addKeyReleaseListener(this);
+        game.inputHandling().addMousePositionListener(this);
+        game.inputHandling().addKeyPressListener(this);
+        game.inputHandling().addKeyReleaseListener(this);
     }
 
     @Override
-    public Vector3f vectorToFocus() {
-        return null;
+    public Vector3fc vectorToFocus() {
+        return new Vector3f(eyeOffset).negate();
     }
 
     @Override
@@ -57,16 +57,17 @@ public class TycoonFixedCamera implements Camera, MousePositionListener, KeyPres
             int xInv = game.window().getWidth() - mouseXPos;
             if (xInv < SCREEN_MOVE_MINIMUM_PIXELS) {
                 float value = positionToMovement(xInv) * deltaTime;
-                eyeDir.normalize(-value).cross(getUpVector());
-                focus.add(eyeDir.x, eyeDir.y, 0);
+                eyeDir.normalize(value).cross(getUpVector());
+                focus.sub(eyeDir.x, eyeDir.y, 0);
             }
         }
 
+        eyeDir.set(eyeOffset);
         // y movement
         if (mouseYPos < SCREEN_MOVE_MINIMUM_PIXELS) {
             float value = positionToMovement(mouseYPos) * deltaTime;
             eyeDir.normalize(value);
-            focus.add(-eyeDir.x, -eyeDir.y, 0);
+            focus.sub(eyeDir.x, eyeDir.y, 0);
 
         } else {
             int yInv = game.window().getHeight() - mouseYPos;
@@ -100,18 +101,27 @@ public class TycoonFixedCamera implements Camera, MousePositionListener, KeyPres
     }
 
     @Override
-    public void setFocus(Vector3fc focus) {
+    public void set(Vector3fc focus, Vector3fc eye) {
         this.focus.set(focus);
+        Vector3f offset = new Vector3f(eye).sub(focus);
+        this.eyeOffset.set(offset);
     }
 
     @Override
-    public void mouseScrolled(float value) {
-        eyeOffset.mul((ZOOM_SPEED * -value) + 1f);
+    public void onScroll(float value) {
+        Settings s = game.settings();
+        float zoomSpeed = s.CAMERA_ZOOM_SPEED;
+        int maxZoom = s.MAX_CAMERA_DIST;
+        eyeOffset.mul((zoomSpeed * -value) + 1f);
+
+        if (eyeOffset.lengthSquared() > maxZoom * maxZoom) {
+            eyeOffset.normalize(maxZoom);
+        }
     }
 
     @Override
     public void cleanup() {
-        game.callbacks().removeListener(this);
+        game.inputHandling().removeListener(this);
     }
 
     @Override
@@ -126,6 +136,7 @@ public class TycoonFixedCamera implements Camera, MousePositionListener, KeyPres
      * @return how fast the camera should move in the direction
      */
     protected float positionToMovement(int pixels) {
+        assert pixels < SCREEN_MOVE_MINIMUM_PIXELS;
         return (SCREEN_MOVE_MINIMUM_PIXELS - pixels) * eyeOffset.length() * SCROLL_SPEED;
     }
 
@@ -152,8 +163,9 @@ public class TycoonFixedCamera implements Camera, MousePositionListener, KeyPres
                 break;
         }
     }
+
+    enum MoveDirection {
+        LEFT, NOT, RIGHT
+    }
 }
 
-enum MoveDirection {
-    LEFT, NOT, RIGHT
-}

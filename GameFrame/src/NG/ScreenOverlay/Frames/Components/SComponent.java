@@ -166,7 +166,10 @@ public abstract class SComponent {
     }
 
     public Vector2ic getScreenPosition() {
-        return parent.getScreenPosition().add(position, new Vector2i());
+        if (parent == null) return position;
+
+        Vector2ic scRef = parent.getScreenPosition();
+        return new Vector2i(scRef).add(position);
     }
 
     Optional<SContainer> getParent() {

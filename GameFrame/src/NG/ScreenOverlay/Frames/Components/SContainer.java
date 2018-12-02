@@ -23,7 +23,7 @@ public abstract class SContainer extends SComponent {
     /**
      * a container that uses the given manager for its layout
      */
-    SContainer(SLayoutManager layout, boolean growHorizontal, boolean growVertical) {
+    public SContainer(SLayoutManager layout, boolean growHorizontal, boolean growVertical) {
         this.layout = layout;
         this.wantHzGrow = growHorizontal;
         this.wantVtGrow = growVertical;
@@ -75,7 +75,7 @@ public abstract class SContainer extends SComponent {
         invalidateLayout();
     }
 
-    void drawChildren(SFrameLookAndFeel lookFeel, Vector2ic offset) {
+    public void drawChildren(SFrameLookAndFeel lookFeel, Vector2ic offset) {
         for (SComponent component : children()) {
             if (component.isVisible() && component.getWidth() != 0 && component.getHeight() != 0) {
                 Vector2i scPos = new Vector2i(component.position).add(offset);

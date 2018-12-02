@@ -1,34 +1,32 @@
 package NG.Engine;
 
+import NG.ActionHandling.FreightCallbacks;
 import NG.ActionHandling.KeyMouseCallbacks;
-import NG.ActionHandling.TycoonGameCallbacks;
 import NG.Camera.Camera;
 import NG.Camera.TycoonFixedCamera;
-import NG.DataStructures.MatrixStack.SGL;
-import NG.Entities.Entity;
-import NG.Entities.Tracks.BuildMenu;
 import NG.Entities.Tracks.TrackMod;
 import NG.GameState.GameLoop;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
 import NG.GameState.HeightMap;
 import NG.Mods.Mod;
+import NG.Mods.TypeCollection;
 import NG.Rendering.GLFWWindow;
 import NG.Rendering.RenderLoop;
 import NG.ScreenOverlay.Frames.BaseLF;
 import NG.ScreenOverlay.Frames.GUIManager;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.Frames.SFrameManager;
-import NG.ScreenOverlay.MainMenu;
+import NG.ScreenOverlay.Menu.FreightToolBar;
+import NG.ScreenOverlay.Menu.MainMenu;
 import NG.ScreenOverlay.ToolBar;
 import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -44,8 +42,9 @@ public class FreightGame implements Game, ModLoader {
     private final RenderLoop renderer;
     private final Settings settings;
     private final GLFWWindow window;
-    private final TycoonGameCallbacks inputHandler;
+    private final FreightCallbacks inputHandler;
     private final GUIManager frameManager;
+    private final TypeCollection typeCollection;
     private MainMenu mainMenu;
 
     private List<Mod> allMods;
@@ -66,20 +65,20 @@ public class FreightGame implements Game, ModLoader {
         settings = new Settings();
         time = new GameTimer();
 
-//        camera = new StaticCamera(Vectors.zeroVector(), Vectors.zVector());
         camera = new TycoonFixedCamera(new Vector3f(), 100);
         window = new GLFWWindow(Settings.GAME_NAME, true);
         renderer = new RenderLoop(settings.TARGET_FPS);
         gameState = new GameLoop(Settings.GAME_NAME, settings.TARGET_TPS);
         gameMap = new HeightMap();
-        inputHandler = new TycoonGameCallbacks();
+        inputHandler = new FreightCallbacks();
         frameManager = new SFrameManager();
 
         // load mods
         allMods = JarModReader.loadMods(Directory.mods);
+        typeCollection = new TypeCollection();
     }
 
-    private void init() throws Exception {
+    public void init() throws Exception {
         Logger.DEBUG.print("Initializing...");
         // init all fields
         window.init(this);
@@ -89,10 +88,6 @@ public class FreightGame implements Game, ModLoader {
         inputHandler.init(this);
         frameManager.init(this);
         gameMap.init(this);
-
-        inputHandler.setMouseClickListener(this::onClick);
-        inputHandler.setMouseReleaseListener(frameManager);
-        inputHandler.setScrollListener(this::onScroll);
 
         renderer.addHudItem(frameManager::draw);
         mainMenu = new MainMenu(this, this, renderer::stopLoop);
@@ -108,10 +103,10 @@ public class FreightGame implements Game, ModLoader {
     @Override
     public void initMods(List<Mod> mods) {
         assert activeMods.isEmpty() : "Already mods loaded";
-        activeMods = mods;
+        activeMods = new ArrayList<>(mods);
 
         // init mods
-        for (Mod mod : mods) {
+        for (Mod mod : activeMods) {
             try {
                 mod.init(this);
                 identifyModule(mod);
@@ -124,7 +119,7 @@ public class FreightGame implements Game, ModLoader {
 
     private void identifyModule(Mod target) throws IllegalNumberOfModulesException {
         if (target instanceof TrackMod) {
-            //                 trackTypes.addAll(mod.getTypes()); or sth similar
+            typeCollection.addTrackTypes((TrackMod) target);
             Logger.DEBUG.print("Installed " + target.getModName() + " as TrackMod");
 
         } else if (target instanceof SFrameLookAndFeel) {
@@ -154,11 +149,7 @@ public class FreightGame implements Game, ModLoader {
     @Override
     public void startGame() {
         mainMenu.setVisible(false);
-        ToolBar toolBar = new ToolBar(this);
-        toolBar.addButton("Exit", this::stopGame);
-        toolBar.addButton("$$$", () -> Logger.INFO.print("You are given one (1) arbitrary value(s)"));
-        toolBar.addSeparator();
-        toolBar.addButton("B", () -> frameManager.addFrame(new BuildMenu()));
+        ToolBar toolBar = new FreightToolBar(this, this::stopGame);
         frameManager.setToolBar(toolBar);
         gameState.start();
     }
@@ -200,13 +191,18 @@ public class FreightGame implements Game, ModLoader {
     }
 
     @Override
-    public KeyMouseCallbacks callbacks() {
+    public KeyMouseCallbacks inputHandling() {
         return inputHandler;
     }
 
     @Override
     public Version getVersionNumber() {
         return new Version(0, 0);
+    }
+
+    @Override
+    public TypeCollection objectTypes() {
+        return typeCollection;
     }
 
     @Override
@@ -231,22 +227,6 @@ public class FreightGame implements Game, ModLoader {
             }
         }
         return null;
-    }
-
-    private void onClick(int button, int x, int y) {
-        if (frameManager.processClick(button, x, y)) return;
-        if (gameState.processClick(button, x, y)) return;
-
-        Matrix4f projection = SGL.getProjection(window.getWidth(), window.getHeight(), camera, Settings.ISOMETRIC_VIEW);
-        Vector4f from = projection.transform(new Vector4f(x, y, 1, 0));
-        Vector4f to = projection.transform(new Vector4f(x, y, -1, 0));
-
-        Entity target = gameState.getEntityByRay(from, to);
-        if (target != null) target.onClick(button);
-    }
-
-    private void onScroll(float value) {
-        camera.mouseScrolled(value);
     }
 
     private void cleanup() {

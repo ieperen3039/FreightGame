@@ -1,17 +1,26 @@
 package NG.GameState;
 
+import NG.ActionHandling.MouseTools.MouseTool;
+import NG.Camera.Camera;
 import NG.DataStructures.Color4f;
 import NG.DataStructures.Material;
 import NG.DataStructures.MatrixStack.Mesh;
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.Game;
+import NG.Rendering.GLFWWindow;
 import NG.Rendering.Shapes.FlatMesh;
 import NG.ScreenOverlay.Frames.Components.SFiller;
 import NG.ScreenOverlay.Frames.Components.SFrame;
 import NG.ScreenOverlay.Frames.Components.SPanel;
 import NG.ScreenOverlay.Frames.Components.SProgressBar;
+import NG.Settings.Settings;
+import NG.Tools.Logger;
 import NG.Tools.Toolbox;
-import org.joml.Vector2fc;
+import NG.Tools.Vectors;
+import org.joml.Intersectionf;
+import org.joml.Matrix4f;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,11 +106,38 @@ public class HeightMap implements GameMap {
     }
 
     @Override
-    public float getHeightAt(Vector2fc position) {
-        float xFloat = position.x() * edgeLength;
-        float yFloat = position.y() * edgeLength;
+    public void draw(SGL gl) {
+        if (hasNewWorld) {
+            meshOfTheWorld.clear();
+            Collection<Mesh> meshes = generateMeshes();
+            meshOfTheWorld.addAll(meshes);
+            hasNewWorld = false;
+        }
+
+        gl.setMaterial(Material.ROUGH, new Color4f(0, 0.5f, 0));
+        meshOfTheWorld.forEach(gl::render);
+    }
+
+    @Override
+    public float getHeightAt(float x, float y) {
+        assert x > 0 && y > 0;
+
+        // ASSUMPTION: map (0, 0) is on heightmap [0, 0]
+        float xFloat = x / edgeLength;
+        float yFloat = y / edgeLength;
         int xMin = (int) xFloat;
         int yMin = (int) yFloat;
+
+        int xSize = heightmap.length;
+        int ySize = heightmap[0].length;
+        if (xMin > xSize - 1 || yMin > ySize - 1) {
+            Logger.ASSERT.printf(
+                    "Coord out of bounds: (%1.3f, %1.3f) -> [%d, %d] (size is %d by %d)",
+                    x, y, xMin + 1, yMin + 1, xSize, ySize
+            );
+            return 0;
+        }
+
         float xFrac = xFloat - xMin;
         float yFrac = yFloat - yMin;
 
@@ -117,20 +153,29 @@ public class HeightMap implements GameMap {
     }
 
     @Override
-    public void draw(SGL gl) {
-        if (hasNewWorld) {
-            meshOfTheWorld.clear();
-            Collection<Mesh> meshes = generateMeshes();
-            meshOfTheWorld.addAll(meshes);
-            hasNewWorld = false;
-        }
+    public void cleanup() {
 
-        gl.setMaterial(Material.ROUGH, new Color4f(0, 0.5f, 0));
-        meshOfTheWorld.forEach(gl::render);
     }
 
     @Override
-    public void cleanup() {
+    public boolean checkMouseClick(MouseTool tool, int xSc, int ySc) {
+        GLFWWindow window = game.window();
+        Camera camera = game.camera();
 
+        int width = window.getWidth();
+        int height = window.getHeight();
+        Matrix4f projection = SGL.getViewProjection(width, height, camera, Settings.ISOMETRIC_VIEW);
+
+        Vector3f origin = new Vector3f();
+        Vector3f direction = new Vector3f();
+        int[] viewport = {0, 0, width, height};
+        projection.unprojectRay(new Vector2f(xSc, ySc), viewport, origin, direction);
+
+        float t = Intersectionf.intersectRayPlane(origin, direction, Vectors.zeroVector(), Vectors.zVector(), 1E-6f);
+        Vector3f pos = origin.add(direction.mul(t));
+
+        tool.apply(new Vector2f(pos.x, pos.y));
+
+        return true;
     }
 }

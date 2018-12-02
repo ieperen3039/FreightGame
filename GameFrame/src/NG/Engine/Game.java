@@ -4,6 +4,7 @@ import NG.ActionHandling.KeyMouseCallbacks;
 import NG.Camera.Camera;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
+import NG.Mods.TypeCollection;
 import NG.Rendering.GLFWWindow;
 import NG.ScreenOverlay.Frames.GUIManager;
 import NG.Settings.Settings;
@@ -26,9 +27,11 @@ public interface Game {
 
     GLFWWindow window();
 
-    KeyMouseCallbacks callbacks();
+    KeyMouseCallbacks inputHandling();
 
     GUIManager gui();
 
     Version getVersionNumber();
+
+    TypeCollection objectTypes();
 }

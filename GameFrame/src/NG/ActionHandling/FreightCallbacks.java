@@ -1,5 +1,7 @@
 package NG.ActionHandling;
 
+import NG.ActionHandling.MouseTools.DefaultMouseTool;
+import NG.ActionHandling.MouseTools.MouseTool;
 import NG.Engine.Game;
 import NG.Engine.GameAspect;
 import NG.Rendering.GLFWWindow;
@@ -7,6 +9,7 @@ import org.lwjgl.glfw.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -14,18 +17,19 @@ import static org.lwjgl.glfw.GLFW.*;
  * A callback handler specialized on a tycoon-game
  * @author Geert van Ieperen. Created on 18-11-2018.
  */
-public class TycoonGameCallbacks implements GameAspect, KeyMouseCallbacks {
+public class FreightCallbacks implements GameAspect, KeyMouseCallbacks {
+    private final DefaultMouseTool DEFAULT_MOUSE_TOOL = new DefaultMouseTool();
     private final Collection<KeyPressListener> keyPressListeners = new ArrayList<>();
     private final Collection<KeyReleaseListener> keyReleaseListeners = new ArrayList<>();
     private final Collection<MousePositionListener> mousePositionListeners = new ArrayList<>();
 
+    private Game game;
     private KeyTypeListener keyTypeListener = null;
-    private MouseClickListener mouseClickListener = null;
-    private MouseReleaseListener mouseReleaseListener = null;
-    private MouseScrollListener scrollListener = null;
+    private MouseTool currentTool = DEFAULT_MOUSE_TOOL;
 
     @Override
     public void init(Game game) {
+        this.game = game;
         GLFWWindow target = game.window();
         target.setCallbacks(new KeyPressCallback(), new MouseButtonPressCallback(), new MouseMoveCallback(), new MouseScrollCallback());
         target.setTextCallback(new CharTypeCallback());
@@ -34,6 +38,19 @@ public class TycoonGameCallbacks implements GameAspect, KeyMouseCallbacks {
     @Override
     public void cleanup() {
         keyPressListeners.clear();
+        keyReleaseListeners.clear();
+        mousePositionListeners.clear();
+        keyTypeListener = null;
+    }
+
+    @Override
+    public void setMouseTool(MouseTool tool) {
+        currentTool = Objects.requireNonNullElse(tool, DEFAULT_MOUSE_TOOL);
+    }
+
+    @Override
+    public MouseTool getMouseTool() {
+        return currentTool;
     }
 
     @Override
@@ -69,30 +86,6 @@ public class TycoonGameCallbacks implements GameAspect, KeyMouseCallbacks {
         keyTypeListener = listener;
     }
 
-    /**
-     * Sets the click listener such that all clicks are captured by this listener
-     * @param listener The new listener, or null to uninstall this listener
-     */
-    public void setMouseClickListener(MouseClickListener listener) {
-        mouseClickListener = listener;
-    }
-
-    /**
-     * Sets the click release listener such that whenever a click is released, this listener is notified
-     * @param listener The new listener, or null to uninstall this listener
-     */
-    public void setMouseReleaseListener(MouseReleaseListener listener) {
-        mouseReleaseListener = listener;
-    }
-
-    /**
-     * Sets the scroll listener, such that whenever is scrolled, this listener is notified
-     * @param listener The new listener, or null to uninstall this listener
-     */
-    public void setScrollListener(MouseScrollListener listener) {
-        scrollListener = listener;
-    }
-
     private class KeyPressCallback extends GLFWKeyCallback {
         @Override
         public void invoke(long window, int keyCode, int scanCode, int action, int mods) {
@@ -118,12 +111,16 @@ public class TycoonGameCallbacks implements GameAspect, KeyMouseCallbacks {
             int x = (int) xBuf[0];
             int y = (int) yBuf[0];
 
-            if (action == GLFW_PRESS && mouseClickListener != null) {
-                mouseClickListener.onClick(button, x, y);
+            currentTool.setButton(button);
+            if (action == GLFW_PRESS) {
+                if (game.gui().checkMouseClick(currentTool, x, y)) return;
+                if (game.state().checkMouseClick(currentTool, x, y)) return;
+                game.map().checkMouseClick(currentTool, x, y);
 
-            } else if (action == GLFW_RELEASE && mouseReleaseListener != null) {
-                mouseReleaseListener.onRelease(button, x, y);
+            } else if (action == GLFW_RELEASE) {
+                currentTool.onRelease(button, x, y);
             }
+
         }
     }
 
@@ -133,15 +130,15 @@ public class TycoonGameCallbacks implements GameAspect, KeyMouseCallbacks {
             for (MousePositionListener listener : mousePositionListeners) {
                 listener.mouseMoved((int) xpos, (int) ypos);
             }
+
+            currentTool.mouseMoved((int) xpos, (int) ypos);
         }
     }
 
     private class MouseScrollCallback extends GLFWScrollCallback {
         @Override
         public void invoke(long window, double xoffset, double yoffset) {
-            if (scrollListener != null) {
-                scrollListener.mouseScrolled((float) yoffset);
-            }
+            game.camera().onScroll((float) yoffset);
         }
     }
 

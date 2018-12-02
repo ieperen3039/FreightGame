@@ -1,7 +1,6 @@
 package NG.Tools;
 
-import org.joml.Vector2ic;
-import org.joml.Vector3fc;
+import org.joml.*;
 
 import java.io.PrintStream;
 import java.util.*;
@@ -44,18 +43,28 @@ public enum Logger {
 
     private static String concatenate(Object[] x) {
         if (x.length == 0) return "";
+
         for (int i = 0; i < x.length; i++) {
-            if (x[i] == null)
+            if (x[i] == null) {
                 x[i] = "null";
-            if (x[i] instanceof Vector3fc) {
+            } else if (x[i] instanceof Vector3fc) {
                 Vector3fc v = (Vector3fc) x[i];
-                x[i] = String.format("(%1.3f, %1.3f, %1.3f),", v.x(), v.y(), v.z());
-            }
-            if (x[i] instanceof Vector2ic) {
+                x[i] = Vectors.toString(v);
+            } else if (x[i] instanceof Vector2fc) {
+                Vector2fc v = (Vector2fc) x[i];
+                x[i] = Vectors.toString(v);
+            } else if (x[i] instanceof Vector2ic) {
                 Vector2ic v = (Vector2ic) x[i];
-                x[i] = String.format("(%d, %d),", v.x(), v.y());
+                x[i] = Vectors.toString(v);
+            } else if (x[i] instanceof Vector3ic) {
+                Vector3ic v = (Vector3ic) x[i];
+                x[i] = Vectors.toString(v);
+            } else if (x[i] instanceof Vector4fc) {
+                Vector4fc v = (Vector4fc) x[i];
+                x[i] = Vectors.toString(v);
             }
         }
+
         StringBuilder s = new StringBuilder(x[0].toString());
         for (int i = 1; i < x.length; i++) {
             s.append(" | ").append(x[i]);

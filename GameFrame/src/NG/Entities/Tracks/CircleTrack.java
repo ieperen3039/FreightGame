@@ -55,12 +55,13 @@ public class CircleTrack implements TrackPiece {
 
     @Override
     public Vector2fc getStartDirection() {
-        return null;
+        // derivative of geometric functions
+        return new Vector2f((float) Math.cos(startRadian), (float) -Math.sin(startRadian));
     }
 
     @Override
     public Vector2fc getEndDirection() {
-        return null;
+        return new Vector2f((float) Math.cos(endRadian), (float) -Math.sin(endRadian));
     }
 
     public float getRadius() {

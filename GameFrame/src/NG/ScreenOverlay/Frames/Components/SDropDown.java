@@ -1,8 +1,7 @@
 package NG.ScreenOverlay.Frames.Components;
 
-import NG.ActionHandling.MouseClickListener;
+import NG.ActionHandling.MouseRelativeClickListener;
 import NG.Engine.Game;
-import NG.ScreenOverlay.Frames.MouseRelativeClickListener;
 import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
@@ -12,7 +11,7 @@ import java.util.List;
 /**
  * @author Geert van Ieperen. Created on 5-10-2018.
  */
-public class SDropDown extends SComponent implements MouseClickListener {
+public class SDropDown extends SComponent implements MouseRelativeClickListener {
     private final String[] values;
     private final DropDownOptions optionPane;
     private final Game game;

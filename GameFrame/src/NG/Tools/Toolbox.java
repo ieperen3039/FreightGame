@@ -38,7 +38,8 @@ public final class Toolbox {
     public static void drawAxisFrame(SGL gl) {
         String source = Logger.getCallingMethod(1);
         if (!Logger.callerBlacklist.contains(source)) {
-            Logger.DEBUG.printFrom(2, " - draws axis frame on " + gl.getPosition(Vectors.zeroVector()));
+            Vector3f position = gl.getPosition(Vectors.zeroVector());
+            Logger.DEBUG.printFrom(2, " - draws axis frame on " + Vectors.toString(position));
             Logger.callerBlacklist.add(source);
         }
 

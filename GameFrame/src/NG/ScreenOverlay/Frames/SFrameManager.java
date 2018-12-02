@@ -1,10 +1,6 @@
 package NG.ScreenOverlay.Frames;
 
-import NG.ActionHandling.KeyMouseCallbacks;
-import NG.ActionHandling.MouseClickListener;
-import NG.ActionHandling.MouseMoveListener;
-import NG.ActionHandling.MouseReleaseListener;
-import NG.DataStructures.Tracked.TrackedInteger;
+import NG.ActionHandling.MouseTools.MouseTool;
 import NG.Engine.Game;
 import NG.ScreenOverlay.Frames.Components.SComponent;
 import NG.ScreenOverlay.Frames.Components.SFrame;
@@ -13,7 +9,10 @@ import NG.ScreenOverlay.ToolBar;
 import NG.Tools.Logger;
 import org.joml.Vector2ic;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * Objects of this class can manage an in-game window system that is behaviourally similar to classes in the {@link
@@ -24,16 +23,10 @@ public class SFrameManager implements GUIManager {
     private Game game;
     /** the first element in this list has focus */
     private Deque<SFrame> frames;
-    private int dragButton = 0;
-    private MouseMoveListener dragListener = null;
-    private MouseReleaseListener releaseListener = null;
-    private TrackedInteger cameraXPos = new TrackedInteger(0);
-    private TrackedInteger cameraYPos = new TrackedInteger(0);
-
     private SComponent modalSection;
 
     private SFrameLookAndFeel lookAndFeel;
-    private Optional<ToolBar> toolBar = Optional.empty();
+    private ToolBar toolBar = null;
 
     public SFrameManager() {
         this.frames = new ArrayDeque<>();
@@ -42,8 +35,6 @@ public class SFrameManager implements GUIManager {
     @Override
     public void init(Game game) {
         this.game = game;
-        KeyMouseCallbacks callbacks = game.callbacks();
-        callbacks.addMousePositionListener(this);
     }
 
     @Override
@@ -66,7 +57,9 @@ public class SFrameManager implements GUIManager {
             modalSection.draw(lookAndFeel, modalSection.getScreenPosition());
         }
 
-        toolBar.ifPresent(t -> t.draw(lookAndFeel));
+        if (toolBar != null) {
+            toolBar.draw(lookAndFeel, null);
+        }
     }
 
     @Override
@@ -125,34 +118,28 @@ public class SFrameManager implements GUIManager {
 
     @Override
     public void setToolBar(ToolBar toolBar) {
-        this.toolBar = Optional.ofNullable(toolBar);
+        this.toolBar = toolBar;
     }
 
     @Override
     public void cleanup() {
-        game.callbacks().removeListener(this);
+        game.inputHandling().removeListener(this);
         frames.forEach(SFrame::dispose);
         frames.clear();
     }
 
     @Override
-    public boolean processClick(int button, int xSc, int ySc) {
-        if (dragListener != null) return true;
-        dragButton = button;
-
+    public boolean checkMouseClick(MouseTool tool, int xSc, int ySc) {
         if (modalSection != null) {
-            MouseRelativeClickListener asListener = (MouseRelativeClickListener) modalSection;
             Vector2ic modalPosition = modalSection.getScreenPosition();
-            asListener.onClick(button, xSc - modalPosition.x(), ySc - modalPosition.y());
+            tool.apply(modalSection, xSc - modalPosition.x(), ySc - modalPosition.y());
             modalSection = null;
             return true;
         }
 
-        if (toolBar.isPresent()) {
-            ToolBar bar = toolBar.get();
-            if (bar.contains(xSc, ySc)) {
-                bar.onClick(button, xSc, ySc);
-                releaseListener = bar;
+        if (toolBar != null) {
+            if (toolBar.contains(xSc, ySc)) {
+                tool.apply(toolBar, xSc, ySc);
                 return true;
             }
         }
@@ -163,56 +150,12 @@ public class SFrameManager implements GUIManager {
                 int xr = xSc - frame.getX();
                 int yr = ySc - frame.getY();
                 SComponent component = frame.getComponentAt(xr, yr);
-                Logger.DEBUG.print("Clicked on " + component);
 
-                if (component instanceof MouseClickListener) {
-                    MouseClickListener cl = (MouseClickListener) component;
-                    // by def. of MouseAnyClickListener, give screen coordinates
-                    cl.onClick(button, xSc, ySc);
-
-                } else if (component instanceof MouseRelativeClickListener) {
-                    MouseRelativeClickListener cl = (MouseRelativeClickListener) component;
-                    // by def. of MouseRelativeClickListener, give relative coordinates
-                    Vector2ic pos = component.getScreenPosition();
-                    cl.onClick(button, xSc - pos.x(), ySc - pos.y());
-                }
-
-                if (component instanceof MouseMoveListener) {
-                    dragListener = (MouseMoveListener) component;
-                    cameraXPos.update(xSc);
-                    cameraYPos.update(ySc);
-                } else {
-                    dragListener = null;
-                }
-
-                releaseListener = (component instanceof MouseReleaseListener) ? (MouseReleaseListener) component : null;
-
+                tool.apply(component, xSc, ySc);
                 return true; // only for top-most frame
             }
         }
 
         return false;
-    }
-
-    @Override
-    public void onRelease(int button, int xSc, int ySc) {
-        if (button != dragButton) return;
-
-        dragListener = null;
-        if (releaseListener != null) {
-            releaseListener.onRelease(button, xSc, ySc);
-            releaseListener = null;
-        }
-    }
-
-    @Override
-    public void mouseMoved(int xPos, int yPos) {
-        if (dragListener == null) return;
-
-        cameraXPos.update(xPos);
-        cameraYPos.update(yPos);
-        int xDelta = cameraXPos.difference();
-        int yDelta = cameraYPos.difference();
-        dragListener.mouseMoved(xDelta, yDelta);
     }
 }

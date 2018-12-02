@@ -1,12 +1,17 @@
 package NG.GameState;
 
+import NG.ActionHandling.MouseTools.MouseTool;
+import NG.Camera.Camera;
 import NG.DataStructures.Color4f;
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.AbstractGameLoop;
 import NG.Engine.Game;
 import NG.Entities.Entity;
+import NG.Rendering.GLFWWindow;
 import NG.Rendering.Light;
+import NG.Settings.Settings;
 import NG.Tools.Toolbox;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.joml.Vector4f;
@@ -21,6 +26,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
+ *
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
 public class GameLoop extends AbstractGameLoop implements GameState {
@@ -145,8 +151,12 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     }
 
     @Override
-    public boolean processClick(int button, int xSc, int ySc) {
-        // TODO allow a listener that catches any click
+    public boolean checkMouseClick(MouseTool tool, int xSc, int ySc) {
+        GLFWWindow window = game.window();
+        Camera camera = game.camera();
+
+        Matrix4f projection = SGL.getViewProjection(window.getWidth(), window.getHeight(), camera, Settings.ISOMETRIC_VIEW);
+
         return false;
     }
 }

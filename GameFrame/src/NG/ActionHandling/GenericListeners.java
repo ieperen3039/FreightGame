@@ -4,6 +4,7 @@ import NG.DataStructures.Tracked.TrackedInteger;
 import NG.Engine.Game;
 import NG.Engine.GameAspect;
 import NG.Rendering.GLFWWindow;
+import NG.ScreenOverlay.Frames.Components.STextInput;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
@@ -20,7 +21,7 @@ import static org.lwjgl.glfw.GLFW.*;
 public class GenericListeners implements GameAspect {
     private final Collection<KeyPressListener> keyPressListeners = new ArrayList<>();
     private final Collection<KeyReleaseListener> keyReleaseListeners = new ArrayList<>();
-    private final Collection<MouseClickListener> mouseClickListeners = new ArrayList<>();
+    private final Collection<STextInput> mouseClickListeners = new ArrayList<>();
     private final Collection<MouseReleaseListener> mouseReleaseListeners = new ArrayList<>();
     private final Collection<MouseScrollListener> mouseScrollListeners = new ArrayList<>();
     private final Collection<MouseMoveListener> mouseMotionListeners = new ArrayList<>();
@@ -51,7 +52,7 @@ public class GenericListeners implements GameAspect {
     /**
      * @param action upon mouse click, receives the {@link org.lwjgl.glfw.GLFW} mouse button that is pressed
      */
-    public void onMouseButtonClick(MouseClickListener action) {
+    public void onMouseButtonClick(STextInput action) {
         mouseClickListeners.add(action);
     }
 
@@ -165,7 +166,7 @@ public class GenericListeners implements GameAspect {
     private class MouseScrollCallback extends GLFWScrollCallback {
         @Override
         public void invoke(long windowHandle, double xScroll, double yScroll) {
-            mouseScrollListeners.forEach(l -> l.mouseScrolled((float) yScroll));
+            mouseScrollListeners.forEach(l -> l.onScroll((float) yScroll));
         }
     }
 

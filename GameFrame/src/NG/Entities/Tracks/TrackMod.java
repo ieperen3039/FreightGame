@@ -5,7 +5,7 @@ import NG.GameState.GameMap;
 import NG.Mods.Mod;
 import org.joml.Vector2fc;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * @author Geert van Ieperen. Created on 19-9-2018.
@@ -14,9 +14,9 @@ public interface TrackMod extends Mod {
 
     /**
      * @return a list of all types of tracks to be created
-     * @implNote The list is not modified. Advised is to cache the list and make it unmodifiable
+     * @implNote The list should not be modified. Advised is to cache the list and make it unmodifiable
      */
-    List<TrackType> getTypes();
+    Collection<TrackType> getTypes();
 
     interface TrackType {
 
