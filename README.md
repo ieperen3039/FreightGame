@@ -9,4 +9,4 @@ There is no timeframe for this project. Thanks to the modding system, each colla
 The unmodded game engine itself only consists of the bare minimum not to crash, and once finished, should see very few influental changes.
 
 # Collaboration
-Still has to be kicked off.
+Still has to be kicked off. Contact me.
