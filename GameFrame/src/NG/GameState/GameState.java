@@ -50,4 +50,11 @@ public interface GameState extends GameAspect, Storable, MouseToolListener {
      * @return all storage objects with a distance to {@code position} less or equal than distance.
      */
     List<Storage> getIndustriesByRange(Vector3fc position, int range);
+
+    /**
+     * removes the first occurrence of an entity from the gameState. This action does not have to be executed
+     * immediately.
+     * @param entity an entity to be removed
+     */
+    void removeEntity(Entity entity);
 }

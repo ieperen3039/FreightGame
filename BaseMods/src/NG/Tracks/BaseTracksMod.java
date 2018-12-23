@@ -1,4 +1,4 @@
-package NG.Entities.Tracks;
+package NG.Tracks;
 
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.Game;
@@ -53,14 +53,16 @@ public class BaseTracksMod implements TrackMod {
         }
 
         @Override
-        public void drawCircle(SGL gl, Vector2fc center, float radius, float startRadian, float endRadian, GameMap map) {
+        public void drawCircle(SGL gl, Vector2fc center, float radius, float lowerTheta, float angle, GameMap map) {
             Vector2f coord = new Vector2f();
             float pieceRad = (trackSpacing / radius);
 
-            for (float p = startRadian; p < endRadian; p += pieceRad) {
+            float upperTheta = lowerTheta + angle;
+            for (float p = lowerTheta; p < upperTheta; p += pieceRad) {
                 gl.pushMatrix();
                 {
-                    coord.set((float) Math.sin(p), (float) Math.cos(p)).mul(radius);
+                    coord.set((float) Math.cos(p), (float) Math.sin(p));
+                    coord.mul(radius);
                     coord.add(center);
 
                     Vector3f position = map.getPosition(coord);

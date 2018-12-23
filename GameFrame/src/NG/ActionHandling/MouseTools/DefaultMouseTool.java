@@ -10,6 +10,7 @@ import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import org.joml.Vector2fc;
 import org.joml.Vector2ic;
+import org.joml.Vector3f;
 
 /**
  * @author Geert van Ieperen. Created on 26-11-2018.
@@ -51,7 +52,7 @@ public class DefaultMouseTool extends MouseTool {
     }
 
     @Override
-    public void apply(Entity entity) {
+    public void apply(Entity entity, Vector3f rayCollision) {
         entity.onClick(getButton());
     }
 
@@ -80,5 +81,10 @@ public class DefaultMouseTool extends MouseTool {
         int xDelta = cameraXPos.difference();
         int yDelta = cameraYPos.difference();
         dragListener.mouseMoved(xDelta, yDelta);
+    }
+
+    @Override
+    public String toString() {
+        return "Default MouseTool";
     }
 }

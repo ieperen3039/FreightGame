@@ -77,7 +77,7 @@ public class SPanel extends SContainer {
      * @param growPolicy if true, this panel tries to grow in each direction
      */
     public SPanel(int minimumWidth, int minimumHeight, boolean growPolicy) {
-        super(new GridLayoutManager(0, 0), growPolicy, growPolicy);
+        super(new GridLayoutManager(1, 1), growPolicy, growPolicy);
         this.minimumWidth = minimumWidth;
         this.minimumHeight = minimumHeight;
     }

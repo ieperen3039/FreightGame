@@ -4,7 +4,6 @@ import NG.ActionHandling.FreightCallbacks;
 import NG.ActionHandling.KeyMouseCallbacks;
 import NG.Camera.Camera;
 import NG.Camera.TycoonFixedCamera;
-import NG.Entities.Tracks.TrackMod;
 import NG.GameState.GameLoop;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
@@ -23,6 +22,7 @@ import NG.ScreenOverlay.ToolBar;
 import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
+import NG.Tracks.TrackMod;
 import org.joml.Vector3f;
 
 import java.io.IOException;

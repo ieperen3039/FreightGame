@@ -1,6 +1,6 @@
 package NG.Mods;
 
-import NG.Entities.Tracks.TrackMod;
+import NG.Tracks.TrackMod;
 
 import java.util.ArrayList;
 import java.util.Collections;

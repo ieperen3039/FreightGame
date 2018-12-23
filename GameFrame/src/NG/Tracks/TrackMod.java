@@ -1,4 +1,4 @@
-package NG.Entities.Tracks;
+package NG.Tracks;
 
 import NG.DataStructures.MatrixStack.SGL;
 import NG.GameState.GameMap;
@@ -25,19 +25,20 @@ public interface TrackMod extends Mod {
 
         /**
          * draw a partially circular track on the given parameters.
-         * @param gl          the object for drawing
-         * @param center      the center of the circle, given as a (x, y) coordinate
-         * @param radius      the radius of the circle where the track lies on
-         * @param startRadian the angle in radian where the circle part starts
-         * @param endRadian   the angle in radians where the circle part ends. Note that if endRadian is less than
-         *                    startRadian, the track goes clockwise.
-         * @param map         the map that provides information about the terrain, e.g. with {@link
-         *                    GameMap#getHeightAt(Vector2fc)}
+         *
+         * @param gl         the object for drawing
+         * @param center     the center of the circle, given as a (x, y) coordinate
+         * @param radius     the radius of the circle where the track lies on
+         * @param lowerTheta the angle in radian where the circle part starts
+         * @param angle      the total angle in radians that this circle describes.
+         * @param map        the map that provides information about the terrain, e.g. with {@link
+         *                   GameMap#getHeightAt(Vector2fc)}
          */
-        void drawCircle(SGL gl, Vector2fc center, float radius, float startRadian, float endRadian, GameMap map);
+        void drawCircle(SGL gl, Vector2fc center, float radius, float lowerTheta, float angle, GameMap map);
 
         /**
-         * draw a partially circular track on the given parameters.
+         * draw a partially straight track on the given parameters.
+         *
          * @param gl         the object for drawing
          * @param startCoord the coordinate where this track origins from
          * @param direction  the normalized direction of where the track goes to

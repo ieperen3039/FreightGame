@@ -116,19 +116,23 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     }
 
     @Override
+    public void removeEntity(Entity entity) {
+        defer(() -> entities.remove(entity));
+    }
+
+    @Override
     public void drawLights(SGL gl) {
         for (Light light : lights) {
             light.draw(gl);
         }
     }
 
-    /** defer is sync'd with {@link #runPostUpdateActions()} */
-    public synchronized void defer(Runnable action) {
+    /** executes action after a gameloop completes */
+    public void defer(Runnable action) {
         postUpdateActionQueue.offer(action);
     }
 
-    private synchronized void runPostUpdateActions() {
-        // this is the only method _removing_ things, so anatomicallity is not required
+    private void runPostUpdateActions() {
         while (!postUpdateActionQueue.isEmpty()) {
             postUpdateActionQueue.remove().run();
         }
@@ -136,8 +140,10 @@ public class GameLoop extends AbstractGameLoop implements GameState {
 
     @Override
     public void cleanup() {
+        drawLock.lock();
         stopLoop(); // possibly this did not happen
         entities.clear();
+        drawLock.unlock();
     }
 
     @Override

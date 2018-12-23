@@ -5,6 +5,7 @@ import NG.ActionHandling.MouseReleaseListener;
 import NG.Entities.Entity;
 import NG.ScreenOverlay.Frames.Components.SComponent;
 import org.joml.Vector2fc;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -25,8 +26,9 @@ public abstract class MouseTool implements MouseMoveListener, MouseReleaseListen
     /**
      * applies the functionality of this tool to the given entity
      * @param entity an entity that is clicked on using this tool, always not null
+     * @param rayCollision the position where the click intersected with this object's hitbox
      */
-    public abstract void apply(Entity entity);
+    public abstract void apply(Entity entity, Vector3f rayCollision);
 
     /**
      * applies the functionality of this tool to the given position in the world

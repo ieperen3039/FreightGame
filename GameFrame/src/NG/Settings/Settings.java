@@ -22,7 +22,7 @@ public class Settings {
     public int MAX_POINT_LIGHTS = 16;
     public int ANTIALIAS_LEVEL = 1;
     public static boolean ISOMETRIC_VIEW = true;
-    public final float CAMERA_ZOOM_SPEED = -0.1f;
+    public final float CAMERA_ZOOM_SPEED = 0.1f;
     public final int MAX_CAMERA_DIST = 1000;
 
     // UI settings
@@ -32,6 +32,6 @@ public class Settings {
     public static int STATION_RANGE = 5;
 
     // in-game appearance settings
-    public float TRACK_SPACING = 0.1f;
+    public float TRACK_SPACING = 1f;
 
 }

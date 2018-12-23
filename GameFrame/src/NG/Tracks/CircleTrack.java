@@ -1,7 +1,8 @@
-package NG.Entities.Tracks;
+package NG.Tracks;
 
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.Game;
+import NG.Tools.Vectors;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 
@@ -9,63 +10,56 @@ import org.joml.Vector2fc;
  * @author Geert van Ieperen. Created on 18-9-2018.
  */
 public class CircleTrack implements TrackPiece {
+
     private final Game game;
     private final TrackMod.TrackType type;
 
     /** middle of the circle describing the track */
     private final Vector2fc center;
-    /** polar coordinates of the track piece */
-    private final float startRadian;
-    private final float endRadian;
-    private final float radius;
 
-    public CircleTrack(Game game, Vector2fc startPosition, Vector2fc startDirection, Vector2fc endPoint, TrackMod.TrackType type) {
+    private final float radius;
+    private final boolean isClockwise;
+    private final float firstTheta;
+    private final float angle;
+
+    public CircleTrack(
+            Game game, TrackMod.TrackType type, Vector2fc startPosition, Vector2fc startDirection, Vector2fc endPoint
+    ) {
         this.game = game;
         this.type = type;
 
         Vector2f startToCenter = new Vector2f(startDirection).perpendicular();
         Vector2f startToEnd = new Vector2f(endPoint).sub(startPosition);
+
         float dot = startToEnd.dot(startToCenter);
-        if (dot < 0) startToCenter.negate();
+        if (dot < 0) { // center is on the wrong side of the direction
+            startToCenter.negate();
+            dot = -dot;
+        }
 
         // derivation: see bottom
         radius = startToEnd.lengthSquared() / (2 * dot);
+        startToCenter.normalize(radius);
 
-        startToCenter.mul(radius);
         center = new Vector2f(startPosition).add(startToCenter);
-        startToCenter.negate();
-        startRadian = (float) Math.atan2(startToCenter.y, startToCenter.x);
-        Vector2f midToCenter = new Vector2f(center).sub(endPoint);
-        endRadian = (float) Math.atan2(midToCenter.y, midToCenter.x);
-    }
 
-    @Override
-    public Vector2fc getEndPosition() {
-        return new Vector2f(center)
-                .add((float) Math.sin(endRadian), (float) Math.cos(endRadian))
-                .mul(radius);
-    }
+        // dotOfCross = sd.cross(ste).dot(Z)
+        float dotOfCross = startDirection.x() * startToEnd.y - startDirection.y() * startToEnd.x;
+        isClockwise = dotOfCross > 0;
 
-    @Override
-    public Vector2fc getStartPosition() {
-        return new Vector2f(center)
-                .add((float) Math.sin(startRadian), (float) Math.cos(startRadian))
-                .mul(radius);
-    }
+        Vector2fc vecToStart = startToCenter.negate();
+        Vector2f vecToEnd = new Vector2f(endPoint).sub(center);
 
-    @Override
-    public Vector2fc getStartDirection() {
-        // derivative of geometric functions
-        return new Vector2f((float) Math.cos(startRadian), (float) -Math.sin(startRadian));
-    }
-
-    @Override
-    public Vector2fc getEndDirection() {
-        return new Vector2f((float) Math.cos(endRadian), (float) -Math.sin(endRadian));
+        angle = Vectors.angle(vecToStart, vecToEnd);
+        firstTheta = Vectors.arcTan(vecToStart);
     }
 
     public float getRadius() {
         return radius;
+    }
+
+    public boolean isClockwise() {
+        return isClockwise;
     }
 
     @Override
@@ -75,12 +69,19 @@ public class CircleTrack implements TrackPiece {
 
     @Override
     public void draw(SGL gl) {
-        type.drawCircle(gl, center, radius, startRadian, endRadian, game.map());
+        float lowerTheta = isClockwise ? firstTheta : firstTheta - angle;
+        type.drawCircle(gl, center, radius, lowerTheta, angle, game.map());
     }
 
     @Override
     public void onClick(int button) {
 
+    }
+
+    @Override
+    public Vector2fc getEndDirection() {
+        float theta = isClockwise ? (firstTheta - angle) : (firstTheta + angle);
+        return new Vector2f(-Vectors.sin(theta), Vectors.cos(theta));
     }
 }
 

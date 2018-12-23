@@ -5,6 +5,7 @@ import NG.ActionHandling.MouseTools.MouseTool;
 import NG.Engine.Game;
 import NG.Engine.GameAspect;
 import NG.Rendering.GLFWWindow;
+import NG.Tools.Logger;
 import org.lwjgl.glfw.*;
 
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ public class FreightCallbacks implements GameAspect, KeyMouseCallbacks {
     @Override
     public void setMouseTool(MouseTool tool) {
         currentTool = Objects.requireNonNullElse(tool, DEFAULT_MOUSE_TOOL);
+        Logger.DEBUG.print("Set mousetool to " + currentTool);
     }
 
     @Override
@@ -114,6 +116,10 @@ public class FreightCallbacks implements GameAspect, KeyMouseCallbacks {
             currentTool.setButton(button);
             if (action == GLFW_PRESS) {
                 if (game.gui().checkMouseClick(currentTool, x, y)) return;
+
+                // invert y for transforming to model space (inconsistency between OpenGL and GLFW)
+                y = game.window().getHeight() - y;
+
                 if (game.state().checkMouseClick(currentTool, x, y)) return;
                 game.map().checkMouseClick(currentTool, x, y);
 

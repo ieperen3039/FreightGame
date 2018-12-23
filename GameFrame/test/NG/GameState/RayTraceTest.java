@@ -123,7 +123,7 @@ public class RayTraceTest {
         }
 
         @Override
-        public void apply(Entity entity) {
+        public void apply(Entity entity, Vector3f rayCollision) {
             Logger.DEBUG.print(entity);
         }
 

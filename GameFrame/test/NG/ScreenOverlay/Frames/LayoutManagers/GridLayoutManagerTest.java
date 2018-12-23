@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 public class GridLayoutManagerTest extends GridLayoutManager {
     @Test
     public void minimumInvalidationTest() {
-        add(new SPanel(10, 10, 0, 0, false, true), 0, 0);
+        add(new SPanel(10, 10, 1, 1, false, true), 0, 0);
         add(new SPanel(15, 15, 1, 2, false, false), 1, 1);
         super.recalculateProperties();
         super.placeComponents();

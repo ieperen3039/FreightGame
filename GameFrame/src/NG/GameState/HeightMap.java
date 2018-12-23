@@ -14,14 +14,11 @@ import NG.ScreenOverlay.Frames.Components.SFrame;
 import NG.ScreenOverlay.Frames.Components.SPanel;
 import NG.ScreenOverlay.Frames.Components.SProgressBar;
 import NG.Settings.Settings;
-import NG.Tools.Logger;
 import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
-import org.joml.Intersectionf;
-import org.joml.Matrix4f;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
+import org.joml.*;
 
+import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -120,8 +117,6 @@ public class HeightMap implements GameMap {
 
     @Override
     public float getHeightAt(float x, float y) {
-        assert x > 0 && y > 0;
-
         // ASSUMPTION: map (0, 0) is on heightmap [0, 0]
         float xFloat = x / edgeLength;
         float yFloat = y / edgeLength;
@@ -130,11 +125,11 @@ public class HeightMap implements GameMap {
 
         int xSize = heightmap.length;
         int ySize = heightmap[0].length;
-        if (xMin > xSize - 1 || yMin > ySize - 1) {
-            Logger.ASSERT.printf(
-                    "Coord out of bounds: (%1.3f, %1.3f) -> [%d, %d] (size is %d by %d)",
-                    x, y, xMin + 1, yMin + 1, xSize, ySize
-            );
+        if (xMin < 0 || yMin < 0 || xMin > xSize - 2 || yMin > ySize - 2) {
+//            Logger.ASSERT.printf(
+//                    "Coord out of bounds: (%1.3f, %1.3f) -> [%d, %d] (size is %d by %d)",
+//                    x, y, xMin + 1, yMin + 1, xSize, ySize
+//            );
             return 0;
         }
 
@@ -154,7 +149,7 @@ public class HeightMap implements GameMap {
 
     @Override
     public void cleanup() {
-
+        heightmap = null;
     }
 
     @Override
@@ -171,11 +166,22 @@ public class HeightMap implements GameMap {
         int[] viewport = {0, 0, width, height};
         projection.unprojectRay(new Vector2f(xSc, ySc), viewport, origin, direction);
 
-        float t = Intersectionf.intersectRayPlane(origin, direction, Vectors.zeroVector(), Vectors.zVector(), 1E-6f);
-        Vector3f pos = origin.add(direction.mul(t));
+        Vector3f pos = intersectWithRay(origin, direction);
 
         tool.apply(new Vector2f(pos.x, pos.y));
 
         return true;
+    }
+
+    /**
+     * returns a vector on the map that results from raytracing the given ray.
+     * @param origin    the origin of the ray
+     * @param direction the (un-normalized) direction of the ray
+     * @return a vector p such that {@code p = origin + t * direction} for minimal t such that p lies on the map.
+     */
+    private Vector3f intersectWithRay(Vector3fc origin, Vector3fc direction) {
+        Vector3f temp = new Vector3f();
+        float t = Intersectionf.intersectRayPlane(origin, direction, Vectors.zeroVector(), Vectors.zVector(), 1E-6f);
+        return origin.add(direction.mul(t, temp), temp);
     }
 }
