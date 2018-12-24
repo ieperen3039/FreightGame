@@ -2,6 +2,7 @@ package NG.Entities;
 
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.GameTimer;
+import org.joml.AABBf;
 
 /**
  * An entity is anything that is both visible in the world, and allows interaction with other entities (including the
@@ -28,7 +29,13 @@ public interface Entity {
      * Executes when the user clicks on this entity. When {@code button == GLFW_LEFT_MOUSE_BUTTON} is clicked, an {@link
      * NG.ScreenOverlay.Frames.Components.SFrame} with information or settings of this Entity is usually opened, and
      * when {@code button == GLFW_RIGHT_MOUSE_BUTTON} is clicked, the 'active' state of this entity may toggle.
-     * @param button the button that is clicked as defined in {@link NG.ActionHandling.MouseClickListener}
+     * @param button the button that is clicked as defined in {@link NG.ActionHandling.MouseRelativeClickListener}
      */
     void onClick(int button);
+
+    default AABBf hitbox() {
+        return null; // TODO implement clickboxes
+    }
+
+    ;
 }

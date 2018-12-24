@@ -1,7 +1,8 @@
 package NG.Tracks;
 
 import NG.Engine.Game;
-import org.joml.Vector2fc;
+import NG.Tools.Vectors;
+import org.joml.Vector2f;
 
 /**
  * @author Geert van Ieperen created on 23-12-2018.
@@ -9,11 +10,11 @@ import org.joml.Vector2fc;
 public class ConnectionNode extends NetworkNode {
     /*
      * Representation Invariants
+     * isReplaced == false (whenever a method is used)
      * if aNode == null then bNode == null
      * if aNode == null then aTrack == null
      * if bNode == null then bTrack == null
-     * getArity() == 2
-     * (isConnected == true) iff (aNode != null && bNode != null)
+     * (isConnected() == true) iff (aNode != null && bNode != null)
      * ((this.position to aNode.position) dot this.direction) < 0
      * ((this.position to bNode.position) dot this.direction) >= 0
      */
@@ -28,42 +29,11 @@ public class ConnectionNode extends NetworkNode {
 
     /**
      * an unconnected node
-     * @param position a position on the map
+     * @param nodePoint the point in space associated with this node
      * @param type     the type of track that this node connects
      */
-    protected ConnectionNode(Vector2fc position, TrackMod.TrackType type) {
-        super(position, type);
-    }
-
-    /**
-     * creates a node between the two given nodes
-     * @param game     the current game instance
-     * @param position the position of this node on the map, such that it lies on the tracks from aNode to bNode
-     * @param aNode    one node to connect to
-     * @param bNode    another node to connect to
-     */
-    public ConnectionNode(Game game, Vector2fc position, NetworkNode aNode, NetworkNode bNode) {
-        super(position, aNode.type);
-        assert aNode.type.equals(bNode.type); // see SwitchNode
-
-        boolean success = removeConnection(game, aNode, bNode);
-        assert success : "Connection did not exist";
-
-        addConnection(game, aNode, this);
-        addConnection(game, this, bNode);
-    }
-
-    /**
-     * Creates a new node, connected on one side only
-     * @param game     the game instance
-     * @param position the position of this new node
-     * @param source   the original node
-     */
-    public ConnectionNode(Game game, Vector2fc position, NetworkNode source) {
-        super(position, source.type);
-        this.aNode = source;
-        addConnection(game, aNode, this);
-        this.direction = aTrack.getEndDirection();
+    protected ConnectionNode(NetworkNodePoint nodePoint, TrackMod.TrackType type) {
+        super(nodePoint, type);
     }
 
     @Override
@@ -72,16 +42,23 @@ public class ConnectionNode extends NetworkNode {
         if (aNode == null) {
             aNode = newNode;
             aTrack = track;
-            direction = track.getEndDirection();
+            direction = track.getDirectionOf(nodePoint);
             return this;
 
         } else if (bNode == null) {
             bNode = newNode;
             bTrack = track;
+
+            assert direction.angle(track.getDirectionOf(nodePoint)) < 0.01f || direction.angle(track.getDirectionOf(nodePoint)
+                    .negate(new Vector2f())) < 0.01f :
+                    String.format("New connection is not fluent with existing connection: %s instead of %s",
+                            Vectors.toString(track.getDirectionOf(nodePoint)), Vectors.toString(direction));
             return this;
 
         } else {
             SwitchNode replacement = new SwitchNode(this);
+            // let position on the map refer to this new replacement node
+            nodePoint.setReference(replacement);
             isReplaced = true;
             return replacement.addNode(newNode, track);
         }
@@ -120,7 +97,7 @@ public class ConnectionNode extends NetworkNode {
 
     @Override
     public boolean isConnected() {
-        return bNode == null;
+        return bNode != null;
     }
 
     NetworkNode getANode() {
@@ -137,5 +114,26 @@ public class ConnectionNode extends NetworkNode {
 
     TrackPiece getBTrack() {
         return bTrack;
+    }
+
+    /**
+     * creates a node between the two given nodes
+     * @param game      the current game instance
+     * @param nodePoint the point in space associated with this node
+     * @param aNode     one node to connect to
+     * @param bNode     another node to connect to
+     * @return the new node
+     */
+    public static ConnectionNode split(Game game, NetworkNodePoint nodePoint, NetworkNode aNode, NetworkNode bNode) {
+        assert aNode.type.equals(bNode.type); // see SwitchNode
+        ConnectionNode newNode = new ConnectionNode(nodePoint, aNode.type);
+
+        boolean success = removeConnection(game, aNode, bNode);
+        assert success : "Connection did not exist";
+
+        addConnection(game, aNode, newNode);
+        addConnection(game, newNode, bNode);
+
+        return newNode;
     }
 }

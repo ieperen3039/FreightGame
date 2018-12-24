@@ -1,6 +1,7 @@
 package NG.Tracks;
 
 import NG.ActionHandling.MouseTools.MouseTool;
+import NG.DataStructures.Pair;
 import NG.Engine.Game;
 import NG.Entities.Entity;
 import NG.ScreenOverlay.Frames.Components.SComponent;
@@ -38,16 +39,17 @@ public class TrackBuilder extends MouseTool {
         }
 
         Logger.DEBUG.print("Clicked on position " + Vectors.toString(newPosition));
-        if (firstPosition != null) {
-            NetworkNode.getNodePair(game, type, firstPosition, newPosition);
-            // TODO error message: you must connect to another track or a building of yours.
-        }
-
         if (firstNode != null) {
             Logger.DEBUG.print("Placing track from " + Vectors.toString(firstNode.getPosition()) +
                     " to " + Vectors.toString(newPosition));
 
-            NetworkNode.connectToNew(game, firstNode, newPosition);
+            firstNode = NetworkNode.connectToNew(game, firstNode, newPosition);
+
+        } else if (firstPosition != null) {
+            Pair<NetworkNode, NetworkNode> pair = NetworkNode.getNodePair(game, type, firstPosition, newPosition);
+            // TODO error message: you must connect to another track or a building of yours.
+            firstPosition = null;
+            firstNode = pair.right;
 
         } else {
             firstPosition = new Vector2f(newPosition);

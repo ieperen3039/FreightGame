@@ -6,6 +6,9 @@ import NG.Tools.Vectors;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 
+import static NG.Tools.Vectors.cos;
+import static NG.Tools.Vectors.sin;
+
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
  */
@@ -13,28 +16,36 @@ public class CircleTrack implements TrackPiece {
 
     private final Game game;
     private final TrackMod.TrackType type;
+    private final NetworkNodePoint startPoint;
+    private final NetworkNodePoint endPoint;
 
     /** middle of the circle describing the track */
     private final Vector2fc center;
 
     private final float radius;
     private final boolean isClockwise;
-    private final float firstTheta;
+    private final float startTheta;
     private final float angle;
+    private final float endTheta;
 
     public CircleTrack(
-            Game game, TrackMod.TrackType type, Vector2fc startPosition, Vector2fc startDirection, Vector2fc endPoint
+            Game game, TrackMod.TrackType type, NetworkNodePoint startPoint, Vector2fc startDirection,
+            NetworkNodePoint endPoint
     ) {
         this.game = game;
         this.type = type;
+        this.startPoint = startPoint;
+        this.endPoint = endPoint;
 
+        Vector2fc startPosition = startPoint.getPosition();
+        Vector2fc endPosition = endPoint.getPosition();
         Vector2f startToCenter = new Vector2f(startDirection).perpendicular();
-        Vector2f startToEnd = new Vector2f(endPoint).sub(startPosition);
+        Vector2f startToEnd = new Vector2f(endPosition).sub(startPosition);
 
         float dot = startToEnd.dot(startToCenter);
         if (dot < 0) { // center is on the wrong side of the direction
             startToCenter.negate();
-            dot = -dot;
+            dot = startToEnd.dot(startToCenter);
         }
 
         // derivation: see bottom
@@ -48,10 +59,21 @@ public class CircleTrack implements TrackPiece {
         isClockwise = dotOfCross > 0;
 
         Vector2fc vecToStart = startToCenter.negate();
-        Vector2f vecToEnd = new Vector2f(endPoint).sub(center);
+        Vector2f vecToEnd = new Vector2f(endPosition).sub(center);
 
         angle = Vectors.angle(vecToStart, vecToEnd);
-        firstTheta = Vectors.arcTan(vecToStart);
+        startTheta = Vectors.arcTan(vecToStart);
+        endTheta = !isClockwise ? (startTheta - angle) : (startTheta + angle);
+
+        assert startPoint.getPosition().distance(angleToPosition(startTheta)) < 0.001f :
+                "calculated start position is not equal to the start point: " +
+                        Vectors.toString(startPoint.getPosition()) + " != " + Vectors.toString(angleToPosition(startTheta));
+        assert endPoint.getPosition().distance(angleToPosition(endTheta)) < 0.001f :
+                "calculated end position is not equal to the end point: " +
+                        Vectors.toString(endPoint.getPosition()) + " != " + Vectors.toString(angleToPosition(endTheta));
+        assert startDirection.angle(getStartDirection().negate()) < 0.001f :
+                "calculated start direction is not equal to the given start direction: " +
+                        Vectors.toString(startDirection) + " != " + Vectors.toString(getStartDirection());
     }
 
     public float getRadius() {
@@ -69,7 +91,7 @@ public class CircleTrack implements TrackPiece {
 
     @Override
     public void draw(SGL gl) {
-        float lowerTheta = isClockwise ? firstTheta : firstTheta - angle;
+        float lowerTheta = Math.min(startTheta, endTheta);
         type.drawCircle(gl, center, radius, lowerTheta, angle, game.map());
     }
 
@@ -78,10 +100,47 @@ public class CircleTrack implements TrackPiece {
 
     }
 
+    public Vector2f distanceToPosition(float distanceFromStart) {
+        float angleTravelled = (float) (distanceFromStart / (radius * 2 * Math.PI));
+        float currentAngle = angleTravelled + startTheta;
+
+        if (currentAngle < 0 || currentAngle > angle) {
+            return null;
+        }
+
+        return angleToPosition(currentAngle);
+    }
+
+    private Vector2f angleToPosition(float currentAngle) {
+        Vector2f offset = new Vector2f(cos(currentAngle), sin(currentAngle));
+        offset.mul(radius);
+        return new Vector2f(center).add(offset);
+    }
+
     @Override
-    public Vector2fc getEndDirection() {
-        float theta = isClockwise ? (firstTheta - angle) : (firstTheta + angle);
-        return new Vector2f(-Vectors.sin(theta), Vectors.cos(theta));
+    public Vector2f getStartDirection() {
+        return getDirectionOf(startTheta).negate();
+    }
+
+    @Override
+    public Vector2f getEndDirection() {
+        return getDirectionOf(endTheta);
+    }
+
+    public Vector2f getDirectionOf(float theta) {
+        Vector2f derivative = new Vector2f(-sin(theta), cos(theta));
+        if (!isClockwise) derivative.negate();
+        return derivative;
+    }
+
+    @Override
+    public NetworkNodePoint getStartNodePoint() {
+        return startPoint;
+    }
+
+    @Override
+    public NetworkNodePoint getEndNodePoint() {
+        return endPoint;
     }
 }
 

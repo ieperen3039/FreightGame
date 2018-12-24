@@ -32,8 +32,12 @@ public class SwitchNode extends NetworkNode {
     private int switchStateA = 0;
     private int switchStateB = 0;
 
+    /**
+     * replace the given ConnectionNode with one of this type
+     * @param node the original node
+     */
     public SwitchNode(ConnectionNode node) {
-        super(node.position, node.type);
+        super(node.nodePoint, node.type);
         this.direction = node.direction;
 
         NetworkNode aNode = node.getANode();
@@ -70,7 +74,7 @@ public class SwitchNode extends NetworkNode {
      * @return whether the position of newNode is on the A-side of the internal representation of this class
      */
     private boolean isOnSideA(NetworkNode newNode) {
-        Vector2f relative = new Vector2f(newNode.position).sub(position);
+        Vector2f relative = new Vector2f(newNode.getPosition()).sub(getPosition());
         return direction.dot(relative) < 0;
     }
 

@@ -2,6 +2,7 @@ package NG.Tracks;
 
 import NG.DataStructures.Pair;
 import NG.Engine.Game;
+import NG.Tools.Vectors;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 
@@ -10,14 +11,19 @@ import org.joml.Vector2fc;
  */
 public abstract class NetworkNode {
     /** map coordinates of this node */
-    protected Vector2fc position;
+    protected NetworkNodePoint nodePoint;
     /** direction of the bNode on this position */
     protected Vector2fc direction; // normalized
     /** type of tracks that this node connects */
     protected TrackMod.TrackType type;
 
-    protected NetworkNode(Vector2fc position, TrackMod.TrackType type) {
-        this.position = position;
+    /**
+     * @param nodePoint the point in space associated with this node
+     * @param type      the type of track this node connects
+     */
+    protected NetworkNode(NetworkNodePoint nodePoint, TrackMod.TrackType type) {
+        this.nodePoint = nodePoint;
+        nodePoint.setReference(this);
         this.type = type;
     }
 
@@ -25,11 +31,13 @@ public abstract class NetworkNode {
      * adds a connection including tracks between node aNode and node bNode, such that the track connects aNode and
      * bNode
      * @param game  the current game instance
-     * @param aNode one node
-     * @param bNode another node
+     * @param aNode the node that determines the direction
+     * @param bNode another node that only determines the end point.
      */
     protected static void addConnection(Game game, NetworkNode aNode, NetworkNode bNode) {
-        TrackPiece trackConnection = TrackPiece.getTrackPiece(game, aNode.type, aNode.position, aNode.direction, bNode.position);
+        TrackPiece trackConnection = TrackPiece.getTrackPiece(
+                game, aNode.type, aNode.nodePoint, aNode.direction, bNode.nodePoint
+        );
         game.state().addEntity(trackConnection);
         aNode.addNode(bNode, trackConnection);
         bNode.addNode(aNode, trackConnection);
@@ -37,7 +45,7 @@ public abstract class NetworkNode {
 
     /**
      * removes the track and references of both nodes to each other
-     * @param game
+     * @param game reference to the current game instance
      * @param aNode one node
      * @param bNode another node connected to aNode
      * @return false iff the two nodes were not connected.
@@ -66,22 +74,30 @@ public abstract class NetworkNode {
     public static Pair<NetworkNode, NetworkNode> getNodePair(
             Game game, TrackMod.TrackType type, Vector2fc aPosition, Vector2fc bPosition
     ) {
-        ConnectionNode A = new ConnectionNode(aPosition, type);
-        ConnectionNode B = new ConnectionNode(bPosition, type);
+        NetworkNodePoint nodePointA = new NetworkNodePoint(aPosition);
+        NetworkNodePoint nodePointB = new NetworkNodePoint(bPosition);
+        game.state().addEntity(nodePointA);
+        game.state().addEntity(nodePointB);
+        ConnectionNode A = new ConnectionNode(nodePointA, type);
+        ConnectionNode B = new ConnectionNode(nodePointB, type);
         A.direction = new Vector2f(bPosition).sub(aPosition);
         addConnection(game, A, B);
 
         return new Pair<>(A, B);
     }
 
-    public static NetworkNode connectToNew(Game game, NetworkNode node, Vector2fc position) {
-        ConnectionNode newNode = new ConnectionNode(position, node.type);
+    public static NetworkNode connectToNew(Game game, NetworkNode node, Vector2fc newPosition) {
+        NetworkNodePoint nodePoint = new NetworkNodePoint(newPosition);
+        game.state().addEntity(nodePoint);
+
+        ConnectionNode newNode = new ConnectionNode(nodePoint, node.type);
         addConnection(game, node, newNode);
+
         return newNode;
     }
 
     public Vector2fc getPosition() {
-        return position;
+        return nodePoint.getPosition();
     }
 
     public Vector2fc getDirection() {
@@ -118,4 +134,8 @@ public abstract class NetworkNode {
      */
     public abstract boolean isConnected();
 
+    @Override
+    public String toString() {
+        return "Node " + Vectors.toString(nodePoint.getPosition()) + "";
+    }
 }

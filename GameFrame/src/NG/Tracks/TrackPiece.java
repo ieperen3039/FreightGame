@@ -11,41 +11,68 @@ import org.joml.Vector2fc;
  */
 public interface TrackPiece extends Entity {
 
+    NetworkNodePoint getStartNodePoint();
+
+    NetworkNodePoint getEndNodePoint();
+
     /**
-     * Given that this track is based on an initial direction and two positions, returns the direction at the unknown
-     * side of the track.
+     * gives the direction of the track at the endNodePoint. This should be equal to {@link #getEndNodePoint()} . {@link
+     * NetworkNodePoint#getNode()} . {@link NetworkNode#getDirection()}
      * @return the direction of the last point on the track.
      */
     Vector2fc getEndDirection();
 
     /**
+     * gives the direction of the track at the startNodePoint. This should be equal to {@link #getStartNodePoint()} .
+     * {@link NetworkNodePoint#getNode()} . {@link NetworkNode#getDirection()}
+     * @return the direction of the first point on the track.
+     */
+    Vector2fc getStartDirection();
+
+    /**
+     * @param nodePoint on of the two node points on this track
+     * @return the associated direction of the track on that point
+     */
+    default Vector2fc getDirectionOf(NetworkNodePoint nodePoint) {
+        if (nodePoint.equals(getStartNodePoint())) {
+            return getStartDirection();
+        } else {
+            assert nodePoint.equals(getEndNodePoint());
+            return getEndDirection();
+        }
+    }
+
+    /**
      * factory method for creating an arbitrary track between two points
      * @param game       the game instance
      * @param type       the track type
-     * @param aPosition  a position coordinate A on the map
-     * @param bPosition  a position coordinate B on the map
+     * @param aPoint     a position coordinate A on the map
      * @param aDirection the direction D of the track in point A, pointing towards B
+     * @param bPoint     a position coordinate B on the map
      * @return a track that describes a track from A to B with direction D in point A
      */
     static TrackPiece getTrackPiece(
-            Game game, TrackMod.TrackType type, Vector2fc aPosition, Vector2fc aDirection, Vector2fc bPosition
+            Game game, TrackMod.TrackType type, NetworkNodePoint aPoint, Vector2fc aDirection, NetworkNodePoint bPoint
     ) {
-        if (aPosition.distanceSquared(bPosition) < 1e-6) {
-            // TODO add null-sized track
+        Vector2f relPosB = aPoint.vectorTo(bPoint);
+        if (relPosB.lengthSquared() < 1e-6) {
             Logger.ASSERT.print("Created track of length 0");
-            return new StraightTrack(game, type, aPosition, bPosition);
+            return new StraightTrack(game, type, aPoint, bPoint);
         }
 
         Vector2f direction = new Vector2f(aDirection).normalize();
-        Vector2f relPosB = new Vector2f(bPosition).sub(aPosition);
-        float dot = relPosB.dot(direction);
-        assert dot >= 0 : "Direction must point toward the end point. Circle parts longer than a half are not accepted";
+        Vector2f vecToB = relPosB.normalize(); // overwrites relPosB
+        float dot = vecToB.dot(direction);
+//        assert dot >= 0 : "Direction must point toward the end point. Circle parts longer than a half are not accepted";
+        if (dot < 0) direction.negate();
 
         if (dot > 0.99f) {
-            return new StraightTrack(game, type, aPosition, bPosition);
+            Logger.DEBUG.print("Creating straight track", "dot = " + dot);
+            return new StraightTrack(game, type, aPoint, bPoint);
 
         } else {
-            return new CircleTrack(game, type, aPosition, direction, bPosition);
+            return new CircleTrack(game, type, aPoint, direction, bPoint);
         }
     }
+
 }
