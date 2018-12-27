@@ -24,4 +24,9 @@ public abstract class Storage implements Entity {
     public Vector3fc getPosition() {
         return position;
     }
+
+    @Override
+    public UpdateFrequency getUpdateFrequency() {
+        return UpdateFrequency.NEVER;
+    }
 }

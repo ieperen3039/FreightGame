@@ -10,17 +10,19 @@ import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import org.joml.Vector2fc;
 import org.joml.Vector2ic;
-import org.joml.Vector3f;
+import org.joml.Vector3fc;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * @author Geert van Ieperen. Created on 26-11-2018.
  */
-public class DefaultMouseTool extends MouseTool {
+public class DefaultMouseTool implements MouseTool {
     private int dragButton = 0;
     private MouseMoveListener dragListener = null;
     private MouseReleaseListener releaseListener = null;
     private TrackedInteger cameraXPos = new TrackedInteger(0);
     private TrackedInteger cameraYPos = new TrackedInteger(0);
+    private int button;
 
     @Override
     public void apply(SComponent component, int xSc, int ySc) {
@@ -30,12 +32,12 @@ public class DefaultMouseTool extends MouseTool {
             MouseRelativeClickListener cl = (MouseRelativeClickListener) component;
             // by def. of MouseRelativeClickListener, give relative coordinates
             Vector2ic pos = component.getScreenPosition();
-            cl.onClick(getButton(), xSc - pos.x(), ySc - pos.y());
+            cl.onClick(button, xSc - pos.x(), ySc - pos.y());
         }
 
         if (component instanceof MouseMoveListener) {
             dragListener = (MouseMoveListener) component;
-            dragButton = getButton();
+            dragButton = button;
             cameraXPos.update(xSc);
             cameraYPos.update(ySc);
 
@@ -52,8 +54,8 @@ public class DefaultMouseTool extends MouseTool {
     }
 
     @Override
-    public void apply(Entity entity, Vector3f rayCollision) {
-        entity.onClick(getButton());
+    public void apply(Entity entity, Vector3fc rayCollision) {
+        entity.onClick(button);
     }
 
     @Override
@@ -86,5 +88,14 @@ public class DefaultMouseTool extends MouseTool {
     @Override
     public String toString() {
         return "Default MouseTool";
+    }
+
+    /**
+     * sets the button field. Should only be called by the input handling
+     * @param button a button enum, often {@link GLFW#GLFW_MOUSE_BUTTON_LEFT} or {@link GLFW#GLFW_MOUSE_BUTTON_RIGHT}
+     */
+    @Override
+    public void setButton(int button) {
+        this.button = button;
     }
 }

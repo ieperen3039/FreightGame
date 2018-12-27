@@ -6,8 +6,8 @@ import NG.DataStructures.Storable;
 import NG.Engine.FreightGame;
 import NG.Engine.GameAspect;
 import NG.Entities.Entity;
+import NG.Shapes.Primitives.Collision;
 import org.joml.Vector3fc;
-import org.joml.Vector4f;
 
 import java.util.List;
 
@@ -41,7 +41,7 @@ public interface GameState extends GameAspect, Storable, MouseToolListener {
      * @param to end position, maximum how far the ray goes
      * @return the entity that is hit, or null if no such entity exists.
      */
-    Entity getEntityByRay(Vector4f from, Vector4f to);
+    Collision getEntityCollision(Vector3fc from, Vector3fc to);
 
     /**
      * queries all industries in range of the given position.

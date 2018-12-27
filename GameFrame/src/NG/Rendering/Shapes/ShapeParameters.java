@@ -1,10 +1,12 @@
 package NG.Rendering.Shapes;
 
+import NG.DataStructures.MatrixStack.Mesh;
 import NG.DataStructures.Pair;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,9 +18,9 @@ import java.util.List;
  * @author Geert van Ieperen created on 6-5-2018.
  */
 public class ShapeParameters {
-    public List<Vector3f> vertices;
-    public List<Vector3f> normals;
-    public List<FlatMesh.Face> faces;
+    public List<Vector3fc> vertices;
+    public List<Vector3fc> normals;
+    public List<Mesh.Face> faces;
     public final String name;
 
     /**
@@ -31,10 +33,10 @@ public class ShapeParameters {
     }
 
     /**
-     * @param offSet offset of the gravity middle in this mesh as {@code GM * -1}
-     * @param scale  the scale standard applied to this object, to let it correspond to its contract
-     * @param path
-     * @param name
+     * @param offSet offset of the gravity middle in this mesh as the negative of the vector to the gravity middle
+     * @param scale  the scaling applied to the loaded object
+     * @param path   the path to the object
+     * @param name   debug name of the shape
      */
     public ShapeParameters(Vector3f offSet, float scale, Path path, String name) {
         this.name = name;
@@ -92,7 +94,7 @@ public class ShapeParameters {
     /**
      * for storage of vertex-indices face == plane
      */
-    private static FlatMesh.Face makeFace(String... tokens) {
+    private static Mesh.Face makeFace(String... tokens) {
         int nOfTokens = tokens.length - 1;
         int[] vert = new int[nOfTokens];
         int[] norm = new int[nOfTokens];
@@ -102,7 +104,7 @@ public class ShapeParameters {
             norm[i] = c.right;
         }
 
-        return new FlatMesh.Face(vert, norm);
+        return new Mesh.Face(vert, norm);
     }
 
     /**

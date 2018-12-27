@@ -13,12 +13,13 @@ import NG.ScreenOverlay.Frames.Components.SFiller;
 import NG.ScreenOverlay.Frames.Components.SFrame;
 import NG.ScreenOverlay.Frames.Components.SPanel;
 import NG.ScreenOverlay.Frames.Components.SProgressBar;
-import NG.Settings.Settings;
 import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
-import org.joml.*;
+import org.joml.Intersectionf;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
-import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -156,15 +157,10 @@ public class HeightMap implements GameMap {
     public boolean checkMouseClick(MouseTool tool, int xSc, int ySc) {
         GLFWWindow window = game.window();
         Camera camera = game.camera();
-
-        int width = window.getWidth();
-        int height = window.getHeight();
-        Matrix4f projection = SGL.getViewProjection(width, height, camera, Settings.ISOMETRIC_VIEW);
-
         Vector3f origin = new Vector3f();
         Vector3f direction = new Vector3f();
-        int[] viewport = {0, 0, width, height};
-        projection.unprojectRay(new Vector2f(xSc, ySc), viewport, origin, direction);
+
+        Vectors.windowCoordToRay(camera, origin, direction, window.getWidth(), window.getHeight(), new Vector2f(xSc, ySc));
 
         Vector3f pos = intersectWithRay(origin, direction);
 

@@ -4,6 +4,7 @@ import NG.DataStructures.MatrixStack.Mesh;
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Tools.Toolbox;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryUtil;
 
@@ -42,7 +43,7 @@ public class FlatMesh implements Mesh {
      * @param normList   a list of normal vectors
      * @param facesList  a list of faces, where each face refers to indices from posList and normList
      */
-    public FlatMesh(List<Vector3f> posList, List<Vector3f> normList, List<Face> facesList) {
+    public FlatMesh(List<? extends Vector3fc> posList, List<? extends Vector3fc> normList, List<Mesh.Face> facesList) {
         final int nOfEdges = facesList.get(0).size();
 
         // Create position array in the order it has been declared. faces have (nOfEdges) vertices of 3 indices
@@ -50,7 +51,7 @@ public class FlatMesh implements Mesh {
         float[] normArr = new float[facesList.size() * 3 * nOfEdges];
 
         for (int i = 0; i < facesList.size(); i++) {
-            Face face = facesList.get(i);
+            Mesh.Face face = facesList.get(i);
             readFaceVertex(face, posList, i, posArr);
             readFaceNormals(face, normList, i, normArr);
         }
@@ -67,7 +68,9 @@ public class FlatMesh implements Mesh {
      * @param facesList a list of faces, where each face refers to indices from posList and normList
      * @return a prepared mesh, where the get() method will load the mesh to the GPU and return the resulting Mesh.
      */
-    public static Supplier<FlatMesh> createDelayed(List<Vector3f> posList, List<Vector3f> normList, List<Face> facesList) {
+    public static Supplier<FlatMesh> createDelayed(
+            List<Vector3fc> posList, List<Vector3fc> normList, List<Mesh.Face> facesList
+    ) {
         FlatMesh delayed = new FlatMesh();
         final int nOfEdges = facesList.get(0).size();
 
@@ -76,7 +79,7 @@ public class FlatMesh implements Mesh {
         float[] normArr = new float[facesList.size() * 3 * nOfEdges];
 
         for (int i = 0; i < facesList.size(); i++) {
-            Face face = facesList.get(i);
+            Mesh.Face face = facesList.get(i);
             readFaceVertex(face, posList, i, posArr);
             readFaceNormals(face, normList, i, normArr);
         }
@@ -106,8 +109,8 @@ public class FlatMesh implements Mesh {
         int nOfVertices = (nOfXFaces + 1) * (nOfYFaces + 1);
 
         // vertices and normals
-        List<Vector3f> vertices = new ArrayList<>(nOfVertices);
-        List<Vector3f> normals = new ArrayList<>(nOfVertices);
+        List<Vector3fc> vertices = new ArrayList<>(nOfVertices);
+        List<Vector3fc> normals = new ArrayList<>(nOfVertices);
 
         for (int y = yStart; y <= yEnd; y++) {
             for (int x = xStart; x <= xEnd; x++) {
@@ -137,18 +140,18 @@ public class FlatMesh implements Mesh {
         // faces
         int nOfQuads = nOfXFaces * nOfYFaces;
         int arrayXSize = xEnd - xStart + 1;
-        List<Face> faces = new ArrayList<>(nOfQuads);
+        List<Mesh.Face> faces = new ArrayList<>(nOfQuads);
 
         for (int y = 0; y < nOfYFaces; y++) {
             for (int x = 0; x < nOfXFaces; x++) {
                 int left = y * arrayXSize + x;
                 int right = (y + 1) * arrayXSize + x;
 
-                faces.add(new Face(
+                faces.add(new Mesh.Face(
                         new int[]{left, right + 1, left + 1},
                         new int[]{left, right + 1, left + 1}
                 ));
-                faces.add(new Face(
+                faces.add(new Mesh.Face(
                         new int[]{left, right, right + 1},
                         new int[]{left, right, right + 1}
                 ));
@@ -158,22 +161,28 @@ public class FlatMesh implements Mesh {
         return createDelayed(vertices, normals, faces);
     }
 
-    private static void readFaceVertex(Face face, List<Vector3f> posList, int faceNumber, float[] posArr) {
+    private static void readFaceVertex(
+            Mesh.Face face, List<? extends Vector3fc> posList, int faceNumber, float[] posArr
+    ) {
         int indices = faceNumber * face.size();
         for (int i = 0; i < face.size(); i++) {
             readVector(indices + i, posList, posArr, face.vert[i]);
         }
     }
 
-    private static void readFaceNormals(Face face, List<Vector3f> normList, int faceNumber, float[] normArr) {
+    private static void readFaceNormals(
+            Mesh.Face face, List<? extends Vector3fc> normList, int faceNumber, float[] normArr
+    ) {
         int indices = faceNumber * face.size();
         for (int i = 0; i < face.size(); i++) {
             readVector(indices + i, normList, normArr, face.norm[i]);
         }
     }
 
-    private static void readVector(int vectorNumber, List<Vector3f> sourceList, float[] targetArray, int index) {
-        Vector3f vertex = sourceList.get(index);
+    private static void readVector(
+            int vectorNumber, List<? extends Vector3fc> sourceList, float[] targetArray, int index
+    ) {
+        Vector3fc vertex = sourceList.get(index);
         int arrayPosition = vectorNumber * 3;
         targetArray[arrayPosition] = vertex.x();
         targetArray[arrayPosition + 1] = vertex.y();
@@ -271,41 +280,6 @@ public class FlatMesh implements Mesh {
      * allows for an empty mesh
      */
     private FlatMesh() {
-    }
-
-    /**
-     * a record class to describe a plane by indices
-     */
-    public static class Face {
-        int[] vert;
-        int[] norm;
-
-        /**
-         * a description of a plane, with the indices of the vertices and normals given. The indices should refer to a
-         * list of vertices and normals that belong to a list of faces where this face is part of.
-         */
-        public Face(int[] vertices, int[] normals) {
-            vert = vertices;
-            norm = normals;
-        }
-
-        /**
-         * a description of a plane, with the indices of the vertices and normals given. The indices should refer to a
-         * list of vertices and normals that belong to a list of faces where this face is part of.
-         */
-        public Face(int[] vertices, int nInd) {
-            int faceSize = vertices.length;
-
-            vert = vertices;
-            norm = new int[faceSize];
-            for (int i = 0; i < faceSize; i++) {
-                norm[i] = nInd;
-            }
-        }
-
-        public int size() {
-            return vert.length;
-        }
     }
 
     private static class EmptyMesh extends FlatMesh {

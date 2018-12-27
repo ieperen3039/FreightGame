@@ -1,6 +1,5 @@
 package NG.Tracks;
 
-import NG.Engine.Game;
 import NG.Tools.Vectors;
 import org.joml.Vector2f;
 
@@ -30,7 +29,7 @@ public class ConnectionNode extends NetworkNode {
     /**
      * an unconnected node
      * @param nodePoint the point in space associated with this node
-     * @param type     the type of track that this node connects
+     * @param type      the type of track that this node connects
      */
     protected ConnectionNode(NetworkNodePoint nodePoint, TrackMod.TrackType type) {
         super(nodePoint, type);
@@ -116,24 +115,4 @@ public class ConnectionNode extends NetworkNode {
         return bTrack;
     }
 
-    /**
-     * creates a node between the two given nodes
-     * @param game      the current game instance
-     * @param nodePoint the point in space associated with this node
-     * @param aNode     one node to connect to
-     * @param bNode     another node to connect to
-     * @return the new node
-     */
-    public static ConnectionNode split(Game game, NetworkNodePoint nodePoint, NetworkNode aNode, NetworkNode bNode) {
-        assert aNode.type.equals(bNode.type); // see SwitchNode
-        ConnectionNode newNode = new ConnectionNode(nodePoint, aNode.type);
-
-        boolean success = removeConnection(game, aNode, bNode);
-        assert success : "Connection did not exist";
-
-        addConnection(game, aNode, newNode);
-        addConnection(game, newNode, bNode);
-
-        return newNode;
-    }
 }

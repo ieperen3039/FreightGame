@@ -12,6 +12,7 @@ import NG.Tools.Vectors;
 import org.joml.*;
 import org.junit.Before;
 import org.junit.Test;
+import org.lwjgl.glfw.GLFW;
 
 import static org.junit.Assert.assertTrue;
 
@@ -116,14 +117,15 @@ public class RayTraceTest {
         }, (int) screen.x, (int) screen.y);
     }
 
-    private class TestTool extends MouseTool {
+    private class TestTool implements MouseTool {
+
         @Override
         public void apply(SComponent component, int xSc, int ySc) {
             Logger.DEBUG.print(component, xSc, ySc);
         }
 
         @Override
-        public void apply(Entity entity, Vector3f rayCollision) {
+        public void apply(Entity entity, Vector3fc rayCollision) {
             Logger.DEBUG.print(entity);
         }
 
@@ -140,6 +142,15 @@ public class RayTraceTest {
         @Override
         public void onRelease(int button, int xSc, int ySc) {
             Logger.DEBUG.print(button, xSc, ySc);
+        }
+
+        /**
+         * sets the button field. Should only be called by the input handling
+         * @param button a button enum, often {@link GLFW#GLFW_MOUSE_BUTTON_LEFT} or {@link
+         *               GLFW#GLFW_MOUSE_BUTTON_RIGHT}
+         */
+        @Override
+        public void setButton(int button) {
         }
     }
 }

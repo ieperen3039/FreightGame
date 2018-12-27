@@ -7,4 +7,9 @@ import org.joml.Vector2f;
  */
 public interface MovingEntity extends Entity {
     Vector2f getPosition();
+
+    @Override
+    default UpdateFrequency getUpdateFrequency() {
+        return UpdateFrequency.ALWAYS;
+    }
 }

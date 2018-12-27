@@ -27,6 +27,49 @@ public abstract class NetworkNode {
         this.type = type;
     }
 
+    public Vector2fc getPosition() {
+        return nodePoint.getPosition();
+    }
+
+    public Vector2fc getDirection() {
+        return direction;
+    }
+
+    /**
+     * adds a connection to another node, with the given track as connecting track piece
+     * @param newNode the new node to add
+     * @param track   the track that connects these two nodes
+     * @return the resulting node that is connected to all nodes this is connected to, plus the given newNode.
+     */
+    protected abstract NetworkNode addNode(NetworkNode newNode, TrackPiece track);
+
+    /**
+     * removes a connection between this node and the given target node
+     * @param target a node this is connected to
+     * @return the track connecting the two nodes iff the target was indeed connected to this node, and has now been
+     * removed. If there is no such connection, this returns null
+     */
+    protected abstract TrackPiece removeNode(NetworkNode target);
+
+    /**
+     * returns the node that follows from passing this node from the direction of the given previous node, according to
+     * the state of this node.
+     * @param previous the node you just left
+     * @return the logical next node on the track
+     * @see SwitchNode#setSwitchState(NetworkNode)
+     */
+    public abstract NetworkNode getNext(NetworkNode previous);
+
+    /**
+     * @return true iff both sides of this node have a connection to another node
+     */
+    public abstract boolean isConnected();
+
+    @Override
+    public String toString() {
+        return "Node " + Vectors.toString(nodePoint.getPosition()) + "";
+    }
+
     /**
      * adds a connection including tracks between node aNode and node bNode, such that the track connects aNode and
      * bNode
@@ -80,12 +123,19 @@ public abstract class NetworkNode {
         game.state().addEntity(nodePointB);
         ConnectionNode A = new ConnectionNode(nodePointA, type);
         ConnectionNode B = new ConnectionNode(nodePointB, type);
-        A.direction = new Vector2f(bPosition).sub(aPosition);
+        A.direction = new Vector2f(bPosition).sub(aPosition).normalize();
         addConnection(game, A, B);
 
         return new Pair<>(A, B);
     }
 
+    /**
+     * connect an NetworkNode to a new node created at the given position
+     * @param game        the game instance
+     * @param node        the node to connect
+     * @param newPosition the position of the new node
+     * @return the new node
+     */
     public static NetworkNode connectToNew(Game game, NetworkNode node, Vector2fc newPosition) {
         NetworkNodePoint nodePoint = new NetworkNodePoint(newPosition);
         game.state().addEntity(nodePoint);
@@ -96,46 +146,25 @@ public abstract class NetworkNode {
         return newNode;
     }
 
-    public Vector2fc getPosition() {
-        return nodePoint.getPosition();
-    }
-
-    public Vector2fc getDirection() {
-        return direction;
-    }
-
     /**
-     * adds a connection to another node, with the given track as connecting track piece
-     * @param newNode the new node to add
-     * @param track   the track that connects these two nodes
-     * @return the resulting node that is connected to all nodes this is connected to, plus the given newNode.
+     * creates a new node between the two given nodes
+     * @param game      the current game instance
+     * @param nodePoint the point in space where the node is inserted. This point must lie on the tracks from aNode to
+     *                  bNode, but this is not checked.
+     * @param aNode     one node to connect to
+     * @param bNode     another node to connect to
+     * @return the new node
      */
-    protected abstract NetworkNode addNode(NetworkNode newNode, TrackPiece track);
+    public static ConnectionNode split(Game game, NetworkNodePoint nodePoint, NetworkNode aNode, NetworkNode bNode) {
+        assert aNode.type.equals(bNode.type); // see SwitchNode
+        ConnectionNode newNode = new ConnectionNode(nodePoint, aNode.type);
 
-    /**
-     * removes a connection between this node and the given target node
-     * @param target a node this is connected to
-     * @return the track connecting the two nodes iff the target was indeed connected to this node, and has now been
-     * removed. If there is no such connection, this returns null
-     */
-    protected abstract TrackPiece removeNode(NetworkNode target);
+        boolean success = removeConnection(game, aNode, bNode);
+        assert success : "Connection did not exist";
 
-    /**
-     * returns the node that follows from passing this node from the direction of the given previous node, according to
-     * the state of this node.
-     * @param previous the node you just left
-     * @return the logical next node on the track
-     * @see SwitchNode#setSwitchState(NetworkNode)
-     */
-    public abstract NetworkNode getNext(NetworkNode previous);
+        addConnection(game, aNode, newNode);
+        addConnection(game, newNode, bNode);
 
-    /**
-     * @return true iff both sides of this node have a connection to another node
-     */
-    public abstract boolean isConnected();
-
-    @Override
-    public String toString() {
-        return "Node " + Vectors.toString(nodePoint.getPosition()) + "";
+        return newNode;
     }
 }

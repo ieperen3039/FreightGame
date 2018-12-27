@@ -16,15 +16,15 @@ public interface TrackPiece extends Entity {
     NetworkNodePoint getEndNodePoint();
 
     /**
-     * gives the direction of the track at the endNodePoint. This should be equal to {@link #getEndNodePoint()} . {@link
-     * NetworkNodePoint#getNode()} . {@link NetworkNode#getDirection()}
+     * gives the normalized direction of the track at the endNodePoint. This should be equal to {@link
+     * #getEndNodePoint()} . {@link NetworkNodePoint#getNode()} . {@link NetworkNode#getDirection()}
      * @return the direction of the last point on the track.
      */
     Vector2fc getEndDirection();
 
     /**
-     * gives the direction of the track at the startNodePoint. This should be equal to {@link #getStartNodePoint()} .
-     * {@link NetworkNodePoint#getNode()} . {@link NetworkNode#getDirection()}
+     * gives the normalized direction of the track at the startNodePoint. This should be equal to {@link
+     * #getStartNodePoint()} . {@link NetworkNodePoint#getNode()} . {@link NetworkNode#getDirection()}
      * @return the direction of the first point on the track.
      */
     Vector2fc getStartDirection();
@@ -43,6 +43,19 @@ public interface TrackPiece extends Entity {
     }
 
     /**
+     * Returns a position that is relatively most related to the given point, but this is not necessarily the single
+     * closest point on the tracks.
+     * @param position a position on the map
+     * @return a point on the tracks that is acceptably close to the given position
+     */
+    Vector2f closestPointOf(Vector2fc position);
+
+    @Override
+    default UpdateFrequency getUpdateFrequency() {
+        return UpdateFrequency.NEVER;
+    }
+
+    /**
      * factory method for creating an arbitrary track between two points
      * @param game       the game instance
      * @param type       the track type
@@ -50,6 +63,8 @@ public interface TrackPiece extends Entity {
      * @param aDirection the direction D of the track in point A, pointing towards B
      * @param bPoint     a position coordinate B on the map
      * @return a track that describes a track from A to B with direction D in point A
+     * @see StraightTrack
+     * @see CircleTrack
      */
     static TrackPiece getTrackPiece(
             Game game, TrackMod.TrackType type, NetworkNodePoint aPoint, Vector2fc aDirection, NetworkNodePoint bPoint
@@ -63,8 +78,10 @@ public interface TrackPiece extends Entity {
         Vector2f direction = new Vector2f(aDirection).normalize();
         Vector2f vecToB = relPosB.normalize(); // overwrites relPosB
         float dot = vecToB.dot(direction);
-//        assert dot >= 0 : "Direction must point toward the end point. Circle parts longer than a half are not accepted";
-        if (dot < 0) direction.negate();
+        if (dot < 0) {
+            direction.negate();
+            dot = -dot;
+        }
 
         if (dot > 0.99f) {
             Logger.DEBUG.print("Creating straight track", "dot = " + dot);

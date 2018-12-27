@@ -1,13 +1,18 @@
 package NG.Tools;
 
+import NG.Camera.Camera;
+import NG.DataStructures.MatrixStack.SGL;
+import NG.DataStructures.Pair;
+import NG.Settings.Settings;
 import org.joml.Math;
 import org.joml.*;
 
 import java.util.Locale;
 
+import static java.lang.Float.isNaN;
+
 /**
- * creates new copies of some standard vectors
- *
+ * A collection of utility functions for vectors, specifically for Vector2f
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public class Vectors {
@@ -126,5 +131,132 @@ public class Vectors {
      */
     public static Vector2fc unitVector(float theta) {
         return new Vector2f(cos(theta), sin(theta));
+    }
+
+    /**
+     * returns the point closest to the given position on the line between startCoord and endCoord
+     * @param position   a point in space
+     * @param startCoord one end of the line
+     * @param endCoord   the other end of the line
+     * @return the position p on the line from {@code startCoord} to {@code endCoord} such that the distance to the
+     * given {@code position} is minimal
+     */
+    public static Vector2f getIntersectionPointLine(Vector2fc position, Vector2fc startCoord, Vector2fc endCoord) {
+        float aX = startCoord.x();
+        float aY = startCoord.y();
+        float abX = endCoord.x() - aX;
+        float abY = endCoord.y() - aY;
+        float t = ((position.x() - aX) * abX + (position.y() - aY) * abY) / (abX * abX + abY * abY);
+        if (t < 0.0f) t = 0.0f;
+        if (t > 1.0f) t = 1.0f;
+        return new Vector2f(aX + t * abX, aY + t * abY);
+    }
+
+    public static void windowCoordToRay(
+            Camera camera, Vector3f origin, Vector3f direction, int width, int height, Vector2f winCoords
+    ) {
+        Matrix4f projection = SGL.getViewProjection(width, height, camera, Settings.ISOMETRIC_VIEW);
+        int[] viewport = {0, 0, width, height};
+        projection.unprojectRay(winCoords, viewport, origin, direction);
+    }
+
+    public static Vector3f getNormalVector(Vector3fc A, Vector3fc B, Vector3fc C) {
+        Vector3f BC = new Vector3f(C).sub(B);
+        Vector3f BA = new Vector3f(A).sub(B);
+        return BA.cross(BC).normalize();
+    }
+
+    /**
+     * Calculates the smallest orb around the given points
+     * @param points a number of points, at least two
+     * @return Left, the middle of the found orb. Right, the radius of the found orb
+     */
+    public static Pair<Vector3fc, Float> getMinimalOrb(Iterable<Vector3fc> points) {
+        // determine furthest two point
+        float duoMaxSq = 0;
+        Vector3f aMax = new Vector3f();
+        Vector3f bMax = new Vector3f();
+        for (Vector3fc a : points) {
+            for (Vector3fc b : points) {
+                float dist = a.distanceSquared(b);
+                if (dist > duoMaxSq) {
+                    duoMaxSq = dist;
+                    aMax.set(a);
+                    bMax.set(b);
+                }
+            }
+        }
+
+        // determine point furthest from the middle
+        Vector3f mid = aMax.lerp(bMax, 0.5f);
+        Vector3f outer = new Vector3f();
+        float tripleMaxSq = 0;
+        for (Vector3fc vector : points) {
+            float dist = mid.distanceSquared(vector);
+            if (dist > tripleMaxSq) {
+                outer.set(vector);
+                tripleMaxSq = dist;
+            }
+        }
+
+        // if the furthest point is none of the two previous points, determine the circumscribed circle
+        // https://en.wikipedia.org/wiki/Circumscribed_circle
+        if ((tripleMaxSq > (duoMaxSq / 4)) && !(outer.equals(aMax) || outer.equals(bMax))) {
+            Vector3f temp2 = new Vector3f();
+            Vector3f temp3 = new Vector3f();
+
+            Vector3fc a = aMax.sub(outer, new Vector3f());
+            Vector3fc b = bMax.sub(outer, new Vector3f());
+
+            Vector3f dif = b.mul(a.lengthSquared(), temp2)
+                    .sub(a.mul(b.lengthSquared(), temp3), temp2);
+            float scalar = 2 * a.cross(b, temp3).lengthSquared();
+
+            mid.set(
+                    dif.cross(a.cross(b, new Vector3f())).div(scalar).add(outer)
+            );
+        }
+
+        return new Pair<>(mid, mid.distance(aMax));
+    }
+
+    /**
+     * evaluates a beziér curve defined by vectors. The given ABCD vectors are kept intact.
+     * @param A starting point
+     * @param B first control point
+     * @param C second control point
+     * @param D ending point
+     * @param u fraction of the curve to be requested
+     * @return vector to the point on the curve on fraction u
+     */
+    public static Vector3f bezierPoint(Vector3fc A, Vector3fc B, Vector3fc C, Vector3fc D, double u) {
+        Vector3f temp = new Vector3f();
+        Vector3f point = new Vector3f();
+        //A*(1−u)^3 + B*3u(1−u)^2 + C*3u^2(1−u) + D*u^3
+        A.mul((float) ((1 - u) * (1 - u) * (1 - u)), point)
+                .add(B.mul((float) (3 * u * (1 - u) * (1 - u)), temp), point)
+                .add(C.mul((float) (3 * u * u * (1 - u)), temp), point)
+                .add(D.mul((float) (u * u * u), temp), point);
+        return point;
+    }
+
+    /**
+     * evaluates the derivative of a beziér curve on a point defined by u
+     * @see #bezierPoint(Vector3fc, Vector3fc, Vector3fc, Vector3fc, double)
+     */
+    public static Vector3f bezierDerivative(Vector3fc A, Vector3fc B, Vector3fc C, Vector3fc D, double u) {
+        Vector3f direction = new Vector3f();
+        Vector3f temp = new Vector3f();
+        final Vector3f point = new Vector3f();
+        //(B-A)*3*(1-u)^2 + (C-B)*6*(1-u)*u + (D-C)*3*u^2
+        (B.sub(A, point))
+                .mul((float) (3 * (1 - u) * (1 - u)), point)
+                .add(C.sub(B, temp).mul((float) (6 * (1 - u) * u), temp), direction)
+                .add(D.sub(C, temp).mul((float) (3 * u * u), temp), direction);
+        return direction;
+    }
+
+    public static boolean isScalable(Vector3fc vec) {
+        return !isNaN(vec.x()) && !isNaN(vec.y()) && !isNaN(vec.z()) && !((vec.x() == 0) && (vec.y() == 0) && (vec.z() == 0));
     }
 }

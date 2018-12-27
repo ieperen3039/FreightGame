@@ -9,12 +9,12 @@ import NG.Engine.Game;
 import NG.Entities.Entity;
 import NG.Rendering.GLFWWindow;
 import NG.Rendering.Light;
-import NG.Settings.Settings;
+import NG.Shapes.Primitives.Collision;
 import NG.Tools.Toolbox;
-import org.joml.Matrix4f;
+import NG.Tools.Vectors;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.joml.Vector4f;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -26,17 +26,14 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- *
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
 public class GameLoop extends AbstractGameLoop implements GameState {
     private final List<Entity> entities;
     private final List<Light> lights;
-
+    private final Lock drawLock;
     private Deque<Runnable> postUpdateActionQueue;
     private Game game;
-
-    private final Lock drawLock;
 
     public GameLoop(String gameName, int targetTps) {
         super("Gameloop " + gameName, targetTps);
@@ -93,7 +90,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     }
 
     @Override
-    public Entity getEntityByRay(Vector4f from, Vector4f to) {
+    public Collision getEntityCollision(Vector3fc from, Vector3fc to) {
         return null;
     }
 
@@ -160,9 +157,15 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     public boolean checkMouseClick(MouseTool tool, int xSc, int ySc) {
         GLFWWindow window = game.window();
         Camera camera = game.camera();
+        Vector3f origin = new Vector3f();
+        Vector3f direction = new Vector3f();
 
-        Matrix4f projection = SGL.getViewProjection(window.getWidth(), window.getHeight(), camera, Settings.ISOMETRIC_VIEW);
+        Vectors.windowCoordToRay(camera, origin, direction, window.getWidth(), window.getHeight(), new Vector2f(xSc, ySc));
 
-        return false;
+        Collision collision = getEntityCollision(origin, direction);
+        if (collision == null) return false;
+
+        tool.apply(collision.getEntity(), collision.hitPosition());
+        return true;
     }
 }

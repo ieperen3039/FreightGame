@@ -2,6 +2,7 @@ package NG.Tracks;
 
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.Game;
+import NG.Tools.Vectors;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 
@@ -57,6 +58,12 @@ public class StraightTrack implements TrackPiece {
     @Override
     public Vector2fc getDirectionOf(NetworkNodePoint nodePoint) {
         return direction;
+    }
+
+    @Override
+    public Vector2f closestPointOf(Vector2fc position) {
+        Vector2fc end = endNode.getPosition();
+        return Vectors.getIntersectionPointLine(position, startCoord, end);
     }
 
     @Override

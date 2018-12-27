@@ -56,4 +56,9 @@ public class NetworkNodePoint implements Entity {
         }
         return false;
     }
+
+    @Override
+    public UpdateFrequency getUpdateFrequency() {
+        return UpdateFrequency.NEVER;
+    }
 }

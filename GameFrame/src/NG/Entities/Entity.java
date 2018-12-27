@@ -11,8 +11,9 @@ import org.joml.AABBf;
  */
 public interface Entity {
     /**
-     * Updates the entity one game tick further. Try using {@link GameTimer#getGametimeDifference()} for speed
-     * calculations and {@link GameTimer#getGametime()} for position calculations
+     * Updates the state of the entity. The frequency this method is called depend on the return value of {@link
+     * #getUpdateFrequency()}. Use {@link GameTimer#getGametimeDifference()} for speed calculations and {@link
+     * GameTimer#getGametime()} for position calculations
      */
     void update();
 
@@ -37,5 +38,9 @@ public interface Entity {
         return null; // TODO implement clickboxes
     }
 
-    ;
+    UpdateFrequency getUpdateFrequency();
+
+    enum UpdateFrequency {
+        ALWAYS, SOMETIMES, NEVER
+    }
 }

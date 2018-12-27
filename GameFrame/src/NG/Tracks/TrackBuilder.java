@@ -10,21 +10,29 @@ import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
-import org.joml.Vector3f;
+import org.joml.Vector3fc;
+import org.lwjgl.glfw.GLFW;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
 /**
  * @author Geert van Ieperen created on 16-12-2018.
  */
-public class TrackBuilder extends MouseTool {
+public class TrackBuilder implements MouseTool {
     private final TrackMod.TrackType type;
     private final SToggleButton sourceButton;
     private Game game;
 
     private Vector2fc firstPosition; // TODO remove this, only allow building from existing tracks or stations
     private NetworkNode firstNode;
+    private int button;
 
+    /**
+     * this mousetool lets the player place a track by clicking on the map
+     * @param game   the game instance
+     * @param type   the type of track to place
+     * @param source the button which will be set to untoggled when this mousetool is disposed
+     */
     public TrackBuilder(Game game, TrackMod.TrackType type, SToggleButton source) {
         this.game = game;
         sourceButton = source;
@@ -33,7 +41,7 @@ public class TrackBuilder extends MouseTool {
 
     @Override
     public void apply(Vector2fc newPosition) {
-        if (getButton() == GLFW_MOUSE_BUTTON_RIGHT) {
+        if (button == GLFW_MOUSE_BUTTON_RIGHT) {
             close();
             return;
         }
@@ -57,19 +65,26 @@ public class TrackBuilder extends MouseTool {
     }
 
     @Override
-    public void apply(Entity entity, Vector3f rayCollision) {
-        if (getButton() == GLFW_MOUSE_BUTTON_RIGHT) {
+    public void apply(Entity entity, Vector3fc rayCollision) {
+        if (button == GLFW_MOUSE_BUTTON_RIGHT) {
             close();
             return;
         }
 
         Logger.DEBUG.print("Clicked on entity " + entity);
         if (entity instanceof TrackPiece) {
-            Vector2f flatRay = new Vector2f(rayCollision.x, rayCollision.y);
+            Vector2f flatRay = new Vector2f(rayCollision.x(), rayCollision.y());
             TrackPiece targetTrack = (TrackPiece) entity;
 
-            if (firstPosition == null) {
+            if (firstNode == null) {
+                NetworkNodePoint aPoint = targetTrack.getStartNodePoint();
+                NetworkNodePoint bPoint = targetTrack.getEndNodePoint();
+                Vector2f closestPoint = targetTrack.closestPointOf(flatRay);
+                NetworkNodePoint newPoint = new NetworkNodePoint(closestPoint);
 
+                firstNode = NetworkNode.split(game, newPoint, aPoint.getNode(), bPoint.getNode());
+            } else {
+                Logger.ERROR.print("Not implemented yet :(");
             }
         }
     }
@@ -78,8 +93,10 @@ public class TrackBuilder extends MouseTool {
     public void apply(SComponent component, int xSc, int ySc) {
         Logger.DEBUG.print("Clicked on component " + component);
         close();
+        game.inputHandling().getMouseTool().apply(component, xSc, ySc);
     }
 
+    /** disposes this mouse tool, resetting the global tool to default */
     private void close() {
         game.inputHandling().setMouseTool(null);
         sourceButton.setState(false);
@@ -98,5 +115,14 @@ public class TrackBuilder extends MouseTool {
     @Override
     public String toString() {
         return "Track Builder (" + type + ")";
+    }
+
+    /**
+     * sets the button field. Should only be called by the input handling
+     * @param button a button enum, often {@link GLFW#GLFW_MOUSE_BUTTON_LEFT} or {@link GLFW#GLFW_MOUSE_BUTTON_RIGHT}
+     */
+    @Override
+    public void setButton(int button) {
+        this.button = button;
     }
 }
