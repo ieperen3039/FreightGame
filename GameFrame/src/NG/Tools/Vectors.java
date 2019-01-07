@@ -71,7 +71,7 @@ public class Vectors {
     }
 
     /**
-     * Rotates a two-dimensional vector on the z-axis
+     * Rotates a two-dimensional vector on the z-axis in clockwise direction //TODO not counterclock?
      * @param target the vector to rotate
      * @param angle  the angle of rotation
      * @return the target vector holding the result

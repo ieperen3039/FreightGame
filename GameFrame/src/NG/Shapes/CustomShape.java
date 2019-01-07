@@ -288,7 +288,7 @@ public class CustomShape {
     }
 
     public Shape wrapToShape() {
-        return null;
+        return new BasicShape(getSortedVertices(), normals, faces);
     }
 
     /**
@@ -324,12 +324,5 @@ public class CustomShape {
 
     private static String vertexToString(int vertex, int normal) {
         return String.format("%d//%d", vertex + 1, normal + 1);
-    }
-
-    /** free up all space used by this shape. */
-    public void dispose() {
-        points.clear();
-        normals.clear();
-        faces.clear();
     }
 }

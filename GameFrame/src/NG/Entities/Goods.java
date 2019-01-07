@@ -1,16 +1,18 @@
 package NG.Entities;
 
+import NG.Engine.GameTimer;
+
 /**
  * @author Geert van Ieperen. Created on 12-11-2018.
  */
 public class Goods {
-    private final String name;
+    private final GoodsType type;
     private final int pickupTime;
     private final Entity pickupPlace;
     private int quantity;
 
-    public Goods(String name, int quantity, int pickupTime, Entity pickupPlace) {
-        this.name = name;
+    public Goods(GoodsType type, int quantity, int pickupTime, Entity pickupPlace) {
+        this.type = type;
         this.quantity = quantity;
         this.pickupTime = pickupTime;
         this.pickupPlace = pickupPlace;
@@ -19,10 +21,10 @@ public class Goods {
     public Goods split(int quantity) {
         assert this.quantity > quantity;
         this.quantity -= quantity;
-        return new Goods(name, quantity, pickupTime, pickupPlace);
+        return new Goods(type, quantity, pickupTime, pickupPlace);
     }
 
-    public int getCurrentPrice() {
-        return 0;
+    public float getCurrentPrice(GameTimer time) {
+        return type.valueOverTime(pickupTime - time.getGametime());
     }
 }

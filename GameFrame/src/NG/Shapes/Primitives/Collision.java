@@ -20,8 +20,8 @@ public class Collision implements Comparable<Collision> {
 
     /**
      * @param c another collision
-     * @return a positive integer if this is later then c, a negative integer if this is earlier than c, or 0 if they
-     * are at the same moment
+     * @return a positive integer if this.scalar is more than c.scalar, a negative integer if this.scalar is less than
+     * c.scalar, or 0 if they are equal
      */
     @Override
     public int compareTo(Collision c) {

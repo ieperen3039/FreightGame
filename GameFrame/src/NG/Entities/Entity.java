@@ -2,7 +2,6 @@ package NG.Entities;
 
 import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.GameTimer;
-import org.joml.AABBf;
 
 /**
  * An entity is anything that is both visible in the world, and allows interaction with other entities (including the
@@ -34,13 +33,13 @@ public interface Entity {
      */
     void onClick(int button);
 
-    default AABBf hitbox() {
-        return null; // TODO implement clickboxes
-    }
-
+    /**
+     * the {@link #update()} method of this entity will be called according to the given update frequency
+     * @return a constant value indicating how often to update this entity
+     */
     UpdateFrequency getUpdateFrequency();
 
     enum UpdateFrequency {
-        ALWAYS, SOMETIMES, NEVER
+        EVERY_FRAME, EVERY_TICK, ONCE_PER_SECOND, ONCE_UPON_A_TIME, NEVER
     }
 }

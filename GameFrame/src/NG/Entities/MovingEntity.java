@@ -10,6 +10,6 @@ public interface MovingEntity extends Entity {
 
     @Override
     default UpdateFrequency getUpdateFrequency() {
-        return UpdateFrequency.ALWAYS;
+        return UpdateFrequency.EVERY_TICK;
     }
 }
