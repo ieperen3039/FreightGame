@@ -1,6 +1,6 @@
 package NG.Shapes;
 
-import NG.DataStructures.MatrixStack.Mesh;
+import NG.Rendering.MatrixStack.Mesh;
 import NG.Rendering.Shapes.ShapeParameters;
 import NG.Shapes.Primitives.Plane;
 import NG.Shapes.Primitives.Quad;

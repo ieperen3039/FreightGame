@@ -1,6 +1,8 @@
 package NG.Rendering.Shaders;
 
 import NG.DataStructures.Color4f;
+import NG.DataStructures.Material;
+import NG.Entities.Entity;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3fc;
@@ -12,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.FloatBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -195,6 +198,17 @@ public abstract class AbstractShader implements ShaderProgram {
         glUniform4f(uniforms.get(uniformName), value.x, value.y, value.z, value.w);
     }
 
+    @Override
+    public void setMaterial(Material material, Color4f color) {
+        Color4f baseColor = material.baseColor.overlay(color);
+        setMaterial(baseColor, material.specular, material.reflectance);
+    }
+
+    @Override
+    public boolean accepts(Entity entity) {
+        return true;
+    }
+
     /**
      * Create a new shader and return the id of the newly created shader.
      * @param programId
@@ -249,7 +263,7 @@ public abstract class AbstractShader implements ShaderProgram {
         String result;
         try (
                 InputStream in = new FileInputStream(path.toFile());
-                Scanner scanner = new Scanner(in, "UTF-8")
+                Scanner scanner = new Scanner(in, StandardCharsets.UTF_8)
         ) {
             result = scanner.useDelimiter("\\A").next();
         } catch (FileNotFoundException e) {

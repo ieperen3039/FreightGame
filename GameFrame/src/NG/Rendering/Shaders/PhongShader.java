@@ -2,6 +2,7 @@ package NG.Rendering.Shaders;
 
 import NG.DataStructures.Color4f;
 import NG.Engine.Game;
+import NG.Entities.Entity;
 import NG.Tools.Directory;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -34,10 +35,20 @@ public class PhongShader extends AbstractShader {
     }
 
     @Override
-    public void setUniforms(Game game) {
+    public void initialize(Game game) {
         Vector3fc eye = game.camera().getEye();
         setUniform("ambientLight", getAmbientLight().toVector3f());
         setUniform("cameraPosition", eye);
+    }
+
+    @Override
+    public void setEntity(Entity entity) {
+
+    }
+
+    @Override
+    public void unsetEntity() {
+
     }
 
     /**

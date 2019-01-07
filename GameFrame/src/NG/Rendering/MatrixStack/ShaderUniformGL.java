@@ -1,13 +1,14 @@
-package NG.DataStructures.MatrixStack;
+package NG.Rendering.MatrixStack;
 
 import NG.Camera.Camera;
 import NG.DataStructures.Color4f;
-import NG.DataStructures.Material;
+import NG.Entities.Entity;
 import NG.Rendering.Shaders.ShaderProgram;
 import NG.Tools.Toolbox;
 import org.joml.*;
 
 import java.util.Stack;
+import java.util.function.Consumer;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -16,6 +17,7 @@ import static org.lwjgl.opengl.GL11.*;
  */
 public class ShaderUniformGL implements SGL {
     private static final int MAX_POINT_LIGHTS = 1;
+    private static final Painter LOCK = new Painter();
 
     private Stack<Matrix4f> matrixStack;
 
@@ -39,12 +41,8 @@ public class ShaderUniformGL implements SGL {
         matrixStack = new Stack<>();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, windowWidth, windowHeight);
-        Toolbox.checkGLError();
         glEnable(GL_LINE_SMOOTH);
-        Toolbox.checkGLError();
-
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        Toolbox.checkGLError();
 
         modelMatrix = new Matrix4f();
         viewProjectionMatrix = SGL.getViewProjection(windowWidth, windowHeight, viewpoint, isometric);
@@ -52,6 +50,8 @@ public class ShaderUniformGL implements SGL {
         for (int i = 0; i < MAX_POINT_LIGHTS; i++) {
             shader.setPointLight(i, new Vector4f(), Color4f.INVISIBLE);
         }
+
+        Toolbox.checkGLError();
     }
 
     @Override
@@ -60,7 +60,7 @@ public class ShaderUniformGL implements SGL {
         shader.setModelMatrix(modelMatrix);
         modelMatrix.normal(normalMatrix);
         shader.setNormalMatrix(normalMatrix);
-        object.render(new Painter());
+        object.render(LOCK);
     }
 
     @Override
@@ -68,12 +68,6 @@ public class ShaderUniformGL implements SGL {
         Vector4f mPos = new Vector4f(position);
         mPos.mul(modelMatrix);
         shader.setPointLight(nextLightIndex++, mPos, lightColor);
-    }
-
-    @Override
-    public void setMaterial(Material material, Color4f color) {
-        Color4f baseColor = material.baseColor.overlay(color);
-        shader.setMaterial(baseColor, material.specular, material.reflectance);
     }
 
     @Override
@@ -144,6 +138,15 @@ public class ShaderUniformGL implements SGL {
         viewProjectionMatrix.transformProject(pos);
         if (pos.z() > 1) return null;
         else return new Vector2f(pos.x(), pos.y());
+    }
+
+    @Override
+    public void ifAccepted(Entity entity, Consumer<SGL> drawFunction) {
+        if (shader.accepts(entity)) {
+            shader.setEntity(entity);
+            drawFunction.accept(this);
+            shader.unsetEntity();
+        }
     }
 
     /** @return the view-projection matrix */

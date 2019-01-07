@@ -66,12 +66,13 @@ public class SFrameManager implements GUIManager {
     public void addFrame(SFrame frame) {
         frame.validateLayout();
 
-        int width = game.window().getWidth();
-        int height = game.window().getHeight();
-        int xPos = width / 2 - frame.getWidth() / 2;
-        int yPos = height / 2 - frame.getHeight() / 2;
+//        int width = game.window().getWidth();
+//        int height = game.window().getHeight();
+//        int xPos = width / 2 - frame.getWidth() / 2;
+//        int yPos = height / 2 - frame.getHeight() / 2;
 
-        addFrame(frame, xPos, yPos);
+        int toolbarHeight = toolBar == null ? 0 : toolBar.getHeight();
+        addFrame(frame, 50, 50 + toolbarHeight);
     }
 
     @Override
@@ -130,6 +131,7 @@ public class SFrameManager implements GUIManager {
 
     @Override
     public boolean checkMouseClick(MouseTool tool, int xSc, int ySc) {
+        // check modal dialogues
         if (modalSection != null) {
             Vector2ic modalPosition = modalSection.getScreenPosition();
             tool.apply(modalSection, xSc - modalPosition.x(), ySc - modalPosition.y());
@@ -137,6 +139,7 @@ public class SFrameManager implements GUIManager {
             return true;
         }
 
+        // check toolbar
         if (toolBar != null) {
             if (toolBar.contains(xSc, ySc)) {
                 tool.apply(toolBar, xSc, ySc);
@@ -144,6 +147,7 @@ public class SFrameManager implements GUIManager {
             }
         }
 
+        // check all frames, starting from the front-most frame
         for (SFrame frame : frames) {
             if (frame.isVisible() && frame.contains(xSc, ySc)) {
                 focus(frame);

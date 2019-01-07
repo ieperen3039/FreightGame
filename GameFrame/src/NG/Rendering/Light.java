@@ -1,7 +1,7 @@
 package NG.Rendering;
 
 import NG.DataStructures.Color4f;
-import NG.DataStructures.MatrixStack.SGL;
+import NG.Rendering.MatrixStack.SGL;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 

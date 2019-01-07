@@ -1,4 +1,4 @@
-package NG.DataStructures.MatrixStack;
+package NG.Rendering.MatrixStack;
 
 import org.joml.*;
 

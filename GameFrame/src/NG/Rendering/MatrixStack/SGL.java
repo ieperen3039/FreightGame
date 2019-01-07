@@ -1,14 +1,16 @@
-package NG.DataStructures.MatrixStack;
+package NG.Rendering.MatrixStack;
 
 import NG.Camera.Camera;
 import NG.DataStructures.Color4f;
-import NG.DataStructures.Material;
+import NG.Entities.Entity;
 import NG.Rendering.Shaders.ShaderProgram;
 import NG.Settings.Settings;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3fc;
 import org.joml.Vector4fc;
+
+import java.util.function.Consumer;
 
 /**
  * This is a stripped down version of a {@link org.lwjgl.opengl.GL} object.
@@ -29,24 +31,6 @@ public interface SGL extends MatrixStack {
      */
     void setLight(Color4f lightColor, Vector4fc position);
 
-    /**
-     * sets the surface properties for the next meshes to the specified material, of which the color is blended into the
-     * material.
-     * @param material the new material properties
-     * @param color    a color transformation. The alpha value determines how much of the color is blended into the
-     *                 material
-     */
-    void setMaterial(Material material, Color4f color);
-
-    /**
-     * sets the surface properties for the next meshes to the specified material. The results is equal to {@code
-     * setMaterial(material, Color4f.WHITE)}.
-     * @param material the new material properties
-     */
-    default void setMaterial(Material material) {
-        setMaterial(material, Color4f.WHITE);
-    }
-
     /** @return the shader that is used for rendering. */
     ShaderProgram getShader();
 
@@ -57,6 +41,13 @@ public interface SGL extends MatrixStack {
      *         range if it is not in the player's FOV. returns null if this vertex is behind the player.
      */
     Vector2f getPositionOnScreen(Vector3fc vertex);
+
+    /**
+     * executes the given draw function if entity is accepted by the shader
+     * @param entity       an entity
+     * @param drawFunction the function that draws this entity
+     */
+    void ifAccepted(Entity entity, Consumer<SGL> drawFunction);
 
     /**
      * Objects should use GPU calls only in their render method. To prevent invalid uses of the {@link

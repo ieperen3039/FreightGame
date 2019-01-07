@@ -1,7 +1,7 @@
 package NG.Rendering.Shapes;
 
-import NG.DataStructures.MatrixStack.Mesh;
-import NG.DataStructures.MatrixStack.SGL;
+import NG.Rendering.MatrixStack.Mesh;
+import NG.Rendering.MatrixStack.SGL;
 
 /**
  * @author Geert van Ieperen. Created on 14-9-2018.

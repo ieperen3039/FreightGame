@@ -1,8 +1,8 @@
 package NG.Tracks;
 
-import NG.DataStructures.MatrixStack.SGL;
 import NG.GameState.GameMap;
 import NG.Mods.Mod;
+import NG.Rendering.MatrixStack.SGL;
 import org.joml.Vector2fc;
 
 import java.util.Collection;

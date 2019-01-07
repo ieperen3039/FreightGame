@@ -2,7 +2,8 @@ package NG.Tools;
 
 import NG.DataStructures.Color4f;
 import NG.DataStructures.Material;
-import NG.DataStructures.MatrixStack.SGL;
+import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.BasicShapes;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -44,18 +45,19 @@ public final class Toolbox {
         }
 
         Material mat = Material.ROUGH;
+        ShaderProgram shader = gl.getShader();
         gl.pushMatrix();
         {
-            gl.setMaterial(mat, Color4f.BLUE);
+            shader.setMaterial(mat, Color4f.BLUE);
             gl.render(BasicShapes.ARROW);
             gl.rotate((float) Math.toRadians(90), 0f, 1f, 0f);
-            gl.setMaterial(mat, Color4f.RED);
+            shader.setMaterial(mat, Color4f.RED);
             gl.render(BasicShapes.ARROW);
             gl.rotate((float) Math.toRadians(-90), 1f, 0f, 0f);
-            gl.setMaterial(mat, Color4f.GREEN);
+            shader.setMaterial(mat, Color4f.GREEN);
             gl.render(BasicShapes.ARROW);
             gl.scale(0.2f);
-            gl.setMaterial(mat, Color4f.WHITE);
+            shader.setMaterial(mat, Color4f.WHITE);
             gl.render(BasicShapes.CUBE);
         }
         gl.popMatrix();
@@ -63,8 +65,9 @@ public final class Toolbox {
 
     public static void draw3DPointer(SGL gl) {
         Material mat = Material.ROUGH;
+        ShaderProgram shader = gl.getShader();
 
-        gl.setMaterial(mat, Color4f.BLUE);
+        shader.setMaterial(mat, Color4f.BLUE);
         gl.pushMatrix();
         {
             gl.scale(1, CURSOR_SIZE, CURSOR_SIZE);
@@ -72,7 +75,7 @@ public final class Toolbox {
         }
         gl.popMatrix();
 
-        gl.setMaterial(mat, Color4f.RED);
+        shader.setMaterial(mat, Color4f.RED);
         gl.pushMatrix();
         {
             gl.scale(CURSOR_SIZE, 1, CURSOR_SIZE);
@@ -80,7 +83,7 @@ public final class Toolbox {
         }
         gl.popMatrix();
 
-        gl.setMaterial(mat, Color4f.GREEN);
+        shader.setMaterial(mat, Color4f.GREEN);
         gl.pushMatrix();
         {
             gl.scale(CURSOR_SIZE, CURSOR_SIZE, 1);

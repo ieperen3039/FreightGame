@@ -1,4 +1,4 @@
-package NG.DataStructures.MatrixStack;
+package NG.Rendering.MatrixStack;
 
 /**
  * @author Geert van Ieperen created on 17-11-2017.

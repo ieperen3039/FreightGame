@@ -1,7 +1,7 @@
 package NG.Rendering.Shapes;
 
-import NG.DataStructures.MatrixStack.Mesh;
 import NG.DataStructures.Pair;
+import NG.Rendering.MatrixStack.Mesh;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;

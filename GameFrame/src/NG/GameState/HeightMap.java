@@ -4,10 +4,10 @@ import NG.ActionHandling.MouseTools.MouseTool;
 import NG.Camera.Camera;
 import NG.DataStructures.Color4f;
 import NG.DataStructures.Material;
-import NG.DataStructures.MatrixStack.Mesh;
-import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.Game;
 import NG.Rendering.GLFWWindow;
+import NG.Rendering.MatrixStack.Mesh;
+import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.FlatMesh;
 import NG.ScreenOverlay.Frames.Components.SFiller;
 import NG.ScreenOverlay.Frames.Components.SFrame;
@@ -112,7 +112,7 @@ public class HeightMap implements GameMap {
             hasNewWorld = false;
         }
 
-        gl.setMaterial(Material.ROUGH, new Color4f(0, 0.5f, 0));
+        gl.getShader().setMaterial(Material.ROUGH, new Color4f(0, 0.5f, 0));
         meshOfTheWorld.forEach(gl::render);
     }
 

@@ -1,7 +1,9 @@
 package NG.Rendering.Shaders;
 
 import NG.DataStructures.Color4f;
+import NG.DataStructures.Material;
 import NG.Engine.Game;
+import NG.Entities.Entity;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -30,7 +32,18 @@ public interface ShaderProgram {
      * initialize the uniforms for this shader
      * @param game the source of information
      */
-    void setUniforms(Game game);
+    void initialize(Game game);
+
+    /**
+     * Allows shaders to only render specific entities.
+     * @param entity an entity
+     * @return true iff this entity should be rendered by this shader.
+     */
+    boolean accepts(Entity entity);
+
+    void setEntity(Entity entity);
+
+    void unsetEntity();
 
     /**
      * pass a pointlight to the shader
@@ -47,4 +60,7 @@ public interface ShaderProgram {
     void setNormalMatrix(Matrix3f normalMatrix);
 
     void setMaterial(Color4f diffuse, Color4f specular, float reflectance);
+
+    void setMaterial(Material material, Color4f color);
+
 }

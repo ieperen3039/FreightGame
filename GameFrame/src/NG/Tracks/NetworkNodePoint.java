@@ -1,7 +1,7 @@
 package NG.Tracks;
 
-import NG.DataStructures.MatrixStack.SGL;
 import NG.Entities.Entity;
+import NG.Rendering.MatrixStack.SGL;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 

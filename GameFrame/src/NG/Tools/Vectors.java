@@ -1,8 +1,8 @@
 package NG.Tools;
 
 import NG.Camera.Camera;
-import NG.DataStructures.MatrixStack.SGL;
 import NG.DataStructures.Pair;
+import NG.Rendering.MatrixStack.SGL;
 import NG.Settings.Settings;
 import org.joml.Math;
 import org.joml.*;

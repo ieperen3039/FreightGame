@@ -1,6 +1,6 @@
 package NG.Shapes;
 
-import NG.DataStructures.MatrixStack.Mesh;
+import NG.Rendering.MatrixStack.Mesh;
 import NG.Rendering.Shapes.FlatMesh;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;

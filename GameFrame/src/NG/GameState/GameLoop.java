@@ -3,12 +3,12 @@ package NG.GameState;
 import NG.ActionHandling.MouseTools.MouseTool;
 import NG.Camera.Camera;
 import NG.DataStructures.Color4f;
-import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.AbstractGameLoop;
 import NG.Engine.Game;
 import NG.Entities.Entity;
 import NG.Rendering.GLFWWindow;
 import NG.Rendering.Light;
+import NG.Rendering.MatrixStack.SGL;
 import NG.Shapes.Primitives.Collision;
 import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
@@ -82,7 +82,9 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         drawLock.lock();
         try {
             Toolbox.drawAxisFrame(gl);
-            entities.forEach(entity -> entity.draw(gl));
+            for (Entity entity : entities) {
+                gl.ifAccepted(entity, entity::draw);
+            }
 
         } finally {
             drawLock.unlock();

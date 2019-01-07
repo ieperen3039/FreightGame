@@ -1,7 +1,7 @@
 package NG.Rendering.Shapes;
 
-import NG.DataStructures.MatrixStack.Mesh;
-import NG.DataStructures.MatrixStack.SGL;
+import NG.Rendering.MatrixStack.Mesh;
+import NG.Rendering.MatrixStack.SGL;
 import NG.Tools.Toolbox;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;

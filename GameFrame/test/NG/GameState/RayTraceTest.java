@@ -1,10 +1,10 @@
 package NG.GameState;
 
 import NG.ActionHandling.MouseTools.MouseTool;
-import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.FreightGame;
 import NG.Engine.Game;
 import NG.Entities.Entity;
+import NG.Rendering.MatrixStack.SGL;
 import NG.ScreenOverlay.Frames.Components.SComponent;
 import NG.Settings.Settings;
 import NG.Tools.Logger;

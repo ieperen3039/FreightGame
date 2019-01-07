@@ -1,7 +1,7 @@
 package NG.Entities;
 
-import NG.DataStructures.MatrixStack.SGL;
 import NG.Engine.GameTimer;
+import NG.Rendering.MatrixStack.SGL;
 
 /**
  * An entity is anything that is both visible in the world, and allows interaction with other entities (including the

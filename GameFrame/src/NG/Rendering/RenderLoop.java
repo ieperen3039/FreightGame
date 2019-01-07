@@ -1,12 +1,12 @@
 package NG.Rendering;
 
-import NG.DataStructures.MatrixStack.SGL;
-import NG.DataStructures.MatrixStack.ShaderUniformGL;
 import NG.Engine.AbstractGameLoop;
 import NG.Engine.Game;
 import NG.Engine.GameAspect;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
+import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.MatrixStack.ShaderUniformGL;
 import NG.Rendering.Shaders.PhongShader;
 import NG.Rendering.Shaders.ShaderProgram;
 import NG.ScreenOverlay.ScreenOverlay;
@@ -59,16 +59,16 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
         // camera
         game.camera().updatePosition(deltaTime); // real-time deltatime
 
-
         GameMap world = game.map();
         GameState entities = game.state();
-        int windowWidth = game.window().getWidth();
-        int window_height = game.window().getHeight();
+        GLFWWindow window = game.window();
+        int windowWidth = window.getWidth();
+        int window_height = window.getHeight();
 
         for (ShaderProgram shader : shaders) {
             // shader uniforms
             shader.bind();
-            shader.setUniforms(game);
+            shader.initialize(game);
 
             // GL object
             SGL gl = new ShaderUniformGL(shader, windowWidth, window_height, game.camera(), Settings.ISOMETRIC_VIEW);
@@ -82,11 +82,11 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
         overlay.draw(windowWidth, window_height, 10, 10, 12);
 
         // update window
-        game.window().update();
+        window.update();
 
         // loop clean
         Toolbox.checkGLError();
-        if (game.window().shouldClose()) stopLoop();
+        if (window.shouldClose()) stopLoop();
     }
 
     @Override
