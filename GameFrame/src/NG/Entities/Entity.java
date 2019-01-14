@@ -2,6 +2,10 @@ package NG.Entities;
 
 import NG.Engine.GameTimer;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.Shapes.Primitives.Collision;
+import NG.Rendering.Shapes.Shape;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 /**
  * An entity is anything that is both visible in the world, and allows interaction with other entities (including the
@@ -41,5 +45,22 @@ public interface Entity {
 
     enum UpdateFrequency {
         EVERY_FRAME, EVERY_TICK, ONCE_PER_SECOND, ONCE_UPON_A_TIME, NEVER
+    }
+
+    /**
+     * determines the collision of a ray with this entity.
+     * @param origin    the origin of the ray
+     * @param direction the direction of the ray
+     * @return a Collision object resutling from the ray, or null if the ray did not hit
+     * @see Shape#getCollision(Vector3fc, Vector3fc, Vector3fc)
+     */
+    Collision getRayCollision(Vector3f origin, Vector3f direction);
+
+    /**
+     * Default implementation returns false.
+     * @return true iff this unit should be removed from the game world before the next gameloop.
+     */
+    default boolean doRemove() {
+        return false;
     }
 }

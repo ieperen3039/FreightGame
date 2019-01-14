@@ -6,7 +6,7 @@ import NG.Engine.FreightGame;
 import NG.Engine.GameAspect;
 import NG.Entities.Entity;
 import NG.Rendering.MatrixStack.SGL;
-import NG.Shapes.Primitives.Collision;
+import NG.Rendering.Shapes.Primitives.Collision;
 import org.joml.Vector3fc;
 
 import java.util.List;
@@ -55,6 +55,7 @@ public interface GameState extends GameAspect, Storable, MouseToolListener {
      * removes the first occurrence of an entity from the gameState. This action does not have to be executed
      * immediately.
      * @param entity an entity to be removed
+     * @deprecated instead, put an entities {@link Entity#doRemove()} to true
      */
     void removeEntity(Entity entity);
 }

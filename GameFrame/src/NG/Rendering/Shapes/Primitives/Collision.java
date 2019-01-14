@@ -1,6 +1,7 @@
-package NG.Shapes.Primitives;
+package NG.Rendering.Shapes.Primitives;
 
 import NG.Entities.Entity;
+import NG.Tools.Vectors;
 import org.joml.Vector3fc;
 
 /**
@@ -16,6 +17,10 @@ public class Collision implements Comparable<Collision> {
         this.scalar = scalar;
         this.normal = normal;
         this.hitPos = hitPos;
+    }
+
+    public Collision(Vector3fc hitPos) {
+        this(1, Vectors.zVector(), hitPos);
     }
 
     /**
@@ -40,10 +45,6 @@ public class Collision implements Comparable<Collision> {
      */
     public Vector3fc normal() {
         return normal;
-    }
-
-    public float scalar() {
-        return scalar;
     }
 
     public Entity getEntity() {

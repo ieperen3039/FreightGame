@@ -259,7 +259,7 @@ public abstract class AbstractShader implements ShaderProgram {
     }
 
 
-    private static String loadText(Path path) throws IOException {
+    public static String loadText(Path path) throws IOException {
         String result;
         try (
                 InputStream in = new FileInputStream(path.toFile());

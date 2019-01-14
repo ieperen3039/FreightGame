@@ -10,7 +10,6 @@ import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import org.joml.Vector2fc;
 import org.joml.Vector2ic;
-import org.joml.Vector3fc;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -54,7 +53,8 @@ public class DefaultMouseTool implements MouseTool {
     }
 
     @Override
-    public void apply(Entity entity, Vector3fc rayCollision) {
+    public void apply(Entity entity, int xSc, int ySc) {
+        Logger.DEBUG.print("Clicked on " + entity);
         entity.onClick(button);
     }
 

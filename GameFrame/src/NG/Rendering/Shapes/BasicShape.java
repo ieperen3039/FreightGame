@@ -1,10 +1,9 @@
-package NG.Shapes;
+package NG.Rendering.Shapes;
 
 import NG.Rendering.MatrixStack.Mesh;
-import NG.Rendering.Shapes.ShapeParameters;
-import NG.Shapes.Primitives.Plane;
-import NG.Shapes.Primitives.Quad;
-import NG.Shapes.Primitives.Triangle;
+import NG.Rendering.Shapes.Primitives.Plane;
+import NG.Rendering.Shapes.Primitives.Quad;
+import NG.Rendering.Shapes.Primitives.Triangle;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import org.joml.Vector3f;

@@ -5,6 +5,7 @@ import NG.Engine.GameAspect;
 import NG.Rendering.MatrixStack.SGL;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 /**
  * @author Geert van Ieperen. Created on 29-9-2018.
@@ -47,4 +48,12 @@ public interface GameMap extends GameAspect, MouseToolListener {
      * @return the height at position (x, y) on the map
      */
     float getHeightAt(float x, float y);
+
+    /**
+     * returns a vector on the map that results from raytracing the given ray.
+     * @param origin    the origin of the ray
+     * @param direction the (un-normalized) direction of the ray
+     * @return a vector p such that {@code p = origin + t * direction} for minimal t such that p lies on the map.
+     */
+    Vector3f intersectWithRay(Vector3fc origin, Vector3fc direction);
 }

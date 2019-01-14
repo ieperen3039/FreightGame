@@ -2,12 +2,16 @@ package NG.Tracks;
 
 import NG.Engine.Game;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.Shapes.Primitives.Collision;
 import NG.Tools.Vectors;
+import org.joml.Math;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
+import org.joml.Vector3f;
 
 import static NG.Tools.Vectors.cos;
 import static NG.Tools.Vectors.sin;
+import static java.lang.Math.abs;
 
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
@@ -89,6 +93,17 @@ public class CircleTrack implements TrackPiece {
 
     }
 
+    @Override
+    public Collision getRayCollision(Vector3f origin, Vector3f direction) {
+        Vector3f position = game.map().intersectWithRay(origin, direction);
+
+        float distanceToCenter = center.distance(position.x, position.y);
+        int clickWidth = game.settings().TRACK_CLICK_WIDTH;
+        if (abs(distanceToCenter - radius) > clickWidth) return null;
+
+        return new Collision(position);
+    }
+
     public Vector2f distanceToPosition(float distanceFromStart) {
         float angleTravelled = (float) (distanceFromStart / (radius * 2 * Math.PI));
         float currentAngle = angleTravelled + startTheta;
@@ -149,8 +164,9 @@ public class CircleTrack implements TrackPiece {
                     Vectors.toString(endPoint.getPosition()) + " != " + Vectors.toString(angleToPosition(endTheta)));
         }
         if (startDirection.angle(getStartDirection().negate()) > 0.001f) {
+            Vector2f simulatedStartDirection = startDirection.negate(new Vector2f());
             throw new IllegalStateException("calculated start direction is not equal to the given start direction: " +
-                    Vectors.toString(startDirection) + " != " + Vectors.toString(getStartDirection()));
+                    Vectors.toString(simulatedStartDirection) + " != " + Vectors.toString(getStartDirection()));
         }
     }
 }

@@ -3,8 +3,11 @@ package NG.ScreenOverlay.Menu;
 import NG.Camera.Camera;
 import NG.Engine.Game;
 import NG.Engine.ModLoader;
+import NG.Entities.Cube;
+import NG.Entities.Entity;
 import NG.GameState.MapGeneratorMod;
 import NG.ScreenOverlay.Frames.Components.*;
+import NG.Tools.Vectors;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 
@@ -17,6 +20,7 @@ public class MainMenu extends SFrame {
     private static final int NUM_BOT_BUTTONS = 10;
     public static final int BUTTON_MIN_WIDTH = 300;
     public static final int BUTTON_MIN_HEIGHT = 50;
+    private static final int NOF_ENTITIES = 8;
 
     private final Vector2i topButtonPos;
     private final Vector2i bottomButtonPos;
@@ -39,6 +43,8 @@ public class MainMenu extends SFrame {
         buttons.add(newGame, onTop());
         SButton justStart = new SButton("Start Testworld", this::testWorld, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
         buttons.add(justStart, onTop());
+        SButton entityCloud = new SButton("Start EntityCloud", this::entityCloud, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
+        buttons.add(entityCloud, onTop());
         SButton exitGame = new SButton("Exit game", exitGameAction, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
         buttons.add(exitGame, onBot());
 
@@ -67,12 +73,37 @@ public class MainMenu extends SFrame {
         modLoader.initMods(modLoader.allMods());
 
         // set camera to middle of map
-        Vector3f cameraFocus = new Vector3f(xSize / 2, ySize / 2, 0);
+        Vector3f cameraFocus = new Vector3f(xSize / 2f, ySize / 2f, 0);
         Camera cam = game.camera();
         Vector3f cameraEye = new Vector3f(cameraFocus).add(-50, -50, 50);
         cam.set(cameraFocus, cameraEye);
 
         // start
+        modLoader.startGame();
+        newGameFrame.setVisible(false);
+    }
+
+    private void entityCloud() {
+        final int spacing = 20;
+        int cbrtc = (int) Math.ceil(Math.cbrt(NOF_ENTITIES));
+
+        int i = NOF_ENTITIES;
+        cubing:
+        for (int x = 0; x < cbrtc; x++) {
+            for (int y = 0; y < cbrtc; y++) {
+                for (int z = 0; z < cbrtc; z++) {
+                    Vector3f pos = new Vector3f(x, y, z).mul(spacing);
+                    Entity cube = new Cube(pos);
+                    game.state().addEntity(cube);
+                    if (--i == 0) break cubing;
+                }
+            }
+        }
+
+        Camera cam = game.camera();
+        Vector3f cameraEye = new Vector3f(cbrtc, cbrtc, cbrtc).mul(spacing).add(10, 10, 10);
+        cam.set(Vectors.zeroVector(), cameraEye);
+
         modLoader.startGame();
         newGameFrame.setVisible(false);
     }

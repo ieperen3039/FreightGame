@@ -155,29 +155,27 @@ public class GLFWWindow implements GameAspect {
         // Swap buffers
         glfwSwapBuffers(window);
 
-        // Poll for events
-        glfwPollEvents();
-
         // Clear framebuffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+        // Poll for events
+        glfwPollEvents();
     }
 
     /**
      * saves a copy of the front buffer (the display) to disc
      * @param dir      directory to store the image to
-     * @param front    if false, the current content of the back buffer is drawn instead of what is visible on the
-     *                 screen
      * @param filename the file to save to
+     * @param bufferToRead one of {@link GL11#GL_FRONT} or {@link GL11#GL_BACK}
      */
-    @SuppressWarnings("NumericOverflow")
-    public void printScreen(Directory dir, boolean front, String filename) {
-        glReadBuffer(front ? GL11.GL_FRONT : GL11.GL_BACK);
+    public void printScreen(Directory dir, String filename, int bufferToRead) {
+        glReadBuffer(bufferToRead);
         int bpp = 4; // Assuming a 32-bit display with a byte each for red, green, blue, and alpha.
         ByteBuffer buffer = BufferUtils.createByteBuffer(width * height * bpp);
         glReadPixels(0, 0, width, height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
 
         new Thread(() -> {
-            String format = "JPG";
+            String format = "png";
             BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 
             for (int x = 0; x < width; x++) {
@@ -191,10 +189,22 @@ public class GLFWWindow implements GameAspect {
             }
 
             try {
-                File file = dir.getFile(filename + ".jpg"); // The file to save to.
-                boolean success = file.mkdirs();
-                if (!success) return;
+                File file = dir.getFile(filename + "." + format); // The file to save to.
+                if (file.exists()) {
+                    boolean success = file.delete();
+                    if (!success) {
+                        Logger.ERROR.print("Could not remove existing file", file);
+                        return;
+                    }
+                } else {
+                    boolean success = file.mkdirs();
+                    if (!success) {
+                        Logger.ERROR.print("Could not create directories", file);
+                        return;
+                    }
+                }
                 ImageIO.write(image, format, file);
+
             } catch (IOException e) {
                 Logger.ERROR.print(e);
             }

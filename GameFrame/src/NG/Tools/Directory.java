@@ -14,7 +14,8 @@ public enum Directory {
     shaders("res", "shaders"),
     meshes("res", "models", "general"),
     fonts("res", "fonts"),
-    mods("jar", "Mods");
+    mods("jar", "Mods"),
+    screenshots("img", "screenshots");
 
     private final Path directory;
 

@@ -4,6 +4,8 @@ import NG.ActionHandling.MouseTools.MouseTool;
 import NG.DataStructures.Pair;
 import NG.Engine.Game;
 import NG.Entities.Entity;
+import NG.GameState.GameLoop;
+import NG.Rendering.Shapes.Primitives.Collision;
 import NG.ScreenOverlay.Frames.Components.SComponent;
 import NG.ScreenOverlay.Frames.Components.SToggleButton;
 import NG.Tools.Logger;
@@ -65,7 +67,7 @@ public class TrackBuilder implements MouseTool {
     }
 
     @Override
-    public void apply(Entity entity, Vector3fc rayCollision) {
+    public void apply(Entity entity, int xSc, int ySc) {
         if (button == GLFW_MOUSE_BUTTON_RIGHT) {
             close();
             return;
@@ -73,14 +75,16 @@ public class TrackBuilder implements MouseTool {
 
         Logger.DEBUG.print("Clicked on entity " + entity);
         if (entity instanceof TrackPiece) {
-            Vector2f flatRay = new Vector2f(rayCollision.x(), rayCollision.y());
+            Collision rayCollision = GameLoop.getClickOnEntity(xSc, ySc, entity, game);
+            Vector3fc hitPosition = rayCollision.hitPosition();
+            Vector2f flatRay = new Vector2f(hitPosition.x(), hitPosition.y());
             TrackPiece targetTrack = (TrackPiece) entity;
 
             if (firstNode == null) {
                 NetworkNodePoint aPoint = targetTrack.getStartNodePoint();
                 NetworkNodePoint bPoint = targetTrack.getEndNodePoint();
                 Vector2f closestPoint = targetTrack.closestPointOf(flatRay);
-                NetworkNodePoint newPoint = new NetworkNodePoint(closestPoint);
+                NetworkNodePoint newPoint = new NetworkNodePoint(closestPoint, game.map());
 
                 firstNode = NetworkNode.split(game, newPoint, aPoint.getNode(), bPoint.getNode());
             } else {

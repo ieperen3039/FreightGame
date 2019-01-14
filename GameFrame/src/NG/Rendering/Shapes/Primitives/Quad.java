@@ -1,4 +1,4 @@
-package NG.Shapes.Primitives;
+package NG.Rendering.Shapes.Primitives;
 
 import NG.Tools.Vectors;
 import org.joml.Vector3f;

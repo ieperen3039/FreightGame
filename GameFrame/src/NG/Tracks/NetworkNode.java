@@ -117,8 +117,8 @@ public abstract class NetworkNode {
     public static Pair<NetworkNode, NetworkNode> getNodePair(
             Game game, TrackMod.TrackType type, Vector2fc aPosition, Vector2fc bPosition
     ) {
-        NetworkNodePoint nodePointA = new NetworkNodePoint(aPosition);
-        NetworkNodePoint nodePointB = new NetworkNodePoint(bPosition);
+        NetworkNodePoint nodePointA = new NetworkNodePoint(aPosition, game.map());
+        NetworkNodePoint nodePointB = new NetworkNodePoint(bPosition, game.map());
         game.state().addEntity(nodePointA);
         game.state().addEntity(nodePointB);
         ConnectionNode A = new ConnectionNode(nodePointA, type);
@@ -137,7 +137,7 @@ public abstract class NetworkNode {
      * @return the new node
      */
     public static NetworkNode connectToNew(Game game, NetworkNode node, Vector2fc newPosition) {
-        NetworkNodePoint nodePoint = new NetworkNodePoint(newPosition);
+        NetworkNodePoint nodePoint = new NetworkNodePoint(newPosition, game.map());
         game.state().addEntity(nodePoint);
 
         ConnectionNode newNode = new ConnectionNode(nodePoint, node.type);

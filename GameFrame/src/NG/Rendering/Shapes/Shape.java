@@ -1,7 +1,7 @@
-package NG.Shapes;
+package NG.Rendering.Shapes;
 
-import NG.Shapes.Primitives.Collision;
-import NG.Shapes.Primitives.Plane;
+import NG.Rendering.Shapes.Primitives.Collision;
+import NG.Rendering.Shapes.Primitives.Plane;
 import org.joml.Vector3fc;
 
 import java.util.Objects;

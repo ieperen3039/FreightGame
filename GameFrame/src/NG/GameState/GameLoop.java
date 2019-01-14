@@ -1,5 +1,6 @@
 package NG.GameState;
 
+import NG.ActionHandling.ClickShader;
 import NG.ActionHandling.MouseTools.MouseTool;
 import NG.Camera.Camera;
 import NG.DataStructures.Color4f;
@@ -9,7 +10,8 @@ import NG.Entities.Entity;
 import NG.Rendering.GLFWWindow;
 import NG.Rendering.Light;
 import NG.Rendering.MatrixStack.SGL;
-import NG.Shapes.Primitives.Collision;
+import NG.Rendering.Shapes.Primitives.Collision;
+import NG.Tools.Logger;
 import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
 import org.joml.Vector2f;
@@ -23,7 +25,8 @@ import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Geert van Ieperen. Created on 14-9-2018.
@@ -31,7 +34,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class GameLoop extends AbstractGameLoop implements GameState {
     private final List<Entity> entities;
     private final List<Light> lights;
-    private final Lock drawLock;
+    private final Lock entityWriteLock;
+    private final Lock entityReadLock;
     private Deque<Runnable> postUpdateActionQueue;
     private Game game;
 
@@ -40,7 +44,9 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         this.entities = new ArrayList<>();
         this.lights = new ArrayList<>();
         this.postUpdateActionQueue = new ConcurrentLinkedDeque<>();
-        this.drawLock = new ReentrantLock();
+        ReadWriteLock rwl = new ReentrantReadWriteLock(false);
+        this.entityWriteLock = rwl.writeLock();
+        this.entityReadLock = rwl.readLock();
 
         lights.add(new Light(new Vector3f(1, 1, 2), new Color4f(1, 1, 0.8f), 0.2f, true));
     }
@@ -56,14 +62,26 @@ public class GameLoop extends AbstractGameLoop implements GameState {
      * @see #defer(Runnable)
      */
     @Override
-    public void addEntity(Entity entity) {
+    public void addEntity(Entity entity) { // TODO group new entities like has been done in JetFighterGame
         // Thanks to the reentrant mechanism, this may also be executed by a deferred action.
         defer(() -> {
-            drawLock.lock();
+            entityWriteLock.lock();
             try {
                 entities.add(entity);
             } finally {
-                drawLock.unlock();
+                entityWriteLock.unlock();
+            }
+        });
+    }
+
+    @Override
+    public void removeEntity(Entity entity) {
+        defer(() -> {
+            entityWriteLock.lock();
+            try {
+                entities.remove(entity);
+            } finally {
+                entityWriteLock.unlock();
             }
         });
     }
@@ -73,13 +91,16 @@ public class GameLoop extends AbstractGameLoop implements GameState {
      */
     public void update(float deltaTime) {
         runPostUpdateActions();
+        runCleaning();
+
         entities.forEach(Entity::update);
+
         runPostUpdateActions();
     }
 
     @Override
     public void draw(SGL gl) {
-        drawLock.lock();
+        entityReadLock.lock();
         try {
             Toolbox.drawAxisFrame(gl);
             for (Entity entity : entities) {
@@ -87,7 +108,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
             }
 
         } finally {
-            drawLock.unlock();
+            entityReadLock.unlock();
         }
     }
 
@@ -102,21 +123,21 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         List<Storage> industries = new ArrayList<>();
 
         //TODO efficiency
-        for (Entity entity : entities) {
-            if (entity instanceof Storage) {
-                Storage industry = (Storage) entity;
-                if (industry.getPosition().distanceSquared(position) < rangeSq) {
-                    industries.add(industry);
+        entityReadLock.lock();
+        try {
+            for (Entity entity : entities) {
+                if (entity instanceof Storage) {
+                    Storage industry = (Storage) entity;
+                    if (industry.getPosition().distanceSquared(position) < rangeSq) {
+                        industries.add(industry);
+                    }
                 }
             }
+        } finally {
+            entityReadLock.unlock();
         }
 
         return industries;
-    }
-
-    @Override
-    public void removeEntity(Entity entity) {
-        defer(() -> entities.remove(entity));
     }
 
     @Override
@@ -128,21 +149,33 @@ public class GameLoop extends AbstractGameLoop implements GameState {
 
     /** executes action after a gameloop completes */
     public void defer(Runnable action) {
+        // TODO make a 'modifyingDefer'
         postUpdateActionQueue.offer(action);
     }
 
+    /** execute all actions that have been deferred */
     private void runPostUpdateActions() {
         while (!postUpdateActionQueue.isEmpty()) {
             postUpdateActionQueue.remove().run();
         }
     }
 
+    /** remove all entities from the entity list that have their doRemove flag true */
+    private void runCleaning() {
+        entityWriteLock.lock();
+        try {
+            entities.removeIf(Entity::doRemove);
+        } finally {
+            entityWriteLock.unlock();
+        }
+    }
+
     @Override
     public void cleanup() {
-        drawLock.lock();
+        entityWriteLock.lock();
         stopLoop(); // possibly this did not happen
         entities.clear();
-        drawLock.unlock();
+        entityWriteLock.unlock();
     }
 
     @Override
@@ -157,6 +190,15 @@ public class GameLoop extends AbstractGameLoop implements GameState {
 
     @Override
     public boolean checkMouseClick(MouseTool tool, int xSc, int ySc) {
+        Entity entity = ClickShader.getEntity(game, xSc, ySc);
+        Logger.DEBUG.print("Found", entity);
+        if (entity == null) return false;
+
+        tool.apply(entity, xSc, ySc);
+        return true;
+    }
+
+    public static Collision getClickOnEntity(int xSc, int ySc, Entity entity, Game game) {
         GLFWWindow window = game.window();
         Camera camera = game.camera();
         Vector3f origin = new Vector3f();
@@ -164,10 +206,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
 
         Vectors.windowCoordToRay(camera, origin, direction, window.getWidth(), window.getHeight(), new Vector2f(xSc, ySc));
 
-        Collision collision = getEntityCollision(origin, direction);
-        if (collision == null) return false;
-
-        tool.apply(collision.getEntity(), collision.hitPosition());
-        return true;
+        return entity.getRayCollision(origin, direction);
     }
 }

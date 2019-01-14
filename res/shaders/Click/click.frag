@@ -3,7 +3,7 @@
 in vec3 mVertexPosition;
 out vec4 fragColor;
 
-uniform color;
+uniform vec4 color;
 
 void main() {
     fragColor = color;

@@ -2,6 +2,7 @@ package NG.GameState;
 
 import NG.Entities.Entity;
 import NG.Entities.Goods;
+import NG.Rendering.Shapes.Primitives.Collision;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -28,5 +29,10 @@ public abstract class Storage implements Entity {
     @Override
     public UpdateFrequency getUpdateFrequency() {
         return UpdateFrequency.NEVER;
+    }
+
+    @Override
+    public Collision getRayCollision(Vector3f origin, Vector3f direction) {
+        return null;
     }
 }

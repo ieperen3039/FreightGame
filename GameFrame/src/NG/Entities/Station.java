@@ -2,6 +2,7 @@ package NG.Entities;
 
 import NG.Engine.Game;
 import NG.GameState.Storage;
+import NG.Rendering.Shapes.Primitives.Collision;
 import NG.Settings.Settings;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -45,6 +46,11 @@ public abstract class Station extends Storage {
     @Override
     public void onClick(int button) {
 
+    }
+
+    @Override
+    public Collision getRayCollision(Vector3f origin, Vector3f direction) {
+        return null;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package NG.Shapes.Primitives;
+package NG.Rendering.Shapes.Primitives;
 
 import NG.Tools.Toolbox;
 import org.joml.Vector3f;
@@ -32,8 +32,7 @@ public class PlaneTest {
 
         if (box != null) {
             // get position of the new vector
-            first.add(dir.mul(box.scalar(), new Vector3f()), result);
-            System.out.println("Hitpoint: " + result);
+            System.out.println("Hitpoint: " + box.hitPosition());
         }
 
         if (expected == null) {

@@ -4,7 +4,7 @@ import NG.DataStructures.Color4f;
 import NG.DataStructures.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.ShaderProgram;
-import NG.Rendering.Shapes.BasicShapes;
+import NG.Rendering.Shapes.ShapesGeneric;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
@@ -49,16 +49,16 @@ public final class Toolbox {
         gl.pushMatrix();
         {
             shader.setMaterial(mat, Color4f.BLUE);
-            gl.render(BasicShapes.ARROW);
+            gl.render(ShapesGeneric.ARROW);
             gl.rotate((float) Math.toRadians(90), 0f, 1f, 0f);
             shader.setMaterial(mat, Color4f.RED);
-            gl.render(BasicShapes.ARROW);
+            gl.render(ShapesGeneric.ARROW);
             gl.rotate((float) Math.toRadians(-90), 1f, 0f, 0f);
             shader.setMaterial(mat, Color4f.GREEN);
-            gl.render(BasicShapes.ARROW);
+            gl.render(ShapesGeneric.ARROW);
             gl.scale(0.2f);
             shader.setMaterial(mat, Color4f.WHITE);
-            gl.render(BasicShapes.CUBE);
+            gl.render(ShapesGeneric.CUBE);
         }
         gl.popMatrix();
     }
@@ -71,7 +71,7 @@ public final class Toolbox {
         gl.pushMatrix();
         {
             gl.scale(1, CURSOR_SIZE, CURSOR_SIZE);
-            gl.render(BasicShapes.CUBE);
+            gl.render(ShapesGeneric.CUBE);
         }
         gl.popMatrix();
 
@@ -79,7 +79,7 @@ public final class Toolbox {
         gl.pushMatrix();
         {
             gl.scale(CURSOR_SIZE, 1, CURSOR_SIZE);
-            gl.render(BasicShapes.CUBE);
+            gl.render(ShapesGeneric.CUBE);
         }
         gl.popMatrix();
 
@@ -87,7 +87,7 @@ public final class Toolbox {
         gl.pushMatrix();
         {
             gl.scale(CURSOR_SIZE, CURSOR_SIZE, 1);
-            gl.render(BasicShapes.CUBE);
+            gl.render(ShapesGeneric.CUBE);
         }
         gl.popMatrix();
     }

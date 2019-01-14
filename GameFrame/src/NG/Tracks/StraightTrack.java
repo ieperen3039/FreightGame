@@ -2,9 +2,11 @@ package NG.Tracks;
 
 import NG.Engine.Game;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.Shapes.Primitives.Collision;
 import NG.Tools.Vectors;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
+import org.joml.Vector3f;
 
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
@@ -43,6 +45,16 @@ public class StraightTrack implements TrackPiece {
     @Override
     public void onClick(int button) {
 
+    }
+
+    @Override
+    public Collision getRayCollision(Vector3f origin, Vector3f direction) {
+        Vector3f position = game.map().intersectWithRay(origin, direction);
+        Vector2fc coordinate = new Vector2f(position.x, position.y);
+        int clickWidth = game.settings().TRACK_CLICK_WIDTH;
+        float offset = coordinate.distance(closestPointOf(coordinate));
+        if (offset > clickWidth) return null;
+        return new Collision(position);
     }
 
     @Override

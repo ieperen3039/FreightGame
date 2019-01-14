@@ -169,13 +169,8 @@ public class HeightMap implements GameMap {
         return true;
     }
 
-    /**
-     * returns a vector on the map that results from raytracing the given ray.
-     * @param origin    the origin of the ray
-     * @param direction the (un-normalized) direction of the ray
-     * @return a vector p such that {@code p = origin + t * direction} for minimal t such that p lies on the map.
-     */
-    private Vector3f intersectWithRay(Vector3fc origin, Vector3fc direction) {
+    @Override
+    public Vector3f intersectWithRay(Vector3fc origin, Vector3fc direction) {
         Vector3f temp = new Vector3f();
         float t = Intersectionf.intersectRayPlane(origin, direction, Vectors.zeroVector(), Vectors.zVector(), 1E-6f);
         return origin.add(direction.mul(t, temp), temp);

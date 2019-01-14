@@ -11,9 +11,9 @@ public class TrackPieceTest {
 
     @Test
     public void circleTest() {
-        NetworkNodePoint startPoint = new NetworkNodePoint(new Vector2f(26.2f, 47.5f));
+        NetworkNodePoint startPoint = new NetworkNodePoint(new Vector2f(26.2f, 47.5f), null);
         Vector2fc startDirection = new Vector2f(2426, -1674).normalize();
-        NetworkNodePoint endPoint = new NetworkNodePoint(new Vector2f(39.1f, 43.7f));
+        NetworkNodePoint endPoint = new NetworkNodePoint(new Vector2f(39.1f, 43.7f), null);
 
         CircleTrack trackPiece = new CircleTrack(null, null, startPoint, startDirection, endPoint);
 

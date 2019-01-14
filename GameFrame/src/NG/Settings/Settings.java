@@ -10,6 +10,7 @@ public class Settings {
 
     // game engine settings
     public int TARGET_TPS = 10;
+    public final int TRACK_CLICK_WIDTH = 10;
 
     // video settings
     public int TARGET_FPS = 60;

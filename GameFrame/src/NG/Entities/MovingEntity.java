@@ -1,12 +1,12 @@
 package NG.Entities;
 
-import org.joml.Vector2f;
+import org.joml.Vector3fc;
 
 /**
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
 public interface MovingEntity extends Entity {
-    Vector2f getPosition();
+    Vector3fc getPosition();
 
     @Override
     default UpdateFrequency getUpdateFrequency() {
