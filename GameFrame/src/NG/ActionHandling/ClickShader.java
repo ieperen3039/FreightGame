@@ -11,7 +11,6 @@ import NG.Rendering.Shaders.ShaderProgram;
 import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
-import NG.Tools.Vectors;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -260,7 +259,6 @@ public class ClickShader implements ShaderProgram {
             glClear(GL_COLOR_BUFFER_BIT);
 
             int i = colorToNumber(value);
-            Logger.DEBUG.printf("(%d, %d) -> %s: %d", xPos, yPos, Vectors.toString(value), i);
 
             if (i == 0) return null;
             return shader.mapping.get(i - 1);

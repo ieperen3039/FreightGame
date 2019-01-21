@@ -2,6 +2,8 @@ package NG.Tools;
 
 import NG.Camera.Camera;
 import NG.DataStructures.Pair;
+import NG.Engine.Game;
+import NG.Rendering.GLFWWindow;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Settings.Settings;
 import org.joml.Math;
@@ -126,14 +128,6 @@ public class Vectors {
     }
 
     /**
-     * @param theta an angle in radians
-     * @return the vector given by (cos(theta), sin(theta))
-     */
-    public static Vector2fc unitVector(float theta) {
-        return new Vector2f(cos(theta), sin(theta));
-    }
-
-    /**
      * returns the point closest to the given position on the line between startCoord and endCoord
      * @param position   a point in space
      * @param startCoord one end of the line
@@ -150,20 +144,6 @@ public class Vectors {
         if (t < 0.0f) t = 0.0f;
         if (t > 1.0f) t = 1.0f;
         return new Vector2f(aX + t * abX, aY + t * abY);
-    }
-
-    public static void windowCoordToRay(
-            Camera camera, Vector3f origin, Vector3f direction, int width, int height, Vector2f winCoords
-    ) {
-        Matrix4f projection = SGL.getViewProjection(width, height, camera, Settings.ISOMETRIC_VIEW);
-        int[] viewport = {0, 0, width, height};
-        projection.unprojectRay(winCoords, viewport, origin, direction);
-    }
-
-    public static Vector3f getNormalVector(Vector3fc A, Vector3fc B, Vector3fc C) {
-        Vector3f BC = new Vector3f(C).sub(B);
-        Vector3f BA = new Vector3f(A).sub(B);
-        return BA.cross(BC).normalize();
     }
 
     /**
@@ -256,7 +236,52 @@ public class Vectors {
         return direction;
     }
 
+    /**
+     * @param vec any vector
+     * @return true iff none of the scalars of the given vector is nan, and the length of the vector is not zero
+     */
     public static boolean isScalable(Vector3fc vec) {
         return !isNaN(vec.x()) && !isNaN(vec.y()) && !isNaN(vec.z()) && !((vec.x() == 0) && (vec.y() == 0) && (vec.z() == 0));
+    }
+
+    /**
+     * transforms a click on a screen of the given size on the given coordinate to a ray. Modifies origin and
+     * direction.
+     * @param camera       the view on the game world
+     * @param windowWidth  the number of pixels of the viewport on the x axis
+     * @param windowHeight the number of pixels of the viewport on the y axis
+     * @param clickCoords  the coordinates of where was clicked on the screen
+     * @param origin       the destination vector of the origin of the ray. The exact result is ({@link Camera#getEye()}
+     *                     + Z_NEAR * direction)
+     * @param direction    the direction of the ray, not normalized.
+     */
+    public static void windowCoordToRay(
+            Camera camera, int windowWidth, int windowHeight, Vector2f clickCoords, Vector3f origin, Vector3f direction
+    ) {
+        Matrix4f projection = SGL.getViewProjection(windowWidth, windowHeight, camera, Settings.ISOMETRIC_VIEW);
+        int[] viewport = {0, 0, windowWidth, windowHeight};
+        projection.unprojectRay(clickCoords, viewport, origin, direction);
+    }
+
+    public static Vector3f getNormalVector(Vector3fc A, Vector3fc B, Vector3fc C) {
+        Vector3f BC = new Vector3f(C).sub(B);
+        Vector3f BA = new Vector3f(A).sub(B);
+        return BA.cross(BC).normalize();
+    }
+
+    /**
+     * transforms a click on the given x and y screen coordinates in the given game instance to a ray, which is returned
+     * in the origin and direction vectors. Modifies origin and direction.
+     * @param game      the game instance
+     * @param xSc       the x screen coordinate of the click
+     * @param ySc       the y screen coordinate of the click
+     * @param origin    the destination vector of the origin of the ray
+     * @param direction the direction of the ray, not normalized.
+     */
+    public static void windowCoordToRay(Game game, int xSc, int ySc, Vector3f origin, Vector3f direction) {
+        GLFWWindow window = game.window();
+        Camera camera = game.camera();
+        Vector2f winCoords = new Vector2f(xSc, ySc);
+        windowCoordToRay(camera, window.getWidth(), window.getHeight(), winCoords, origin, direction);
     }
 }

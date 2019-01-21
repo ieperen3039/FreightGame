@@ -2,19 +2,15 @@ package NG.GameState;
 
 import NG.ActionHandling.ClickShader;
 import NG.ActionHandling.MouseTools.MouseTool;
-import NG.Camera.Camera;
 import NG.DataStructures.Color4f;
 import NG.Engine.AbstractGameLoop;
 import NG.Engine.Game;
 import NG.Entities.Entity;
-import NG.Rendering.GLFWWindow;
 import NG.Rendering.Light;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.Primitives.Collision;
-import NG.Tools.Logger;
 import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
-import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -191,7 +187,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     @Override
     public boolean checkMouseClick(MouseTool tool, int xSc, int ySc) {
         Entity entity = ClickShader.getEntity(game, xSc, ySc);
-        Logger.DEBUG.print("Found", entity);
         if (entity == null) return false;
 
         tool.apply(entity, xSc, ySc);
@@ -199,12 +194,10 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     }
 
     public static Collision getClickOnEntity(int xSc, int ySc, Entity entity, Game game) {
-        GLFWWindow window = game.window();
-        Camera camera = game.camera();
         Vector3f origin = new Vector3f();
         Vector3f direction = new Vector3f();
 
-        Vectors.windowCoordToRay(camera, origin, direction, window.getWidth(), window.getHeight(), new Vector2f(xSc, ySc));
+        Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
 
         return entity.getRayCollision(origin, direction);
     }

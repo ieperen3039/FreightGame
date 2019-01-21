@@ -1,11 +1,9 @@
 package NG.GameState;
 
 import NG.ActionHandling.MouseTools.MouseTool;
-import NG.Camera.Camera;
 import NG.DataStructures.Color4f;
 import NG.DataStructures.Material;
 import NG.Engine.Game;
-import NG.Rendering.GLFWWindow;
 import NG.Rendering.MatrixStack.Mesh;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.FlatMesh;
@@ -155,12 +153,10 @@ public class HeightMap implements GameMap {
 
     @Override
     public boolean checkMouseClick(MouseTool tool, int xSc, int ySc) {
-        GLFWWindow window = game.window();
-        Camera camera = game.camera();
         Vector3f origin = new Vector3f();
         Vector3f direction = new Vector3f();
 
-        Vectors.windowCoordToRay(camera, origin, direction, window.getWidth(), window.getHeight(), new Vector2f(xSc, ySc));
+        Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
 
         Vector3f pos = intersectWithRay(origin, direction);
 

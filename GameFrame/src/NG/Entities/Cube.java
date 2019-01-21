@@ -51,4 +51,9 @@ public class Cube implements MovingEntity {
     public boolean doRemove() {
         return !isAlive;
     }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName();
+    }
 }
