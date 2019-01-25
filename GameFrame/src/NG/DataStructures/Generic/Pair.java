@@ -1,4 +1,4 @@
-package NG.DataStructures;
+package NG.DataStructures.Generic;
 
 /**
  * Pair class that simply holds two variables.

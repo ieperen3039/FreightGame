@@ -1,6 +1,6 @@
 package NG.Engine;
 
-import NG.DataStructures.AveragingQueue;
+import NG.DataStructures.Generic.AveragingQueue;
 import NG.Tools.Logger;
 import NG.Tools.Timer;
 

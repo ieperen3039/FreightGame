@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
+ * Repeatedly renders a frame of the main camera of the game given by {@link #init(Game)}
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public class RenderLoop extends AbstractGameLoop implements GameAspect {

@@ -1,6 +1,6 @@
 package NG.Tracks;
 
-import NG.DataStructures.Pair;
+import NG.DataStructures.Generic.Pair;
 import NG.Engine.Game;
 import NG.Tools.Vectors;
 import org.joml.Vector2f;

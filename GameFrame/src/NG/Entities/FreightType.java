@@ -1,9 +1,13 @@
 package NG.Entities;
 
+import NG.DataStructures.Valuta;
+
 /**
+ * A material that can be transported.
  * @author Geert van Ieperen created on 7-1-2019.
+ * @see Freight
  */
-public interface GoodsType {
+public interface FreightType {
     /** @return a user-friendly canonical name */
     String name();
 
@@ -11,5 +15,5 @@ public interface GoodsType {
      * @param daysInTransit the number of time units this good is in transit
      * @return the amount of currency that the good is worth
      */
-    float valueOverTime(float daysInTransit);
+    Valuta valueOverTime(float daysInTransit);
 }

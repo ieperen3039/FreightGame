@@ -8,6 +8,8 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 /**
+ * An object that represents the world where all other entities stand on. This includes both the graphical and the
+ * physical representation.
  * @author Geert van Ieperen. Created on 29-9-2018.
  */
 public interface GameMap extends GameAspect, MouseToolListener {
@@ -26,8 +28,7 @@ public interface GameMap extends GameAspect, MouseToolListener {
     }
 
     /**
-     * maps a 2D map coordinate to a 3D position.
-     * Returns a vector with z == 0 if no map is loaded.
+     * maps a 2D map coordinate to a 3D position. Returns a vector with z == 0 if no map is loaded.
      * <p>{@code \result.x == mapCoord.x && result.y == mapCoord.y}</p>
      * @param mapCoord a 2D map coordinate
      * @return the 2D coordinate mapped to the surface of the inital map.

@@ -32,6 +32,9 @@ import java.util.List;
 
 /**
  * A game of planning and making money.
+ * <p>
+ * This class initializes all gameAspects, allow for starting a game, loading mods and cleaning up afterwards. It
+ * provides all aspects of the game engine through the {@link Game} interface.
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public class FreightGame implements Game, ModLoader {
@@ -78,6 +81,10 @@ public class FreightGame implements Game, ModLoader {
         typeCollection = new TypeCollection();
     }
 
+    /**
+     * start all elements required for showing the main frame of the game.
+     * @throws Exception when the initialisation fails.
+     */
     public void init() throws Exception {
         Logger.DEBUG.print("Initializing...");
         // init all fields

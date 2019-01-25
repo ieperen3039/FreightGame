@@ -1,4 +1,4 @@
-package NG.DataStructures;
+package NG.DataStructures.Generic;
 
 /**
  * a Collection that accepts floats and can only return the average of the last n entries (in constant time)

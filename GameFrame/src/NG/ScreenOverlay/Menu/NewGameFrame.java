@@ -1,6 +1,6 @@
 package NG.ScreenOverlay.Menu;
 
-import NG.DataStructures.PairList;
+import NG.DataStructures.Generic.PairList;
 import NG.Engine.Game;
 import NG.Engine.ModLoader;
 import NG.GameState.MapGeneratorMod;

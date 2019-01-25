@@ -1,6 +1,6 @@
 package NG.DataStructures.Interpolation;
 
-import NG.DataStructures.BlockingTimedArrayQueue;
+import NG.DataStructures.Generic.BlockingTimedArrayQueue;
 
 /**
  * @author Geert van Ieperen created on 15-12-2017.

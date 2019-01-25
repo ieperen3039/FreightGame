@@ -1,7 +1,7 @@
 package NG.Rendering.MatrixStack;
 
 import NG.Camera.Camera;
-import NG.DataStructures.Color4f;
+import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
 import NG.Rendering.Shaders.ShaderProgram;
 import NG.Settings.Settings;

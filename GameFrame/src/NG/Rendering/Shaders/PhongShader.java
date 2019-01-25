@@ -1,6 +1,6 @@
 package NG.Rendering.Shaders;
 
-import NG.DataStructures.Color4f;
+import NG.DataStructures.Generic.Color4f;
 import NG.Engine.Game;
 import NG.Entities.Entity;
 import NG.Tools.Directory;

@@ -1,4 +1,4 @@
-package NG.DataStructures;
+package NG.DataStructures.Generic;
 
 import NG.Tools.Toolbox;
 import org.joml.Vector3f;

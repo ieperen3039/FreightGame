@@ -13,6 +13,7 @@ import org.joml.Vector3fc;
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
 public interface Entity {
+
     /**
      * Updates the state of the entity. The frequency this method is called depend on the return value of {@link
      * #getUpdateFrequency()}. Use {@link GameTimer#getGametimeDifference()} for speed calculations and {@link

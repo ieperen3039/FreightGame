@@ -1,4 +1,4 @@
-package NG.DataStructures;
+package NG.DataStructures.Generic;
 
 /**
  * A queue that allows a producer to queue timed objects (e.g. positions) while a consumer takes the next item from a

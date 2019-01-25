@@ -12,7 +12,8 @@ import org.joml.Vector3fc;
 import java.util.List;
 
 /**
- * Manages all entities, their movement and physics.
+ * A collection of all entities in the world, all lights present in the world. Allows querying for specific objects and
+ * collisions.
  * @author Geert van Ieperen. Created on 21-9-2018.
  */
 public interface GameState extends GameAspect, Storable, MouseToolListener {
@@ -23,7 +24,7 @@ public interface GameState extends GameAspect, Storable, MouseToolListener {
     void addEntity(Entity entity);
 
     /**
-     * draws the objects on the screen, according to the state of the {@link FreightGame#time} object. Must be called
+     * draws the objects on the screen, according to the state of the {@link FreightGame#timer()} object. Must be called
      * after {@link #drawLights(SGL)}
      * @param gl the gl object to draw with
      */
@@ -38,7 +39,7 @@ public interface GameState extends GameAspect, Storable, MouseToolListener {
     /**
      * cast a ray into the world, and returns the first entity hit by this ray
      * @param from starting position
-     * @param to end position, maximum how far the ray goes
+     * @param to   end position, maximum how far the ray goes
      * @return the entity that is hit, or null if no such entity exists.
      */
     Collision getEntityCollision(Vector3fc from, Vector3fc to);

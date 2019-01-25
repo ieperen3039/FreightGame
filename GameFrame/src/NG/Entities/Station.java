@@ -3,44 +3,36 @@ package NG.Entities;
 import NG.Engine.Game;
 import NG.GameState.Storage;
 import NG.Rendering.Shapes.Primitives.Collision;
-import NG.Settings.Settings;
+import NG.ScreenOverlay.Frames.Components.SFrame;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Geert van Ieperen. Created on 12-11-2018.
  */
 public abstract class Station extends Storage {
+    private final String className = this.getClass().getSimpleName();
+
     private Game game;
 
     /** the position and orientation of the station */
-    protected Vector3f position = new Vector3f();
     protected float orientation = 0;
     /** whether this station has been placed down. */
     protected boolean isFixed = false;
+    private String stationName = "Multicast";
 
-    void init(Game game, Vector3fc position) {
+    public void init(Game game, Vector3fc position) {
         this.game = game;
-        moveTo(position, 0);
+        setPosition(position);
     }
 
-    public void moveTo(Vector3fc newPosition, float newOrientation) {
-        position.set(newPosition);
-        orientation = newOrientation;
+    public void setOrientation(float orientation) {
+        this.orientation = orientation;
     }
 
     @Override
     public void update() {
-        List<Goods> reachableGoods = new ArrayList<>();
-        List<Storage> elements = game.state().getIndustriesByRange(position, Settings.STATION_RANGE);
-        for (Storage element : elements) {
-            reachableGoods.addAll(element.getGoods());
-        }
 
-        //TODO
     }
 
     @Override
@@ -48,13 +40,25 @@ public abstract class Station extends Storage {
 
     }
 
+    public void fixPosition() {
+        isFixed = true;
+    }
+
+    @Override
+    public String toString() {
+        return className + " " + stationName;
+    }
+
     @Override
     public Collision getRayCollision(Vector3f origin, Vector3f direction) {
         return null;
     }
 
-    @Override
-    public Vector3fc getPosition() {
-        return position;
+    private class StationUI extends SFrame {
+        public StationUI() {
+            super(Station.this.toString(), 500, 300);
+
+            // add buttons etc.
+        }
     }
 }

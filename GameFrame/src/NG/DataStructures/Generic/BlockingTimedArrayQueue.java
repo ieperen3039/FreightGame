@@ -1,4 +1,4 @@
-package NG.DataStructures;
+package NG.DataStructures.Generic;
 
 import java.io.Serializable;
 import java.util.ArrayDeque;

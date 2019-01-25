@@ -28,11 +28,11 @@ public class SFrame extends SContainer {
         this(title, width, height, true);
     }
 
-    public SFrame(String title, int width, int height, boolean editable) {
+    public SFrame(String title, int width, int height, boolean manipulable) {
         super(new SingleElementLayout(), false, false);
         this.title = title;
 
-        upperBar = editable ? makeUpperBar(title) : SContainer.singleton(new STextArea(title, FRAME_TITLE_BAR_SIZE, true));
+        upperBar = manipulable ? makeUpperBar(title) : SContainer.singleton(new STextArea(title, FRAME_TITLE_BAR_SIZE, true));
         upperBar.setParent(this);
 
         setMainPanel(new SPanel());

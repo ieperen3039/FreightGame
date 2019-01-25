@@ -1,7 +1,7 @@
 package NG.GameState;
 
 import NG.ActionHandling.MouseTools.MouseTool;
-import NG.DataStructures.Color4f;
+import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Material;
 import NG.Engine.Game;
 import NG.Rendering.MatrixStack.Mesh;

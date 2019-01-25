@@ -1,4 +1,4 @@
-package NG.DataStructures;
+package NG.DataStructures.Generic;
 
 import java.util.*;
 import java.util.concurrent.locks.Lock;

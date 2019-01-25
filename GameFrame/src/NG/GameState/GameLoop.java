@@ -2,7 +2,7 @@ package NG.GameState;
 
 import NG.ActionHandling.ClickShader;
 import NG.ActionHandling.MouseTools.MouseTool;
-import NG.DataStructures.Color4f;
+import NG.DataStructures.Generic.Color4f;
 import NG.Engine.AbstractGameLoop;
 import NG.Engine.Game;
 import NG.Entities.Entity;
@@ -25,6 +25,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
+ * A collection of entities, which manages synchronous updating and drawing.
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
 public class GameLoop extends AbstractGameLoop implements GameState {
@@ -118,7 +119,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         final int rangeSq = range * range;
         List<Storage> industries = new ArrayList<>();
 
-        //TODO efficiency
+        //TODO efficiency (binary tree?)
         entityReadLock.lock();
         try {
             for (Entity entity : entities) {
@@ -193,6 +194,14 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         return true;
     }
 
+    /**
+     * queries the collision of an entity
+     * @param xSc
+     * @param ySc
+     * @param entity
+     * @param game
+     * @return
+     */
     public static Collision getClickOnEntity(int xSc, int ySc, Entity entity, Game game) {
         Vector3f origin = new Vector3f();
         Vector3f direction = new Vector3f();

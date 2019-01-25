@@ -1,6 +1,6 @@
 package NG.Rendering.Shapes;
 
-import NG.DataStructures.Pair;
+import NG.DataStructures.Generic.Pair;
 import NG.Rendering.MatrixStack.Mesh;
 import NG.Tools.Directory;
 import NG.Tools.Logger;

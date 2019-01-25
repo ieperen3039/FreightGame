@@ -1,6 +1,6 @@
 package NG.ScreenOverlay.Frames;
 
-import NG.DataStructures.Color4f;
+import NG.DataStructures.Generic.Color4f;
 import NG.Engine.Game;
 import NG.Engine.Version;
 import NG.ScreenOverlay.NGFonts;

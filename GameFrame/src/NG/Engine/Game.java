@@ -10,7 +10,7 @@ import NG.ScreenOverlay.Frames.GUIManager;
 import NG.Settings.Settings;
 
 /**
- *
+ * A collection of references to any major element of the game.
  * @author Geert van Ieperen. Created on 16-9-2018.
  */
 public interface Game {

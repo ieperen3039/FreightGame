@@ -1,10 +1,9 @@
 package NG.Tracks;
 
 import NG.ActionHandling.MouseTools.MouseTool;
-import NG.DataStructures.Pair;
+import NG.DataStructures.Generic.Pair;
 import NG.Engine.Game;
 import NG.Entities.Entity;
-import NG.GameState.GameLoop;
 import NG.Rendering.Shapes.Primitives.Collision;
 import NG.ScreenOverlay.Frames.Components.SComponent;
 import NG.ScreenOverlay.Frames.Components.SToggleButton;
@@ -12,6 +11,7 @@ import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
+import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.lwjgl.glfw.GLFW;
 
@@ -75,9 +75,14 @@ public class TrackBuilder implements MouseTool {
 
         Logger.DEBUG.print("Clicked on entity " + entity);
         if (entity instanceof TrackPiece) {
-            Collision rayCollision = GameLoop.getClickOnEntity(xSc, ySc, entity, game);
+            Vector3f origin = new Vector3f();
+            Vector3f direction = new Vector3f();
+            Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
+
+            Collision rayCollision = entity.getRayCollision(origin, direction);
             Vector3fc hitPosition = rayCollision.hitPosition();
             Vector2f flatRay = new Vector2f(hitPosition.x(), hitPosition.y());
+
             TrackPiece targetTrack = (TrackPiece) entity;
 
             if (firstNode == null) {

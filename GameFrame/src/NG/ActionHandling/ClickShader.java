@@ -1,6 +1,6 @@
 package NG.ActionHandling;
 
-import NG.DataStructures.Color4f;
+import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Material;
 import NG.Engine.Game;
 import NG.Entities.Entity;

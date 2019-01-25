@@ -1,7 +1,7 @@
 package NG.Tools;
 
 import NG.Camera.Camera;
-import NG.DataStructures.Pair;
+import NG.DataStructures.Generic.Pair;
 import NG.Engine.Game;
 import NG.Rendering.GLFWWindow;
 import NG.Rendering.MatrixStack.SGL;
