@@ -1,19 +1,20 @@
-package NG.ScreenOverlay.Frames;
+package NG.GUI;
 
 import NG.DataStructures.Generic.Color4f;
 import NG.Engine.Game;
 import NG.Engine.Version;
+import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.NGFonts;
 import NG.ScreenOverlay.ScreenOverlay;
 import NG.Tools.Logger;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
+import org.lwjgl.nanovg.NanoVG;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
 import static NG.ScreenOverlay.NGFonts.ORBITRON_MEDIUM;
-import static org.lwjgl.nanovg.NanoVG.*;
 
 /**
  * @author Geert van Ieperen. Created on 21-9-2018.
@@ -35,8 +36,11 @@ public class BaseLF implements SFrameLookAndFeel {
 
     @Override
     public void init(Game game) {
-        if (!game.getVersionNumber().isLessThan(2, 0))
-            Logger.ASSERT.print("SLF is ugly. please install something better");
+        if (!game.getVersionNumber().isLessThan(2, 0)) {
+            Logger.ASSERT.print(this + " is ugly. Please install something better");
+        }
+
+        game.gui().setLookAndFeel(this);
     }
 
     @Override
@@ -71,12 +75,12 @@ public class BaseLF implements SFrameLookAndFeel {
 
         if (center) {
             hud.text(x + (width / 2), y + (height / 2),
-                    TEXT_SIZE_LARGE, ORBITRON_MEDIUM, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, TEXT_COLOR,
+                    TEXT_SIZE_LARGE, ORBITRON_MEDIUM, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_MIDDLE, TEXT_COLOR,
                     text
             );
         } else {
             hud.text(x, y,
-                    TEXT_SIZE_LARGE, ORBITRON_MEDIUM, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, TEXT_COLOR,
+                    TEXT_SIZE_LARGE, ORBITRON_MEDIUM, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, TEXT_COLOR,
                     text
             );
         }
@@ -117,11 +121,6 @@ public class BaseLF implements SFrameLookAndFeel {
     @Override
     public void cleanup() {
 
-    }
-
-    @Override
-    public String getModName() {
-        return "SLF";
     }
 
     @Override

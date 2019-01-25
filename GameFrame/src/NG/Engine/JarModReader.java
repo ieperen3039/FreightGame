@@ -1,5 +1,6 @@
 package NG.Engine;
 
+import NG.Mods.InitialisationMod;
 import NG.Mods.Mod;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
@@ -61,7 +62,7 @@ public final class JarModReader {
      * loads all classes in all jars in the given directory, collecting all implementations of {@link Mod}. For each mod
      * one instance is created. To start them, the {@link Mod#init(Game)} method must be called.
      * @param dir the directory to search
-     * @return an unmodifiable list of all loaded mods
+     * @return a list of all loaded mods
      * @throws IOException if the directory is invalid
      */
     public static List<Mod> loadMods(Directory dir) throws IOException {
@@ -96,7 +97,7 @@ public final class JarModReader {
         Logger.INFO.print("Loaded " + mods.size() + " mods\n");
 
         modloader.close();
-        return Collections.unmodifiableList(mods);
+        return mods;
     }
 
     /**
@@ -157,5 +158,31 @@ public final class JarModReader {
 
         Logger.DEBUG.print("Loaded class " + classFile);
         return clazz;
+    }
+
+    /**
+     * removes and initializes all mods from the given mod list that extend {@link InitialisationMod}
+     * @param modList a list of mods, is modified
+     * @param game    the game instance to initialize all the filtered mods
+     * @return the initialized mods that have been removed from {@code modList}
+     */// can be made generic and moved to Toolbox (but why)
+    public static List<Mod> filterInitialisationMods(List<Mod> modList, Game game) {
+        List<Mod> permanents = new ArrayList<>();
+        for (Mod mod : modList) {
+            if (mod instanceof InitialisationMod) {
+                try {
+                    mod.init(game);
+                    permanents.add(mod);
+
+                } catch (Version.MisMatchException e) {
+                    Logger.ERROR.print(e);
+                    modList.remove(mod);
+                }
+            }
+        }
+
+        modList.removeAll(permanents);
+
+        return permanents;
     }
 }

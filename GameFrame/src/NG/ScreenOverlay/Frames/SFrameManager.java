@@ -39,6 +39,8 @@ public class SFrameManager implements GUIManager {
 
     @Override
     public void draw(ScreenOverlay.Painter painter) {
+        assert hasLookAndFeel();
+
         frames.removeIf(SFrame::isDisposed);
         lookAndFeel.setPainter(painter);
 

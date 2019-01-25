@@ -1,6 +1,6 @@
 package NG.ScreenOverlay.Frames;
 
-import NG.Mods.Mod;
+import NG.Mods.InitialisationMod;
 import NG.ScreenOverlay.NGFonts;
 import NG.ScreenOverlay.ScreenOverlay;
 import org.joml.Vector2ic;
@@ -12,7 +12,7 @@ import java.nio.file.Path;
  * a stateless mapping from abstract descriptions to drawings in NanoVG
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
-public interface SFrameLookAndFeel extends Mod {
+public interface SFrameLookAndFeel extends InitialisationMod {
 
     /**
      * sets the LF to draw with the specified painter

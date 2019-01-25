@@ -8,13 +8,12 @@ import NG.GameState.GameLoop;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
 import NG.GameState.HeightMap;
+import NG.Mods.InitialisationMod;
 import NG.Mods.Mod;
 import NG.Mods.TypeCollection;
 import NG.Rendering.GLFWWindow;
 import NG.Rendering.RenderLoop;
-import NG.ScreenOverlay.Frames.BaseLF;
 import NG.ScreenOverlay.Frames.GUIManager;
-import NG.ScreenOverlay.Frames.SFrameLookAndFeel;
 import NG.ScreenOverlay.Frames.SFrameManager;
 import NG.ScreenOverlay.Menu.FreightToolBar;
 import NG.ScreenOverlay.Menu.MainMenu;
@@ -38,6 +37,8 @@ import java.util.List;
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public class FreightGame implements Game, ModLoader {
+    private static final Version GAME_VERSION = new Version(0, 0);
+
     private final GameTimer time;
     private final Camera camera;
     private final GameLoop gameState;
@@ -52,6 +53,7 @@ public class FreightGame implements Game, ModLoader {
 
     private List<Mod> allMods;
     private List<Mod> activeMods = Collections.emptyList();
+    private List<Mod> permanentMods;
 
     public FreightGame() throws IOException {
         Logger.INFO.print("Starting up the game engine...");
@@ -96,13 +98,12 @@ public class FreightGame implements Game, ModLoader {
         frameManager.init(this);
         gameMap.init(this);
 
+        permanentMods = JarModReader.filterInitialisationMods(allMods, this);
+
         renderer.addHudItem(frameManager::draw);
         mainMenu = new MainMenu(this, this, renderer::stopLoop);
         frameManager.addFrame(mainMenu);
-
-        BaseLF lookAndFeel = new BaseLF();
-        lookAndFeel.init(this);
-        frameManager.setLookAndFeel(lookAndFeel);
+        gameState.start();
 
         Logger.INFO.print("Finished initialisation\n");
     }
@@ -115,11 +116,14 @@ public class FreightGame implements Game, ModLoader {
         // init mods
         for (Mod mod : activeMods) {
             try {
+                assert !(mod instanceof InitialisationMod) : "Init mods should not be loaded here";
+
                 mod.init(this);
                 identifyModule(mod);
 
             } catch (Exception ex) {
                 Logger.ERROR.print("Error while loading " + mod.getModName(), ex);
+                mods.remove(mod);
             }
         }
     }
@@ -129,14 +133,6 @@ public class FreightGame implements Game, ModLoader {
             typeCollection.addTrackTypes((TrackMod) target);
             Logger.DEBUG.print("Installed " + target.getModName() + " as TrackMod");
 
-        } else if (target instanceof SFrameLookAndFeel) {
-            if (frameManager.hasLookAndFeel()) {
-                throw new IllegalNumberOfModulesException(
-                        "Tried installing " + target.getModName() + " while we already have a LookAndFeel Mod");
-            }
-
-            frameManager.setLookAndFeel((SFrameLookAndFeel) target);
-            Logger.DEBUG.print("Installed " + target.getModName() + " as LookAndFeel mod");
         }
     }
 
@@ -158,11 +154,11 @@ public class FreightGame implements Game, ModLoader {
         mainMenu.setVisible(false);
         ToolBar toolBar = new FreightToolBar(this, this::stopGame);
         frameManager.setToolBar(toolBar);
-        gameState.start();
+        gameState.unPause();
     }
 
     private void stopGame() {
-        gameState.stopLoop();
+        gameState.pause();
         frameManager.setToolBar(null);
         cleanMods();
         mainMenu.setVisible(true);
@@ -205,7 +201,7 @@ public class FreightGame implements Game, ModLoader {
 
     @Override
     public Version getVersionNumber() {
-        return new Version(0, 0);
+        return GAME_VERSION;
     }
 
     @Override
@@ -238,6 +234,9 @@ public class FreightGame implements Game, ModLoader {
     }
 
     private void cleanup() {
+        gameState.stopLoop();
+        permanentMods.forEach(GameAspect::cleanup);
+
         window.cleanup();
         renderer.cleanup();
         camera.cleanup();
