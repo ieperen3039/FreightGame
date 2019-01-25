@@ -13,6 +13,7 @@ import org.joml.Vector3fc;
 import static NG.Camera.TycoonFixedCamera.MoveDirection.*;
 
 /**
+ * A camera implementation that can be moved by holding the mouse to the corners of the screen
  * @author Geert van Ieperen. Created on 18-11-2018.
  */
 public class TycoonFixedCamera implements Camera, MousePositionListener, KeyPressListener, KeyReleaseListener {
@@ -136,7 +137,7 @@ public class TycoonFixedCamera implements Camera, MousePositionListener, KeyPres
      * @return how fast the camera should move in the direction
      */
     protected float positionToMovement(int pixels) {
-        assert pixels < SCREEN_MOVE_MINIMUM_PIXELS;
+        if (pixels >= SCREEN_MOVE_MINIMUM_PIXELS) return 0;
         return (SCREEN_MOVE_MINIMUM_PIXELS - pixels) * eyeOffset.length() * SCROLL_SPEED;
     }
 

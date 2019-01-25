@@ -2,6 +2,7 @@ package NG.Entities;
 
 import NG.DataStructures.Valuta;
 import NG.Engine.GameTimer;
+import NG.Mods.FreightMod;
 
 /**
  * Known as 'Goods' or 'Haul' and represents whatever is put on a train (can be humans). One instance represents a
@@ -9,16 +10,16 @@ import NG.Engine.GameTimer;
  * implementation of quantity of goods.
  * @author Geert van Ieperen. Created on 12-11-2018.
  * @see NG.DataStructures.FreightStorage
- * @see FreightType
+ * @see FreightMod.FreightType
  */
 public class Freight {
-    public final FreightType type;
+    public final FreightMod.FreightType type;
 
     private final int pickupTime;
     private final Entity pickupPlace;
     private int quantity;
 
-    public Freight(FreightType type, int quantity, int pickupTime, Entity pickupPlace) {
+    public Freight(FreightMod.FreightType type, int quantity, int pickupTime, Entity pickupPlace) {
         this.type = type;
         this.quantity = quantity;
         this.pickupTime = pickupTime;

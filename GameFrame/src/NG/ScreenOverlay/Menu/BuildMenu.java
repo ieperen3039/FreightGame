@@ -23,7 +23,7 @@ public class BuildMenu extends SFrame {
 
         for (int i = 0; i < tracks.size(); i++) {
             TrackMod.TrackType trackType = tracks.get(i);
-            SToggleButton buildTrack = new SToggleButton(trackType.getTypeName(), 250, 50);
+            SToggleButton buildTrack = new SToggleButton(trackType.name(), 250, 50);
             mainPanel.add(buildTrack, new Vector2i(0, i));
 
             buildTrack.addStateChangeListener(

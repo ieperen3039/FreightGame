@@ -1,7 +1,7 @@
 package NG.DataStructures;
 
 import NG.Entities.Freight;
-import NG.Entities.FreightType;
+import NG.Mods.FreightMod;
 import NG.Tools.Logger;
 
 import java.util.ArrayList;
@@ -31,7 +31,9 @@ public class FreightStorage {
      * @return a collection of the required goods, with a summed quantity either equal to amount, or all goods of the
      * desired type available in the storage.
      */
-    public Collection<Freight> pull(FreightType type, int amount, boolean newest) {//TODO sort on newest freight first
+    public Collection<Freight> pull(
+            FreightMod.FreightType type, int amount, boolean newest
+    ) {//TODO sort on newest freight first
         if (newest) Logger.ASSERT.print("pull(): parameter newest is ignored");
         Collection<Freight> batch = new ArrayList<>();
         int remainder = amount;

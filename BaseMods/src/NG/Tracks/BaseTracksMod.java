@@ -13,22 +13,21 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Implementation of regular iron tracks on wooden pallets.
  * @author Geert van Ieperen. Created on 19-9-2018.
  */
 public class BaseTracksMod implements TrackMod {
-    private List<TrackType> types;
+    private List<TrackType> types = Collections.singletonList(new RegularTrack());
     private float trackSpacing;
 
     @Override
     public void init(Game game) throws Version.MisMatchException {
         game.getVersionNumber().requireAtLeast(0, 0);
         trackSpacing = game.settings().TRACK_SPACING;
-        types = Collections.singletonList(new RegularTrack());
     }
 
     @Override
     public void cleanup() {
-        types = null;
     }
 
     @Override
@@ -48,7 +47,7 @@ public class BaseTracksMod implements TrackMod {
 
     private class RegularTrack implements TrackType {
         @Override
-        public String getTypeName() {
+        public String name() {
             return "Regular Tracks";
         }
 

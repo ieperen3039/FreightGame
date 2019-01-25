@@ -134,6 +134,7 @@ public class FreightGame implements Game, ModLoader {
             Logger.DEBUG.print("Installed " + target.getModName() + " as TrackMod");
 
         }
+        // add mod installation procedures
     }
 
     public void root() throws Exception {
@@ -235,7 +236,7 @@ public class FreightGame implements Game, ModLoader {
 
     private void cleanup() {
         gameState.stopLoop();
-        permanentMods.forEach(GameAspect::cleanup);
+        permanentMods.forEach(Mod::cleanup);
 
         window.cleanup();
         renderer.cleanup();

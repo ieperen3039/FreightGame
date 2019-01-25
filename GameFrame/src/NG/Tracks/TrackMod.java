@@ -11,17 +11,18 @@ import java.util.Collection;
  * @author Geert van Ieperen. Created on 19-9-2018.
  */
 public interface TrackMod extends Mod {
-
     /**
-     * @return a list of all types of tracks to be created
-     * @implNote The list should not be modified. Advised is to cache the list and make it unmodifiable
+     * @return a collection of all types of tracks to be created.
      */
     Collection<TrackType> getTypes();
 
+    /**
+     * A specific type of track where trains can move along. This is implemented as a graphical representation of the
+     * track.
+     *///TODO extend this
     interface TrackType {
-
         /** @return a name for this track */
-        String getTypeName();
+        String name();
 
         /**
          * draw a partially circular track on the given parameters.
