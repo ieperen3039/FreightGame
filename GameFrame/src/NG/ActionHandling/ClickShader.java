@@ -11,6 +11,7 @@ import NG.Rendering.Shaders.ShaderProgram;
 import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
+import NG.Tools.Vectors;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -37,9 +38,6 @@ public class ClickShader implements ShaderProgram {
 
     private static final Path VERTEX_PATH = Directory.shaders.getPath("Click", "click.vert");
     private static final Path FRAGMENT_PATH = Directory.shaders.getPath("Click", "click.frag");
-    private static final int COLOR_SHIFT = 2;
-    private static final int COLOR_MASK = 1 << COLOR_SHIFT;
-    private static final Color4f DEFAULT_COLOR = Color4f.BLACK;
     private final Map<String, Integer> uniforms;
 
     private ArrayList<Entity> mapping;
@@ -199,18 +197,42 @@ public class ClickShader implements ShaderProgram {
     }
 
     private static Vector3i numberToColor(int i) {
-        assert i < 65535;
-        byte r = (byte) (i % 256);
-        byte g = (byte) ((i >> 8) % 256);
-        byte b = (byte) ((i >> 16) % 256);
+        assert i < (1 << 18);
+        final int bitSize = (1 << 6);
+        int r = (i % bitSize) << 2;
+        int g = (((i >> 6) % bitSize) << 2);
+        int b = (((i >> 12) % bitSize) << 2);
+
         return new Vector3i(r, g, b);
     }
 
     private static int colorToNumber(Vector3i value) {
         int i = 0;
-        i += value.x;
-        i += (value.y << 8);
-        i += (value.z << 16);
+        i += nearest(value.x) >> 2;
+        i += nearest(value.y) << 4;
+        i += nearest(value.z) << 10;
+
+        Logger.DEBUG.printf("%s -> %d", Vectors.toString(value), i);
+
+        return i;
+    }
+
+    /**
+     * if the number is not divisible by 4, move the number up or down such that it is
+     * @param i a number
+     * @return the closest value divisible by 4, or the number itself if multiple are nearest
+     */
+    private static int nearest(int i) {
+        int mod = i % 4;
+        if (mod == 1) {
+            i -= 1;
+            Logger.DEBUG.printf("Corrected -1 for %d (%1.2f)", i, (float) i / 4);
+        } else if (mod == 3) {
+            i += 1;
+            Logger.DEBUG.printf("Corrected +1 for %d (%1.2f)", i, (float) i / 4);
+        } else if (mod == 2) {
+            Logger.ASSERT.printf("Color to number failed for i = %d (%1.2f)", i, (float) i / 4);
+        }
         return i;
     }
 
@@ -225,9 +247,9 @@ public class ClickShader implements ShaderProgram {
         ByteBuffer buffer = BufferUtils.createByteBuffer(bpp);
         glReadPixels(xPos, yPos, 1, 1, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
 
-        int r = buffer.get(0);
-        int g = buffer.get(1);
-        int b = buffer.get(2);
+        int r = Byte.toUnsignedInt(buffer.get(0));
+        int g = Byte.toUnsignedInt(buffer.get(1));
+        int b = Byte.toUnsignedInt(buffer.get(2));
         assert !(r < 0 || g < 0 || b < 0) : String.format("got (%d, %d, %d)", r, g, b);
         buffer.clear();
 

@@ -12,9 +12,12 @@ import org.joml.Vector3fc;
 public class Cube implements MovingEntity {
     private Vector3f position;
     private boolean isAlive = true;
+    private static int nr = 0;
+    private final int id;
 
     public Cube(Vector3f position) {
         this.position = position;
+        id = nr++;
     }
 
     @Override
@@ -54,6 +57,6 @@ public class Cube implements MovingEntity {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName();
+        return this.getClass().getSimpleName() + " " + id;
     }
 }

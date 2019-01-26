@@ -20,7 +20,7 @@ public class MainMenu extends SFrame {
     private static final int NUM_BOT_BUTTONS = 10;
     public static final int BUTTON_MIN_WIDTH = 300;
     public static final int BUTTON_MIN_HEIGHT = 50;
-    private static final int NOF_ENTITIES = 8;
+    private static final int NOF_ENTITIES = 4 * 4 * 4;
 
     private final Vector2i topButtonPos;
     private final Vector2i bottomButtonPos;
@@ -84,7 +84,7 @@ public class MainMenu extends SFrame {
     }
 
     private void entityCloud() {
-        final int spacing = 20;
+        final int spacing = 20 / NOF_ENTITIES + 5;
         int cbrtc = (int) Math.ceil(Math.cbrt(NOF_ENTITIES));
 
         int i = NOF_ENTITIES;
