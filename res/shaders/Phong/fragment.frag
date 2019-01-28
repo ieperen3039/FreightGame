@@ -72,5 +72,5 @@ void main()
         }
     }
 
-    fragColor = material.diffuse * vec4(ambientLight, 1.0) + vec4(diffuseSpecularComponent, material.diffuse.w);
+    fragColor = material.diffuse * vec4(ambientLight, 1.0) + vec4(diffuseSpecularComponent, 0.0);
 }

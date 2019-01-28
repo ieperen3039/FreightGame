@@ -160,6 +160,8 @@ public class FreightGame implements Game, ModLoader {
 
     private void stopGame() {
         gameState.pause();
+        gameState.cleanup();
+        gameMap.cleanup();
         frameManager.setToolBar(null);
         cleanMods();
         mainMenu.setVisible(true);

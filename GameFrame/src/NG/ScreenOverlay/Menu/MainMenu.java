@@ -1,11 +1,13 @@
 package NG.ScreenOverlay.Menu;
 
 import NG.Camera.Camera;
+import NG.DataStructures.Generic.Color4f;
 import NG.Engine.Game;
 import NG.Engine.ModLoader;
 import NG.Entities.Cube;
 import NG.Entities.Entity;
 import NG.GameState.MapGeneratorMod;
+import NG.Rendering.Light;
 import NG.ScreenOverlay.Frames.Components.*;
 import NG.Tools.Vectors;
 import org.joml.Vector2i;
@@ -84,7 +86,7 @@ public class MainMenu extends SFrame {
     }
 
     private void entityCloud() {
-        final int spacing = 20 / NOF_ENTITIES + 5;
+        final int spacing = 100 / NOF_ENTITIES + 5;
         int cbrtc = (int) Math.ceil(Math.cbrt(NOF_ENTITIES));
 
         int i = NOF_ENTITIES;
@@ -103,6 +105,7 @@ public class MainMenu extends SFrame {
         Camera cam = game.camera();
         Vector3f cameraEye = new Vector3f(cbrtc, cbrtc, cbrtc).mul(spacing).add(10, 10, 10);
         cam.set(Vectors.zeroVector(), cameraEye);
+        game.state().addLight(new Light(new Vector3f(1, 1, 2), new Color4f(1, 1, 1), 0.2f, true));
 
         modLoader.startGame();
         newGameFrame.setVisible(false);

@@ -11,7 +11,6 @@ import NG.Rendering.Shaders.ShaderProgram;
 import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
-import NG.Tools.Vectors;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -212,8 +211,7 @@ public class ClickShader implements ShaderProgram {
         i += nearest(value.y) << 4;
         i += nearest(value.z) << 10;
 
-        Logger.DEBUG.printf("%s -> %d", Vectors.toString(value), i);
-
+//        Logger.DEBUG.printf("%s -> %d", Vectors.toString(value), i);
         return i;
     }
 

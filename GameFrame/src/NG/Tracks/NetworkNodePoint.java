@@ -1,11 +1,13 @@
 package NG.Tracks;
 
 import NG.ActionHandling.ClickShader;
+import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
 import NG.GameState.GameMap;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.Primitives.Collision;
 import NG.Rendering.Shapes.ShapesGeneric;
+import NG.Tools.Logger;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
@@ -14,14 +16,16 @@ import org.joml.Vector3f;
  * @author Geert van Ieperen created on 23-12-2018.
  */
 public class NetworkNodePoint implements Entity {
-    private static final float NODE_SIZE = 10;
+    private static final float NODE_SIZE = 0.5f;
     private final GameMap heightMap;
     private NetworkNode reference;
     private final Vector2fc position;
+    private boolean isDisposed = false;
+    private static final Color4f TRANSPARENT_WHITE = new Color4f(1f, 1f, 1f, 0.2f);
 
     public NetworkNodePoint(Vector2fc coordinate, GameMap map) {
         this.heightMap = map;
-        this.position = coordinate;
+        this.position = new Vector2f(coordinate);
     }
 
     public void setReference(NetworkNode reference) {
@@ -39,10 +43,14 @@ public class NetworkNodePoint implements Entity {
 
     @Override
     public void draw(SGL gl) {
-        if (gl.getShader() instanceof ClickShader) {
+        if ((gl.getShader() instanceof ClickShader) || (Logger.getLoggingLevel() == Logger.DEBUG)) {
             gl.pushMatrix();
-            gl.scale(NODE_SIZE, NODE_SIZE, 0.001f);
-            gl.render(ShapesGeneric.CUBE);
+            {
+                gl.translate(heightMap.getPosition(position));
+                gl.scale(NODE_SIZE, NODE_SIZE, NODE_SIZE);
+                gl.getShader().setMaterial(TRANSPARENT_WHITE, Color4f.INVISIBLE, 1);
+                gl.render(ShapesGeneric.CUBE);
+            }
             gl.popMatrix();
         }
     }
@@ -50,6 +58,16 @@ public class NetworkNodePoint implements Entity {
     @Override
     public void onClick(int button) {
 
+    }
+
+    @Override
+    public void dispose() {
+        isDisposed = true;
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return isDisposed;
     }
 
     public Vector2fc getPosition() {

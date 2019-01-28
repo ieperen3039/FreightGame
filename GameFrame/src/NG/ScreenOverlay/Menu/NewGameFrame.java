@@ -50,10 +50,10 @@ public class NewGameFrame extends SFrame implements Runnable {
         SPanel sizeSelection = new SPanel(0, 0, 4, 1, false, false);
         sizeSelection.add(new STextArea("Size", 0, true), new Vector2i(0, 0));
         this.game = game;
-        xSizeSelector = new SDropDown(this.game, 1, 100, 60, "100", "200", "500", "1000");
+        xSizeSelector = new SDropDown(this.game, 100, 60, 1, "100", "200", "500", "1000");
         sizeSelection.add(xSizeSelector, new Vector2i(1, 0));
         sizeSelection.add(new STextArea("X", 0, true), new Vector2i(2, 0));
-        ySizeSelector = new SDropDown(this.game, 1, 100, 60, "100", "200", "500", "1000");
+        ySizeSelector = new SDropDown(this.game, 100, 60, 1, "100", "200", "500", "1000");
         sizeSelection.add(ySizeSelector, new Vector2i(3, 0));
         mainPanel.add(sizeSelection, mpos.add(0, 1));
 
@@ -121,7 +121,7 @@ public class NewGameFrame extends SFrame implements Runnable {
             this.game.map().generateNew(generatorMod);
 
             // set camera to middle of map
-            Vector3f cameraFocus = new Vector3f(xSize / 2, ySize / 2, 0);
+            Vector3f cameraFocus = new Vector3f(xSize / 2f, ySize / 2f, 0);
             Vector3f cameraEye = cameraFocus.add(10, 10, 10, new Vector3f());
             this.game.camera().set(cameraFocus, cameraEye);
 

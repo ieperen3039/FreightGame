@@ -2,17 +2,20 @@ package NG.ActionHandling;
 
 import NG.ActionHandling.MouseTools.DefaultMouseTool;
 import NG.ActionHandling.MouseTools.MouseTool;
+import NG.DataStructures.Tracked.TrackedFloat;
 import NG.Engine.Game;
 import NG.Engine.GameAspect;
 import NG.Rendering.GLFWWindow;
 import NG.Tools.Logger;
+import org.joml.Vector2i;
 import org.lwjgl.glfw.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 
-import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
+import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
 /**
  * A callback handler specialized on a tycoon-game
@@ -32,7 +35,8 @@ public class FreightCallbacks implements GameAspect, KeyMouseCallbacks {
     public void init(Game game) {
         this.game = game;
         GLFWWindow target = game.window();
-        target.setCallbacks(new KeyPressCallback(), new MouseButtonPressCallback(), new MouseMoveCallback(), new MouseScrollCallback());
+        Vector2i mousePosition = target.getMousePosition();
+        target.setCallbacks(new KeyPressCallback(), new MouseButtonPressCallback(), new MouseMoveCallback(mousePosition), new MouseScrollCallback());
         target.setTextCallback(new CharTypeCallback());
     }
 
@@ -53,6 +57,11 @@ public class FreightCallbacks implements GameAspect, KeyMouseCallbacks {
     @Override
     public MouseTool getMouseTool() {
         return currentTool;
+    }
+
+    @Override
+    public MouseTool getDefaultMouseTool() {
+        return DEFAULT_MOUSE_TOOL;
     }
 
     @Override
@@ -107,11 +116,9 @@ public class FreightCallbacks implements GameAspect, KeyMouseCallbacks {
     private class MouseButtonPressCallback extends GLFWMouseButtonCallback {
         @Override
         public void invoke(long windowHandle, int button, int action, int mods) {
-            double[] xBuf = new double[1];
-            double[] yBuf = new double[1];
-            glfwGetCursorPos(windowHandle, xBuf, yBuf);
-            int x = (int) xBuf[0];
-            int y = (int) yBuf[0];
+            Vector2i pos = game.window().getMousePosition();
+            int x = pos.x;
+            int y = pos.y;
 
             currentTool.setButton(button);
             if (action == GLFW_PRESS) {
@@ -131,13 +138,26 @@ public class FreightCallbacks implements GameAspect, KeyMouseCallbacks {
     }
 
     private class MouseMoveCallback extends GLFWCursorPosCallback {
+        private TrackedFloat mouseXPos;
+        private TrackedFloat mouseYPos;
+
+        MouseMoveCallback(Vector2i mousePos) {
+            mouseXPos = new TrackedFloat((float) mousePos.x);
+            mouseYPos = new TrackedFloat((float) mousePos.y);
+        }
+
         @Override
         public void invoke(long window, double xpos, double ypos) {
+            mouseXPos.update((float) xpos);
+            mouseYPos.update((float) ypos);
+
             for (MousePositionListener listener : mousePositionListeners) {
                 listener.mouseMoved((int) xpos, (int) ypos);
             }
 
-            currentTool.mouseMoved((int) xpos, (int) ypos);
+            int xDiff = mouseXPos.difference().intValue();
+            int yDiff = mouseYPos.difference().intValue();
+            currentTool.mouseMoved(xDiff, yDiff);
         }
     }
 

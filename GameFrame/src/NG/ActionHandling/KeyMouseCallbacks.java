@@ -7,6 +7,9 @@ import NG.ActionHandling.MouseTools.MouseTool;
  * @author Geert van Ieperen. Created on 18-11-2018.
  */
 public interface KeyMouseCallbacks {
+    /** @return the mouse tool obtained from {@code setMouseTool(null); getMouseTool()} */
+    MouseTool getDefaultMouseTool();
+
     /**
      * @param listener when the mouse moves, the {@link MousePositionListener#mouseMoved(int, int)} method is called
      */

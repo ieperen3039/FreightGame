@@ -70,6 +70,10 @@ public abstract class SContainer extends SComponent {
         return layout.getComponents();
     }
 
+    /**
+     * removes a component from this container
+     * @param comp the component that should be added to this component first.
+     */
     public void removeComponent(SComponent comp) {
         layout.remove(comp);
         invalidateLayout();

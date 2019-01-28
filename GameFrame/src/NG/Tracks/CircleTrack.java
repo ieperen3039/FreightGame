@@ -32,6 +32,8 @@ public class CircleTrack implements TrackPiece {
     private final float angle;
     private final float endTheta;
 
+    private boolean isInvalid = false;
+
     /**
      * @param game           the current game instance
      * @param type           the type of track
@@ -84,8 +86,12 @@ public class CircleTrack implements TrackPiece {
 
     @Override
     public void draw(SGL gl) {
-        float lowerTheta = Math.min(startTheta, endTheta);
-        type.drawCircle(gl, center, radius, lowerTheta, angle, game.map());
+        gl.pushMatrix();
+        {
+            float lowerTheta = Math.min(startTheta, endTheta);
+            type.drawCircle(gl, center, radius, lowerTheta, angle, game.map());
+        }
+        gl.popMatrix();
     }
 
     @Override
@@ -130,6 +136,16 @@ public class CircleTrack implements TrackPiece {
     public Vector2f closestPointOf(Vector2fc position) {
         Vector2f relative = new Vector2f(position).sub(center);
         return relative.normalize(radius).add(center);
+    }
+
+    @Override
+    public void dispose() {
+        isInvalid = true;
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return isInvalid;
     }
 
     @Override

@@ -21,6 +21,8 @@ public class StraightTrack implements TrackPiece {
     private final Vector2fc direction;
     private final float length;
 
+    private boolean isInvalid;
+
     public StraightTrack(Game game, TrackMod.TrackType type, NetworkNodePoint startNode, NetworkNodePoint endNode) {
         this.game = game;
         this.type = type;
@@ -39,12 +41,26 @@ public class StraightTrack implements TrackPiece {
 
     @Override
     public void draw(SGL gl) {
-        type.drawStraight(gl, startCoord, direction, length, game.map());
+        gl.pushMatrix();
+        {
+            type.drawStraight(gl, startCoord, direction, length, game.map());
+        }
+        gl.popMatrix();
     }
 
     @Override
     public void onClick(int button) {
 
+    }
+
+    @Override
+    public void dispose() {
+        isInvalid = true;
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return isInvalid;
     }
 
     @Override

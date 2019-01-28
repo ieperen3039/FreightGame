@@ -91,5 +91,4 @@ public interface TrackPiece extends Entity {
             return new CircleTrack(game, type, aPoint, direction, bPoint);
         }
     }
-
 }

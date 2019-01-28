@@ -4,6 +4,7 @@ import NG.ActionHandling.MouseTools.MouseTool;
 import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Material;
 import NG.Engine.Game;
+import NG.Rendering.Light;
 import NG.Rendering.MatrixStack.Mesh;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.FlatMesh;
@@ -83,6 +84,7 @@ public class HeightMap implements GameMap {
                 meshProgress += meshPStep;
             }
         }
+        game.state().addLight(new Light(new Vector3f(1, 1, 2), Color4f.WHITE, 0.1f, true));
 
         hasNewWorld = true;
         meshProgress = 1f;
@@ -149,6 +151,8 @@ public class HeightMap implements GameMap {
     @Override
     public void cleanup() {
         heightmap = null;
+        preparedMeshes.clear();
+        meshOfTheWorld.clear();
     }
 
     @Override
@@ -167,6 +171,7 @@ public class HeightMap implements GameMap {
 
     @Override
     public Vector3f intersectWithRay(Vector3fc origin, Vector3fc direction) {
+        // TODO more precise calculation
         Vector3f temp = new Vector3f();
         float t = Intersectionf.intersectRayPlane(origin, direction, Vectors.zeroVector(), Vectors.zVector(), 1E-6f);
         return origin.add(direction.mul(t, temp), temp);

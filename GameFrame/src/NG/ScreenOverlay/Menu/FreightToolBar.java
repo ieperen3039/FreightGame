@@ -4,6 +4,9 @@ import NG.Engine.Game;
 import NG.ScreenOverlay.Frames.GUIManager;
 import NG.ScreenOverlay.ToolBar;
 import NG.Tools.Logger;
+import NG.Tracks.TrackMod;
+
+import java.util.List;
 
 /**
  * @author Geert van Ieperen. Created on 21-11-2018.
@@ -20,6 +23,10 @@ public class FreightToolBar extends ToolBar {
         addButton("Exit", stopGame);
         addButton("$$$", () -> Logger.INFO.print("You are given one (1) arbitrary value(s)"));
         addSeparator();
-        addButton("B", () -> game.gui().addFrame(new BuildMenu(game)));
+
+        List<TrackMod.TrackType> tracks = game.objectTypes().getTrackTypes();
+        for (TrackMod.TrackType trackType : tracks) {
+            addButton("B", () -> game.gui().addFrame(new BuildMenu(game, trackType)));
+        }
     }
 }

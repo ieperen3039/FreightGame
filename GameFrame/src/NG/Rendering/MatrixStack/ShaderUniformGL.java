@@ -142,7 +142,7 @@ public class ShaderUniformGL implements SGL {
 
     @Override
     public void ifAccepted(Entity entity, Consumer<SGL> drawFunction) {
-        if (!entity.doRemove() && shader.accepts(entity)) {
+        if (!entity.isDisposed() && shader.accepts(entity)) {
             shader.setEntity(entity);
             drawFunction.accept(this);
             shader.unsetEntity();

@@ -68,13 +68,24 @@ public class SFrameManager implements GUIManager {
     public void addFrame(SFrame frame) {
         frame.validateLayout();
 
-//        int width = game.window().getWidth();
-//        int height = game.window().getHeight();
-//        int xPos = width / 2 - frame.getWidth() / 2;
-//        int yPos = height / 2 - frame.getHeight() / 2;
-
         int toolbarHeight = toolBar == null ? 0 : toolBar.getHeight();
-        addFrame(frame, 50, 50 + toolbarHeight);
+        int x = 50;
+        int y = 50 + toolbarHeight;
+
+        // reposition frame not to overlap other frames (greedy)
+        for (Iterator<SFrame> iterator = frames.descendingIterator(); iterator.hasNext(); ) {
+            SFrame other = iterator.next();
+            if (other.isMinimized() || !other.isVisible()) continue;
+
+            Vector2ic otherPos = other.getScreenPosition();
+
+            if (otherPos.x() == x && otherPos.y() == y) {
+                x += 20;
+                y += 20; // windows-style
+            }
+        }
+
+        addFrame(frame, x, y);
     }
 
     @Override
@@ -135,8 +146,9 @@ public class SFrameManager implements GUIManager {
     public boolean checkMouseClick(MouseTool tool, int xSc, int ySc) {
         // check modal dialogues
         if (modalSection != null) {
-            Vector2ic modalPosition = modalSection.getScreenPosition();
-            tool.apply(modalSection, xSc - modalPosition.x(), ySc - modalPosition.y());
+            if (modalSection.contains(xSc, ySc)) {
+                tool.apply(modalSection, xSc, ySc);
+            }
             modalSection = null;
             return true;
         }

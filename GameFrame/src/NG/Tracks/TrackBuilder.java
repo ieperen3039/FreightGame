@@ -1,11 +1,10 @@
 package NG.Tracks;
 
-import NG.ActionHandling.MouseTools.MouseTool;
+import NG.ActionHandling.MouseTools.EntityBuildTool;
 import NG.DataStructures.Generic.Pair;
 import NG.Engine.Game;
 import NG.Entities.Entity;
 import NG.Rendering.Shapes.Primitives.Collision;
-import NG.ScreenOverlay.Frames.Components.SComponent;
 import NG.ScreenOverlay.Frames.Components.SToggleButton;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
@@ -13,21 +12,17 @@ import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.lwjgl.glfw.GLFW;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
 /**
  * @author Geert van Ieperen created on 16-12-2018.
  */
-public class TrackBuilder implements MouseTool {
+public class TrackBuilder extends EntityBuildTool {
     private final TrackMod.TrackType type;
-    private final SToggleButton sourceButton;
-    private Game game;
 
     private Vector2fc firstPosition; // TODO remove this, only allow building from existing tracks or stations
     private NetworkNode firstNode;
-    private int button;
 
     /**
      * this mousetool lets the player place a track by clicking on the map
@@ -36,8 +31,7 @@ public class TrackBuilder implements MouseTool {
      * @param source the button which will be set to untoggled when this mousetool is disposed
      */
     public TrackBuilder(Game game, TrackMod.TrackType type, SToggleButton source) {
-        this.game = game;
-        sourceButton = source;
+        super(game, source);
         this.type = type;
     }
 
@@ -95,30 +89,22 @@ public class TrackBuilder implements MouseTool {
             } else {
                 Logger.ERROR.print("Not implemented yet :(");
             }
+
+        } else if (entity instanceof NetworkNodePoint) {
+            if (firstNode == null) {
+                NetworkNodePoint nodePoint = (NetworkNodePoint) entity;
+                firstNode = nodePoint.getNode();
+
+            } else {
+                Logger.ERROR.print("Not implemented yet :(");
+            }
         }
     }
 
     @Override
-    public void apply(SComponent component, int xSc, int ySc) {
-        Logger.DEBUG.print("Clicked on component " + component);
-        close();
-        game.inputHandling().getMouseTool().apply(component, xSc, ySc);
-    }
-
-    /** disposes this mouse tool, resetting the global tool to default */
-    private void close() {
-        game.inputHandling().setMouseTool(null);
-        sourceButton.setState(false);
-    }
-
-    @Override
     public void mouseMoved(int xDelta, int yDelta) {
+        super.mouseMoved(xDelta, yDelta);
         // TODO implement multiple build-possibilities
-    }
-
-    @Override
-    public void onRelease(int button, int xSc, int ySc) {
-
     }
 
     @Override
@@ -126,12 +112,4 @@ public class TrackBuilder implements MouseTool {
         return "Track Builder (" + type + ")";
     }
 
-    /**
-     * sets the button field. Should only be called by the input handling
-     * @param button a button enum, often {@link GLFW#GLFW_MOUSE_BUTTON_LEFT} or {@link GLFW#GLFW_MOUSE_BUTTON_RIGHT}
-     */
-    @Override
-    public void setButton(int button) {
-        this.button = button;
-    }
 }

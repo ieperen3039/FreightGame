@@ -6,9 +6,9 @@ import org.joml.Vector2ic;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
+ * A button with a state that only changes upon clicking the button
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
 public class SToggleButton extends SComponent implements MouseRelativeClickListener {
@@ -19,8 +19,16 @@ public class SToggleButton extends SComponent implements MouseRelativeClickListe
     private String text;
 
     private boolean state;
-    private List<Consumer<Boolean>> stateChangeListeners = new ArrayList<>();
+    private List<Runnable> stateChangeListeners = new ArrayList<>();
 
+    /**
+     * Create a button with the given properties
+     * @param text      the displayed text
+     * @param minWidth  the minimal width of this button, which {@link NG.ScreenOverlay.Frames.LayoutManagers.SLayoutManager}s
+     *                  should respect
+     * @param minHeight the minimal height of this button.
+     * @param initial   the initial state of the button. Iff true, the button will be enabled
+     */
     public SToggleButton(String text, int minWidth, int minHeight, boolean initial) {
         this.minHeight = minHeight;
         this.minWidth = minWidth;
@@ -28,8 +36,15 @@ public class SToggleButton extends SComponent implements MouseRelativeClickListe
         this.state = initial;
     }
 
-    public SToggleButton(String name, int minWidth, int minHeight) {
-        this(name, minWidth, minHeight, false);
+    /**
+     * Create a button with the given properties, starting disabled
+     * @param text      the displayed text
+     * @param minWidth  the minimal width of this buttion, which {@link NG.ScreenOverlay.Frames.LayoutManagers.SLayoutManager}s
+     *                  should respect
+     * @param minHeight the minimal height of this button.
+     */
+    public SToggleButton(String text, int minWidth, int minHeight) {
+        this(text, minWidth, minHeight, false);
     }
 
     public void setGrowthPolicy(boolean horizontal, boolean vertical) {
@@ -65,12 +80,10 @@ public class SToggleButton extends SComponent implements MouseRelativeClickListe
 
     @Override
     public void onClick(int button, int xSc, int ySc) {
-        // setState(!getState());
-        state = !state;
-        stateChangeListeners.forEach(s -> s.accept(state));
+        setState(!state);
     }
 
-    public void addStateChangeListener(Consumer<Boolean> action) {
+    public void addStateChangeListener(Runnable action) {
         stateChangeListeners.add(action);
     }
 
@@ -80,6 +93,7 @@ public class SToggleButton extends SComponent implements MouseRelativeClickListe
 
     public void setState(boolean state) {
         this.state = state;
+        stateChangeListeners.forEach(Runnable::run);
     }
 
     public String getText() {

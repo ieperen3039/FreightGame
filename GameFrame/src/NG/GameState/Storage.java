@@ -3,8 +3,8 @@ package NG.GameState;
 import NG.DataStructures.FreightStorage;
 import NG.Entities.Entity;
 import NG.Entities.Freight;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
+import org.joml.Vector2f;
+import org.joml.Vector2fc;
 
 /**
  * A storage is any building that stores {@link Freight}. This includes stations, industries and possibly a rearranging
@@ -13,9 +13,10 @@ import org.joml.Vector3fc;
  */
 public abstract class Storage implements Entity {
     private FreightStorage contents;
-    private Vector3f position;
+    private Vector2f position;
+    private boolean isDisposed = false;
 
-    public void init(Vector3f position) {
+    public Storage(Vector2f position) {
         this.position = position;
         this.contents = new FreightStorage();
     }
@@ -24,11 +25,21 @@ public abstract class Storage implements Entity {
         return contents;
     }
 
-    public void setPosition(Vector3fc position) {
+    public void setPosition(Vector2fc position) {
         this.position.set(position);
     }
 
-    public Vector3fc getPosition() {
+    public Vector2fc getPosition() {
         return position;
+    }
+
+    @Override
+    public void dispose() {
+        isDisposed = true;
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return isDisposed;
     }
 }

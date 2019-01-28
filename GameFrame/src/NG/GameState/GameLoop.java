@@ -2,7 +2,6 @@ package NG.GameState;
 
 import NG.ActionHandling.ClickShader;
 import NG.ActionHandling.MouseTools.MouseTool;
-import NG.DataStructures.Generic.Color4f;
 import NG.Engine.AbstractGameLoop;
 import NG.Engine.Game;
 import NG.Entities.Entity;
@@ -10,8 +9,7 @@ import NG.Rendering.Light;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.Primitives.Collision;
 import NG.Tools.Toolbox;
-import NG.Tools.Vectors;
-import org.joml.Vector3f;
+import org.joml.Vector2fc;
 import org.joml.Vector3fc;
 
 import java.io.DataInput;
@@ -44,8 +42,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         ReadWriteLock rwl = new ReentrantReadWriteLock(false);
         this.entityWriteLock = rwl.writeLock();
         this.entityReadLock = rwl.readLock();
-
-        lights.add(new Light(new Vector3f(1, 1, 2), new Color4f(1, 1, 0.8f), 0.2f, true));
     }
 
     @Override
@@ -72,11 +68,11 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     }
 
     @Override
-    public void removeEntity(Entity entity) {
+    public void addLight(Light light) {
         defer(() -> {
             entityWriteLock.lock();
             try {
-                entities.remove(entity);
+                lights.add(light);
             } finally {
                 entityWriteLock.unlock();
             }
@@ -115,7 +111,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     }
 
     @Override
-    public List<Storage> getIndustriesByRange(Vector3fc position, int range) {
+    public List<Storage> getIndustriesByRange(Vector2fc position, int range) {
         final int rangeSq = range * range;
         List<Storage> industries = new ArrayList<>();
 
@@ -161,7 +157,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     private void runCleaning() {
         entityWriteLock.lock();
         try {
-            entities.removeIf(Entity::doRemove);
+            entities.removeIf(Entity::isDisposed);
         } finally {
             entityWriteLock.unlock();
         }
@@ -170,8 +166,9 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     @Override
     public void cleanup() {
         entityWriteLock.lock();
-        stopLoop(); // possibly this did not happen
         entities.clear();
+        lights.clear();
+        postUpdateActionQueue.clear();
         entityWriteLock.unlock();
     }
 
@@ -194,20 +191,4 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         return true;
     }
 
-    /**
-     * queries the collision of an entity
-     * @param xSc
-     * @param ySc
-     * @param entity
-     * @param game
-     * @return
-     */
-    public static Collision getClickOnEntity(int xSc, int ySc, Entity entity, Game game) {
-        Vector3f origin = new Vector3f();
-        Vector3f direction = new Vector3f();
-
-        Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
-
-        return entity.getRayCollision(origin, direction);
-    }
 }

@@ -68,6 +68,8 @@ public interface MatrixStack {
     void popMatrix();
 
     /**
+     * @param axis the axis to rotate around
+     * @param angle the angle to rotate in radians
      * @see #rotate(float, float, float, float)
      */
     default void rotate(Vector3f axis, float angle) {
@@ -75,7 +77,7 @@ public interface MatrixStack {
     }
 
     /**
-     * @see #rotate(float, float, float, float)
+     * @see #rotate(Vector3f, float)
      */
     void rotate(Quaternionf rotation);
 

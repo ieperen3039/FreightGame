@@ -24,10 +24,21 @@ public class SFrame extends SContainer {
     private SContainer upperBar;
     private boolean isDisposed = false;
 
+    /**
+     * Creates a SFrame with the given title, width and height
+     * @param title the title of the new frame
+     * @see SPanel
+     */
     public SFrame(String title, int width, int height) {
         this(title, width, height, true);
     }
 
+    /**
+     * Creates a SFrame with the given title, width and height. Moving, minimizing and closing by the user is disabled
+     * for this frame.
+     * @param title the title of the new frame
+     * @see SPanel
+     */
     public SFrame(String title, int width, int height, boolean manipulable) {
         super(new SingleElementLayout(), false, false);
         this.title = title;
@@ -39,6 +50,11 @@ public class SFrame extends SContainer {
         setSize(width, height);
     }
 
+    /**
+     * Creates a SFrame with the given title and minimum size
+     * @param title the title of the new frame
+     * @see SPanel
+     */
     public SFrame(String title) {
         this(title, 0, 0);
     }
@@ -62,8 +78,20 @@ public class SFrame extends SContainer {
      * @param comp the new middle component
      */
     public void setMainPanel(SContainer comp) {
-        add(comp, null); // single element layout
+        super.add(comp, null); // single element layout
         comp.setPosition(0, upperBar.getHeight());
+    }
+
+    /**
+     * This method should not be used. The main panel should be modified, which can be set with {@link
+     * #setMainPanel(SContainer)}
+     * @throws UnsupportedOperationException always
+     * @deprecated this should not be used
+     */
+    @Deprecated
+    @Override
+    public void add(SComponent comp, Object prop) {
+        throw new UnsupportedOperationException("Tried adding components to a SFrame, which is illegal");
     }
 
     /**

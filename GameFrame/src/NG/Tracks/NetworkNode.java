@@ -88,20 +88,19 @@ public abstract class NetworkNode {
 
     /**
      * removes the track and references of both nodes to each other
-     * @param game reference to the current game instance
      * @param aNode one node
      * @param bNode another node connected to aNode
      * @return false iff the two nodes were not connected.
      */
-    protected static boolean removeConnection(Game game, NetworkNode aNode, NetworkNode bNode) {
+    protected static boolean removeConnection(NetworkNode aNode, NetworkNode bNode) {
         TrackPiece trackPiece = aNode.removeNode(bNode);
         TrackPiece samePiece = bNode.removeNode(aNode);
 
-        assert trackPiece == samePiece : "Nodes are mutually connected with a different track piece (" +
+        assert trackPiece == samePiece : "Nodes were mutually connected with a different track piece (" +
                 trackPiece + " and " + samePiece + ")";
 
         if (trackPiece == null) return false;
-        game.state().removeEntity(trackPiece);
+        trackPiece.dispose();
         return true;
     }
 
@@ -111,7 +110,7 @@ public abstract class NetworkNode {
      * @param type      the type of track
      * @param aPosition one position of the map
      * @param bPosition another position on the map
-     * @return a pair of nodes, where one of the two is at position {@code aPosition} and the other at {@code
+     * @return a pair of nodes, where left is at position {@code aPosition} and right at {@code
      * bPosition}, and which are connected with an instance of {@link StraightTrack}
      */
     public static Pair<NetworkNode, NetworkNode> getNodePair(
@@ -159,7 +158,7 @@ public abstract class NetworkNode {
         assert aNode.type.equals(bNode.type); // see SwitchNode
         ConnectionNode newNode = new ConnectionNode(nodePoint, aNode.type);
 
-        boolean success = removeConnection(game, aNode, bNode);
+        boolean success = removeConnection(aNode, bNode);
         assert success : "Connection did not exist";
 
         addConnection(game, aNode, newNode);

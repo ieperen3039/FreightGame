@@ -26,13 +26,16 @@ public class SPanel extends SContainer {
 
     /**
      * creates a panel with the given layout manager
-     * @param minimumWidth  minimum width of the panel in pixels
-     * @param minimumHeight minimum height of the panel in pixels
-     * @param layoutManager a new layout manager for this component
+     * @param minimumWidth   minimum width of the panel in pixels
+     * @param minimumHeight  minimum height of the panel in pixels
+     * @param layoutManager  a new layout manager for this component
      * @param growHorizontal if true, the panel tries to grow in its width
-     * @param growVertical if true, the panel tries to grow in its height
+     * @param growVertical   if true, the panel tries to grow in its height
      */
-    public SPanel(int minimumWidth, int minimumHeight, SLayoutManager layoutManager, boolean growHorizontal, boolean growVertical) {
+    public SPanel(
+            int minimumWidth, int minimumHeight, SLayoutManager layoutManager, boolean growHorizontal,
+            boolean growVertical
+    ) {
         super(layoutManager, growHorizontal, growVertical);
         this.minimumWidth = minimumWidth;
         this.minimumHeight = minimumHeight;
@@ -40,29 +43,40 @@ public class SPanel extends SContainer {
 
     /**
      * creates a panel that uses a grid layout with the given number of rows and columns
-     * @param minimumWidth  minimum width of the panel in pixels
-     * @param minimumHeight minimum height of the panel in pixels
-     * @param rows          number of grid rows in this panel
-     * @param cols          number of columns in this panel
+     * @param minimumWidth   minimum width of the panel in pixels
+     * @param minimumHeight  minimum height of the panel in pixels
+     * @param rows           number of grid rows in this panel
+     * @param cols           number of columns in this panel
      * @param growHorizontal if true, the panel tries to grow in its width
-     * @param growVertical if true, the panel tries to grow in its height
+     * @param growVertical   if true, the panel tries to grow in its height
      */
-    public SPanel(int minimumWidth, int minimumHeight, int cols, int rows, boolean growHorizontal, boolean growVertical) {
+    public SPanel(
+            int minimumWidth, int minimumHeight, int cols, int rows, boolean growHorizontal, boolean growVertical
+    ) {
         this(minimumWidth, minimumHeight, new GridLayoutManager(cols, rows), growHorizontal, growVertical);
     }
 
     /**
      * creates a panel with the given layout manager, minimum size of (0, 0)
      * @param layoutManager a new layout manager for this component
-     * @param growPolicy if true, try to grow
+     * @param growPolicy    if true, try to grow
      */
     public SPanel(SLayoutManager layoutManager, boolean growPolicy) {
         this(0, 0, layoutManager, growPolicy, growPolicy);
     }
 
     /**
-     * creates a panel that uses a default GridLayout of 3x3 and with minimum size of
-     * (0, 0) and a no-growth policy
+     * creates a panel that uses a default GridLayout of 3x3 and with minimum size of (0, 0) and a no-growth policy.
+     * Objects should be located using one of
+     * {@link #NORTH},
+     * {@link #EAST},
+     * {@link #SOUTH},
+     * {@link #WEST},
+     * {@link #NORTHEAST},
+     * {@link #SOUTHEAST},
+     * {@link #MORTHWEST},
+     * {@link #SOUTHWEST},
+     * {@link #MIDDLE}
      */
     public SPanel() {
         super(new GridLayoutManager(3, 3), false, false);
@@ -74,7 +88,7 @@ public class SPanel extends SContainer {
      * creates a panel that uses no layout and with given minimum size
      * @param minimumWidth  minimum width of the panel in pixels
      * @param minimumHeight minimum height of the panel in pixels
-     * @param growPolicy if true, this panel tries to grow in each direction
+     * @param growPolicy    if true, this panel tries to grow in each direction
      */
     public SPanel(int minimumWidth, int minimumHeight, boolean growPolicy) {
         super(new GridLayoutManager(1, 1), growPolicy, growPolicy);

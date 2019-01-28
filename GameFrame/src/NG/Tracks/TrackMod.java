@@ -21,7 +21,7 @@ public interface TrackMod extends Mod {
      * track.
      *///TODO extend this
     interface TrackType {
-        /** @return a name for this track */
+        /** @return a name for this track type */
         String name();
 
         /**

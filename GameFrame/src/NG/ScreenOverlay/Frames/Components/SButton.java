@@ -13,6 +13,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
 /**
+ * A Button that may execute actions for both left and right clicks upon release.
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
 public class SButton extends SComponent implements MouseReleaseListener, MouseRelativeClickListener {
@@ -26,17 +27,42 @@ public class SButton extends SComponent implements MouseReleaseListener, MouseRe
     private boolean vtGrow = false;
     private boolean hzGrow = false;
 
+    /**
+     * a button with no associated action (a dead button)
+     * @param text      the text of the button
+     * @param minWidth  the minimal width of this buttion, which {@link NG.ScreenOverlay.Frames.LayoutManagers.SLayoutManager}s
+     *                  should respect
+     * @param minHeight the minimal height of this button.
+     * @see #addLeftClickListener(Runnable)
+     */
     public SButton(String text, int minWidth, int minHeight) {
         this.minHeight = minHeight;
         this.minWidth = minWidth;
-        this.text = text;
+        setText(text);
     }
 
+    /**
+     * a button with a basic associated action
+     * @param text      the text of the button
+     * @param action    the action that is executed upon (releasing a) left click
+     * @param minWidth  the minimal width of this buttion, which {@link NG.ScreenOverlay.Frames.LayoutManagers.SLayoutManager}s
+     *                  should respect
+     * @param minHeight the minimal height of this button.
+     */
     public SButton(String text, Runnable action, int minWidth, int minHeight) {
         this(text, minWidth, minHeight);
         leftClickListeners.add(action);
     }
 
+    /**
+     * a button with both a left and a right click action
+     * @param text      the text of the button
+     * @param onLeftClick the action that is executed upon (releasing a) left click
+     * @param onRightClick the action that is executed upon (releasing a) right click
+     * @param minWidth  the minimal width of this buttion, which {@link NG.ScreenOverlay.Frames.LayoutManagers.SLayoutManager}s
+     *                  should respect
+     * @param minHeight the minimal height of this button.
+     */
     public SButton(String text, Runnable onLeftClick, Runnable onRightClick, int minWidth, int minHeight) {
         this(text, onLeftClick, minWidth, minHeight);
         rightClickListeners.add(onRightClick);

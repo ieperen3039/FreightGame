@@ -5,8 +5,10 @@ import NG.DataStructures.Storable;
 import NG.Engine.FreightGame;
 import NG.Engine.GameAspect;
 import NG.Entities.Entity;
+import NG.Rendering.Light;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.Primitives.Collision;
+import org.joml.Vector2fc;
 import org.joml.Vector3fc;
 
 import java.util.List;
@@ -22,6 +24,12 @@ public interface GameState extends GameAspect, Storable, MouseToolListener {
      * @param entity the new entity, with only its constructor called
      */
     void addEntity(Entity entity);
+
+    /**
+     * adds a point-light to the game in a thread-safe way.
+     * @param light the new light
+     */
+    void addLight(Light light);
 
     /**
      * draws the objects on the screen, according to the state of the {@link FreightGame#timer()} object. Must be called
@@ -50,13 +58,16 @@ public interface GameState extends GameAspect, Storable, MouseToolListener {
      * @param range    a maximum distance
      * @return all storage objects with a distance to {@code position} less or equal than distance.
      */
-    List<Storage> getIndustriesByRange(Vector3fc position, int range);
+    List<Storage> getIndustriesByRange(Vector2fc position, int range);
 
     /**
-     * removes the first occurrence of an entity from the gameState. This action does not have to be executed
+     * removes the given entity from the gameState. This action does not have to be executed
      * immediately.
      * @param entity an entity to be removed
-     * @deprecated instead, put an entities {@link Entity#doRemove()} to true
+     * @deprecated instead, put an entities {@link Entity#isDisposed()} to true
      */
-    void removeEntity(Entity entity);
+    @Deprecated
+    default void removeEntity(Entity entity) {
+        entity.dispose();
+    }
 }

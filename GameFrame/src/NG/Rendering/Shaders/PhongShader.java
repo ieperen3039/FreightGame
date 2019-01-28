@@ -56,7 +56,7 @@ public class PhongShader extends AbstractShader {
      * @return light color
      */
     private Color4f getAmbientLight() {
-        return new Color4f(1, 1, 1, 0.1f);
+        return new Color4f(1, 1, 1, 0.2f);
     }
 
     /**

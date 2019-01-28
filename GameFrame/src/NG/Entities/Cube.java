@@ -10,10 +10,11 @@ import org.joml.Vector3fc;
  * @author Geert van Ieperen created on 9-1-2019.
  */
 public class Cube implements MovingEntity {
-    private Vector3f position;
-    private boolean isAlive = true;
     private static int nr = 0;
     private final int id;
+
+    private boolean isDisposed = false;
+    private Vector3f position;
 
     public Cube(Vector3f position) {
         this.position = position;
@@ -42,7 +43,12 @@ public class Cube implements MovingEntity {
 
     @Override
     public void onClick(int button) {
-        isAlive = false;
+        dispose();
+    }
+
+    @Override
+    public void dispose() {
+        isDisposed = true;
     }
 
     @Override
@@ -51,8 +57,8 @@ public class Cube implements MovingEntity {
     }
 
     @Override
-    public boolean doRemove() {
-        return !isAlive;
+    public boolean isDisposed() {
+        return isDisposed;
     }
 
     @Override
