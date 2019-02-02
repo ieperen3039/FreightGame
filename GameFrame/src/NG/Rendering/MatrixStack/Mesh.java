@@ -1,5 +1,7 @@
 package NG.Rendering.MatrixStack;
 
+import java.util.Arrays;
+
 /**
  * @author Geert van Ieperen created on 17-11-2017.
  */
@@ -13,19 +15,37 @@ public interface Mesh {
     void dispose();
 
     /**
-     * a record class to describe a plane by indices
+     * a record class to describe a plane by indices. This object is not robust, thus one may not assume it is immutable.
      */
     class Face {
-        public int[] vert;
-        public int[] norm;
+        /** indices of the vertices of this face */
+        public final int[] vert;
+        /** indices of the normals of this face */
+        public final int[] norm;
+        /** indices of the texture coordinates of this face */
+        public final int[] tex;
+
+        public Face(int[] vertexIndices, int[] normalIndices, int[] textureIndices) {
+            int size = vertexIndices.length;
+            assert (normalIndices.length == size && textureIndices.length == size);
+
+            this.vert = vertexIndices;
+            this.norm = normalIndices;
+            this.tex = textureIndices;
+        }
 
         /**
          * a description of a plane, with the indices of the vertices and normals given. The indices should refer to a
          * list of vertices and normals that belong to a list of faces where this face is part of.
          */
         public Face(int[] vertices, int[] normals) {
-            vert = vertices;
-            norm = normals;
+            int size = vertices.length;
+            assert (normals.length == size);
+
+            this.vert = vertices;
+            this.norm = normals;
+            this.tex = new int[size];
+            for (int i = 0; i < size; i++) tex[i] = -1;
         }
 
         /**
@@ -33,17 +53,37 @@ public interface Mesh {
          * list of vertices and normals that belong to a list of faces where this face is part of.
          */
         public Face(int[] vertices, int nInd) {
-            int faceSize = vertices.length;
+            this(vertices, new int[vertices.length]);
+            Arrays.fill(norm, nInd);
+        }
 
-            vert = vertices;
-            norm = new int[faceSize];
-            for (int i = 0; i < faceSize; i++) {
-                norm[i] = nInd;
+        /**
+         * parses a face object from a given line of an OBJ formatted file
+         * @param tokens a line of a face, split on whitespaces, with 'f' on position 0.
+         */
+        public Face(String[] tokens) {
+            assert tokens[0].equals("f") : Arrays.toString(tokens);
+
+            int nOfEdges = tokens.length - 1;
+            vert = new int[nOfEdges];
+            norm = new int[nOfEdges];
+            tex = new int[nOfEdges];
+
+            for (int i = 0; i < nOfEdges; i++) {
+                String[] indices = tokens[i + 1].split("/");
+                vert[i] = readSymbol(indices[0]);
+                tex[i] = readSymbol(indices[1]);
+                norm[i] = readSymbol(indices[2]);
             }
         }
 
         public int size() {
             return vert.length;
         }
+
+        private int readSymbol(String index) {
+            return index.isEmpty() ? -1 : Integer.parseInt(index) - 1;
+        }
+
     }
 }

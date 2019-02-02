@@ -1,63 +1,135 @@
 package NG.Rendering.Shapes;
 
+import NG.DataStructures.Generic.Color4f;
 import NG.Rendering.MatrixStack.Mesh;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Tools.Toolbox;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.lwjgl.opengl.GL;
-import org.lwjgl.system.MemoryUtil;
 
-import java.nio.FloatBuffer;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 import java.util.function.Supplier;
 
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
+import static org.lwjgl.opengl.GL15.glBindBuffer;
+import static org.lwjgl.opengl.GL30.glBindVertexArray;
 
 /**
+ * A mesh that supports (only) flat shading. Per-vertex coloring is supported, no textures.
  * @author Geert van Ieperen created on 17-11-2017.
  */
-public class FlatMesh implements Mesh {
+public class FlatMesh extends AbstractMesh {
     /**
      * an empty mesh, not bound to any resources.
      */
-    public static final FlatMesh EMPTY_MESH = new EmptyMesh();
-
-    private static Queue<FlatMesh> loadedMeshes = new ArrayDeque<>(20);
-
-    private int vaoId;
-    private int vertexCount;
-    private int posVboID;
-    private int normVboID;
+    public static final Mesh EMPTY_MESH = new EmptyMesh();
 
     /**
      * Creates a mesh from the given data. This may only be called on the main thread. VERY IMPORTANT that you have
      * first called {@link GL#createCapabilities()} (or similar) for openGL 3 or higher.
-     * @param posList    a list of vertices
-     * @param normList   a list of normal vectors
-     * @param facesList  a list of faces, where each face refers to indices from posList and normList
+     * @param posList   a list of vertices
+     * @param normList  a list of normal vectors
+     * @param facesList a list of faces, where each face refers to indices from posList and normList
      */
-    public FlatMesh(List<? extends Vector3fc> posList, List<? extends Vector3fc> normList, List<Mesh.Face> facesList) {
-        final int nOfEdges = facesList.get(0).size();
+    public FlatMesh(
+            List<? extends Vector3fc> posList, List<? extends Vector3fc> normList, List<Color4f> colorList,
+            List<Face> facesList
+    ) {
+        int faceSize = facesList.isEmpty() ? 0 : facesList.get(0).size();
 
         // Create position array in the order it has been declared. faces have (nOfEdges) vertices of 3 indices
-        float[] posArr = new float[facesList.size() * 3 * nOfEdges];
-        float[] normArr = new float[facesList.size() * 3 * nOfEdges];
+        int nrOf3VecElements = facesList.size() * 3 * faceSize;
+        setElementCount(nrOf3VecElements);
+        float[] posArr = new float[nrOf3VecElements];
+        float[] normArr = new float[nrOf3VecElements];
+        float[] colorArr = colorList == null ? null : new float[facesList.size() * 4 * faceSize];
 
         for (int i = 0; i < facesList.size(); i++) {
-            Mesh.Face face = facesList.get(i);
+            Face face = facesList.get(i);
             readFaceVertex(face, posList, i, posArr);
             readFaceNormals(face, normList, i, normArr);
+
+            if (colorList != null) {
+                readFaceColors(face, colorList, i, colorArr);
+            }
         }
 
-        writeToGL(posArr, normArr);
-        loadedMeshes.add(this);
+        writeToGL(posArr, normArr, colorArr);
+    }
+
+    /**
+     * Creates a mesh from the given data. This may only be called on the main thread. VERY IMPORTANT that you have
+     * first called {@link GL#createCapabilities()} (or similar) for openGL 3 or higher.
+     * @param posList   a list of vertices
+     * @param normList  a list of normal vectors
+     * @param facesList a list of faces, where each face refers to indices from posList and normList
+     */
+    public FlatMesh(List<? extends Vector3fc> posList, List<? extends Vector3fc> normList, List<Face> facesList) {
+        this(posList, normList, null, facesList);
+    }
+
+    /**
+     * allows for an empty mesh
+     */
+    private FlatMesh() {
+    }
+
+    /**
+     * create a mesh and store it to the GL. For both lists it holds that the ith vertex has the ith normal vector
+     * @param positions the vertices, concatenated in groups of 3
+     * @param normals   the normals, concatenated in groups of 3
+     * @param colors    the vertex colors, concatenated in groups of 4. May be null.
+     * @throws IllegalArgumentException if positions or normals has length not divisible by 3, or when colors has length
+     *                                  not divisible by 4.
+     * @throws IllegalArgumentException if the arrays are of unequal length
+     * @throws IllegalStateException    if the mesh is already loaded
+     */
+    private void writeToGL(float[] positions, float[] normals, float[] colors) {
+        if (getVAO() != 0) throw new IllegalStateException("Tried loading a mesh that was already loaded");
+        assert testAssumptions(positions, normals, colors);
+
+        createVAO();
+        createVBOTable(3); // all 0's
+
+        glBindVertexArray(getVAO());
+
+        // Position VBO
+        createVBO(positions, 0, 3);
+
+        // Vertex normals VBO
+        createVBO(normals, 1, 3);
+
+        // Vertex color VBO
+        if (colors != null) {
+            createVBO(colors, 2, 4);
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+        Toolbox.checkGLError();
+    }
+
+    /**
+     * test that the given arrays correctly represent a coherent set of vertices, normals, colors and coordinates.
+     * @return always true
+     * @throws IllegalArgumentException if any of the assumptions are invalid
+     */
+    private boolean testAssumptions(float[] positions, float[] normals, float[] colors) {
+        if (((positions.length % 3) != 0) || (positions.length == 0)) {
+            throw new IllegalArgumentException("received invalid position array of length " + positions.length + ".");
+
+        } else if (normals.length != positions.length) {
+            throw new IllegalArgumentException("received a normals array that is not as long as vertices array: " +
+                    positions.length + " position values and " + normals.length + " normal values");
+
+        } else if (colors != null && (colors.length * 3) != (positions.length * 4)) {
+            throw new IllegalArgumentException("received a color array that is not of the required size: " +
+                    "expected " + ((positions.length * 4) / 3) + " color values but got " + colors.length + " color values");
+        }
+
+        return true;
     }
 
     /**
@@ -66,34 +138,45 @@ public class FlatMesh implements Mesh {
      * @param posList   a list of vertices
      * @param normList  a list of normal vectors
      * @param facesList a list of faces, where each face refers to indices from posList and normList
+     * @param colorList
      * @return a prepared mesh, where the get() method will load the mesh to the GPU and return the resulting Mesh.
      */
-    public static Supplier<FlatMesh> createDelayed(
-            List<Vector3fc> posList, List<Vector3fc> normList, List<Mesh.Face> facesList
+    public static Supplier<AbstractMesh> createDelayed(
+            List<Vector3fc> posList, List<Vector3fc> normList, List<Face> facesList,
+            List<Color4f> colorList
     ) {
         FlatMesh delayed = new FlatMesh();
-        final int nOfEdges = facesList.get(0).size();
+        int faceSize = 3;
 
-        // Create position array in the order it has been declared. faces have (faces.size()) vertices of 3 indices
-        float[] posArr = new float[facesList.size() * 3 * nOfEdges];
-        float[] normArr = new float[facesList.size() * 3 * nOfEdges];
+        // Create position array in the order it has been declared. faces have (nOfEdges) vertices of 3 indices
+        int nrOf3VecElements = facesList.size() * 3 * faceSize;
+        delayed.setElementCount(nrOf3VecElements);
+        float[] posArr = new float[nrOf3VecElements];
+        float[] normArr = new float[nrOf3VecElements];
+        float[] colorArr = colorList == null ? null : new float[facesList.size() * 4 * faceSize];
 
         for (int i = 0; i < facesList.size(); i++) {
-            Mesh.Face face = facesList.get(i);
+            Face face = facesList.get(i);
+            assert face.size() == faceSize;
+
             readFaceVertex(face, posList, i, posArr);
             readFaceNormals(face, normList, i, normArr);
+
+            if (colorList != null) {
+                readFaceColors(face, colorList, i, colorArr);
+            }
         }
 
         return () -> {
-            delayed.writeToGL(posArr, normArr);
-            loadedMeshes.add(delayed);
+            delayed.writeToGL(posArr, normArr, colorArr);
             return delayed;
         };
     }
 
     /**
      * creates a Mesh of a section of the given heightmap. Note that the xEnd value should not be larger than
-     * (heightmap.length - 1), same for yEnd.
+     * (heightmap.length - 1), same for yEnd. The returned supplier must be activated on the current GL context, this
+     * function does not have to be called there.
      * @param heightmap the heightmap, giving the height of a virtual (x, y) coordinate
      * @param xStart    the lowest x index to consider, inclusive
      * @param xEnd      the the highest x index to consider, inclusive.
@@ -103,7 +186,9 @@ public class FlatMesh implements Mesh {
      *                  this value gives the real coordinate.
      * @return a mesh of the heightmap, using quads, positioned in absolute coordinates. (no transformation is needed)
      */
-    public static Supplier<FlatMesh> meshFromHeightmap(float[][] heightmap, int xStart, int xEnd, int yStart, int yEnd, float edgeSize) {
+    public static Supplier<AbstractMesh> meshFromHeightmap(
+            float[][] heightmap, int xStart, int xEnd, int yStart, int yEnd, float edgeSize
+    ) {
         int nOfXFaces = xEnd - xStart;
         int nOfYFaces = yEnd - yStart;
         int nOfVertices = (nOfXFaces + 1) * (nOfYFaces + 1);
@@ -140,42 +225,59 @@ public class FlatMesh implements Mesh {
         // faces
         int nOfQuads = nOfXFaces * nOfYFaces;
         int arrayXSize = xEnd - xStart + 1;
-        List<Mesh.Face> faces = new ArrayList<>(nOfQuads);
+        List<Face> faces = new ArrayList<>(nOfQuads);
 
         for (int y = 0; y < nOfYFaces; y++) {
             for (int x = 0; x < nOfXFaces; x++) {
                 int left = y * arrayXSize + x;
                 int right = (y + 1) * arrayXSize + x;
 
-                faces.add(new Mesh.Face(
+                faces.add(new Face(
                         new int[]{left, right + 1, left + 1},
                         new int[]{left, right + 1, left + 1}
                 ));
-                faces.add(new Mesh.Face(
+                faces.add(new Face(
                         new int[]{left, right, right + 1},
                         new int[]{left, right, right + 1}
                 ));
             }
         }
 
-        return createDelayed(vertices, normals, faces);
+        return createDelayed(vertices, normals, faces, null);
     }
 
-    private static void readFaceVertex(
-            Mesh.Face face, List<? extends Vector3fc> posList, int faceNumber, float[] posArr
-    ) {
-        int indices = faceNumber * face.size();
-        for (int i = 0; i < face.size(); i++) {
-            readVector(indices + i, posList, posArr, face.vert[i]);
+    private static void readFaceVertex(Face face, List<? extends Vector3fc> posList, int faceNumber, float[] posArr) {
+        assert face.size() == 3;
+
+        int vectorIndex = faceNumber * 3;
+        for (int i = 0; i < 3; i++) {
+            readVector(vectorIndex + i, posList, posArr, face.vert[i]);
         }
     }
 
     private static void readFaceNormals(
-            Mesh.Face face, List<? extends Vector3fc> normList, int faceNumber, float[] normArr
+            Face face, List<? extends Vector3fc> normList, int faceNumber, float[] normArr
     ) {
-        int indices = faceNumber * face.size();
-        for (int i = 0; i < face.size(); i++) {
-            readVector(indices + i, normList, normArr, face.norm[i]);
+        assert face.size() == 3;
+
+        int vectorIndex = faceNumber * 3;
+        for (int i = 0; i < 3; i++) {
+            readVector(vectorIndex + i, normList, normArr, face.norm[i]);
+        }
+    }
+
+    private static void readFaceColors(Face face, List<Color4f> colorList, int faceNumber, float[] colorArr) {
+        assert face.size() == 3;
+
+        int vectorIndex = faceNumber * 3;
+        for (int i = 0; i < 3; i++) {
+            Color4f color = colorList.get(face.vert[i]);
+            int offset = (vectorIndex + i) * 4;
+
+            colorArr[offset] = color.red;
+            colorArr[offset + 1] = color.green;
+            colorArr[offset + 2] = color.blue;
+            colorArr[offset + 3] = color.alpha;
         }
     }
 
@@ -183,106 +285,13 @@ public class FlatMesh implements Mesh {
             int vectorNumber, List<? extends Vector3fc> sourceList, float[] targetArray, int index
     ) {
         Vector3fc vertex = sourceList.get(index);
-        int arrayPosition = vectorNumber * 3;
-        targetArray[arrayPosition] = vertex.x();
-        targetArray[arrayPosition + 1] = vertex.y();
-        targetArray[arrayPosition + 2] = vertex.z();
+        int offset = vectorNumber * 3;
+        targetArray[offset] = vertex.x();
+        targetArray[offset + 1] = vertex.y();
+        targetArray[offset + 2] = vertex.z();
     }
 
-
-    /**
-     * create a mesh and store it to the GL. For both lists it holds that the ith vertex has the ith normal Vector3f
-     * @param positions the vertices, concatenated in groups of 3
-     * @param normals   the normals, concatenated in groups of 3
-     * @throws IllegalArgumentException if any of the arrays has length not divisible by 3
-     * @throws IllegalArgumentException if the arrays are of unequal length
-     */
-    private void writeToGL(float[] positions, float[] normals) {
-        if (((positions.length % 3) != 0) || (positions.length == 0)) {
-            throw new IllegalArgumentException("received invalid position array of length " + positions.length + ".");
-        } else if (normals.length != positions.length) {
-            throw new IllegalArgumentException("received a normals array that is not as long as positions: " +
-                    positions.length + " position values and " + normals.length + "normal values");
-        } else if (vaoId != 0) {
-            throw new IllegalStateException("Tried loading a mesh that was already loaded");
-        }
-
-        vertexCount = positions.length;
-        FloatBuffer posBuffer = MemoryUtil.memAllocFloat(vertexCount);
-        FloatBuffer normBuffer = MemoryUtil.memAllocFloat(vertexCount);
-
-        try {
-            posBuffer.put(positions).flip();
-            normBuffer.put(normals).flip();
-
-            vaoId = glGenVertexArrays();
-            glBindVertexArray(vaoId);
-
-            // Position VBO
-            posVboID = glGenBuffers();
-            glBindBuffer(GL_ARRAY_BUFFER, posVboID);
-            glBufferData(GL_ARRAY_BUFFER, posBuffer, GL_STATIC_DRAW);
-            glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-
-            // Vertex normals VBO
-            normVboID = glGenBuffers();
-            glBindBuffer(GL_ARRAY_BUFFER, normVboID);
-            glBufferData(GL_ARRAY_BUFFER, normBuffer, GL_STATIC_DRAW);
-            glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
-
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glBindVertexArray(0);
-
-        } finally {
-            MemoryUtil.memFree(posBuffer);
-            MemoryUtil.memFree(normBuffer);
-        }
-    }
-
-    public void render(SGL.Painter lock) {
-        glBindVertexArray(vaoId);
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-
-        glDrawArrays(GL_TRIANGLES, 0, vertexCount);
-
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
-        glBindVertexArray(0);
-    }
-
-    /**
-     * all meshes that have been written to the GPU will be removed
-     */
-    @SuppressWarnings("ConstantConditions")
-    public static void cleanAll() {
-        while (!loadedMeshes.isEmpty()) {
-            loadedMeshes.peek().dispose();
-        }
-        Toolbox.checkGLError();
-    }
-
-    public void dispose() {
-        glDisableVertexAttribArray(0);
-
-        glDeleteBuffers(posVboID);
-        glDeleteBuffers(normVboID);
-
-        // Delete the VAO
-        glBindVertexArray(0);
-        glDeleteVertexArrays(vaoId);
-
-        loadedMeshes.remove(this);
-        vaoId = 0;
-    }
-
-    /**
-     * allows for an empty mesh
-     */
-    private FlatMesh() {
-    }
-
-    private static class EmptyMesh extends FlatMesh {
+    private static class EmptyMesh extends AbstractMesh {
         private EmptyMesh() {
             super();
         }
