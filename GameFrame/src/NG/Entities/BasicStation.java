@@ -6,7 +6,9 @@ import NG.DataStructures.Generic.Pair;
 import NG.DataStructures.Material;
 import NG.Engine.Game;
 import NG.Rendering.MatrixStack.SGL;
-import NG.Rendering.Shapes.ShapesGeneric;
+import NG.Rendering.Shaders.MaterialShader;
+import NG.Rendering.Shaders.ShaderProgram;
+import NG.Rendering.Shapes.FileShapes;
 import NG.ScreenOverlay.Frames.Components.*;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
@@ -109,8 +111,14 @@ public class BasicStation extends Station {
             gl.translate(position);
             gl.rotate(Vectors.zVector(), orientation);
             gl.scale(realLength / 2, realWidth / 2, 5);
-            gl.getShader().setMaterial(Material.ROUGH, isFixed ? Color4f.GREEN : Color4f.WHITE);
-            gl.render(ShapesGeneric.CUBE);
+
+            ShaderProgram shader = gl.getShader();
+            if (shader instanceof MaterialShader) {
+                MaterialShader matShader = (MaterialShader) shader;
+                matShader.setMaterial(Material.ROUGH, isFixed ? Color4f.GREEN : Color4f.WHITE);
+            }
+
+            gl.render(FileShapes.CUBE, this);
         }
         gl.popMatrix();
     }

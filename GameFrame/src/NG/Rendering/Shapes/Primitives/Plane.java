@@ -12,7 +12,7 @@ import java.util.Arrays;
  * @author Geert van Ieperen
  */
 public abstract class Plane {
-    private static final double EPSILON = 1e-3;
+    private static final float EPSILON = 1e-3f;
     /**
      * a summation of references to define the bounding box of this plane. often, these refer to the same vectors
      */
@@ -68,7 +68,7 @@ public abstract class Plane {
         if (!isInfinite && asideHitbox(origin, endPoint)) return null;
 
         float scalar = hitScalar(origin, direction);
-        if (!isInfinite && (scalar > 1.0f)) return null;
+        if (!isInfinite && (scalar > (1.0f + EPSILON))) return null;
 
         Vector3f hitDir = new Vector3f(direction).mul(scalar);
         Vector3fc hitPos = hitDir.add(origin);

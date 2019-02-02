@@ -1,5 +1,7 @@
 package NG.DataStructures.Generic;
 
+import java.util.Objects;
+
 /**
  * Pair class that simply holds two variables.
  * @param <L> Left type
@@ -19,11 +21,8 @@ public class Pair<L, R> {
         if (this == o) return true;
         if ((o == null) || (getClass() != o.getClass())) return false;
 
-        Pair<?, ?> pair = (Pair<?, ?>) o;
-
-        boolean leftEquals = (left != null) ? left.equals(pair.left) : (pair.left == null);
-        if (leftEquals) return (right != null) ? right.equals(pair.right) : (pair.right == null);
-        return false;
+        Pair<?, ?> other = (Pair<?, ?>) o;
+        return Objects.equals(left, other.left) && Objects.equals(right, other.right);
     }
 
     @Override

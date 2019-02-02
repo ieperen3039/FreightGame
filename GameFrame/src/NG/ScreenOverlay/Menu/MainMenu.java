@@ -7,7 +7,6 @@ import NG.Engine.ModLoader;
 import NG.Entities.Cube;
 import NG.Entities.Entity;
 import NG.GameState.MapGeneratorMod;
-import NG.Rendering.Light;
 import NG.ScreenOverlay.Frames.Components.*;
 import NG.Tools.Vectors;
 import org.joml.Vector2i;
@@ -80,6 +79,12 @@ public class MainMenu extends SFrame {
         Vector3f cameraEye = new Vector3f(cameraFocus).add(-50, -50, 50);
         cam.set(cameraFocus, cameraEye);
 
+        Vector3f pos = new Vector3f(cameraFocus).add(0, 0, 20);
+        Entity cube = new Cube(pos);
+        game.state().addEntity(cube);
+
+        game.state().setDirectionalLight(new Vector3f(1, 1.5f, 0.5f), Color4f.WHITE, 0.5f);
+
         // start
         modLoader.startGame();
         newGameFrame.setVisible(false);
@@ -105,7 +110,8 @@ public class MainMenu extends SFrame {
         Camera cam = game.camera();
         Vector3f cameraEye = new Vector3f(cbrtc, cbrtc, cbrtc).mul(spacing).add(10, 10, 10);
         cam.set(Vectors.zeroVector(), cameraEye);
-        game.state().addLight(new Light(new Vector3f(1, 1, 2), new Color4f(1, 1, 1), 0.2f, true));
+
+        game.state().setDirectionalLight(new Vector3f(1, 1.5f, 0.5f), Color4f.WHITE, 0.5f);
 
         modLoader.startGame();
         newGameFrame.setVisible(false);

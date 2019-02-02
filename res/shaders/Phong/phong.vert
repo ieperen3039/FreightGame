@@ -14,8 +14,8 @@ uniform mat4 modelMatrix;
 uniform mat4 viewProjectionMatrix;
 uniform mat3 normalMatrix;
 
-void main() {
-
+void main()
+{
 	vec4 mPosition = modelMatrix * vec4(position, 1.0);
     gl_Position = viewProjectionMatrix * mPosition;
 

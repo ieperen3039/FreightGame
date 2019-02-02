@@ -57,4 +57,17 @@ public interface GameMap extends GameAspect, MouseToolListener {
      * @return a vector p such that {@code p = origin + t * direction} for minimal t such that p lies on the map.
      */
     Vector3f intersectWithRay(Vector3fc origin, Vector3fc direction);
+
+    /**
+     * allows objects to listen for when this map is changed, as a result of {@link #generateNew(MapGeneratorMod)} or
+     * possibly an internal reason. Any call to {@link #draw(SGL)}, {@link #getHeightAt(float, float)} etc. will
+     * represent the new values as soon as this callback is activated.
+     * @param listener the object to notify
+     */
+    void addChangeListener(ChangeListener listener);
+
+    interface ChangeListener {
+        /** is called when the map is changed */
+        void onMapChange();
+    }
 }

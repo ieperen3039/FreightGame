@@ -57,12 +57,13 @@ public class FreightGame implements Game, ModLoader {
 
     public FreightGame() throws IOException {
         Logger.INFO.print("Starting up the game engine...");
+
         Logger.DEBUG.print("General debug information: " +
                 // manual aligning will do the trick
                 "\n\tSystem OS:          " + System.getProperty("os.name") +
                 "\n\tJava VM:            " + System.getProperty("java.runtime.version") +
                 "\n\tFrame version:      " + getVersionNumber() +
-                "\n\tWorking directory:  " + Directory.currentDirectory() +
+                "\n\tWorking directory:  " + Directory.workDirectory() +
                 "\n\tMods directory:     " + Directory.mods.getPath()
         );
 

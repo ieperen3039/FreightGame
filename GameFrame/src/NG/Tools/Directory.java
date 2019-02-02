@@ -6,21 +6,23 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 /**
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public enum Directory {
     shaders("res", "shaders"),
-    meshes("res", "models", "general"),
+    meshes("res", "models"),
     fonts("res", "fonts"),
     mods("jar", "Mods"),
     screenshots("img", "screenshots");
 
-    private final Path directory;
+    private static Path WORKING_DIRECTORY = null;
+    private final Path directory; // relative path
 
     Directory() {
-        this.directory = currentDirectory();
+        this.directory = workDirectory();
     }
 
     Directory(Path directory) {
@@ -36,25 +38,36 @@ public enum Directory {
     }
 
     public File getFile(String... path) {
-        return currentDirectory()
-                .resolve(getPath(path))
-                .toFile();
+        return getPath(path).toFile();
     }
 
     public Path getPath(String... path) {
-        Path dir = this.directory;
-        for (String p : path) {
-            dir = dir.resolve(p);
-        }
-        return dir;
+        String first = path[0];
+        String[] second = Arrays.copyOfRange(path, 1, path.length);
+        Path other = Paths.get(first, second);
+        return workDirectory().resolve(directory).resolve(other).toAbsolutePath();
+    }
+
+    public Path getPath() {
+        return directory; // immutable
     }
 
     public File[] getFiles() {
         return getDirectory().listFiles();
     }
 
-    public static Path currentDirectory() {
-        return Paths.get("").toAbsolutePath();
+    public static Path workDirectory() {
+        if (WORKING_DIRECTORY == null) {
+            WORKING_DIRECTORY = Paths.get("").toAbsolutePath();
+
+            if (!WORKING_DIRECTORY.endsWith("FreightGame")) {
+                WORKING_DIRECTORY = WORKING_DIRECTORY.getParent();
+            }
+
+            // more checks
+            assert WORKING_DIRECTORY.endsWith("FreightGame");
+        }
+        return WORKING_DIRECTORY;
     }
 
     public URL toURL() {

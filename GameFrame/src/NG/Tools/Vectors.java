@@ -5,7 +5,6 @@ import NG.DataStructures.Generic.Pair;
 import NG.Engine.Game;
 import NG.Rendering.GLFWWindow;
 import NG.Rendering.MatrixStack.SGL;
-import NG.Settings.Settings;
 import org.joml.Math;
 import org.joml.*;
 
@@ -254,11 +253,13 @@ public class Vectors {
      * @param origin       the destination vector of the origin of the ray. The exact result is ({@link Camera#getEye()}
      *                     + Z_NEAR * direction)
      * @param direction    the direction of the ray, not normalized.
+     * @param isometric
      */
     public static void windowCoordToRay(
-            Camera camera, int windowWidth, int windowHeight, Vector2f clickCoords, Vector3f origin, Vector3f direction
+            Camera camera, int windowWidth, int windowHeight, Vector2f clickCoords, Vector3f origin, Vector3f direction,
+            boolean isometric
     ) {
-        Matrix4f projection = SGL.getViewProjection(windowWidth, windowHeight, camera, Settings.ISOMETRIC_VIEW);
+        Matrix4f projection = SGL.getViewProjection(windowWidth, windowHeight, camera, isometric);
         int[] viewport = {0, 0, windowWidth, windowHeight};
         projection.unprojectRay(clickCoords, viewport, origin, direction);
     }
@@ -282,6 +283,6 @@ public class Vectors {
         GLFWWindow window = game.window();
         Camera camera = game.camera();
         Vector2f winCoords = new Vector2f(xSc, ySc);
-        windowCoordToRay(camera, window.getWidth(), window.getHeight(), winCoords, origin, direction);
+        windowCoordToRay(camera, window.getWidth(), window.getHeight(), winCoords, origin, direction, game.settings().ISOMETRIC_VIEW);
     }
 }

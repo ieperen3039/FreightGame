@@ -26,8 +26,8 @@ public class BasicShape implements Shape {
     public BasicShape(ShapeParameters model) {
         this(model.vertices, model.normals, model.faces);
 
-        Logger.DEBUG.print("loaded model " + model.name + ": [Faces: " + model.faces.size() + ", vertices: " + model.vertices
-                .size() + "]");
+        Logger.DEBUG.printf("loaded model %s: [Faces: %d, vertices: %d]",
+                model.name, model.faces.size(), model.vertices.size());
     }
 
     /**

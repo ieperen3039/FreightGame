@@ -20,12 +20,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.GL_SMOOTH_LINE_WIDTH_RANGE;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
@@ -69,18 +67,13 @@ public class GLFWWindow implements GameAspect {
             throw new RuntimeException("Unable to initialize GLFW");
         }
 
-        if (settings.DEBUG && GL_DEBUG_MESSAGES) {
-            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-            GLUtil.setupDebugMessageCallback();
-        }
-
         // Configure window
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, resizable ? GL_TRUE : GL_FALSE);
         // Set OpenGL version
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
@@ -101,8 +94,15 @@ public class GLFWWindow implements GameAspect {
 
         GL.createCapabilities();
 
+        // debug message callbacks
+        if (settings.DEBUG && GL_DEBUG_MESSAGES) {
+            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+            GLUtil.setupDebugMessageCallback();
+        }
+
         // Set clear color to black
-        glClearColor(0f, 0f, 0f, 0f);
+        glClearColor(0f, 0f, 0f, 0f); // black
+//        glClearColor(1f, 1f, 1f, 0f); // white
 
         // Enable Depth Test
         glEnable(GL_DEPTH_TEST);
@@ -111,9 +111,6 @@ public class GLFWWindow implements GameAspect {
         // Support transparencies
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        final FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(2);
-        glGetFloatv(GL_SMOOTH_LINE_WIDTH_RANGE, floatBuffer);
 
         Toolbox.checkGLError();
     }
@@ -166,7 +163,7 @@ public class GLFWWindow implements GameAspect {
      * saves a copy of the front buffer (the display) to disc
      * @param dir      directory to store the image to
      * @param filename the file to save to
-     * @param bufferToRead one of {@link GL11#GL_FRONT} or {@link GL11#GL_BACK}
+     * @param bufferToRead the GL buffer to read, usually one of {@link GL11#GL_FRONT} or {@link GL11#GL_BACK}
      */
     public void printScreen(Directory dir, String filename, int bufferToRead) {
         glReadBuffer(bufferToRead);

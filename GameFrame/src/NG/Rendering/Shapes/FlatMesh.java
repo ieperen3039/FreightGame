@@ -3,6 +3,7 @@ package NG.Rendering.Shapes;
 import NG.DataStructures.Generic.Color4f;
 import NG.Rendering.MatrixStack.Mesh;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.Shaders.ShaderProgram;
 import NG.Tools.Toolbox;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -91,19 +92,19 @@ public class FlatMesh extends AbstractMesh {
         assert testAssumptions(positions, normals, colors);
 
         createVAO();
-        createVBOTable(3); // all 0's
+        createVBOTable(); // all 0's
 
         glBindVertexArray(getVAO());
 
         // Position VBO
-        createVBO(positions, 0, 3);
+        createVBO(positions, ShaderProgram.VERTEX_LOCATION, 3);
 
         // Vertex normals VBO
-        createVBO(normals, 1, 3);
+        createVBO(normals, ShaderProgram.NORMAL_LOCATION, 3);
 
         // Vertex color VBO
         if (colors != null) {
-            createVBO(colors, 2, 4);
+            createVBO(colors, ShaderProgram.COLOR_LOCATION, 4);
         }
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);

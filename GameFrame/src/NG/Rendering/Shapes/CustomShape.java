@@ -42,7 +42,7 @@ public class CustomShape {
 
     /**
      * A shape that may be defined by the client code using methods of this class. When the shape is finished, call
-     * {@link #asMesh()} to load it into the GPU. The returned shape should be re-used as a static mesh for any future
+     * {@link #asFlatMesh()} to load it into the GPU. The returned shape should be re-used as a static mesh for any future
      * calls to such shape.
      * @param middle the middle of this object. More specifically, from this point, all normal vectors point outward
      *               except maybe for those that have their normal explicitly defined.
@@ -77,12 +77,8 @@ public class CustomShape {
 
     /** a quad in rotational, counterclockwise order */
     private void addFinalQuad(Vector3fc A, Vector3fc B, Vector3fc C, Vector3fc D, Vector3fc normal) {
-        int aInd = addHitpoint(A);
-        int bInd = addHitpoint(B);
-        int cInd = addHitpoint(C);
-        int dInd = addHitpoint(D);
-        int nInd = addNormal(normal);
-        faces.add(new Mesh.Face(new int[]{aInd, bInd, cInd, dInd}, nInd));
+        addFinalTriangle(A, C, B, normal);
+        addFinalTriangle(A, D, C, normal);
     }
 
     /**
@@ -226,12 +222,16 @@ public class CustomShape {
      * convert this object into a Mesh
      * @return a hardware-accelerated Mesh object
      */
-    public Mesh asMesh() {
+    public Mesh asFlatMesh() {
         return new FlatMesh(getSortedVertices(), normals, faces);
     }
 
+//    public Mesh asSmoothMesh(){
+//        return null;
+//    }
+
     private List<Vector3fc> getSortedVertices() {
-        // this is the most clear, structured way of the duplicate-vector problem. maybe not the most efficient.
+        // this is the most clear, structured solution of the duplicate-vector problem. maybe not the most efficient.
         Vector3fc[] sortedVertices = new Vector3f[points.size()];
         points.forEach((v, i) -> sortedVertices[i] = v);
 

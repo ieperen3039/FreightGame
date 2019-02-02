@@ -3,8 +3,9 @@ package NG.Tools;
 import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Material;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
-import NG.Rendering.Shapes.ShapesGeneric;
+import NG.Rendering.Shapes.FileShapes;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
@@ -46,19 +47,28 @@ public final class Toolbox {
 
         Material mat = Material.ROUGH;
         ShaderProgram shader = gl.getShader();
+        MaterialShader matShader = (diffuse, specular, reflectance) -> {};
+
+        if (shader instanceof MaterialShader) {
+            matShader = (MaterialShader) shader;
+        }
+
         gl.pushMatrix();
         {
-            shader.setMaterial(mat, Color4f.BLUE);
-            gl.render(ShapesGeneric.ARROW);
+            matShader.setMaterial(mat, Color4f.BLUE);
+            gl.render(FileShapes.ARROW, null);
             gl.rotate((float) Math.toRadians(90), 0f, 1f, 0f);
-            shader.setMaterial(mat, Color4f.RED);
-            gl.render(ShapesGeneric.ARROW);
+
+            matShader.setMaterial(mat, Color4f.RED);
+            gl.render(FileShapes.ARROW, null);
             gl.rotate((float) Math.toRadians(-90), 1f, 0f, 0f);
-            shader.setMaterial(mat, Color4f.GREEN);
-            gl.render(ShapesGeneric.ARROW);
+
+            matShader.setMaterial(mat, Color4f.GREEN);
+            gl.render(FileShapes.ARROW, null);
             gl.scale(0.2f);
-            shader.setMaterial(mat, Color4f.WHITE);
-            gl.render(ShapesGeneric.CUBE);
+
+            matShader.setMaterial(mat, Color4f.WHITE);
+            gl.render(FileShapes.CUBE, null);
         }
         gl.popMatrix();
     }
@@ -66,28 +76,33 @@ public final class Toolbox {
     public static void draw3DPointer(SGL gl) {
         Material mat = Material.ROUGH;
         ShaderProgram shader = gl.getShader();
+        MaterialShader matShader = (diffuse, specular, reflectance) -> {};
 
-        shader.setMaterial(mat, Color4f.BLUE);
+        if (shader instanceof MaterialShader) {
+            matShader = (MaterialShader) shader;
+        }
+
+        matShader.setMaterial(mat, Color4f.BLUE);
         gl.pushMatrix();
         {
             gl.scale(1, CURSOR_SIZE, CURSOR_SIZE);
-            gl.render(ShapesGeneric.CUBE);
+            gl.render(FileShapes.CUBE, null);
         }
         gl.popMatrix();
 
-        shader.setMaterial(mat, Color4f.RED);
+        matShader.setMaterial(mat, Color4f.RED);
         gl.pushMatrix();
         {
             gl.scale(CURSOR_SIZE, 1, CURSOR_SIZE);
-            gl.render(ShapesGeneric.CUBE);
+            gl.render(FileShapes.CUBE, null);
         }
         gl.popMatrix();
 
-        shader.setMaterial(mat, Color4f.GREEN);
+        matShader.setMaterial(mat, Color4f.GREEN);
         gl.pushMatrix();
         {
             gl.scale(CURSOR_SIZE, CURSOR_SIZE, 1);
-            gl.render(ShapesGeneric.CUBE);
+            gl.render(FileShapes.CUBE, null);
         }
         gl.popMatrix();
     }

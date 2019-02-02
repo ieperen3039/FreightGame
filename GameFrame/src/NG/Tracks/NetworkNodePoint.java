@@ -5,9 +5,8 @@ import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
 import NG.GameState.GameMap;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.Shapes.FileShapes;
 import NG.Rendering.Shapes.Primitives.Collision;
-import NG.Rendering.Shapes.ShapesGeneric;
-import NG.Tools.Logger;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
@@ -43,13 +42,12 @@ public class NetworkNodePoint implements Entity {
 
     @Override
     public void draw(SGL gl) {
-        if ((gl.getShader() instanceof ClickShader) || (Logger.getLoggingLevel() == Logger.DEBUG)) {
+        if (gl.getShader() instanceof ClickShader) {
             gl.pushMatrix();
             {
                 gl.translate(heightMap.getPosition(position));
                 gl.scale(NODE_SIZE, NODE_SIZE, NODE_SIZE);
-                gl.getShader().setMaterial(TRANSPARENT_WHITE, Color4f.INVISIBLE, 1);
-                gl.render(ShapesGeneric.CUBE);
+                gl.render(FileShapes.CUBE, this);
             }
             gl.popMatrix();
         }

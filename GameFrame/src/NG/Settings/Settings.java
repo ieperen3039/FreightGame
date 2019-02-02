@@ -1,5 +1,7 @@
 package NG.Settings;
 
+import NG.DataStructures.Generic.Color4f;
+
 /**
  * A class that collects a number of settings. It is the only class whose fields are always initialized upon creation.
  * @author Geert van Ieperen. Created on 13-9-2018.
@@ -17,14 +19,15 @@ public class Settings {
     public boolean V_SYNC = true;
     public int WINDOW_WIDTH = 1200;
     public int WINDOW_HEIGHT = 800;
-    public static float FOV = 0.4f;
-    public static float Z_NEAR = 1f;
-    public static float Z_FAR = 5000;
-    public int MAX_POINT_LIGHTS = 16;
+    public static float FOV = (float) Math.toRadians(40);
+    public static float Z_NEAR = 0.01f;
+    public static float Z_FAR = 1000;
     public int ANTIALIAS_LEVEL = 1;
-    public static boolean ISOMETRIC_VIEW = true;
-    public final float CAMERA_ZOOM_SPEED = 0.1f;
-    public final int MAX_CAMERA_DIST = 1000;
+    public boolean ISOMETRIC_VIEW = false;
+    public float CAMERA_ZOOM_SPEED = 0.1f;
+    public int MAX_CAMERA_DIST = 1000;
+    public float MIN_CAMERA_DIST = 0.5f;
+    public int SHADOW_RESOLUTION = 1024;
 
     // UI settings
     public static int TOOL_BAR_HEIGHT = 80;
@@ -34,5 +37,5 @@ public class Settings {
 
     // in-game appearance settings
     public float TRACK_SPACING = 1f;
-
+    public Color4f AMBIENT_LIGHT = new Color4f(1, 1, 1, 0.2f);
 }

@@ -42,16 +42,16 @@ public class ShadowMatrix implements MatrixStack {
     }
 
     @Override
-    public Vector3f getPosition(Vector3f p) {
+    public Vector3f getPosition(Vector3fc position) {
         Vector3f result = new Vector3f();
-        p.mulPosition(matrix, result);
+        position.mulPosition(matrix, result);
         return result;
     }
 
     @Override
-    public Vector3f getDirection(Vector3f v) {
+    public Vector3f getDirection(Vector3fc direction) {
         Vector3f result = new Vector3f();
-        v.mulDirection(matrix, result);
+        direction.mulDirection(matrix, result);
         return result;
     }
 

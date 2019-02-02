@@ -4,9 +4,10 @@ import NG.ActionHandling.MouseTools.MouseTool;
 import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Material;
 import NG.Engine.Game;
-import NG.Rendering.Light;
 import NG.Rendering.MatrixStack.Mesh;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.Shaders.MaterialShader;
+import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.FlatMesh;
 import NG.ScreenOverlay.Frames.Components.SFiller;
 import NG.ScreenOverlay.Frames.Components.SFrame;
@@ -21,6 +22,7 @@ import org.joml.Vector3fc;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -31,6 +33,8 @@ public class HeightMap implements GameMap {
     private static final int MESH_SIZE_UPPER_BOUND = 100;
 
     private Game game;
+    private List<ChangeListener> listeners = new ArrayList<>();
+
     private float[][] heightmap;
     private final Collection<Mesh> meshOfTheWorld = new CopyOnWriteArrayList<>();
 
@@ -84,7 +88,7 @@ public class HeightMap implements GameMap {
                 meshProgress += meshPStep;
             }
         }
-        game.state().addLight(new Light(new Vector3f(1, 1, 2), Color4f.WHITE, 0.1f, true));
+        game.state().setDirectionalLight(new Vector3f(1, 1, 2), Color4f.WHITE, 0.5f);
 
         hasNewWorld = true;
         meshProgress = 1f;
@@ -110,10 +114,18 @@ public class HeightMap implements GameMap {
             Collection<Mesh> meshes = generateMeshes();
             meshOfTheWorld.addAll(meshes);
             hasNewWorld = false;
+
+            // only here, all promises hold
+            listeners.forEach(ChangeListener::onMapChange);
         }
 
-        gl.getShader().setMaterial(Material.ROUGH, new Color4f(0, 0.5f, 0));
-        meshOfTheWorld.forEach(gl::render);
+        ShaderProgram shader = gl.getShader();
+        if (shader instanceof MaterialShader) {
+            MaterialShader matShader = (MaterialShader) shader;
+            matShader.setMaterial(Material.ROUGH, new Color4f(0, 0.5f, 0));
+        }
+
+        meshOfTheWorld.forEach(object -> gl.render(object, null));
     }
 
     @Override
@@ -153,6 +165,7 @@ public class HeightMap implements GameMap {
         heightmap = null;
         preparedMeshes.clear();
         meshOfTheWorld.clear();
+        listeners.clear();
     }
 
     @Override
@@ -175,5 +188,10 @@ public class HeightMap implements GameMap {
         Vector3f temp = new Vector3f();
         float t = Intersectionf.intersectRayPlane(origin, direction, Vectors.zeroVector(), Vectors.zVector(), 1E-6f);
         return origin.add(direction.mul(t, temp), temp);
+    }
+
+    @Override
+    public void addChangeListener(ChangeListener listener) {
+        listeners.add(listener);
     }
 }

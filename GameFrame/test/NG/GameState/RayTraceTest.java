@@ -6,7 +6,6 @@ import NG.Engine.Game;
 import NG.Entities.Entity;
 import NG.Rendering.MatrixStack.SGL;
 import NG.ScreenOverlay.Frames.Components.SComponent;
-import NG.Settings.Settings;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import org.joml.*;
@@ -35,7 +34,7 @@ public class RayTraceTest {
 
     @Test
     public void screenTestIso() {
-        Settings.ISOMETRIC_VIEW = true;
+        game.settings().ISOMETRIC_VIEW = true;
         int width = game.window().getWidth();
         int height = game.window().getHeight();
 
@@ -51,7 +50,7 @@ public class RayTraceTest {
 
     @Test
     public void screenTestPerspec() {
-        Settings.ISOMETRIC_VIEW = false;
+        game.settings().ISOMETRIC_VIEW = false;
         int width = game.window().getWidth();
         int height = game.window().getHeight();
 
@@ -97,7 +96,7 @@ public class RayTraceTest {
 
     /** tests whether the given coordinate on the given isometric setting can be transformed one way and back */
     private void testCoord(final Vector3fc original, boolean isometricView) {
-        Settings.ISOMETRIC_VIEW = isometricView;
+        game.settings().ISOMETRIC_VIEW = isometricView;
 
         int width = game.window().getWidth();
         int height = game.window().getHeight();

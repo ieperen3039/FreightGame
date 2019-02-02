@@ -135,6 +135,8 @@ public final class ScreenOverlay implements GameAspect {
      * draw using the given painter
      */
     private synchronized void draw(int windowWidth, int windowHeight, Painter painter) {
+        // this should be the case
+        glViewport(0, 0, windowWidth, windowHeight);
         // Begin NanoVG frame
         nvgBeginFrame(vg, windowWidth, windowHeight, 1);
 

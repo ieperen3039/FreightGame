@@ -45,17 +45,17 @@ public interface MatrixStack {
 
     /**
      * calculate the position of a vector in reference to the space in which this is initialized
-     * @param p a local vector
+     * @param position a local vector
      * @return that vector in world-space
      */
-    Vector3f getPosition(Vector3f p);
+    Vector3f getPosition(Vector3fc position);
 
     /**
      * calculate a direction vector in reference to the space in which this is initialized
-     * @param v a local direction
+     * @param direction a local direction
      * @return this direction in world-space
      */
-    Vector3f getDirection(Vector3f v);
+    Vector3f getDirection(Vector3fc direction);
 
     /**
      * stores the current state of the transformations on a stack

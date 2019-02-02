@@ -113,10 +113,15 @@ public class TycoonFixedCamera implements Camera, MousePositionListener, KeyPres
         Settings s = game.settings();
         float zoomSpeed = s.CAMERA_ZOOM_SPEED;
         int maxZoom = s.MAX_CAMERA_DIST;
-        eyeOffset.mul((zoomSpeed * -value) + 1f);
+
+        float v = Math.max(Math.min(zoomSpeed * -value, 0.1f), -0.1f);
+        eyeOffset.mul(v + 1f);
+        float minZoom = s.MIN_CAMERA_DIST;
 
         if (eyeOffset.lengthSquared() > maxZoom * maxZoom) {
             eyeOffset.normalize(maxZoom);
+        } else if (eyeOffset.lengthSquared() < minZoom * minZoom) {
+            eyeOffset.normalize(minZoom);
         }
     }
 

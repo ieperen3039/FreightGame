@@ -1,12 +1,8 @@
 package NG.Rendering.Shaders;
 
 import NG.DataStructures.Generic.Color4f;
-import NG.DataStructures.Material;
-import NG.Entities.Entity;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-import org.joml.Vector3fc;
-import org.joml.Vector4f;
+import NG.Tools.Toolbox;
+import org.joml.*;
 import org.lwjgl.system.MemoryStack;
 
 import java.io.FileInputStream;
@@ -20,14 +16,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
+import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL32.GL_GEOMETRY_SHADER;
 
 /**
+ * An abstract shader that initializes a view-projection matrix, a model matrix, and a normal matrix. allows for setting
+ * multiple unforms, and gives utility methods as {@link #createPointLightsUniform(String, int)}
  * @author Yoeri Poels
  * @author Geert van Ieperen
  */
-public abstract class AbstractShader implements ShaderProgram {
+public abstract class SceneShader implements ShaderProgram, MaterialShader, LightShader {
 
     private final Map<String, Integer> uniforms;
 
@@ -45,7 +44,7 @@ public abstract class AbstractShader implements ShaderProgram {
      * @throws IOException     if the defined files could not be found (the file is searched for in the shader folder
      *                         itself, and should exclude any first slash)
      */
-    public AbstractShader(Path vertexPath, Path geometryPath, Path fragmentPath) throws ShaderException, IOException {
+    public SceneShader(Path vertexPath, Path geometryPath, Path fragmentPath) throws ShaderException, IOException {
         uniforms = new HashMap<>();
 
         programId = glCreateProgram();
@@ -74,6 +73,14 @@ public abstract class AbstractShader implements ShaderProgram {
         createUniform("viewProjectionMatrix");
         createUniform("modelMatrix");
         createUniform("normalMatrix");
+
+        Toolbox.checkGLError();
+    }
+
+    protected void resetLights(int nOfLights) {
+        for (int i = 0; i < nOfLights; i++) {
+            setPointLight(new Vector3f(), Color4f.INVISIBLE, 0);
+        }
     }
 
     @Override
@@ -96,7 +103,7 @@ public abstract class AbstractShader implements ShaderProgram {
 
     public void link() throws ShaderException {
         glLinkProgram(programId);
-        if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {
+        if (glGetProgrami(programId, GL_LINK_STATUS) == GL_FALSE) {
             throw new ShaderException("Error linking Shader code: " + glGetProgramInfoLog(programId, 1024));
         }
 
@@ -111,10 +118,9 @@ public abstract class AbstractShader implements ShaderProgram {
         }
 
         glValidateProgram(programId);
-        if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
+        if (glGetProgrami(programId, GL_VALIDATE_STATUS) == GL_FALSE) {
             System.err.println("Warning validating Shader code: " + glGetProgramInfoLog(programId, 1024));
         }
-
     }
 
     /**
@@ -140,7 +146,7 @@ public abstract class AbstractShader implements ShaderProgram {
             // Dump the matrix into a float buffer
             FloatBuffer fb = stack.mallocFloat(16);
             value.get(fb);
-            glUniformMatrix4fv(uniforms.get(uniformName), false, fb);
+            glUniformMatrix4fv(unif(uniformName), false, fb);
         }
     }
 
@@ -154,7 +160,7 @@ public abstract class AbstractShader implements ShaderProgram {
             // Dump the matrix into a float buffer
             FloatBuffer fb = stack.mallocFloat(9);
             value.get(fb);
-            glUniformMatrix3fv(uniforms.get(uniformName), false, fb);
+            glUniformMatrix3fv(unif(uniformName), false, fb);
         }
     }
 
@@ -164,7 +170,7 @@ public abstract class AbstractShader implements ShaderProgram {
      * @param value       The new value of the uniform.
      */
     protected void setUniform(String uniformName, int value) {
-        glUniform1i(uniforms.get(uniformName), value);
+        glUniform1i(unif(uniformName), value);
     }
 
     /**
@@ -173,7 +179,7 @@ public abstract class AbstractShader implements ShaderProgram {
      * @param value       The new value of the uniform.
      */
     protected void setUniform(String uniformName, float value) {
-        glUniform1f(uniforms.get(uniformName), value);
+        glUniform1f(unif(uniformName), value);
     }
 
     /**
@@ -182,11 +188,19 @@ public abstract class AbstractShader implements ShaderProgram {
      * @param value       The new value of the uniform.
      */
     protected void setUniform(String uniformName, Vector3fc value) {
-        glUniform3f(uniforms.get(uniformName), value.x(), value.y(), value.z());
+        glUniform3f(unif(uniformName), value.x(), value.y(), value.z());
+    }
+
+    private int unif(String uniformName) {
+        try {
+            return uniforms.get(uniformName);
+        } catch (NullPointerException ex) {
+            throw new ShaderException("Uniform '" + uniformName + "' does not exist");
+        }
     }
 
     protected void setUniform(String uniformName, float[] value) {
-        glUniform4f(uniforms.get(uniformName), value[0], value[1], value[2], value[3]);
+        glUniform4f(unif(uniformName), value[0], value[1], value[2], value[3]);
     }
 
     /**
@@ -194,19 +208,52 @@ public abstract class AbstractShader implements ShaderProgram {
      * @param uniformName The name of the uniform.
      * @param value       The new value of the uniform.
      */
-    protected void setUniform(String uniformName, Vector4f value) {
-        glUniform4f(uniforms.get(uniformName), value.x, value.y, value.z, value.w);
+    protected void setUniform(String uniformName, Vector4fc value) {
+        glUniform4f(unif(uniformName), value.x(), value.y(), value.z(), value.w());
     }
 
-    @Override
-    public void setMaterial(Material material, Color4f color) {
-        Color4f baseColor = material.baseColor.overlay(color);
-        setMaterial(baseColor, material.specular, material.reflectance);
+    protected void setUniform(String uniformName, boolean value) {
+        setUniform(uniformName, value ? 1 : 0);
     }
 
-    @Override
-    public boolean accepts(Entity entity) {
-        return true;
+    protected void setUniform(String uniformName, Color4f color) {
+        glUniform4f(unif(uniformName), color.red, color.green, color.blue, color.alpha);
+    }
+
+    public void setProjectionMatrix(Matrix4f viewProjectionMatrix) {
+        setUniform("viewProjectionMatrix", viewProjectionMatrix);
+    }
+
+    public void setModelMatrix(Matrix4f modelMatrix) {
+        setUniform("modelMatrix", modelMatrix);
+    }
+
+    public void setNormalMatrix(Matrix3f normalMatrix) {
+        setUniform("normalMatrix", normalMatrix);
+    }
+
+    /**
+     * Create an uniform for a point-light array.
+     * @param name the name of the uniform in the shader
+     * @param size The size of the array.
+     * @throws ShaderException If an error occurs while fetching the memory location.
+     */
+    protected void createPointLightsUniform(String name, int size) throws ShaderException {
+        for (int i = 0; i < size; i++) {
+            try {
+                createUniform((name + "[" + i + "]") + ".color");
+                createUniform((name + "[" + i + "]") + ".mPosition");
+                createUniform((name + "[" + i + "]") + ".intensity");
+
+            } catch (ShaderException ex) {
+                if (i == 0) {
+                    throw ex;
+                } else {
+                    throw new IllegalArgumentException(
+                            "Number of lights in shader is not equal to game value (" + (i - 1) + " instead of " + size + ")", ex);
+                }
+            }
+        }
     }
 
     /**
@@ -235,30 +282,12 @@ public abstract class AbstractShader implements ShaderProgram {
         return shaderId;
     }
 
-    protected void setUniform(String uniformName, boolean value) {
-        setUniform(uniformName, value ? 1 : 0);
-    }
-
-    protected void setUniform(String uniformName, Color4f color) {
-        glUniform4f(uniforms.get(uniformName), color.red, color.green, color.blue, color.alpha);
-    }
-
-    @Override
-    public void setProjectionMatrix(Matrix4f viewProjectionMatrix) {
-        setUniform("viewProjectionMatrix", viewProjectionMatrix);
-    }
-
-    @Override
-    public void setModelMatrix(Matrix4f modelMatrix) {
-        setUniform("modelMatrix", modelMatrix);
-    }
-
-    @Override
-    public void setNormalMatrix(Matrix3f normalMatrix) {
-        setUniform("normalMatrix", normalMatrix);
-    }
-
-
+    /**
+     * loads a textfile and returns the text as a string
+     * @param path a path to an UTF-8 text file.
+     * @return a string representation of the requested resource
+     * @throws IOException if the path does not point to a valid, readable file
+     */
     public static String loadText(Path path) throws IOException {
         String result;
         try (
@@ -266,9 +295,11 @@ public abstract class AbstractShader implements ShaderProgram {
                 Scanner scanner = new Scanner(in, StandardCharsets.UTF_8)
         ) {
             result = scanner.useDelimiter("\\A").next();
+
         } catch (FileNotFoundException e) {
             throw new IOException("Resource not found: " + path);
         }
         return result;
     }
+
 }

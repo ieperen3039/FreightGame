@@ -1,13 +1,15 @@
 package NG.GameState;
 
 import NG.ActionHandling.MouseTools.MouseToolListener;
+import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Storable;
 import NG.Engine.FreightGame;
 import NG.Engine.GameAspect;
 import NG.Entities.Entity;
-import NG.Rendering.Light;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.PointLight;
 import NG.Rendering.Shapes.Primitives.Collision;
+import NG.Rendering.Textures.Texture;
 import org.joml.Vector2fc;
 import org.joml.Vector3fc;
 
@@ -29,17 +31,17 @@ public interface GameState extends GameAspect, Storable, MouseToolListener {
      * adds a point-light to the game in a thread-safe way.
      * @param light the new light
      */
-    void addLight(Light light);
+    void addLight(PointLight light);
 
     /**
      * draws the objects on the screen, according to the state of the {@link FreightGame#timer()} object. Must be called
      * after {@link #drawLights(SGL)}
      * @param gl the gl object to draw with
      */
-    void draw(SGL gl);
+    void drawEntities(SGL gl);
 
     /**
-     * initializes the lights on the scene. Should be called before {@link #draw(SGL)}
+     * initializes the lights on the scene. Should be called before {@link #drawEntities(SGL)}
      * @param gl the current gl object
      */
     void drawLights(SGL gl);
@@ -70,4 +72,15 @@ public interface GameState extends GameAspect, Storable, MouseToolListener {
     default void removeEntity(Entity entity) {
         entity.dispose();
     }
+
+    /**
+     * set the parameters of the one infinitely-far light source of the scene.
+     * @param origin    a vector TO the light source
+     * @param color     the color of the light source
+     * @param intensity the light intensity
+     */
+    void setDirectionalLight(Vector3fc origin, Color4f color, float intensity);
+
+    /** gets the texture of the directional light shadow map */
+    Texture getStaticShadowMap();
 }

@@ -21,14 +21,13 @@ import static org.lwjgl.opengl.GL30.*;
 public abstract class AbstractMesh implements Mesh {
     protected static Queue<AbstractMesh> loadedMeshes = new ArrayDeque<>();
 
-    private int vaoId = 0;
-    private int elementCount = 0;
+    private int VAO_ID = 0;
+    private int EBO_ID = 0;
+    private int nrOfElements = 0;
     private int[] VBOIndices;
-    private int indexBuffer = 0;
-    private int indicesCount = 0;
 
     public void render(SGL.Painter lock) {
-        glBindVertexArray(vaoId);
+        glBindVertexArray(VAO_ID);
 
         // enable all non-null attributes
         for (int i = 0; i < VBOIndices.length; i++) {
@@ -37,14 +36,14 @@ public abstract class AbstractMesh implements Mesh {
             }
         }
 
-        if (indexBuffer == 0) {
+        if (EBO_ID == 0) {
             // draw the regular way
-            glDrawArrays(GL_TRIANGLES, 0, elementCount);
+            glDrawArrays(GL_TRIANGLES, 0, nrOfElements);
 
         } else {
             // draw using an index buffer
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-            glDrawElements(GL_TRIANGLES, indicesCount, GL_UNSIGNED_INT, 0);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_ID);
+            glDrawElements(GL_TRIANGLES, nrOfElements, GL_UNSIGNED_INT, 0);
         }
 
         // disable all enabled attributes
@@ -62,10 +61,11 @@ public abstract class AbstractMesh implements Mesh {
      * @param indices an array of indices, which isnot modified nor cached.
      */
     public void createIndexBuffer(int[] indices) {
-        indexBuffer = glGenBuffers();
-        indicesCount = indices.length;
+        assert EBO_ID == 0;
+        EBO_ID = glGenBuffers();
+        setElementCount(indices.length);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_ID);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
     }
 
@@ -73,27 +73,27 @@ public abstract class AbstractMesh implements Mesh {
      * Initiates the creation of a mesh on the GPU.
      */
     protected void createVAO() {
-        assert vaoId == 0;
-        vaoId = glGenVertexArrays();
+        assert VAO_ID == 0;
+        VAO_ID = glGenVertexArrays();
         loadedMeshes.add(this);
     }
 
     public int getVAO() {
-        return vaoId;
+        return VAO_ID;
     }
 
     public int getElementCount() {
-        return elementCount;
+        return nrOfElements;
     }
 
     protected void setElementCount(int elementCount) {
-        assert this.elementCount == 0;
-        this.elementCount = elementCount;
+        assert this.nrOfElements == 0;
+        this.nrOfElements = elementCount;
     }
 
-    protected void createVBOTable(int nrOfIndices) {
+    protected void createVBOTable() {
         assert VBOIndices == null;
-        this.VBOIndices = new int[nrOfIndices];
+        this.VBOIndices = new int[5];
     }
 
     public int[] getVBOTable() {
@@ -109,12 +109,16 @@ public abstract class AbstractMesh implements Mesh {
             glDeleteBuffers(vbo);
         }
 
+        if (EBO_ID != 0) {
+            glDeleteBuffers(EBO_ID);
+        }
+
         // Delete the VAO
         glBindVertexArray(0);
-        glDeleteVertexArrays(vaoId);
+        glDeleteVertexArrays(VAO_ID);
 
         loadedMeshes.remove(this);
-        vaoId = 0;
+        VAO_ID = 0;
     }
 
     /**
@@ -131,7 +135,7 @@ public abstract class AbstractMesh implements Mesh {
      * Creates a buffer object to transfer data to the GPU. The reference to the resulting VBO is placed at
      * VBOIndices[index].
      * @param data  data to transfer
-     * @param index index of the VBO
+     * @param index index of the VBO, one of the constants given in {@link NG.Rendering.Shaders.ShaderProgram}
      * @param size  number of elements in each attribute
      */
     @SuppressWarnings("Duplicates")
@@ -147,6 +151,7 @@ public abstract class AbstractMesh implements Mesh {
 
         try {
             int vboId = glGenBuffers();
+            assert vboId != 0; // this is not guaranteed by specification
 
             glBindBuffer(GL_ARRAY_BUFFER, vboId);
             glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);

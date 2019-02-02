@@ -5,7 +5,8 @@ in vec3 mVertexPosition;
 
 out vec4 fragColor;
 
-struct Light {
+struct Light
+{
     vec4 mPosition;
     vec3 color;
     float intensity;
