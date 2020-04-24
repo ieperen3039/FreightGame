@@ -1,23 +1,27 @@
 package NG.Tools;
 
 import NG.DataStructures.Generic.Color4f;
-import NG.DataStructures.Material;
+import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
-import NG.Rendering.Shapes.FileShapes;
+import NG.Rendering.Shapes.GenericShapes;
+import org.joml.AABBf;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.lwjgl.BufferUtils;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import static org.lwjgl.openal.AL10.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -30,9 +34,18 @@ public final class Toolbox {
     // universal random to be used everywhere
     public static final Random random = new Random();
     public static final double PHI = 1.6180339887498948;
+    public static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
+    public static final Pattern PERIOD_MATCHER = Pattern.compile("\\.");
 
     private static final float ROUNDINGERROR = 1E-6F;
-    public static final float CURSOR_SIZE = 0.05f;
+    private static final float CURSOR_SIZE = 0.05f;
+
+    // a set of possible titles for error messages
+    private static final String[] ERROR_MESSAGES = new String[]{
+            "I Blame Menno", "You're holding it wrong", "This title is at random",
+            "You can't blame me for this", "Something Happened", "Oops!", "stuff's broke lol",
+            "Look at what you have done", "Please ignore the following message", "Congratulations!"
+    };
 
     /**
      * Draws the x-axis (red), y-axis (green), z-axis (blue), and origin (yellow).
@@ -40,7 +53,7 @@ public final class Toolbox {
     public static void drawAxisFrame(SGL gl) {
         String source = Logger.getCallingMethod(1);
         if (!Logger.callerBlacklist.contains(source)) {
-            Vector3f position = gl.getPosition(Vectors.zeroVector());
+            Vector3f position = gl.getPosition(Vectors.O);
             Logger.DEBUG.printFrom(2, " - draws axis frame on " + Vectors.toString(position));
             Logger.callerBlacklist.add(source);
         }
@@ -56,19 +69,16 @@ public final class Toolbox {
         gl.pushMatrix();
         {
             matShader.setMaterial(mat, Color4f.BLUE);
-            gl.render(FileShapes.ARROW, null);
+            gl.render(GenericShapes.ARROW, null);
+
             gl.rotate((float) Math.toRadians(90), 0f, 1f, 0f);
-
             matShader.setMaterial(mat, Color4f.RED);
-            gl.render(FileShapes.ARROW, null);
+            gl.render(GenericShapes.ARROW, null);
             gl.rotate((float) Math.toRadians(-90), 1f, 0f, 0f);
-
             matShader.setMaterial(mat, Color4f.GREEN);
-            gl.render(FileShapes.ARROW, null);
-            gl.scale(0.2f);
+            gl.render(GenericShapes.ARROW, null);
 
-            matShader.setMaterial(mat, Color4f.WHITE);
-            gl.render(FileShapes.CUBE, null);
+            matShader.setMaterial(Material.ROUGH, Color4f.WHITE);
         }
         gl.popMatrix();
     }
@@ -86,7 +96,7 @@ public final class Toolbox {
         gl.pushMatrix();
         {
             gl.scale(1, CURSOR_SIZE, CURSOR_SIZE);
-            gl.render(FileShapes.CUBE, null);
+            gl.render(GenericShapes.CUBE, null);
         }
         gl.popMatrix();
 
@@ -94,7 +104,7 @@ public final class Toolbox {
         gl.pushMatrix();
         {
             gl.scale(CURSOR_SIZE, 1, CURSOR_SIZE);
-            gl.render(FileShapes.CUBE, null);
+            gl.render(GenericShapes.CUBE, null);
         }
         gl.popMatrix();
 
@@ -102,17 +112,35 @@ public final class Toolbox {
         gl.pushMatrix();
         {
             gl.scale(CURSOR_SIZE, CURSOR_SIZE, 1);
-            gl.render(FileShapes.CUBE, null);
+            gl.render(GenericShapes.CUBE, null);
         }
+        matShader.setMaterial(Material.ROUGH, Color4f.WHITE);
         gl.popMatrix();
     }
 
-    public static void checkGLError() {
+    public static void drawHitboxes(SGL gl, Collection<? extends AABBf> targets) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        for (AABBf h : targets) {
+            gl.pushMatrix();
+            {
+                gl.translate((h.maxX + h.minX) / 2, (h.maxY + h.minY) / 2, (h.maxZ + h.minZ) / 2);
+                gl.scale((h.maxX - h.minX) / 2, (h.maxY - h.minY) / 2, (h.maxZ - h.minZ) / 2);
+                gl.render(GenericShapes.CUBE, null);
+            }
+            gl.popMatrix();
+        }
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    public static void checkGLError(String name) {
         int error;
         int i = 0;
+
         while ((error = glGetError()) != GL_NO_ERROR) {
-            Logger.ERROR.printFrom(2, "glError " + asHex(error) + ": " + getMessage(error));
-            if (++i == 10) throw new IllegalStateException("Context is probably not current for this thread");
+            Logger.ERROR.printFrom(2, name + ": " + asHex(error) + " " + getMessage(error));
+            if (++i == 20) throw new IllegalStateException("Context is probably not current for this thread");
         }
     }
 
@@ -174,8 +202,7 @@ public final class Toolbox {
     }
 
     /**
-     * performs an incremental insertion-sort on (preferably nearly-sorted) the given array.
-     * modifies items
+     * performs an incremental insertion-sort on (preferably nearly-sorted) the given array. modifies items
      * @param items the array to sort
      * @param map   maps a moving source to the value to be sorted upon
      */
@@ -193,15 +220,20 @@ public final class Toolbox {
                 if (map.apply(target) > map.apply(subject)) {
                     items[empty] = target;
                     empty--;
-                } else break;
+                } else {
+                    break;
+                }
             }
             items[empty] = subject;
         }
     }
 
     /** @return a rotation that maps the x-vector to the given direction, with up in direction of z */
-    public static Quaternionf xTo(Vector3f direction) {
-        return new Quaternionf().rotateTo(Vectors.xVector(), direction);
+    public static Quaternionf xTo(Vector3fc direction) {
+        if (direction.y() == 0 && direction.z() == 0 && direction.x() < 0) {
+            return new Quaternionf().rotateZ((float) Math.PI);
+        }
+        return new Quaternionf().rotateTo(Vectors.X, new Vector3f(direction).normalize());
     }
 
     /** returns a uniformly distributed random value between val1 and val2 */
@@ -209,16 +241,21 @@ public final class Toolbox {
         return val1 + ((val2 - val1) * random.nextFloat());
     }
 
-    /** transforms a floating point value to an integer value, by drawing a random variable for the remainder */
+    /**
+     * transforms a floating point value to an integer value, by drawing a random variable for the remainder.
+     * @return an int i such that for float f, we have (f - 1 < i < f + 1) and the average return value is f.
+     */
     public static int randomToInt(float value) {
-        return random.nextBoolean() ? (int) value : (int) value + 1;
+        int floor = (int) value;
+        if (floor == value) return floor;
+        return random.nextFloat() > (value - floor) ? floor : floor + 1;
     }
 
     public static float instantPreserveFraction(float rotationPreserveFactor, float deltaTime) {
         return (float) (StrictMath.pow(rotationPreserveFactor, deltaTime));
     }
 
-    public static void waitFor(int millis) {
+    public static void sleep(int millis) {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException ignored) {
@@ -280,12 +317,13 @@ public final class Toolbox {
             Type e = array[mid];
 
             float cmp = map.apply(e);
-            if (cmp < value)
+            if (cmp < value) {
                 low = mid + 1;
-            else if (cmp > value)
+            } else if (cmp > value) {
                 high = mid - 1;
-            else
+            } else {
                 return mid; // key found
+            }
         }
         return -(low + 1);  // key not found.
     }
@@ -302,26 +340,7 @@ public final class Toolbox {
         return result;
     }
 
-    public static String findClosest(String target, String[] options) {
-        int max = 0;
-        int lengthOfMax = Integer.MAX_VALUE;
-        String best = "";
-
-        for (String candidate : options) {
-            int wordLength = Math.abs(candidate.length() - target.length());
-            int dist = hammingDistance(target, candidate);
-
-            if (dist > max || (dist == max && wordLength < lengthOfMax)) {
-                max = dist;
-                lengthOfMax = wordLength;
-                best = candidate;
-            }
-        }
-
-        return best;
-    }
-
-    public static <T extends Enum> T findClosest(String target, T[] options) {
+    public static <T> T findClosest(String target, T[] options) {
         int max = 0;
         int lengthOfMax = Integer.MAX_VALUE;
         T best = null;
@@ -342,10 +361,17 @@ public final class Toolbox {
     }
 
     /**
-     * computes the hamming distance between string a and b as: {@code LCSLength(X[1..m], Y[1..n]) C = array(0..m, 0..n)
-     * for i := 1..m for j := 1..n if X[i] = Y[j] C[i,j] := C[i-1,j-1] + 1 else C[i,j] := max(C[i,j-1], C[i-1,j]) return
-     * C[m,n] }
+     * computes the longest common substring of string a and b
      */
+    // LCSLength(X[1..m], Y[1..n])
+    //  C = array(0..m, 0..n)
+    //  for i := 1..m
+    //      for j := 1..n
+    //          if X[i] = Y[j]
+    //              C[i,j] := C[i-1,j-1] + 1
+    //          else
+    //              C[i,j] := max(C[i,j-1], C[i-1,j])
+    //  return C[m,n]
     public static int hammingDistance(String a, String b) {
         int m = a.length();
         int n = b.length();
@@ -387,5 +413,37 @@ public final class Toolbox {
 
     public static float interpolate(float a, float b, float fraction) {
         return ((b - a) * fraction) + a;
+    }
+
+    public static void display(Exception e) {
+        Logger.ERROR.print(e);
+        int rng = random.nextInt(ERROR_MESSAGES.length);
+
+        JOptionPane.showMessageDialog(null, e.getClass() + ":\n" + e.getMessage(), ERROR_MESSAGES[rng], JOptionPane.ERROR_MESSAGE);
+    }
+
+    public static <T> Iterator<T> singletonIterator(T action) {
+        // from Collections.singletonIterator
+        return new Iterator<>() {
+            private boolean hasNext = true;
+
+            public boolean hasNext() {
+                return hasNext;
+            }
+
+            public T next() {
+                hasNext = false;
+                return action;
+            }
+
+            @Override
+            public void forEachRemaining(Consumer<? super T> element) {
+                Objects.requireNonNull(element);
+                if (hasNext) {
+                    hasNext = false;
+                    element.accept(action);
+                }
+            }
+        };
     }
 }

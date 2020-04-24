@@ -1,9 +1,9 @@
 package NG.Camera;
 
-import NG.ActionHandling.KeyPressListener;
-import NG.ActionHandling.KeyReleaseListener;
-import NG.ActionHandling.MousePositionListener;
-import NG.Engine.Game;
+import NG.Core.Game;
+import NG.InputHandling.KeyPressListener;
+import NG.InputHandling.KeyReleaseListener;
+import NG.InputHandling.MousePositionListener;
 import NG.Settings.KeyBinding;
 import NG.Settings.Settings;
 import NG.Tools.Vectors;
@@ -98,7 +98,7 @@ public class TycoonFixedCamera implements Camera, MousePositionListener, KeyPres
 
     @Override
     public Vector3fc getUpVector() {
-        return Vectors.zVector();
+        return Vectors.Z;
     }
 
     @Override
@@ -172,6 +172,11 @@ public class TycoonFixedCamera implements Camera, MousePositionListener, KeyPres
 
     enum MoveDirection {
         LEFT, NOT, RIGHT
+    }
+
+    @Override
+    public boolean isIsometric() {
+        return true;
     }
 }
 

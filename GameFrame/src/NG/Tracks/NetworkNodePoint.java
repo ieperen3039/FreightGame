@@ -1,15 +1,15 @@
 package NG.Tracks;
 
-import NG.ActionHandling.ClickShader;
 import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
 import NG.GameState.GameMap;
+import NG.InputHandling.ClickShader;
 import NG.Rendering.MatrixStack.SGL;
-import NG.Rendering.Shapes.FileShapes;
+import NG.Rendering.Shapes.GenericShapes;
 import NG.Rendering.Shapes.Primitives.Collision;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
-import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 /**
  * @author Geert van Ieperen created on 23-12-2018.
@@ -47,7 +47,7 @@ public class NetworkNodePoint implements Entity {
             {
                 gl.translate(heightMap.getPosition(position));
                 gl.scale(NODE_SIZE, NODE_SIZE, NODE_SIZE);
-                gl.render(FileShapes.CUBE, this);
+                gl.render(GenericShapes.CUBE, this);
             }
             gl.popMatrix();
         }
@@ -92,7 +92,7 @@ public class NetworkNodePoint implements Entity {
     }
 
     @Override
-    public Collision getRayCollision(Vector3f origin, Vector3f direction) {
+    public Collision getRayCollision(Vector3fc origin, Vector3fc direction) {
         return new Collision(heightMap.getPosition(position));
     }
 }

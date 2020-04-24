@@ -1,12 +1,9 @@
 package NG.Entities;
 
-import NG.Engine.Game;
-import NG.Engine.GameTimer;
+import NG.Core.GameTimer;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.Primitives.Collision;
 import NG.Rendering.Shapes.Shape;
-import NG.Tools.Vectors;
-import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 /**
@@ -38,9 +35,9 @@ public interface Entity {
 
     /**
      * Executes when the user clicks on this entity. When {@code button == GLFW_LEFT_MOUSE_BUTTON} is clicked, an {@link
-     * NG.ScreenOverlay.Frames.Components.SFrame} with information or settings of this Entity is usually opened, and
-     * when {@code button == GLFW_RIGHT_MOUSE_BUTTON} is clicked, the 'active' state of this entity may toggle.
-     * @param button the button that is clicked as defined in {@link NG.ActionHandling.MouseRelativeClickListener}
+     * NG.GUIMenu.Components.SFrame} with information or settings of this Entity is usually opened, and when {@code
+     * button == GLFW_RIGHT_MOUSE_BUTTON} is clicked, the 'active' state of this entity may toggle.
+     * @param button the button that is clicked as defined in {@link NG.InputHandling.MouseRelativeClickListener}
      */
     void onClick(int button);
 
@@ -67,24 +64,5 @@ public interface Entity {
      * @return a Collision object resutling from the ray, or null if the ray did not hit
      * @see Shape#getCollision(Vector3fc, Vector3fc, Vector3fc)
      */
-    Collision getRayCollision(Vector3f origin, Vector3f direction);
-
-    /**
-     * calculates the collision of an entity and a screen pixel
-     * @param game the game instance
-     * @param xSc x pixel coordinate
-     * @param ySc y pixel coordinate
-     * @param entity the entity that has been clicked on
-     * @return the collision between the ray cast by the given coordinates and the given entity
-     * @see Vectors#windowCoordToRay(Game, int, int, Vector3f, Vector3f)
-     * @see Entity#getRayCollision(Vector3f, Vector3f)
-     */
-    static Collision getClickOnEntity(Game game, int xSc, int ySc, Entity entity) {
-        Vector3f origin = new Vector3f();
-        Vector3f direction = new Vector3f();
-
-        Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
-
-        return entity.getRayCollision(origin, direction);
-    }
+    Collision getRayCollision(Vector3fc origin, Vector3fc direction);
 }

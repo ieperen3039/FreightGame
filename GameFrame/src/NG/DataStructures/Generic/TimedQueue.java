@@ -31,8 +31,8 @@ public interface TimedQueue<T> {
     /**
      * @param timeStamp the timestamp in seconds from where the next element is active
      * @return the difference in timestamp of the given parameter and the next item. All elements with a timestamp
-     *         before the returned item are no longer accessible, even for {@link #getActive(float)} if this item does
-     *         not exist, it returns a negative value equal to minus the time since the last item
+     * before the returned item are no longer accessible, even for {@link #getActive(float)} if this item does not
+     * exist, it returns a negative value equal to minus the time since the last item
      */
     float timeUntilNext(float timeStamp);
 

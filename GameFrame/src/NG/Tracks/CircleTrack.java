@@ -1,13 +1,11 @@
 package NG.Tracks;
 
-import NG.Engine.Game;
+import NG.Core.Game;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.Primitives.Collision;
 import NG.Tools.Vectors;
 import org.joml.Math;
-import org.joml.Vector2f;
-import org.joml.Vector2fc;
-import org.joml.Vector3f;
+import org.joml.*;
 
 import static NG.Tools.Vectors.cos;
 import static NG.Tools.Vectors.sin;
@@ -19,7 +17,7 @@ import static java.lang.Math.abs;
 public class CircleTrack implements TrackPiece {
 
     private final Game game;
-    private final TrackMod.TrackType type;
+    private final TrackType type;
     private final NetworkNodePoint startPoint;
     private final NetworkNodePoint endPoint;
 
@@ -42,7 +40,7 @@ public class CircleTrack implements TrackPiece {
      * @param endPoint       another point on the map, different from A.
      */
     public CircleTrack(
-            Game game, TrackMod.TrackType type, NetworkNodePoint startPoint, Vector2fc startDirection,
+            Game game, TrackType type, NetworkNodePoint startPoint, Vector2fc startDirection,
             NetworkNodePoint endPoint
     ) {
         this.game = game;
@@ -100,7 +98,7 @@ public class CircleTrack implements TrackPiece {
     }
 
     @Override
-    public Collision getRayCollision(Vector3f origin, Vector3f direction) {
+    public Collision getRayCollision(Vector3fc origin, Vector3fc direction) {
         Vector3f position = game.map().intersectWithRay(origin, direction);
 
         float distanceToCenter = center.distance(position.x, position.y);

@@ -1,22 +1,22 @@
 package NG.GameState;
 
-import NG.ActionHandling.MouseTools.MouseTool;
+import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
-import NG.DataStructures.Material;
-import NG.Engine.Game;
-import NG.Rendering.MatrixStack.Mesh;
+import NG.GUIMenu.Components.SFiller;
+import NG.GUIMenu.Components.SFrame;
+import NG.GUIMenu.Components.SPanel;
+import NG.GUIMenu.Components.SProgressBar;
+import NG.InputHandling.MouseTools.MouseTool;
+import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.MeshLoading.FlatMesh;
+import NG.Rendering.MeshLoading.Mesh;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
-import NG.Rendering.Shapes.FlatMesh;
-import NG.ScreenOverlay.Frames.Components.SFiller;
-import NG.ScreenOverlay.Frames.Components.SFrame;
-import NG.ScreenOverlay.Frames.Components.SPanel;
-import NG.ScreenOverlay.Frames.Components.SProgressBar;
+import NG.Resources.Resource;
 import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
 import org.joml.Intersectionf;
-import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -24,25 +24,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Supplier;
 
 /**
  * @author Geert van Ieperen. Created on 27-9-2018.
  */
 public class HeightMap implements GameMap {
     private static final int MESH_SIZE_UPPER_BOUND = 100;
-
+    private final List<ChangeListener> listeners = new ArrayList<>();
     private Game game;
-    private List<ChangeListener> listeners = new ArrayList<>();
 
     private float[][] heightmap;
-    private final Collection<Mesh> meshOfTheWorld = new CopyOnWriteArrayList<>();
+    private final Collection<Resource<Mesh>> meshOfTheWorld = new CopyOnWriteArrayList<>();
 
     private int edgeLength;
-
-    private Collection<Supplier<? extends Mesh>> preparedMeshes = new ArrayList<>();
     private float meshProgress;
-    private boolean hasNewWorld;
 
     @Override
     public void init(Game game) {
@@ -54,7 +49,7 @@ public class HeightMap implements GameMap {
         SFrame frame = new SFrame("Generating map...", 500, 200);
         SPanel panel = new SPanel();
         panel.add(new SFiller(), SPanel.NORTHEAST);
-        panel.add(new SProgressBar(400, 50, () -> (mapGenerator.heightmapProgress() / 2 + meshProgress)), SPanel.MIDDLE);
+        panel.add(new SProgressBar(400, 50, () -> (mapGenerator.heightmapProgress() + meshProgress) / 2), SPanel.MIDDLE);
         panel.add(new SFiller(), SPanel.SOUTHWEST);
         frame.setMainPanel(panel);
         frame.setVisible(true);
@@ -81,51 +76,29 @@ public class HeightMap implements GameMap {
             for (int yStart = 0; yStart < ySize; yStart += adaptedMeshSize) {
                 int xEnd = Math.min(xStart + adaptedMeshSize, xSize - 1);
                 int yEnd = Math.min(yStart + adaptedMeshSize, xSize - 1);
-                preparedMeshes.add(
+
+                meshOfTheWorld.add(
                         FlatMesh.meshFromHeightmap(heightmap, xStart, xEnd, yStart, yEnd, edgeLength)
                 );
 
                 meshProgress += meshPStep;
             }
         }
-        game.state().setDirectionalLight(new Vector3f(1, 1, 2), Color4f.WHITE, 0.5f);
+        game.lights().addDirectionalLight(new Vector3f(1, 1, 2), Color4f.WHITE, 0.5f);
 
-        hasNewWorld = true;
+        listeners.forEach(ChangeListener::onMapChange);
         meshProgress = 1f;
-    }
-
-    private Collection<Mesh> generateMeshes() {
-        assert hasNewWorld;
-
-        Collection<Mesh> worlAsMeshes = new ArrayList<>(preparedMeshes.size());
-        for (Supplier<? extends Mesh> preparedMesh : preparedMeshes) {
-            Mesh mesh = preparedMesh.get();
-            worlAsMeshes.add(mesh);
-        }
-        preparedMeshes.clear();
-
-        return worlAsMeshes;
     }
 
     @Override
     public void draw(SGL gl) {
-        if (hasNewWorld) {
-            meshOfTheWorld.clear();
-            Collection<Mesh> meshes = generateMeshes();
-            meshOfTheWorld.addAll(meshes);
-            hasNewWorld = false;
-
-            // only here, all promises hold
-            listeners.forEach(ChangeListener::onMapChange);
-        }
-
         ShaderProgram shader = gl.getShader();
         if (shader instanceof MaterialShader) {
             MaterialShader matShader = (MaterialShader) shader;
             matShader.setMaterial(Material.ROUGH, new Color4f(0, 0.5f, 0));
         }
 
-        meshOfTheWorld.forEach(object -> gl.render(object, null));
+        meshOfTheWorld.forEach(object -> gl.render(object.get(), null));
     }
 
     @Override
@@ -163,7 +136,6 @@ public class HeightMap implements GameMap {
     @Override
     public void cleanup() {
         heightmap = null;
-        preparedMeshes.clear();
         meshOfTheWorld.clear();
         listeners.clear();
     }
@@ -177,7 +149,7 @@ public class HeightMap implements GameMap {
 
         Vector3f pos = intersectWithRay(origin, direction);
 
-        tool.apply(new Vector2f(pos.x, pos.y));
+        tool.apply(pos, xSc, ySc);
 
         return true;
     }
@@ -186,7 +158,7 @@ public class HeightMap implements GameMap {
     public Vector3f intersectWithRay(Vector3fc origin, Vector3fc direction) {
         // TODO more precise calculation
         Vector3f temp = new Vector3f();
-        float t = Intersectionf.intersectRayPlane(origin, direction, Vectors.zeroVector(), Vectors.zVector(), 1E-6f);
+        float t = Intersectionf.intersectRayPlane(origin, direction, Vectors.O, Vectors.Z, 1E-6f);
         return origin.add(direction.mul(t, temp), temp);
     }
 

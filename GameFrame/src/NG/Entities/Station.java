@@ -1,13 +1,13 @@
 package NG.Entities;
 
-import NG.Engine.Game;
+import NG.Core.Game;
+import NG.GUIMenu.Components.SFrame;
 import NG.GameState.Storage;
 import NG.Rendering.Shapes.Primitives.Collision;
-import NG.ScreenOverlay.Frames.Components.SFrame;
 import NG.Tools.Logger;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
-import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -32,7 +32,7 @@ public abstract class Station extends Storage {
 
     public void setOrientation(float orientation) {
         if (isFixed) {
-            Logger.ERROR.print("Tried changing position of a fixed station");
+            Logger.ERROR.print("Tried changing state of a fixed station");
             return;
         }
         this.orientation = orientation;
@@ -45,7 +45,7 @@ public abstract class Station extends Storage {
     @Override
     public void setPosition(Vector2fc position) {
         if (isFixed) {
-            Logger.ERROR.print("Tried changing position of a fixed station");
+            Logger.ERROR.print("Tried changing state of a fixed station");
             return;
         }
 
@@ -58,7 +58,7 @@ public abstract class Station extends Storage {
     }
 
     @Override
-    public Collision getRayCollision(Vector3f origin, Vector3f direction) {
+    public Collision getRayCollision(Vector3fc origin, Vector3fc direction) {
         return null;
     }
 

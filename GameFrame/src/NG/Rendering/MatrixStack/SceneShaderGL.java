@@ -2,11 +2,10 @@ package NG.Rendering.MatrixStack;
 
 import NG.Camera.Camera;
 import NG.Entities.Entity;
+import NG.Rendering.MeshLoading.Mesh;
 import NG.Rendering.Shaders.SceneShader;
 import NG.Rendering.Shaders.ShaderProgram;
 import org.joml.*;
-
-import static org.lwjgl.opengl.GL11.*;
 
 /**
  * @author Geert van Ieperen created on 16-11-2017.
@@ -22,17 +21,11 @@ public class SceneShaderGL extends AbstractSGL {
      * @param windowWidth  the width of the viewport in pixels
      * @param windowHeight the height of the viewport in pixels
      * @param viewpoint    the camera that defines eye position, focus and up vector
-     * @param isometric    when true, no perspective transformation is used. This results in a retro tycoon style
      */
-    public SceneShaderGL(SceneShader shader, int windowWidth, int windowHeight, Camera viewpoint, boolean isometric) {
+    public SceneShaderGL(SceneShader shader, int windowWidth, int windowHeight, Camera viewpoint) {
         super();
         this.shader = shader;
-        viewProjectionMatrix = SGL.getViewProjection(windowWidth, windowHeight, viewpoint, isometric);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glViewport(0, 0, windowWidth, windowHeight);
-        glEnable(GL_LINE_SMOOTH);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        viewProjectionMatrix = viewpoint.getViewProjection((float) windowWidth / windowHeight);
     }
 
     @Override
@@ -49,6 +42,11 @@ public class SceneShaderGL extends AbstractSGL {
 
     public ShaderProgram getShader() {
         return shader;
+    }
+
+    @Override
+    public Matrix4fc getViewProjectionMatrix() {
+        return viewProjectionMatrix;
     }
 
     public Vector2f getPositionOnScreen(Vector3fc vertex) {

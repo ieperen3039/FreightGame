@@ -1,29 +1,25 @@
 package NG.Tracks;
 
-import NG.Engine.Game;
-import NG.Engine.Version;
+import NG.Core.Game;
+import NG.Core.Version;
 import NG.GameState.GameMap;
+import NG.Mods.Mod;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Tools.Toolbox;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
- * Implementation of regular iron tracks on wooden pallets.
+ * Implementation of regular rail
  * @author Geert van Ieperen. Created on 19-9-2018.
  */
-public class BaseTracksMod implements TrackMod {
-    private List<TrackType> types = Collections.singletonList(new RegularTrack());
-    private float trackSpacing;
+public class BaseTracksMod implements Mod {
 
     @Override
     public void init(Game game) throws Version.MisMatchException {
         game.getVersionNumber().requireAtLeast(0, 0);
-        trackSpacing = game.settings().TRACK_SPACING;
+        game.objectTypes().addTrackTypes(new DebugTrack());
     }
 
     @Override
@@ -36,25 +32,22 @@ public class BaseTracksMod implements TrackMod {
     }
 
     @Override
-    public List<TrackType> getTypes() {
-        return types;
-    }
-
-    @Override
     public Version getVersionNumber() {
         return new Version(0, 0);
     }
 
-    private class RegularTrack implements TrackType {
+    private static class DebugTrack implements TrackType {
+        public static final float TRACK_SPACING = 1;
+
         @Override
         public String name() {
-            return "Regular Tracks";
+            return "Debug Tracks";
         }
 
         @Override
         public void drawCircle(SGL gl, Vector2fc center, float radius, float lowerTheta, float angle, GameMap map) {
             Vector2f coord = new Vector2f();
-            float pieceRad = (trackSpacing / radius);
+            float pieceRad = (TRACK_SPACING / radius);
 
             float upperTheta = lowerTheta + angle;
             for (float p = lowerTheta; p < upperTheta; p += pieceRad) {
@@ -76,7 +69,7 @@ public class BaseTracksMod implements TrackMod {
         public void drawStraight(SGL gl, Vector2fc startCoord, Vector2fc direction, float length, GameMap map) {
             Vector2f coord = new Vector2f();
 
-            for (int l = 0; l < length; l += trackSpacing) {
+            for (int l = 0; l < length; l += TRACK_SPACING) {
                 gl.pushMatrix();
                 {
                     coord.set(direction).mul(l);

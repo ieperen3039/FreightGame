@@ -1,7 +1,7 @@
 package NG.Entities;
 
 import NG.Rendering.MatrixStack.SGL;
-import NG.Rendering.Shapes.FileShapes;
+import NG.Rendering.Shapes.GenericShapes;
 import NG.Rendering.Shapes.Primitives.Collision;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -36,7 +36,7 @@ public class Cube implements MovingEntity {
         gl.pushMatrix();
         {
             gl.translate(position);
-            gl.render(FileShapes.CUBE, this);
+            gl.render(GenericShapes.CUBE, this);
         }
         gl.popMatrix();
     }
@@ -52,7 +52,7 @@ public class Cube implements MovingEntity {
     }
 
     @Override
-    public Collision getRayCollision(Vector3f origin, Vector3f direction) {
+    public Collision getRayCollision(Vector3fc origin, Vector3fc direction) {
         return null;
     }
 

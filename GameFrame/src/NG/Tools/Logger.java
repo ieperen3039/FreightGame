@@ -3,7 +3,10 @@ package NG.Tools;
 import org.joml.*;
 
 import java.io.PrintStream;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -91,7 +94,7 @@ public enum Logger {
     }
 
     /**
-     * Text resutling from the given supplier is presented somewhere on the screen of this program, likely a
+     * Text resulting from the given supplier is presented somewhere on the screen of this program, likely a
      * debug-screen.
      * @param source a source of text, queried every frame
      */
@@ -103,13 +106,12 @@ public enum Logger {
     }
 
     /**
-     * puts a message on the debug screen, which is updated every frame
+     * Writes all the online output strings to the given consumer
      * @param accepter a method that prints the given string, on the same position as a previous call to this method
      */
-    public static void setOnlineOutput(Consumer<String> accepter) {
+    public static void putOnlinePrint(Consumer<String> accepter) {
         for (Supplier<String> source : onlinePrints) {
-            String message = source.get();
-            accepter.accept(message);
+            accepter.accept(source.get());
         }
     }
 
@@ -118,25 +120,24 @@ public enum Logger {
      * @param level the stack depth to receive. -1 = this method {@code getCallingMethod(int)} 0 = the calling method
      *              (yourself) 1 = the caller of the method this is called in
      * @return a string that completely describes the path to the file, the method and line number where this is called
-     *         If DEBUG == false, return an empty string
+     * If DEBUG == false, return an empty string
      */
     public static String getCallingMethod(int level) {
-        StackTraceElement caller;
-        Exception exception = new Exception();
-        StackTraceElement[] stackTrace = exception.getStackTrace();
-        level++;
-        do {
-            caller = stackTrace[level++]; // level + 1
-        } while (caller.isNativeMethod() && level < stackTrace.length);
+        // the better way of getting the top of the stack
+        StackWalker.StackFrame frame = StackWalker.getInstance()
+                .walk(s -> s.skip(level + 1)
+                        .findFirst()
+                        .orElseThrow()
+                );
 
-        return String.format("%-100s ", caller);
+        return String.format("%-100s ", frame);
     }
 
     /**
      * removes the specified updater off the debug screen
      * @param source an per-frame updated debug message that has previously added to the debug screen
      */
-    public static void removeOnlineUpdate(Supplier<String> source) {
+    public static void removeOnlinePrint(Supplier<String> source) {
         onlinePrints.remove(source);
     }
 
@@ -195,14 +196,29 @@ public enum Logger {
             case ERROR:
                 err.accept(prefix + ": " + concatenate(s));
 
-                // let's do a fancy stream
-                if (this == ERROR) Arrays.stream(s)
-                        .filter(e -> e instanceof Exception)
-                        .map(e -> (Exception) e)
-                        .flatMap(e -> Arrays.stream(e.getStackTrace()))
-                        .map(StackTraceElement::toString)
-                        .forEach(err);
+                if (this == ERROR) {
+                    for (Object elt : s) {
+                        if (elt instanceof Throwable) {
+                            dumpException((Throwable) elt, err);
+                        }
+                    }
+                }
+
                 break;
+        }
+    }
+
+    public void dumpException(Throwable e, Consumer<String> action) {
+        for (StackTraceElement stackTraceElement : e.getStackTrace()) {
+            String s1 = "\t" + stackTraceElement;
+            action.accept(s1);
+        }
+
+        Throwable cause = e.getCause();
+        if (cause != null) {
+            err.accept("Caused by:");
+            err.accept(cause.toString());
+            dumpException(cause, action);
         }
     }
 
@@ -232,7 +248,12 @@ public enum Logger {
     /**
      * @return the error logger as a printstream
      */
-    public PrintStream getPrintStream() {
-        return System.err; // TODO mapping (lambda -> PrintStream)
+    public PrintStream getPrintStream() { // TODO make an outputstream that reroutes all traffic
+        return new PrintStream(System.out, true) {
+            @Override
+            public void print(String s) {
+                Logger.this.print(s);
+            }
+        };
     }
 }

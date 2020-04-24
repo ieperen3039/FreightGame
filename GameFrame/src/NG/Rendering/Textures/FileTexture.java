@@ -3,10 +3,10 @@ package NG.Rendering.Textures;
 import NG.Tools.Logger;
 import de.matthiasmann.twl.utils.PNGDecoder;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
@@ -16,14 +16,13 @@ import static org.lwjgl.opengl.GL30.glGenerateMipmap;
  * @author Cas Wognum (TU/e, 1012585)
  */
 public class FileTexture implements Texture {
-
     private final int id;
 
     private final int width;
     private final int height;
 
-    public FileTexture(File file) throws IOException {
-        FileInputStream in = new FileInputStream(file);
+    public FileTexture(Path path) throws IOException {
+        FileInputStream in = new FileInputStream(path.toFile());
         PNGDecoder image = new PNGDecoder(in);
 
         this.width = image.getWidth();
@@ -53,7 +52,7 @@ public class FileTexture implements Texture {
         // Generate Mip Map
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        Logger.DEBUG.printf("loaded texture %s: (%d, %d)", file.getName(), width, height);
+        Logger.DEBUG.printf("loaded texture %s: (%d, %d)", path.getFileName(), width, height);
     }
 
     @Override
@@ -75,5 +74,10 @@ public class FileTexture implements Texture {
     @Override
     public int getHeight() {
         return height;
+    }
+
+    @Override
+    public int getID() {
+        return id;
     }
 }

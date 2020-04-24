@@ -1,7 +1,7 @@
 package NG.GameState;
 
-import NG.Engine.Game;
-import NG.Engine.Version;
+import NG.Core.Game;
+import NG.Core.Version;
 import NG.Tools.Toolbox;
 import org.joml.SimplexNoise;
 
@@ -10,8 +10,9 @@ import org.joml.SimplexNoise;
  */
 public class SimpleMapGenerator implements MapGeneratorMod {
     public static final int EDGDE_LENGTH = 1;
-    private static final float PRIMARY_DENSITY = 0.1f;
-    private int progress = 0;
+    private static final float PRIMARY_DENSITY = 50f;
+    private static final float SECONDARY_DENSITY = 20f;
+    private float progress = 0;
     private int seed;
     private int width;
     private int height;
@@ -24,10 +25,13 @@ public class SimpleMapGenerator implements MapGeneratorMod {
     @Override
     public float[][] generateHeightMap() {
         float[][] map = new float[width][height];
+
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                map[x][y] = SimplexNoise.noise(PRIMARY_DENSITY * x, PRIMARY_DENSITY * y);
+                map[x][y] = SimplexNoise.noise(x / PRIMARY_DENSITY, y / PRIMARY_DENSITY);
+                map[x][y] += 0.1f * SimplexNoise.noise(x / SECONDARY_DENSITY, y / SECONDARY_DENSITY);
             }
+            progress = (float) width / x;
         }
         progress = 1;
         return map;
@@ -55,7 +59,7 @@ public class SimpleMapGenerator implements MapGeneratorMod {
 
     @Override
     public Version getVersionNumber() {
-        return new Version(0, 0);
+        return new Version(0, 1);
     }
 
     @Override

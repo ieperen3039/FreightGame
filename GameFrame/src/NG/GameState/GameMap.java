@@ -1,7 +1,7 @@
 package NG.GameState;
 
-import NG.ActionHandling.MouseTools.MouseToolListener;
-import NG.Engine.GameAspect;
+import NG.Core.GameAspect;
+import NG.InputHandling.MouseTools.MouseToolListener;
 import NG.Rendering.MatrixStack.SGL;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;

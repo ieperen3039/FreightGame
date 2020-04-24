@@ -1,10 +1,9 @@
 package NG.Tools;
 
 import NG.Camera.Camera;
+import NG.Core.Game;
 import NG.DataStructures.Generic.Pair;
-import NG.Engine.Game;
 import NG.Rendering.GLFWWindow;
-import NG.Rendering.MatrixStack.SGL;
 import org.joml.Math;
 import org.joml.*;
 
@@ -16,43 +15,69 @@ import static java.lang.Float.isNaN;
  * A collection of utility functions for vectors, specifically for Vector2f
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
-public class Vectors {
+public final class Vectors {
+    public static final Vector3fc X = newXVector();
+    public static final Vector3fc Y = new Vector3f(0, 1, 0);
+    public static final Vector3fc Z = newZVector();
+    public static final Vector3fc O = newZeroVector();
     private static final float PI = (float) Math.PI;
+    private static final float VECTOR_EQUALITY_DIST_SQ = 1e-6f;
 
-    public static Vector3f zeroVector() {
+    public static Vector3f newZeroVector() {
         return new Vector3f(0, 0, 0);
     }
 
-    public static Vector3f zVector() {
+    public static Vector3f newZVector() {
         return new Vector3f(0, 0, 1);
     }
 
-    public static Vector3f xVector() {
+    public static Vector3f newXVector() {
         return new Vector3f(1, 0, 0);
     }
 
     public static String toString(Vector3fc v) {
+        if (v == null) return "null";
         return String.format(Locale.US, "(%1.3f, %1.3f, %1.3f)", v.x(), v.y(), v.z());
     }
 
     public static String toString(Vector2fc v) {
+        if (v == null) return "null";
         return String.format(Locale.US, "(%1.3f, %1.3f)", v.x(), v.y());
     }
 
     public static String toString(Vector3ic v) {
+        if (v == null) return "null";
         return String.format("(%d, %d, %d)", v.x(), v.y(), v.z());
     }
 
     public static String toString(Vector2ic v) {
+        if (v == null) return "null";
         return String.format("(%d, %d)", v.x(), v.y());
     }
 
     public static String toString(Vector4fc v) {
+        if (v == null) return "null";
         return String.format(Locale.US, "(%1.3f, %1.3f, %1.3f, %1.3f)", v.x(), v.y(), v.z(), v.w());
     }
 
-    public static String stringAsVector(float x, float y) {
+    public static String asVectorString(float x, float y) {
         return String.format("(%1.3f, %1.3f)", x, y);
+    }
+
+    /**
+     * @return a vector with length < 1 that is universally distributed. Would form a solid sphere when created points
+     */
+    public static Vector3f randomOrb() {
+        float phi = Toolbox.random.nextFloat() * 6.2832f;
+        float costheta = (Toolbox.random.nextFloat() * 2) - 1;
+
+        float theta = (float) Math.acos(costheta);
+        float r = (float) java.lang.Math.cbrt(Toolbox.random.nextFloat());
+
+        float x = (r * sin(theta) * cos(phi));
+        float y = (r * sin(theta) * sin(phi));
+        float z = (r * cos(theta));
+        return new Vector3f(x, y, z);
     }
 
     /**
@@ -210,13 +235,11 @@ public class Vectors {
      */
     public static Vector3f bezierPoint(Vector3fc A, Vector3fc B, Vector3fc C, Vector3fc D, double u) {
         Vector3f temp = new Vector3f();
-        Vector3f point = new Vector3f();
         //A*(1−u)^3 + B*3u(1−u)^2 + C*3u^2(1−u) + D*u^3
-        A.mul((float) ((1 - u) * (1 - u) * (1 - u)), point)
-                .add(B.mul((float) (3 * u * (1 - u) * (1 - u)), temp), point)
-                .add(C.mul((float) (3 * u * u * (1 - u)), temp), point)
-                .add(D.mul((float) (u * u * u), temp), point);
-        return point;
+        return new Vector3f(A).mul((float) ((1 - u) * (1 - u) * (1 - u)))
+                .add(B.mul((float) (3 * u * (1 - u) * (1 - u)), temp))
+                .add(C.mul((float) (3 * u * u * (1 - u)), temp))
+                .add(D.mul((float) (u * u * u), temp));
     }
 
     /**
@@ -236,32 +259,29 @@ public class Vectors {
     }
 
     /**
+     * swaps the contents of a and b
+     * @param a
+     * @param b
+     */
+    public static void swap(Vector3f a, Vector3f b) {
+        float t;
+        t = a.x;
+        a.x = b.x;
+        b.x = t;
+        t = a.y;
+        a.y = b.y;
+        b.y = t;
+        t = a.z;
+        a.z = b.z;
+        b.z = t;
+    }
+
+    /**
      * @param vec any vector
      * @return true iff none of the scalars of the given vector is nan, and the length of the vector is not zero
      */
     public static boolean isScalable(Vector3fc vec) {
         return !isNaN(vec.x()) && !isNaN(vec.y()) && !isNaN(vec.z()) && !((vec.x() == 0) && (vec.y() == 0) && (vec.z() == 0));
-    }
-
-    /**
-     * transforms a click on a screen of the given size on the given coordinate to a ray. Modifies origin and
-     * direction.
-     * @param camera       the view on the game world
-     * @param windowWidth  the number of pixels of the viewport on the x axis
-     * @param windowHeight the number of pixels of the viewport on the y axis
-     * @param clickCoords  the coordinates of where was clicked on the screen
-     * @param origin       the destination vector of the origin of the ray. The exact result is ({@link Camera#getEye()}
-     *                     + Z_NEAR * direction)
-     * @param direction    the direction of the ray, not normalized.
-     * @param isometric
-     */
-    public static void windowCoordToRay(
-            Camera camera, int windowWidth, int windowHeight, Vector2f clickCoords, Vector3f origin, Vector3f direction,
-            boolean isometric
-    ) {
-        Matrix4f projection = SGL.getViewProjection(windowWidth, windowHeight, camera, isometric);
-        int[] viewport = {0, 0, windowWidth, windowHeight};
-        projection.unprojectRay(clickCoords, viewport, origin, direction);
     }
 
     public static Vector3f getNormalVector(Vector3fc A, Vector3fc B, Vector3fc C) {
@@ -282,7 +302,45 @@ public class Vectors {
     public static void windowCoordToRay(Game game, int xSc, int ySc, Vector3f origin, Vector3f direction) {
         GLFWWindow window = game.window();
         Camera camera = game.camera();
-        Vector2f winCoords = new Vector2f(xSc, ySc);
-        windowCoordToRay(camera, window.getWidth(), window.getHeight(), winCoords, origin, direction, game.settings().ISOMETRIC_VIEW);
+
+        int windowWidth = window.getWidth();
+        int windowHeight = window.getHeight();
+        Matrix4f projection = camera.getViewProjection((float) windowWidth / windowHeight);
+
+        Vector2f winCoords = new Vector2f(xSc, windowHeight - ySc);
+        int[] viewport = {0, 0, windowWidth, windowHeight};
+        projection.unprojectRay(winCoords, viewport, origin, direction);
+    }
+
+    public static Vector2i toVector2i(Vector3ic coordinate) {
+        return new Vector2i(coordinate.x(), coordinate.y());
+    }
+
+    public static Matrix4f toMatrix4f(float[] f) {
+        assert f.length == 16;
+        return new Matrix4f(
+                f[0], f[1], f[2], f[3],
+                f[4], f[5], f[6], f[7],
+                f[8], f[9], f[10], f[11],
+                f[12], f[13], f[14], f[15]
+        );
+    }
+
+    public static Vector3f sizeOf(AABBf box) {
+        return new Vector3f(box.maxX - box.minX, box.maxY - box.minY, box.maxZ - box.minZ);
+    }
+
+    public static boolean almostEqual(Vector3fc alpha, Vector3fc beta) {
+        return alpha.distanceSquared(beta) < VECTOR_EQUALITY_DIST_SQ;
+    }
+
+    public static final class Scaling {
+        public static final Vector3fc UNIFORM = new Vector3f(1, 1, 1);
+        /** scaling that mirrors in the X direction */
+        public static final org.joml.Vector3fc MIRROR_X = new Vector3f(-1, 1, 1);
+        /** scaling that mirrors in the Y direction */
+        public static final Vector3fc MIRROR_Y = new Vector3f(1, -1, 1);
+        /** scaling that mirrors in the Z direction */
+        public static final Vector3fc MIRROR_Z = new Vector3f(1, 1, -1);
     }
 }

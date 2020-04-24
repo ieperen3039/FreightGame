@@ -1,19 +1,20 @@
 package NG.Tracks;
 
-import NG.Engine.Game;
+import NG.Core.Game;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.Primitives.Collision;
 import NG.Tools.Vectors;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
  */
 public class StraightTrack implements TrackPiece {
     private Game game;
-    private final TrackMod.TrackType type;
+    private final TrackType type;
 
     private final Vector2fc startCoord;
     private final NetworkNodePoint startNode;
@@ -23,7 +24,7 @@ public class StraightTrack implements TrackPiece {
 
     private boolean isInvalid;
 
-    public StraightTrack(Game game, TrackMod.TrackType type, NetworkNodePoint startNode, NetworkNodePoint endNode) {
+    public StraightTrack(Game game, TrackType type, NetworkNodePoint startNode, NetworkNodePoint endNode) {
         this.game = game;
         this.type = type;
         startCoord = new Vector2f(startNode.getPosition());
@@ -64,7 +65,7 @@ public class StraightTrack implements TrackPiece {
     }
 
     @Override
-    public Collision getRayCollision(Vector3f origin, Vector3f direction) {
+    public Collision getRayCollision(Vector3fc origin, Vector3fc direction) {
         Vector3f position = game.map().intersectWithRay(origin, direction);
         Vector2fc coordinate = new Vector2f(position.x, position.y);
         int clickWidth = game.settings().TRACK_CLICK_WIDTH;

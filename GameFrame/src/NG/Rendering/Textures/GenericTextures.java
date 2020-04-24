@@ -1,31 +1,16 @@
 package NG.Rendering.Textures;
 
-import NG.Tools.Directory;
-import NG.Tools.Logger;
-
-import java.io.File;
-import java.io.IOException;
-
 /**
  * @author Geert van Ieperen created on 1-2-2019.
  */
 public enum GenericTextures implements Texture {
-    CHECKER("..", "check.png"),
-    HARRY("..", "harry.png"),
-//    OR_WAS_IT("Kitsune.png"),
+    CHECKER("check.png"),
     ;
 
-    private Texture tex;
+    private final Texture tex;
 
     GenericTextures(String... path) {
-        File file = Directory.meshes.getFile(path);
-
-        try {
-            tex = new FileTexture(file);
-        } catch (IOException ex) {
-            Logger.ERROR.print(ex);
-            tex = null;
-        }
+        tex = Texture.createResource(path).get();
     }
 
     @Override
@@ -46,5 +31,10 @@ public enum GenericTextures implements Texture {
     @Override
     public int getHeight() {
         return tex.getHeight();
+    }
+
+    @Override
+    public int getID() {
+        return tex.getID();
     }
 }

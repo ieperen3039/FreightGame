@@ -1,6 +1,6 @@
 package NG;
 
-import NG.Engine.FreightGame;
+import NG.Core.FreightGame;
 import NG.Tools.Logger;
 
 import java.util.ArrayList;

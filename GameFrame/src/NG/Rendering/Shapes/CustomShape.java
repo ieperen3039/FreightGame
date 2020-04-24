@@ -1,14 +1,12 @@
 package NG.Rendering.Shapes;
 
-import NG.Rendering.MatrixStack.Mesh;
-import NG.Tools.Logger;
+import NG.Rendering.MeshLoading.FlatMesh;
+import NG.Rendering.MeshLoading.Mesh;
+import NG.Rendering.MeshLoading.MeshFile;
 import NG.Tools.Vectors;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -18,7 +16,7 @@ import java.util.*;
  */
 public class CustomShape {
 
-    private final boolean invertMiddle;
+    private final boolean doInvertMiddle;
     private final Map<Vector3fc, Integer> points;
     private final List<Vector3fc> normals;
     private final List<Mesh.Face> faces;
@@ -29,7 +27,7 @@ public class CustomShape {
      * @see #CustomShape(Vector3fc, boolean)
      */
     public CustomShape() {
-        this(Vectors.zeroVector());
+        this(Vectors.O);
     }
 
     /**
@@ -42,17 +40,17 @@ public class CustomShape {
 
     /**
      * A shape that may be defined by the client code using methods of this class. When the shape is finished, call
-     * {@link #asFlatMesh()} to load it into the GPU. The returned shape should be re-used as a static mesh for any future
-     * calls to such shape.
+     * {@link #toFlatMesh()} to load it into the GPU. The returned shape should be re-used as a static mesh for any
+     * future calls to such shape.
      * @param middle the middle of this object. More specifically, from this point, all normal vectors point outward
      *               except maybe for those that have their normal explicitly defined.
      */
-    public CustomShape(Vector3fc middle, boolean invertMiddle) {
+    public CustomShape(Vector3fc middle, boolean doInvertMiddle) {
         this.middle = middle;
         this.faces = new ArrayList<>();
         this.points = new Hashtable<>();
         this.normals = new ArrayList<>();
-        this.invertMiddle = invertMiddle;
+        this.doInvertMiddle = doInvertMiddle;
     }
 
     /**
@@ -82,7 +80,7 @@ public class CustomShape {
     }
 
     /**
-     * defines a quad that is mirrored over the xz-plane
+     * defines a quad with two vectors that are mirrored over the xz-plane
      * @see CustomShape#addFinalQuad(Vector3fc, Vector3fc, Vector3fc, Vector3fc, Vector3fc)
      */
     public void addQuad(Vector3fc A, Vector3fc B) {
@@ -97,7 +95,7 @@ public class CustomShape {
 
         final Vector3f direction = new Vector3f(B).sub(middle);
 
-        if ((normal.dot(direction) >= 0) != invertMiddle) {
+        if ((normal.dot(direction) >= 0) != doInvertMiddle) {
             addFinalQuad(A, B, C, D, normal);
         } else {
             normal.negate();
@@ -126,7 +124,7 @@ public class CustomShape {
         Vector3f normal = Vectors.getNormalVector(A, B, C);
         final Vector3f direction = new Vector3f(B).sub(middle);
 
-        if ((normal.dot(direction) >= 0) != invertMiddle) {
+        if ((normal.dot(direction) >= 0) != doInvertMiddle) {
             addFinalTriangle(A, B, C, normal);
         } else {
             normal.negate();
@@ -159,7 +157,7 @@ public class CustomShape {
     }
 
     private int addNormal(Vector3fc normal) {
-        if ((normal == null) || normal.equals(Vectors.zeroVector())) {
+        if ((normal == null) || normal.equals(Vectors.O)) {
             throw new IllegalArgumentException("Customshape.addNormal(Vector3fc): invalid normal: " + normal);
         }
 
@@ -173,7 +171,10 @@ public class CustomShape {
      * @return index of the vector
      */
     private int addHitpoint(Vector3fc vector) {
-        points.putIfAbsent(vector, points.size());
+        if (!points.containsKey(vector)) {
+            points.put(new Vector3f(vector), points.size());
+        }
+
         return points.get(vector);
     }
 
@@ -222,13 +223,20 @@ public class CustomShape {
      * convert this object into a Mesh
      * @return a hardware-accelerated Mesh object
      */
-    public Mesh asFlatMesh() {
+    public Mesh toFlatMesh() {
         return new FlatMesh(getSortedVertices(), normals, faces);
     }
 
-//    public Mesh asSmoothMesh(){
-//        return null;
-//    }
+    public Shape toShape() {
+        return new BasicShape(getSortedVertices(), normals, faces);
+    }
+
+    public MeshFile toMeshFile() {
+        return new MeshFile(
+                "custom", getSortedVertices(), normals, faces, Collections.emptyList(),
+                Collections.emptyList()
+        );
+    }
 
     private List<Vector3fc> getSortedVertices() {
         // this is the most clear, structured solution of the duplicate-vector problem. maybe not the most efficient.
@@ -236,45 +244,6 @@ public class CustomShape {
         points.forEach((v, i) -> sortedVertices[i] = v);
 
         return Arrays.asList(sortedVertices);
-    }
-
-    /**
-     * writes an object to the given filename
-     * @param filename
-     * @throws IOException if any problem occurs while creating the file
-     */
-    public void writeOBJFile(String filename) throws IOException {
-        PrintWriter writer = new PrintWriter(filename, StandardCharsets.UTF_8);
-
-        writer.println("# created using a simple obj writer by Geert van Ieperen");
-        writer.println("# calling method: " + Logger.getCallingMethod(2));
-        writer.println("mtllib arrow.mtl"); // TODO is this necessary?
-
-        List<Vector3fc> sortedVertices = getSortedVertices();
-
-        for (Vector3fc vec : sortedVertices) {
-            writer.println(String.format(Locale.US, "v %1.09f %1.09f %1.09f", vec.x(), vec.z(), vec.y()));
-        }
-
-        for (Vector3fc vec : normals) {
-            writer.println(String.format(Locale.US, "vn %1.09f %1.09f %1.09f", vec.x(), vec.z(), vec.y()));
-        }
-
-        writer.println("usemtl None");
-        writer.println("s off");
-        writer.println("");
-
-        for (Mesh.Face face : faces) {
-            writer.print("f ");
-            for (int i = 0; i < face.vert.length; i++) {
-                writer.print(" " + vertexToString(face.vert[i], face.norm[i]));
-            }
-            writer.println();
-        }
-
-        writer.close();
-
-        Logger.DEBUG.print("Successfully created obj file: " + filename);
     }
 
     public void setMiddle(Vector3f middle) {
@@ -285,11 +254,6 @@ public class CustomShape {
     public String toString() {
         return getSortedVertices().toString();
     }
-
-    public Shape wrapToShape() {
-        return new BasicShape(getSortedVertices(), normals, faces);
-    }
-
     /**
      * Adds an arbitrary polygon to the object. For correct rendering, the plane should be flat
      * @param normal the direction of the normal of this plane. When null, it is calculated using the middle
@@ -321,7 +285,4 @@ public class CustomShape {
         }
     }
 
-    private static String vertexToString(int vertex, int normal) {
-        return String.format("%d//%d", vertex + 1, normal + 1);
-    }
 }

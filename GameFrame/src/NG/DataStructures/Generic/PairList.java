@@ -1,6 +1,7 @@
 package NG.DataStructures.Generic;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -21,6 +22,41 @@ public class PairList<L, R> extends AbstractList<Pair<L, R>> {
         rightList = new ArrayList<>();
     }
 
+    /**
+     * creates a pairlist by copying the pairs of the given list.
+     * @param pairs a list of pairs.
+     */
+    public PairList(List<Pair<L, R>> pairs) {
+        this(pairs.size());
+        addAll(pairs);
+    }
+
+    public PairList(Map<L, R> pairs) {
+        leftList = new ArrayList<>(pairs.size());
+        rightList = new ArrayList<>(pairs.size());
+        for (L left : pairs.keySet()) {
+            add(left, pairs.get(left));
+        }
+    }
+
+    /**
+     * creates a pairlist whose elements are represented by the given lists. Changes in this object write through the
+     * given lists, and changes in the given lists write through this pairlist. Unbalance between the size of the two
+     * lists due to external interference is not checked.
+     * @param leftElements  elements that are used as left elements
+     * @param rightElements elements that are used as right elements
+     */
+    public PairList(List<L> leftElements, List<R> rightElements) {
+        if (leftElements.size() != rightElements.size()) {
+            throw new IllegalArgumentException(
+                    "Given arrays are of unequal size: " + leftElements.size() + ", " + rightElements.size()
+            );
+        }
+
+        this.leftList = leftElements;
+        this.rightList = rightElements;
+    }
+
     /** adds the given pair to the end of the list */
     public boolean add(Pair<L, R> p) {
         return add(p.left, p.right);
@@ -39,6 +75,12 @@ public class PairList<L, R> extends AbstractList<Pair<L, R>> {
     }
 
     public void add(int index, L left, R right) {
+        // ensure index >= size()
+        for (int i = size(); i <= index; i++) {
+            leftList.add(null);
+            rightList.add(null);
+        }
+
         leftList.add(index, left);
         rightList.add(index, right);
     }
@@ -164,14 +206,35 @@ public class PairList<L, R> extends AbstractList<Pair<L, R>> {
         return new PairListIterator(index);
     }
 
+    public void forEach(BiConsumer<L, R> action) {
+        for (int i = 0; i < size(); i++) {
+            action.accept(leftList.get(i), rightList.get(i));
+        }
+    }
+
     public void addAll(List<L> leftNew, List<R> rightNew) {
-        if (leftNew.size() != rightNew.size())
+        if (leftNew.size() != rightNew.size()) {
             throw new IllegalArgumentException(
                     "Given lists are of unequal size: " + leftNew.size() + ", " + rightNew.size()
             );
+        }
 
         leftList.addAll(leftNew);
         rightList.addAll(rightNew);
+    }
+
+    public L[] leftToArray(L[] a) {
+        return leftList.toArray(a);
+    }
+
+    public R[] rightToArray(R[] a) {
+        return rightList.toArray(a);
+    }
+
+    public static <L, R> PairList<L, R> empty() {
+        return new PairList<>(
+                Collections.emptyList(), Collections.emptyList()
+        );
     }
 
     /**

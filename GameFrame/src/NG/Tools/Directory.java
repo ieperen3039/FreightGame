@@ -6,50 +6,64 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 
 /**
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public enum Directory {
-    shaders("res", "shaders"),
-    meshes("res", "models"),
-    fonts("res", "fonts"),
-    mods("jar", "Mods"),
-    screenshots("img", "screenshots");
+    shaders(true, "res", "shaders"),
+    meshes(true, "res", "models"),
+    fonts(true, "res", "fonts"),
+    mods(false, "Mods"),
+    screenshots(false, "Screenshots"),
+    savedMaps(false, "Saved maps"),
+    images(true, "res", "images");
 
-    private static Path WORKING_DIRECTORY = null;
+    private static Path workingDirectory = null;
     private final Path directory; // relative path
-
-    Directory() {
-        this.directory = workDirectory();
-    }
 
     Directory(Path directory) {
         this.directory = directory;
     }
 
-    Directory(String first, String... directory) {
-        this.directory = Paths.get(first, directory);
+    Directory(boolean isResource, String first, String... other) {
+        directory = Paths.get(first, other);
+
+        File file = workDirectory().resolve(directory).toFile();
+        if (isResource && !file.exists()) {
+            throw new RuntimeException("Directory " + directory + " is missing. Searched for " + file);
+        }
+
+        if (!isResource) {
+            file.mkdirs();
+        }
     }
 
     public File getDirectory() {
-        return directory.toFile();
+        return getPath().toFile();
     }
 
     public File getFile(String... path) {
         return getPath(path).toFile();
     }
 
+    public File getFileMakeParents(String... path) {
+        File file = getPath(path).toFile();
+        file.getParentFile().mkdirs();
+        return file;
+    }
+
+    /** @return the path local to the work directory */
     public Path getPath(String... path) {
-        String first = path[0];
-        String[] second = Arrays.copyOfRange(path, 1, path.length);
-        Path other = Paths.get(first, second);
-        return workDirectory().resolve(directory).resolve(other).toAbsolutePath();
+        Path pathBuilder = directory;
+        for (String s : path) {
+            pathBuilder = pathBuilder.resolve(s);
+        }
+        return workDirectory().resolve(pathBuilder);
     }
 
     public Path getPath() {
-        return directory; // immutable
+        return workDirectory().resolve(directory);
     }
 
     public File[] getFiles() {
@@ -57,17 +71,10 @@ public enum Directory {
     }
 
     public static Path workDirectory() {
-        if (WORKING_DIRECTORY == null) {
-            WORKING_DIRECTORY = Paths.get("").toAbsolutePath();
-
-            if (!WORKING_DIRECTORY.endsWith("FreightGame")) {
-                WORKING_DIRECTORY = WORKING_DIRECTORY.getParent();
-            }
-
-            // more checks
-            assert WORKING_DIRECTORY.endsWith("FreightGame");
+        if (workingDirectory == null) {
+            workingDirectory = Paths.get("").toAbsolutePath();
         }
-        return WORKING_DIRECTORY;
+        return workingDirectory;
     }
 
     public URL toURL() {

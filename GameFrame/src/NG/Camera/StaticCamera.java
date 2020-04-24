@@ -1,7 +1,7 @@
 package NG.Camera;
 
 
-import NG.Engine.Game;
+import NG.Core.Game;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -10,10 +10,10 @@ import org.joml.Vector3fc;
  */
 public class StaticCamera implements Camera {
 
-    private Vector3f eye, focus;
-    private Vector3f up;
+    private Vector3fc eye, focus;
+    private Vector3fc up;
 
-    public StaticCamera(Vector3f eye, Vector3f focus, Vector3f up) {
+    public StaticCamera(Vector3fc eye, Vector3fc focus, Vector3fc up) {
         this.eye = eye;
         this.focus = focus;
         this.up = up;
@@ -51,8 +51,8 @@ public class StaticCamera implements Camera {
 
     @Override
     public void set(Vector3fc focus, Vector3fc eye) {
-        this.focus.set(focus);
-        this.eye.set(eye);
+        this.focus = new Vector3f(focus);
+        this.eye = new Vector3f(eye);
     }
 
     @Override
@@ -63,5 +63,10 @@ public class StaticCamera implements Camera {
     @Override
     public void cleanup() {
 
+    }
+
+    @Override
+    public boolean isIsometric() {
+        return true;
     }
 }

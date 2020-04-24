@@ -1,23 +1,25 @@
 package NG.Entities;
 
-import NG.ActionHandling.MouseTools.EntityBuildTool;
+import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Generic.Pair;
-import NG.DataStructures.Material;
-import NG.Engine.Game;
+import NG.GUIMenu.Components.*;
+import NG.InputHandling.MouseTools.SurfaceBuildTool;
+import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
-import NG.Rendering.Shapes.FileShapes;
-import NG.ScreenOverlay.Frames.Components.*;
+import NG.Rendering.Shapes.GenericShapes;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import NG.Tracks.NetworkNode;
-import NG.Tracks.TrackMod;
+import NG.Tracks.TrackType;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
+
+import java.util.function.Consumer;
 
 import static NG.Tools.Vectors.cos;
 import static NG.Tools.Vectors.sin;
@@ -37,9 +39,9 @@ public class BasicStation extends Station {
 
     private NetworkNode[] forwardConnections;
     private NetworkNode[] backwardConnections;
-    private TrackMod.TrackType type;
+    private TrackType type;
 
-    public BasicStation(Game game, int nrOfPlatforms, int length, TrackMod.TrackType type) {
+    public BasicStation(Game game, int nrOfPlatforms, int length, TrackType type) {
         super(game, new Vector2f());
         assert nrOfPlatforms > 0 : "created station with " + nrOfPlatforms + " platforms";
         this.type = type;
@@ -71,6 +73,9 @@ public class BasicStation extends Station {
 
         Vector2fc forward = new Vector2f(cos(orientation), sin(orientation)).normalize(realLength / 2f);
 
+        forwardConnections = new NetworkNode[numberOfPlatforms];
+        backwardConnections = new NetworkNode[numberOfPlatforms];
+
         if (numberOfPlatforms > 1) {
             Vector2fc sideward = new Vector2f(-sin(orientation), cos(orientation)).normalize(realWidth / 2f);
             Vector2fc sideSkip = new Vector2f(sideward).normalize(PLATFORM_SIZE);
@@ -78,9 +83,6 @@ public class BasicStation extends Station {
             Vector2f frontPos = new Vector2f(getPosition()).sub(sideward).add(sideSkip.x() / 2, sideSkip.y() / 2);
             Vector2f backPos = new Vector2f(frontPos).sub(forward);
             frontPos.add(forward);
-
-            forwardConnections = new NetworkNode[numberOfPlatforms];
-            backwardConnections = new NetworkNode[numberOfPlatforms];
 
             for (int i = 0; i < numberOfPlatforms; i++) {
                 Pair<NetworkNode, NetworkNode> nodePair = NetworkNode.getNodePair(game, type, frontPos, backPos);
@@ -98,6 +100,7 @@ public class BasicStation extends Station {
 
             Pair<NetworkNode, NetworkNode> nodePair = NetworkNode.getNodePair(game, type, frontPos, backPos);
 
+            Logger.WARN.print(nodePair);
             forwardConnections[0] = nodePair.left;
             backwardConnections[0] = nodePair.right;
         }
@@ -109,7 +112,7 @@ public class BasicStation extends Station {
         {
             Vector3f position = game.map().getPosition(getPosition());
             gl.translate(position);
-            gl.rotate(Vectors.zVector(), orientation);
+            gl.rotate(Vectors.Z, orientation);
             gl.scale(realLength / 2, realWidth / 2, 5);
 
             ShaderProgram shader = gl.getShader();
@@ -118,7 +121,7 @@ public class BasicStation extends Station {
                 matShader.setMaterial(Material.ROUGH, isFixed ? Color4f.GREEN : Color4f.WHITE);
             }
 
-            gl.render(FileShapes.CUBE, this);
+            gl.render(GenericShapes.CUBE, this);
         }
         gl.popMatrix();
     }
@@ -128,7 +131,7 @@ public class BasicStation extends Station {
         return UpdateFrequency.NEVER;
     }
 
-    public static class Builder extends EntityBuildTool {
+    public static class Builder extends SurfaceBuildTool {
         private static final String[] values = new String[12];
 
         static {
@@ -143,18 +146,12 @@ public class BasicStation extends Station {
         private boolean isPositioned = false;
         private SizeSelector selector;
 
-        public Builder(Game game, SToggleButton source, TrackMod.TrackType trackType) {
-            super(game, source);
+        public Builder(Game game, SToggleButton source, TrackType trackType) {
+            super(game, () -> source.setActive(false));
             this.station = new BasicStation(game, 1, 3, trackType);
 
             selector = new SizeSelector();
             game.gui().addFrame(selector);
-        }
-
-        @Override
-        protected void close() {
-            super.close();
-            selector.dispose();
         }
 
         @Override
@@ -163,6 +160,11 @@ public class BasicStation extends Station {
         }
 
         @Override
+        public void dispose() {
+            super.dispose();
+            selector.dispose();
+        }
+
         public void apply(Vector2fc position) {
             station.setPosition(position);
             game.state().addEntity(station);
@@ -187,7 +189,7 @@ public class BasicStation extends Station {
             super.onRelease(button, xSc, ySc);
             if (!isPositioned) return;
             station.fixPosition();
-            close();
+            dispose();
         }
 
         private class SizeSelector extends SFrame {
@@ -195,17 +197,18 @@ public class BasicStation extends Station {
                 super("Station Size");
                 SPanel panel = new SPanel(2, 2);
 
-                SDropDown capacityChooser = new SDropDown(game, station.platformCapacity, values);
-                SDropDown widthChooser = new SDropDown(game, station.numberOfPlatforms, values);
+                SDropDown capacityChooser = new SDropDown(game.gui(), station.platformCapacity, values);
+                SDropDown widthChooser = new SDropDown(game.gui(), station.numberOfPlatforms, values);
 
-                Runnable changeListener = () -> station.setSize(capacityChooser.getSelectedIndex(), widthChooser.getSelectedIndex());
+                Consumer<Integer> changeListener = (i) -> station.setSize(capacityChooser.getSelectedIndex(), widthChooser
+                        .getSelectedIndex());
 
                 capacityChooser.addStateChangeListener(changeListener);
                 widthChooser.addStateChangeListener(changeListener);
 
-                panel.add(new STextArea("Wagons per platform", capacityChooser.minHeight(), true), new Vector2i(0, 0));
+                panel.add(new STextArea("Wagons per platform", capacityChooser.minHeight()), new Vector2i(0, 0));
                 panel.add(capacityChooser, new Vector2i(1, 0));
-                panel.add(new STextArea("Number of platforms", widthChooser.minHeight(), true), new Vector2i(0, 1));
+                panel.add(new STextArea("Number of platforms", widthChooser.minHeight()), new Vector2i(0, 1));
                 panel.add(widthChooser, new Vector2i(1, 1));
 
                 setMainPanel(panel);

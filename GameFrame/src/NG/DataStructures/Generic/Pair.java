@@ -1,5 +1,6 @@
 package NG.DataStructures.Generic;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -7,7 +8,7 @@ import java.util.Objects;
  * @param <L> Left type
  * @param <R> Right type
  */
-public class Pair<L, R> {
+public class Pair<L, R> implements Serializable {
     public final L left;
     public final R right;
 
@@ -27,9 +28,9 @@ public class Pair<L, R> {
 
     @Override
     public int hashCode() {
-        int result = (left != null) ? left.hashCode() : 0;
-        result = (31 * result) + ((right != null) ? right.hashCode() : 0);
-        return result;
+        int leftCode = (left != null) ? left.hashCode() : 0;
+        int rightCode = (right != null) ? right.hashCode() : 0;
+        return (31 * leftCode) + rightCode;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package NG.Rendering.Shaders;
 
 import NG.DataStructures.Generic.Color4f;
-import NG.Rendering.DirectionalLight;
+import NG.Rendering.Lights.DirectionalLight;
 import org.joml.Vector3fc;
 
 /**
@@ -21,4 +21,9 @@ public interface LightShader {
      * @param light a light with parameters
      */
     void setDirectionalLight(DirectionalLight light);
+
+    /**
+     * sets possible unused point-light slots to 'off'. No more point lights can be added after a call to this method.
+     */
+    void discardRemainingLights();
 }

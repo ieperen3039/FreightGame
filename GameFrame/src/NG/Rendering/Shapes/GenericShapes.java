@@ -1,56 +1,78 @@
 package NG.Rendering.Shapes;
 
-import NG.Rendering.MatrixStack.Mesh;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.MeshLoading.Mesh;
+import NG.Rendering.MeshLoading.MeshFile;
 import NG.Rendering.Shapes.Primitives.Plane;
+import NG.Resources.GeneratorResource;
+import NG.Resources.Resource;
+import NG.Tools.Directory;
+import org.joml.AABBf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.stream.Stream;
+import java.util.Collection;
 
 /**
- * @author Geert van Ieperen created on 1-2-2019.
+ * A collection of generic shapes
+ * @author Geert van Ieperen. Created on 14-9-2018.
  */
 public enum GenericShapes implements Mesh, Shape {
-    /** a quad of size 2x2 on the xy plane */
-    QUAD(makeSingleQuad());
+    ARROW("general", "arrow.obj"),
+    ICOSAHEDRON("general", "icosahedron.obj"),
+    INV_CUBE("general", "inverseCube.obj"),
+    CUBE("general", "cube.obj"),
+    TEXTURED_QUAD("general", "quad.obj"),
 
-    private final Mesh mesh;
-    private final Shape shape;
+    /** a quad of size 2x2 on the xy plane */
+    QUAD(makeSingleQuad()),
+    ;
+
+    private Resource<Mesh> mesh;
+    private Shape shape; // we use the actual shape as this is an enum
+
+    GenericShapes(String... path) {
+        Resource<MeshFile> pars = MeshFile.createResource(Directory.meshes, path);
+        shape = pars.get().getShape();
+        mesh = Resource.derive(pars, MeshFile::getMesh, Mesh::dispose);
+    }
 
     GenericShapes(CustomShape frame) {
-        mesh = frame.asFlatMesh();
-        shape = frame.wrapToShape();
+        shape = frame.toShape();
+        mesh = new GeneratorResource<>(frame::toFlatMesh, Mesh::dispose);
+    }
+
+    public Resource<Mesh> meshResource() {
+        return mesh;
+    }
+
+    public Resource<Shape> shapeResource() {
+        return new GeneratorResource<>(() -> shape, null);
     }
 
     @Override
     public void render(SGL.Painter lock) {
-        mesh.render(lock);
+        mesh.get().render(lock);
     }
 
     @Override
     public void dispose() {
-        mesh.dispose();
+        mesh.drop();
     }
 
     @Override
-    public Iterable<? extends Plane> getPlanes() {
+    public Collection<? extends Plane> getPlanes() {
         return shape.getPlanes();
     }
 
     @Override
-    public Iterable<Vector3fc> getPoints() {
+    public Collection<Vector3fc> getPoints() {
         return shape.getPoints();
     }
 
     @Override
-    public Stream<? extends Plane> getPlaneStream() {
-        return shape.getPlaneStream();
-    }
-
-    @Override
-    public Stream<? extends Vector3fc> getPointStream() {
-        return shape.getPointStream();
+    public AABBf getBoundingBox() {
+        return shape.getBoundingBox();
     }
 
     private static CustomShape makeSingleQuad() {

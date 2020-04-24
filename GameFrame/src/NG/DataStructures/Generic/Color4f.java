@@ -4,13 +4,15 @@ import NG.Tools.Toolbox;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
+import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
 /**
  * An immutable representation of colors. Includes an opacity value (the alpha value) and a set of predefined colors.
  * @author Geert van Ieperen created on 21-11-2017.
  */
-public class Color4f {
+public class Color4f implements Serializable {
     public static final Color4f BLACK = new Color4f(0, 0, 0);
     public static final Color4f GREY = new Color4f(0.5f, 0.5f, 0.5f);
     public static final Color4f LIGHT_GREY = new Color4f(0.8f, 0.8f, 0.8f);
@@ -69,16 +71,6 @@ public class Color4f {
     }
 
     /**
-     * create a color using integer arguments [0 - 255] with 0 = none and 255 = max
-     */
-    public Color4f(int ired, int igreen, int iblue, int ialpha) {
-        red = cap(ired / 255f);
-        green = cap(igreen / 255f);
-        blue = cap(iblue / 255f);
-        alpha = cap(ialpha / 255f);
-    }
-
-    /**
      * create a new color based on another color with new intensity. if (intensity == source.alpha), then
      * (this.equals(source))
      * @param source    a source color, of which the red green and blue values are taken
@@ -91,8 +83,18 @@ public class Color4f {
         alpha = cap(intensity);
     }
 
-    public Color4f(float[] values) {
-        this(values[0], values[1], values[2], values[3]);
+    /**
+     * create a color using integer arguments [0 - 255] with 0 = none and 255 = max
+     */
+    public static Color4f rgb(int ired, int igreen, int iblue, float alpha) {
+        return new Color4f(ired / 255f, igreen / 255f, iblue / 255f, alpha);
+    }
+
+    /**
+     * create a color using integer arguments [0 - 255] with 0 = none and 255 = max
+     */
+    public static Color4f rgb(int ired, int igreen, int iblue) {
+        return rgb(ired, igreen, iblue, 1f);
     }
 
     public static Color4f randomBetween(Color4f color1, Color4f color2) {
@@ -110,10 +112,10 @@ public class Color4f {
                 .split(", ");
 
         return new Color4f(
-                Float.valueOf(numbers[0]),
-                Float.valueOf(numbers[1]),
-                Float.valueOf(numbers[2]),
-                Float.valueOf(numbers[3])
+                Float.parseFloat(numbers[0]),
+                Float.parseFloat(numbers[1]),
+                Float.parseFloat(numbers[2]),
+                Float.parseFloat(numbers[3])
         );
     }
 
@@ -142,7 +144,7 @@ public class Color4f {
                 inverseMul(red, other.red),
                 inverseMul(green, other.green),
                 inverseMul(blue, other.blue),
-                inverseMul(alpha, other.alpha)
+                alpha * other.alpha
         );
     }
 
@@ -239,7 +241,11 @@ public class Color4f {
     }
 
     public FloatBuffer toFloatBuffer() {
-        return FloatBuffer.wrap(new float[]{red, green, blue, alpha});
+        return FloatBuffer.wrap(toArray());
+    }
+
+    public float[] toArray() {
+        return new float[]{red, green, blue, alpha};
     }
 
     public Color4f interpolateTo(Color4f other, float value) {
@@ -248,5 +254,23 @@ public class Color4f {
                 green + ((other.green - green) * value),
                 blue + ((other.blue - blue) * value)
         );
+    }
+
+    /**
+     * puts this color on the buffer and increase the position by 4
+     * @param colorBuffer the buffer to write to
+     */
+    public void put(FloatBuffer colorBuffer) {
+        colorBuffer.put(red);
+        colorBuffer.put(green);
+        colorBuffer.put(blue);
+        colorBuffer.put(alpha);
+    }
+
+    public void put(ByteBuffer colorBuffer) {
+        colorBuffer.put((byte) (red * 255));
+        colorBuffer.put((byte) (green * 255));
+        colorBuffer.put((byte) (blue * 255));
+        colorBuffer.put((byte) (alpha * 255));
     }
 }

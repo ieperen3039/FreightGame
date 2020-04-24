@@ -1,7 +1,7 @@
 package NG.Tracks;
 
+import NG.Core.Game;
 import NG.DataStructures.Generic.Pair;
-import NG.Engine.Game;
 import NG.Tools.Vectors;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
@@ -15,13 +15,13 @@ public abstract class NetworkNode {
     /** direction of the bNode on this position */
     protected Vector2fc direction; // normalized
     /** type of tracks that this node connects */
-    protected TrackMod.TrackType type;
+    protected TrackType type;
 
     /**
      * @param nodePoint the point in space associated with this node
      * @param type      the type of track this node connects
      */
-    protected NetworkNode(NetworkNodePoint nodePoint, TrackMod.TrackType type) {
+    protected NetworkNode(NetworkNodePoint nodePoint, TrackType type) {
         this.nodePoint = nodePoint;
         nodePoint.setReference(this);
         this.type = type;
@@ -114,7 +114,7 @@ public abstract class NetworkNode {
      * bPosition}, and which are connected with an instance of {@link StraightTrack}
      */
     public static Pair<NetworkNode, NetworkNode> getNodePair(
-            Game game, TrackMod.TrackType type, Vector2fc aPosition, Vector2fc bPosition
+            Game game, TrackType type, Vector2fc aPosition, Vector2fc bPosition
     ) {
         NetworkNodePoint nodePointA = new NetworkNodePoint(aPosition, game.map());
         NetworkNodePoint nodePointB = new NetworkNodePoint(bPosition, game.map());

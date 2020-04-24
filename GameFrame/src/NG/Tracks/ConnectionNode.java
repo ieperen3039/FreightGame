@@ -31,7 +31,7 @@ public class ConnectionNode extends NetworkNode {
      * @param nodePoint the point in space associated with this node
      * @param type      the type of track that this node connects
      */
-    protected ConnectionNode(NetworkNodePoint nodePoint, TrackMod.TrackType type) {
+    protected ConnectionNode(NetworkNodePoint nodePoint, TrackType type) {
         super(nodePoint, type);
     }
 

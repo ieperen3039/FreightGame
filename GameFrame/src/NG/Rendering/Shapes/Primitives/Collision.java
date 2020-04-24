@@ -20,7 +20,7 @@ public class Collision implements Comparable<Collision> {
     }
 
     public Collision(Vector3fc hitPos) {
-        this(1, Vectors.zVector(), hitPos);
+        this(1, Vectors.Z, hitPos);
     }
 
     /**
@@ -53,5 +53,9 @@ public class Collision implements Comparable<Collision> {
 
     public void setEntity(Entity entity) {
         this.entity = entity;
+    }
+
+    public float getScalar() {
+        return scalar;
     }
 }

@@ -1,20 +1,21 @@
 package NG.Rendering.Shaders;
 
+import NG.Camera.Camera;
+import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
+import NG.Rendering.GLFWWindow;
+import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.MatrixStack.SceneShaderGL;
+import NG.Tools.Logger;
 import NG.Tools.Toolbox;
 import org.joml.*;
 import org.lwjgl.system.MemoryStack;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.FloatBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 
 import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL20.*;
@@ -40,7 +41,7 @@ public abstract class SceneShader implements ShaderProgram, MaterialShader, Ligh
      * @param vertexPath   the path to the vertex shader, or null for the standard implementation
      * @param geometryPath the path to the geometry shader, or null for the standard implementation
      * @param fragmentPath the path to the fragment shader, or null for the standard implementation
-     * @throws ShaderException if a new shader could not be created by some opengl reason
+     * @throws ShaderException if a new shader could not be created for internal reasons
      * @throws IOException     if the defined files could not be found (the file is searched for in the shader folder
      *                         itself, and should exclude any first slash)
      */
@@ -53,34 +54,49 @@ public abstract class SceneShader implements ShaderProgram, MaterialShader, Ligh
         }
 
         if (vertexPath != null) {
-            final String shaderCode = loadText(vertexPath);
-            vertexShaderID = createShader(programId, GL_VERTEX_SHADER, shaderCode);
+            final String shaderCode = ShaderProgram.loadText(vertexPath);
+            vertexShaderID = ShaderProgram.createShader(programId, GL_VERTEX_SHADER, shaderCode);
         }
 
         if (geometryPath != null) {
-            final String shaderCode = loadText(geometryPath);
-            geometryShaderID = createShader(programId, GL_GEOMETRY_SHADER, shaderCode);
+            final String shaderCode = ShaderProgram.loadText(geometryPath);
+            geometryShaderID = ShaderProgram.createShader(programId, GL_GEOMETRY_SHADER, shaderCode);
         }
 
         if (fragmentPath != null) {
-            final String shaderCode = loadText(fragmentPath);
-            fragmentShaderID = createShader(programId, GL_FRAGMENT_SHADER, shaderCode);
+            final String shaderCode = ShaderProgram.loadText(fragmentPath);
+            fragmentShaderID = ShaderProgram.createShader(programId, GL_FRAGMENT_SHADER, shaderCode);
         }
 
-        link();
+        glLinkProgram(programId);
+
+        if (glGetProgrami(programId, GL_LINK_STATUS) == GL_FALSE) {
+            throw new ShaderException("Error linking Shader code: " + glGetProgramInfoLog(programId, 1024));
+        }
+
+        if (vertexShaderID != 0) {
+            glDetachShader(programId, vertexShaderID);
+        }
+
+        if (geometryShaderID != 0) {
+            glDetachShader(programId, geometryShaderID);
+        }
+
+        if (fragmentShaderID != 0) {
+            glDetachShader(programId, fragmentShaderID);
+        }
+
+        glValidateProgram(programId);
+        if (glGetProgrami(programId, GL_VALIDATE_STATUS) == GL_FALSE) {
+            Logger.WARN.print("Warning validating Shader code: " + glGetProgramInfoLog(programId, 1024));
+        }
 
         // Create uniforms for world and projection matrices
         createUniform("viewProjectionMatrix");
         createUniform("modelMatrix");
         createUniform("normalMatrix");
 
-        Toolbox.checkGLError();
-    }
-
-    protected void resetLights(int nOfLights) {
-        for (int i = 0; i < nOfLights; i++) {
-            setPointLight(new Vector3f(), Color4f.INVISIBLE, 0);
-        }
+        Toolbox.checkGLError(toString());
     }
 
     @Override
@@ -95,31 +111,10 @@ public abstract class SceneShader implements ShaderProgram, MaterialShader, Ligh
 
     @Override
     public void cleanup() {
-        unbind();
         if (programId != 0) {
+            unbind();
             glDeleteProgram(programId);
-        }
-    }
-
-    public void link() throws ShaderException {
-        glLinkProgram(programId);
-        if (glGetProgrami(programId, GL_LINK_STATUS) == GL_FALSE) {
-            throw new ShaderException("Error linking Shader code: " + glGetProgramInfoLog(programId, 1024));
-        }
-
-        if (vertexShaderID != 0) {
-            glDetachShader(programId, vertexShaderID);
-        }
-        if (geometryShaderID != 0) {
-            glDetachShader(programId, geometryShaderID);
-        }
-        if (fragmentShaderID != 0) {
-            glDetachShader(programId, fragmentShaderID);
-        }
-
-        glValidateProgram(programId);
-        if (glGetProgrami(programId, GL_VALIDATE_STATUS) == GL_FALSE) {
-            System.err.println("Warning validating Shader code: " + glGetProgramInfoLog(programId, 1024));
+            programId = 0;
         }
     }
 
@@ -187,8 +182,17 @@ public abstract class SceneShader implements ShaderProgram, MaterialShader, Ligh
      * @param uniformName The name of the uniform.
      * @param value       The new value of the uniform.
      */
-    protected void setUniform(String uniformName, Vector3fc value) {
+    public void setUniform(String uniformName, Vector3fc value) {
         glUniform3f(unif(uniformName), value.x(), value.y(), value.z());
+    }
+
+    /**
+     * Set the value of a certain 2D Vector shader uniform
+     * @param uniformName The name of the uniform.
+     * @param value       The new value of the uniform.
+     */
+    protected void setUniform(String uniformName, Vector2fc value) {
+        glUniform2f(unif(uniformName), value.x(), value.y());
     }
 
     private int unif(String uniformName) {
@@ -256,50 +260,12 @@ public abstract class SceneShader implements ShaderProgram, MaterialShader, Ligh
         }
     }
 
-    /**
-     * Create a new shader and return the id of the newly created shader.
-     * @param programId
-     * @param shaderType The type of shader, e.g. GL_VERTEX_SHADER.
-     * @param shaderCode The shaderCode as a String.
-     * @return The id of the newly created shader.
-     * @throws ShaderException If an error occurs during the creation of a shader.
-     */
-    public static int createShader(int programId, int shaderType, String shaderCode) throws ShaderException {
-        int shaderId = glCreateShader(shaderType);
-        if (shaderId == 0) {
-            throw new ShaderException("Error creating shader. Type: " + shaderType);
-        }
-
-        glShaderSource(shaderId, shaderCode);
-        glCompileShader(shaderId);
-
-        if (glGetShaderi(shaderId, GL_COMPILE_STATUS) == 0) {
-            throw new ShaderException("Error compiling Shader code:\n" + glGetShaderInfoLog(shaderId, 1024));
-        }
-
-        glAttachShader(programId, shaderId);
-
-        return shaderId;
+    @Override
+    public SGL getGL(Game game) {
+        GLFWWindow window = game.window();
+        Camera camera = game.camera();
+        int windowWidth = window.getWidth();
+        int windowHeight = window.getHeight();
+        return new SceneShaderGL(this, windowWidth, windowHeight, camera);
     }
-
-    /**
-     * loads a textfile and returns the text as a string
-     * @param path a path to an UTF-8 text file.
-     * @return a string representation of the requested resource
-     * @throws IOException if the path does not point to a valid, readable file
-     */
-    public static String loadText(Path path) throws IOException {
-        String result;
-        try (
-                InputStream in = new FileInputStream(path.toFile());
-                Scanner scanner = new Scanner(in, StandardCharsets.UTF_8)
-        ) {
-            result = scanner.useDelimiter("\\A").next();
-
-        } catch (FileNotFoundException e) {
-            throw new IOException("Resource not found: " + path);
-        }
-        return result;
-    }
-
 }

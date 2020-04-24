@@ -1,9 +1,6 @@
 package NG.Rendering;
 
 import NG.DataStructures.Generic.Color4f;
-import NG.Engine.Game;
-import NG.Engine.GameAspect;
-import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
 import NG.Tools.Toolbox;
@@ -20,6 +17,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -27,18 +27,17 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
- * @author Jorren Hendriks
- *         <p>
- *         A window which initializes GLFW and manages it.
+ * @author Jorren Hendriks & Geert van Ieperen
+ * <p>
+ * A window which initializes GLFW and manages it.
  */
-public class GLFWWindow implements GameAspect {
-    private static final boolean GL_DEBUG_MESSAGES = false;
-
+public class GLFWWindow {
     private final String title;
     private final boolean resizable;
     // buffers for mouse input
     private final DoubleBuffer mousePosX;
     private final DoubleBuffer mousePosY;
+    private final Settings settings;
 
     private long primaryMonitor;
     private long window;
@@ -46,20 +45,18 @@ public class GLFWWindow implements GameAspect {
     private int height;
     private boolean fullScreen = false;
     private boolean mouseIsCaptured;
-    private Game game;
+    private List<ResizeListener> sizeChangeListeners = new ArrayList<>();
+    private Thread glContext;
 
-    public GLFWWindow(String title, boolean resizable) {
+    public GLFWWindow(String title, Settings settings, boolean resizable) {
         this.title = title;
         this.resizable = resizable;
+        this.settings = settings;
 
         this.mousePosX = BufferUtils.createDoubleBuffer(1);
         this.mousePosY = BufferUtils.createDoubleBuffer(1);
-    }
 
-    public void init(Game game) {
-        this.game = game;
-        Settings settings = game.settings();
-        // Setup error callback, print to System.err
+        // Setup error callback, print to Logger.ERROR
         GLFWErrorCallback.createPrint(Logger.ERROR.getPrintStream()).set();
 
         // Initialize GLFW
@@ -77,25 +74,30 @@ public class GLFWWindow implements GameAspect {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-        if (settings.ANTIALIAS_LEVEL > 0) {
-            glfwWindowHint(GLFW_STENCIL_BITS, settings.ANTIALIAS_LEVEL);
-            glfwWindowHint(GLFW_SAMPLES, settings.ANTIALIAS_LEVEL);
+        if (settings.antialiasLevel > 0) {
+            glfwWindowHint(GLFW_STENCIL_BITS, settings.antialiasLevel);
+            glfwWindowHint(GLFW_SAMPLES, settings.antialiasLevel);
         }
 
-        window = getWindow(settings.WINDOW_WIDTH, settings.WINDOW_HEIGHT);
+        window = getWindow(settings.windowWidth, settings.windowHeight);
         primaryMonitor = glfwGetPrimaryMonitor();
 
-        setWindowed();
+        if (settings.fullscreen) {
+            setFullScreen(settings);
+        } else {
+            setWindowed(settings);
+        }
 
-        if (settings.V_SYNC) {
+        if (settings.vSync) {
             // Turn on vSync
             glfwSwapInterval(1);
         }
 
         GL.createCapabilities();
+        glContext = Thread.currentThread();
 
         // debug message callbacks
-        if (settings.DEBUG && GL_DEBUG_MESSAGES) {
+        if (settings.debugMode && settings.glDebugMessages) {
             glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
             GLUtil.setupDebugMessageCallback();
         }
@@ -111,8 +113,16 @@ public class GLFWWindow implements GameAspect {
         // Support transparencies
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if (settings.cullFace) {
+            // face culling
+            glEnable(GL_CULL_FACE);
+            glCullFace(GL_FRONT);
+        }
 
-        Toolbox.checkGLError();
+        // set polygons to fill
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        Toolbox.checkGLError("window");
     }
 
     /**
@@ -136,6 +146,7 @@ public class GLFWWindow implements GameAspect {
             glfwSetFramebufferSizeCallback(newWindow, (window, newWidth, newHeight) -> {
                 this.width = newWidth;
                 this.height = newHeight;
+                sizeChangeListeners.forEach(l -> l.onChange(newWidth, newHeight));
             });
         }
 
@@ -152,17 +163,14 @@ public class GLFWWindow implements GameAspect {
         // Swap buffers
         glfwSwapBuffers(window);
 
-        // Clear framebuffer
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
         // Poll for events
         glfwPollEvents();
     }
 
     /**
      * saves a copy of the front buffer (the display) to disc
-     * @param dir      directory to store the image to
-     * @param filename the file to save to
+     * @param dir          directory to store the image to
+     * @param filename     the file to save to
      * @param bufferToRead the GL buffer to read, usually one of {@link GL11#GL_FRONT} or {@link GL11#GL_BACK}
      */
     public void printScreen(Directory dir, String filename, int bufferToRead) {
@@ -188,11 +196,7 @@ public class GLFWWindow implements GameAspect {
             try {
                 File file = dir.getFile(filename + "." + format); // The file to save to.
                 if (file.exists()) {
-                    boolean success = file.delete();
-                    if (!success) {
-                        Logger.ERROR.print("Could not remove existing file", file);
-                        return;
-                    }
+                    Files.delete(file.toPath());
                 } else {
                     boolean success = file.mkdirs();
                     if (!success) {
@@ -226,6 +230,7 @@ public class GLFWWindow implements GameAspect {
      * Terminate GLFW and release GLFW error callback
      */
     public void cleanup() {
+        sizeChangeListeners.clear();
         glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
         glfwTerminate();
@@ -265,7 +270,7 @@ public class GLFWWindow implements GameAspect {
     /**
      * Get the current position of the mouse.
      * @return the position of the cursor, in screen coordinates, relative to the upper-left corner of the client area
-     *         of the specified window
+     * of the specified window
      */
     public Vector2i getMousePosition() {
         glfwGetCursorPos(window, mousePosX, mousePosY);
@@ -304,27 +309,11 @@ public class GLFWWindow implements GameAspect {
         return resizable;
     }
 
-    /**
-     * Get whether vSync is currently enabled.
-     * @return Whether vSync is enabled.
-     */
-    public boolean vSyncEnabled() {
-        return game.settings().V_SYNC;
-    }
-
-    /**
-     * Clear the window.
-     */
-    public void clear() {
-        // Clear framebuffer
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    }
-
-    public void setFullScreen() {
+    public void setFullScreen(Settings settings) {
         GLFWVidMode vidmode = glfwGetVideoMode(primaryMonitor);
-        glfwSetWindowMonitor(window, primaryMonitor, 0, 0, vidmode.width(), vidmode.height(), game.settings().TARGET_FPS);
+        glfwSetWindowMonitor(window, primaryMonitor, 0, 0, vidmode.width(), vidmode.height(), settings.targetFPS);
 
-        if (game.settings().V_SYNC) {
+        if (settings.vSync) {
             // Turn on vSync
             glfwSwapInterval(1);
         }
@@ -332,41 +321,39 @@ public class GLFWWindow implements GameAspect {
         fullScreen = true;
     }
 
-    public void setWindowed() {
+    public void setWindowed(Settings settings) {
         // Get primary display resolution
         GLFWVidMode vidmode = glfwGetVideoMode(primaryMonitor);
         // Center window on display
         glfwSetWindowPos(
                 window,
-                (vidmode.width() - game.settings().WINDOW_WIDTH) / 2,
-                (vidmode.height() - game.settings().WINDOW_HEIGHT) / 2
+                (vidmode.width() - settings.windowWidth) / 2,
+                (vidmode.height() - settings.windowHeight) / 2
         );
         fullScreen = false;
     }
 
     public void toggleFullScreen() {
-        if (fullScreen) setWindowed();
-        else setFullScreen();
+        if (fullScreen) {
+            setWindowed(settings);
+        } else {
+            setFullScreen(settings);
+        }
     }
 
-    /**
-     * sets mouse to invisible and restrict movement
-     */
-    public void capturePointer() {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        mouseIsCaptured = true;
-    }
-
-    /**
-     * sets mouse to visible
-     */
-    public void freePointer() {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        mouseIsCaptured = false;
-    }
-
-    public boolean isMouseCaptured() {
-        return mouseIsCaptured;
+    /** sets the mouse pointer to the given mode */
+    public void setCursorMode(CursorMode mode) {
+        switch (mode) {
+            case VISIBLE:
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                break;
+            case HIDDEN_FREE:
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+                break;
+            case HIDDEN_CAPTURED:
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                break;
+        }
     }
 
     public void setClearColor(Color4f color4f) {
@@ -376,7 +363,10 @@ public class GLFWWindow implements GameAspect {
     /**
      * Sets the callbacks to the given listeners. The values that are null are skipped.
      */
-    public void setCallbacks(GLFWKeyCallbackI key, GLFWMouseButtonCallbackI mousePress, GLFWCursorPosCallbackI mouseMove, GLFWScrollCallbackI mouseScroll) {
+    public void setCallbacks(
+            GLFWKeyCallbackI key, GLFWMouseButtonCallbackI mousePress, GLFWCursorPosCallbackI mouseMove,
+            GLFWScrollCallbackI mouseScroll
+    ) {
         if (key != null) glfwSetKeyCallback(window, key);
         if (mousePress != null) glfwSetMouseButtonCallback(window, mousePress);
         if (mouseMove != null) glfwSetCursorPosCallback(window, mouseMove);
@@ -386,5 +376,66 @@ public class GLFWWindow implements GameAspect {
     public void setTextCallback(GLFWCharCallbackI input) {
         glfwSetCharCallback(window, input);
     }
+
+    public void addResizeListener(ResizeListener listener) {
+        sizeChangeListeners.add(listener);
+    }
+
+    public void setMinimized(boolean doMinimize) {
+        if (doMinimize) {
+            glfwHideWindow(window);
+        } else {
+            glfwShowWindow(window);
+        }
+    }
+
+    public Thread getOpenGLThread() {
+        return glContext;
+    }
+
+    public interface ResizeListener {
+        void onChange(int width, int height);
+    }
+
+    public static class Settings {
+        final boolean debugMode;
+        final boolean glDebugMessages;
+        final int antialiasLevel;
+        final int windowWidth;
+        final int windowHeight;
+        final boolean vSync;
+        final int targetFPS;
+        final boolean fullscreen;
+        final boolean cullFace;
+
+        public Settings() {
+            this(false, false, 1, false, 800, 600, false, 60, false);
+        }
+
+        public Settings(NG.Settings.Settings s) {
+            this(
+                    s.DEBUG, false,
+                    s.ANTIALIAS_LEVEL, !s.DEBUG,
+                    s.WINDOW_WIDTH, s.WINDOW_HEIGHT,
+                    s.V_SYNC, s.TARGET_FPS, true
+            );
+        }
+
+        public Settings(
+                boolean debugMode, boolean glDebugMessages, int antialiasLevel, boolean fullscreen, int windowWidth,
+                int windowHeight, boolean vSync, int targetFPS, boolean cullFace
+        ) {
+            this.debugMode = debugMode;
+            this.glDebugMessages = glDebugMessages;
+            this.antialiasLevel = antialiasLevel;
+            this.fullscreen = fullscreen;
+            this.windowWidth = windowWidth;
+            this.windowHeight = windowHeight;
+            this.vSync = vSync;
+            this.targetFPS = targetFPS;
+            this.cullFace = cullFace;
+        }
+    }
 }
 
+enum CursorMode {VISIBLE, HIDDEN_FREE, HIDDEN_CAPTURED}

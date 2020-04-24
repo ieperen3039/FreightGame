@@ -68,7 +68,7 @@ public class ShadowMatrix implements MatrixStack {
     }
 
     @Override
-    public void rotate(Quaternionf rotation) {
+    public void rotate(Quaternionfc rotation) {
         matrix.rotate(rotation);
         inverseMatrix = null;
     }
@@ -80,8 +80,14 @@ public class ShadowMatrix implements MatrixStack {
     }
 
     @Override
-    public void multiplyAffine(Matrix4f postTransformation) {
+    public void multiplyAffine(Matrix4fc postTransformation) {
         matrix.mulAffine(postTransformation);
+        inverseMatrix = null;
+    }
+
+    @Override
+    public void rotateXYZ(float x, float y, float z) {
+        matrix.rotateXYZ(x, y, z);
         inverseMatrix = null;
     }
 

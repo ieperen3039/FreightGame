@@ -2,6 +2,7 @@ package NG.Rendering.Shapes.Primitives;
 
 import NG.Tools.Toolbox;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.junit.Before;
 
 /**
@@ -26,30 +27,38 @@ public class PlaneTest {
         System.out.println("\nVector " + first + " towards " + second + ": direction is " + dir);
         if (expected == null) System.out.println("Expecting no intersection");
 
-        Collision box = instance.getCollisionWith(first, dir, second);
+        float scalar = instance.getIntersectionScalar(first, dir);
+        Vector3fc result = new Vector3f(dir).mul(scalar).add(first);
 
-        Vector3f result = new Vector3f();
+        boolean hasIntersect = (scalar <= 1);
 
-        if (box != null) {
-            // get position of the new vector
-            System.out.println("Hitpoint: " + box.hitPosition());
+        if (!hasIntersect) {
+            System.out.println("No intersection");
+        } else {
+            System.out.println("Scalar: " + scalar + ", result: " + result);
         }
 
         if (expected == null) {
-            assert box == null :
-                    String.format("Testcase gave %s where no intersection was expected",
-                            result);
+            if (hasIntersect) {
+                throw new AssertionError(String.format(
+                        "Testcase gave %s where no intersection was expected",
+                        result
+                ));
+            }
         } else {
-            assert box != null :
-                    String.format("Testcase gave no intersection where %s was expected",
-                            expected);
+            if (!hasIntersect) {
+                throw new AssertionError(String.format(
+                        "Testcase gave no intersection where %s was expected",
+                        expected
+                ));
+            }
 
             float diff = expected.distance(result);
             if (!Toolbox.almostZero(diff)) {
-                throw new AssertionError(
-                        String.format("Testcase gave %s where %s was expected: difference is %f units",
-                                result, expected, diff)
-                );
+                throw new AssertionError(String.format(
+                        "Testcase gave %s where %s was expected: difference is %f units",
+                        result, expected, diff
+                ));
             }
         }
     }

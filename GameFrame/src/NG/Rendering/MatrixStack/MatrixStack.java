@@ -2,10 +2,9 @@ package NG.Rendering.MatrixStack;
 
 
 import NG.Tools.Vectors;
-import org.joml.Matrix4f;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
+import org.joml.*;
+
+import static java.lang.Math.PI;
 
 /**
  * @author Geert van Ieperen created on 19-11-2017.
@@ -24,7 +23,7 @@ public interface MatrixStack {
         Vector3f sourceToTarget = new Vector3f();
         target.sub(source, sourceToTarget).normalize();
 
-        rotate(new Quaternionf().rotateTo(Vectors.zVector(), sourceToTarget));
+        rotate(new Quaternionf().rotateTo(Vectors.Z, sourceToTarget));
     }
 
     /**
@@ -68,18 +67,19 @@ public interface MatrixStack {
     void popMatrix();
 
     /**
-     * @param axis the axis to rotate around
+     * @param axis  the axis to rotate around
      * @param angle the angle to rotate in radians
      * @see #rotate(float, float, float, float)
      */
-    default void rotate(Vector3f axis, float angle) {
+    default void rotate(Vector3fc axis, float angle) {
         rotate(angle, axis.x(), axis.y(), axis.z());
     }
 
     /**
-     * @see #rotate(Vector3f, float)
+     * @param rotation
+     * @see #rotate(Vector3fc, float)
      */
-    void rotate(Quaternionf rotation);
+    void rotate(Quaternionfc rotation);
 
     /**
      * @see #translate(float, float, float)
@@ -106,5 +106,21 @@ public interface MatrixStack {
      * Applies an affine transformation.
      * @param postTransformation some affine matrix
      */
-    void multiplyAffine(Matrix4f postTransformation);
+    void multiplyAffine(Matrix4fc postTransformation);
+
+    /**
+     * @param x the rotation around the x-axis
+     * @param y the rotation around the y-axis
+     * @param z the rotation around the z-axis
+     */
+    void rotateXYZ(float x, float y, float z);
+
+    default void rotateXYZ(Vector3fc rot) {
+        rotateXYZ(rot.x(), rot.y(), rot.z());
+    }
+
+    default void rotateQuarter(int x, int y, int z) {
+        float QUARTER = (float) (PI / 2);
+        rotateXYZ(x * QUARTER, y * QUARTER, z * QUARTER);
+    }
 }

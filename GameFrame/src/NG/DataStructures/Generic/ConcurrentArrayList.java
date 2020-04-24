@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 
 /**
  * An {@link ArrayList} wrapper that uses a {@link ReadWriteLock} for access. An alternative of {@link
- * java.util.Collections#synchronizedList(List)} of arrayLists
+ * Collections#synchronizedList(List)} of arrayLists
  * @author Geert van Ieperen created on 1-3-2018.
  */
 @SuppressWarnings("NullableProblems")

@@ -1,6 +1,6 @@
 package NG.Tracks;
 
-import NG.Engine.Game;
+import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.Tools.Logger;
 import org.joml.Vector2f;
@@ -67,7 +67,7 @@ public interface TrackPiece extends Entity {
      * @see CircleTrack
      */
     static TrackPiece getTrackPiece(
-            Game game, TrackMod.TrackType type, NetworkNodePoint aPoint, Vector2fc aDirection, NetworkNodePoint bPoint
+            Game game, TrackType type, NetworkNodePoint aPoint, Vector2fc aDirection, NetworkNodePoint bPoint
     ) {
         Vector2f relPosB = aPoint.vectorTo(bPoint);
         if (relPosB.lengthSquared() < 1e-6) {

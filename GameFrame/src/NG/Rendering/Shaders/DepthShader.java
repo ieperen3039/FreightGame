@@ -1,13 +1,14 @@
 package NG.Rendering.Shaders;
 
+import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
-import NG.Engine.Game;
 import NG.Entities.Entity;
-import NG.Rendering.DirectionalLight;
+import NG.Rendering.Lights.DirectionalLight;
 import NG.Rendering.MatrixStack.AbstractSGL;
-import NG.Rendering.MatrixStack.Mesh;
+import NG.Rendering.MeshLoading.Mesh;
 import NG.Tools.Directory;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.joml.Vector3fc;
 import org.lwjgl.system.MemoryStack;
 
@@ -17,8 +18,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-import static NG.Rendering.Shaders.SceneShader.createShader;
-import static NG.Rendering.Shaders.SceneShader.loadText;
+import static NG.Rendering.Shaders.ShaderProgram.createShader;
+import static NG.Rendering.Shaders.ShaderProgram.loadText;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER;
 import static org.lwjgl.opengl.GL30.glBindFramebuffer;
@@ -28,8 +29,8 @@ import static org.lwjgl.opengl.GL30.glBindFramebuffer;
  */
 @SuppressWarnings("Duplicates")
 public class DepthShader implements ShaderProgram, LightShader {
-    private static final Path VERTEX_PATH = Directory.shaders.getPath("Shadow", "depth_vertex.vert");
-    private static final Path FRAGMENT_PATH = Directory.shaders.getPath("Shadow", "depth_fragment.frag");
+    private static final Path VERTEX_PATH = Directory.shaders.getPath("BlinnPhong", "depth_vertex.vert");
+    private static final Path FRAGMENT_PATH = Directory.shaders.getPath("BlinnPhong", "depth_fragment.frag");
     private final Map<String, Integer> uniforms;
 
     private int programId;
@@ -136,6 +137,14 @@ public class DepthShader implements ShaderProgram, LightShader {
         // ignore
     }
 
+    /**
+     * @param dynamic if true, the dynamic map of the light will be used. If false, the static map of the light will be
+     *                used
+     */
+    public void setDynamic(boolean dynamic) {
+        isDynamic = dynamic;
+    }
+
     @Override
     public void setDirectionalLight(DirectionalLight light) {
         directionalLight = light;
@@ -143,14 +152,16 @@ public class DepthShader implements ShaderProgram, LightShader {
         shadowMap.bindFrameBuffer();
     }
 
+    @Override
+    public void discardRemainingLights() {
+        // ignore
+    }
+
     /**
      * create a GL object that allows rendering the depth map of a scene
-     * @param dynamicMapping if true, the dynamic map of the light will be used. If false, the static map of the light
-     *                       will be used
      * @return a GL object that renders a depth map in the frame buffer of the first light that is rendered.
      */
-    public DepthGL getGL(boolean dynamicMapping) {
-        isDynamic = dynamicMapping;
+    public DepthGL getGL(Game game) {
         return new DepthGL();
     }
 
@@ -169,6 +180,11 @@ public class DepthShader implements ShaderProgram, LightShader {
         @Override
         public ShaderProgram getShader() {
             return DepthShader.this;
+        }
+
+        @Override
+        public Matrix4fc getViewProjectionMatrix() {
+            return directionalLight.getLightSpaceMatrix();
         }
 
         public void cleanup() {
