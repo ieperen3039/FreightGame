@@ -33,6 +33,7 @@ public class STileBrowser extends SContainer {
             layoutManager.add(elt, null);
         }
 
+        layoutBorder.add(buttonBack.minWidth(), buttonFurther.minWidth(), 0, 0);
         setGrowthPolicy(growPolicy, growPolicy);
     }
 
@@ -87,8 +88,4 @@ public class STileBrowser extends SContainer {
         drawChildren(design, screenPosition);
     }
 
-    @Override
-    protected ComponentBorder newLayoutBorder() {
-        return super.newLayoutBorder().add(buttonBack.minWidth(), buttonFurther.minWidth(), 0, 0);
-    }
 }

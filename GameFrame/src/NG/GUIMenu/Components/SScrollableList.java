@@ -10,7 +10,7 @@ import org.joml.Vector2ic;
  */
 public class SScrollableList extends SContainer {
     private final SScrollBar scroller;
-    private LimitedVisibilityLayout layout;
+    private final LimitedVisibilityLayout layout;
     private int nrOfShownElts;
 
     public SScrollableList(int nrOfShownElts, SComponent... elements) {
@@ -34,6 +34,8 @@ public class SScrollableList extends SContainer {
             this.layout.setAsFirstVisible(value);
             invalidateLayout();
         });
+
+        layoutBorder.add(0, scroller.minWidth(), 0, 0);
     }
 
     @Override
@@ -80,8 +82,4 @@ public class SScrollableList extends SContainer {
         return Math.max(super.minWidth(), scroller.minWidth());
     }
 
-    @Override
-    protected ComponentBorder newLayoutBorder() {
-        return new ComponentBorder(0, scroller.minWidth(), 0, 0);
-    }
 }

@@ -58,8 +58,8 @@ public class MainMenu extends SFrame {
     }
 
     private void testWorld() {
-        int xSize = 200;
-        int ySize = 200;
+        int xSize = 100;
+        int ySize = 100;
 
         // random map
         List<Mod> mods = modLoader.allMods();
@@ -81,7 +81,7 @@ public class MainMenu extends SFrame {
         cam.set(cameraFocus, cameraEye);
 
         Vector3f pos = new Vector3f(cameraFocus).add(0, 0, 20);
-        Entity cube = new Cube(pos);
+        Entity cube = new Cube(game, pos);
         game.state().addEntity(cube);
 
         game.lights().addDirectionalLight(new Vector3f(1, 1.5f, 0.5f), Color4f.WHITE, 0.5f);
@@ -91,7 +91,10 @@ public class MainMenu extends SFrame {
             toolBar.addButton("Build ...", () -> showBuildTool(trackType));
         }
 
-        toolBar.addButton("Exit", modLoader::stopGame);
+        toolBar.addButton("Exit", () -> {
+            game.gui().clear();
+            modLoader.stopGame();
+        });
         game.gui().setToolBar(toolBar);
 
         // start

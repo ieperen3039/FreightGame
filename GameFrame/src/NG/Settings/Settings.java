@@ -12,7 +12,6 @@ public class Settings {
 
     // game engine settings
     public int TARGET_TPS = 10;
-    public final int TRACK_CLICK_WIDTH = 10;
     public boolean WRITE_CLICK_SHADER_IMAGE = false;
 
     // video settings
@@ -36,6 +35,9 @@ public class Settings {
 
     // UI settings
     public static int TOOL_BAR_HEIGHT = 80;
+    public static final float CLICK_BOX_WIDTH = 2f;
+    public static final float CLICK_BOX_HEIGHT = 0.25f;
+    public static final int RESOLUTION = 10;
 
     // in-game functional settings
     public static int STATION_RANGE = 5;

@@ -1,30 +1,28 @@
 package NG.Tracks;
 
-import NG.DataStructures.Generic.Color4f;
+import NG.Core.AbstractGameObject;
+import NG.Core.Game;
 import NG.Entities.Entity;
-import NG.GameState.GameMap;
 import NG.InputHandling.ClickShader;
+import NG.Network.NetworkNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.GenericShapes;
-import NG.Rendering.Shapes.Primitives.Collision;
-import org.joml.Vector2f;
-import org.joml.Vector2fc;
+import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 /**
+ * A reference point to build tracks with.
  * @author Geert van Ieperen created on 23-12-2018.
  */
-public class NetworkNodePoint implements Entity {
+public class TrackConnectionPoint extends AbstractGameObject implements Entity {
     private static final float NODE_SIZE = 0.5f;
-    private final GameMap heightMap;
     private NetworkNode reference;
-    private final Vector2fc position;
+    private final Vector3f position;
     private boolean isDisposed = false;
-    private static final Color4f TRANSPARENT_WHITE = new Color4f(1f, 1f, 1f, 0.2f);
 
-    public NetworkNodePoint(Vector2fc coordinate, GameMap map) {
-        this.heightMap = map;
-        this.position = new Vector2f(coordinate);
+    public TrackConnectionPoint(Game game, Vector3fc coordinate) {
+        super(game);
+        this.position = new Vector3f(coordinate);
     }
 
     public void setReference(NetworkNode reference) {
@@ -45,7 +43,7 @@ public class NetworkNodePoint implements Entity {
         if (gl.getShader() instanceof ClickShader) {
             gl.pushMatrix();
             {
-                gl.translate(heightMap.getPosition(position));
+                gl.translate(position);
                 gl.scale(NODE_SIZE, NODE_SIZE, NODE_SIZE);
                 gl.render(GenericShapes.CUBE, this);
             }
@@ -68,19 +66,23 @@ public class NetworkNodePoint implements Entity {
         return isDisposed;
     }
 
-    public Vector2fc getPosition() {
+    public Vector3fc getPosition() {
         return position;
     }
 
-    public Vector2f vectorTo(NetworkNodePoint bPosition) {
-        return new Vector2f(bPosition.position).sub(position);
+    public void setPosition(Vector3fc newPosition) {
+        position.set(newPosition);
+    }
+
+    public Vector3f vectorTo(TrackConnectionPoint bPosition) {
+        return new Vector3f(bPosition.position).sub(position);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (obj instanceof NetworkNodePoint) {
-            NetworkNodePoint other = (NetworkNodePoint) obj;
+        if (obj instanceof TrackConnectionPoint) {
+            TrackConnectionPoint other = (TrackConnectionPoint) obj;
             return other.position.equals(this.position);
         }
         return false;
@@ -91,8 +93,4 @@ public class NetworkNodePoint implements Entity {
         return UpdateFrequency.NEVER;
     }
 
-    @Override
-    public Collision getRayCollision(Vector3fc origin, Vector3fc direction) {
-        return new Collision(heightMap.getPosition(position));
-    }
 }

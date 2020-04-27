@@ -1,0 +1,197 @@
+package NG.Network;
+
+import NG.Core.Game;
+import NG.Tools.Vectors;
+import NG.Tracks.StraightTrack;
+import NG.Tracks.TrackPiece;
+import NG.Tracks.TrackType;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * A single node from the train network.
+ * @author Geert van Ieperen created on 16-12-2018.
+ */
+public class NetworkNode {
+    /*
+     * Representation Invariants
+     * for all NetworkNodes n in aNodes {
+     *      v := this.position to n.position
+     *      (v dot this.direction) < 0
+     * }
+     * for all NetworkNodes n in bNodes {
+     *      v := this.position to n.position
+     *      (v dot this.direction) >= 0
+     * }
+     */
+
+    private final List<NetworkNode> aNodes = new ArrayList<>(1);
+    private final List<NetworkNode> bNodes = new ArrayList<>(1);
+    private final List<TrackPiece> aTracks = new ArrayList<>(1);
+    private final List<TrackPiece> bTracks = new ArrayList<>(1);
+    private final Vector3fc direction;
+
+    /** position of this node */
+    private final Vector3fc position;
+    /** type of tracks that this node connects */
+    private final TrackType type;
+
+    public NetworkNode(Vector3fc nodePoint, TrackType type, Vector3fc direction) {
+        this.position = nodePoint;
+        this.type = type;
+        this.direction = new Vector3f(direction);
+    }
+
+    /**
+     * @param other another node
+     * @return the direction of track leaving this node if it were to connect to other
+     */
+    public Vector3fc getDirectionTo(NetworkNode other) {
+        return isSameDirection(other) ? direction : new Vector3f(direction).negate();
+    }
+
+    private boolean isSameDirection(NetworkNode other) {
+        Vector3f thisToOther = new Vector3f(other.position).sub(position);
+        return thisToOther.dot(direction) > 0;
+    }
+
+    /**
+     * adds a connection to another node, with the given track as connecting track piece
+     * @param newNode the new node to add
+     * @param track   the track that connects these two nodes
+     */
+    public void addNode(NetworkNode newNode, TrackPiece track) {
+        if (isSameDirection(newNode)) {
+            aNodes.add(newNode);
+            aTracks.add(track);
+
+        } else {
+            bNodes.add(newNode);
+            bTracks.add(track);
+        }
+
+    }
+
+    /**
+     * removes a connection between this node and the given target node
+     * @param target a node this is connected to
+     * @return the track connecting the two nodes iff the target was indeed connected to this node, and has now been
+     * removed. If there is no such connection, this returns null
+     */
+    protected TrackPiece removeNode(NetworkNode target) {
+        int i = aNodes.indexOf(target);
+        if (i != -1) {
+            aNodes.remove(i);
+            return aTracks.remove(i);
+        }
+
+        int j = bNodes.indexOf(target);
+        if (j != -1) {
+            bNodes.remove(j);
+            return bTracks.remove(j);
+        }
+
+        return null;
+    }
+
+    /**
+     * returns the node that follows from passing this node from the direction of the given previous node, according to
+     * the state of this node.
+     * @param previous the node you just left
+     * @return the logical next node on the track
+     */
+    public Collection<NetworkNode> getNext(NetworkNode previous) {
+        if (aNodes.contains(previous)) {
+            return bNodes;
+
+        } else {
+            assert bNodes.contains(previous) : "Not connected to node " + previous;
+            return aNodes;
+        }
+    }
+
+    protected Vector3fc getDirectionTo(Vector3fc point) {
+        Vector3f thisToOther = new Vector3f(point).sub(position);
+        boolean isSameDirection = thisToOther.dot(direction) > 0;
+        return isSameDirection ? direction : new Vector3f(direction).negate();
+    }
+
+    public Vector3fc getPosition() {
+        return position;
+    }
+
+    @Override
+    public String toString() {
+        return "Node " + Vectors.toString(position) + "";
+    }
+
+    /**
+     * creates two nodes that are only connected together with a straight piece of track.
+     * @param game      the current game instance
+     * @param type      the type of track
+     * @param aPosition one position of the map
+     * @param bPosition another position on the map
+     * @return a {@link StraightTrack} piece that connects the
+     */
+    public static TrackPiece createNewTrack(Game game, TrackType type, Vector3fc aPosition, Vector3fc bPosition) {
+        Vector3f AToB = new Vector3f(bPosition).sub(aPosition);
+        NetworkNode A = new NetworkNode(aPosition, type, AToB);
+
+        TrackPiece trackConnection = TrackPiece.getTrackPiece(
+                game, A.type, A, AToB, bPosition
+        );
+        game.state().addEntity(trackConnection);
+        return trackConnection;
+    }
+
+    /**
+     * connect a NetworkNode to a new node created at the given position
+     * @param game        the game instance
+     * @param node        the node to connect
+     * @param newPosition the position of the new node
+     * @return the new node
+     */
+    public static NetworkNode createNew(Game game, NetworkNode node, Vector3fc newPosition) {
+        TrackPiece trackConnection = TrackPiece.getTrackPiece(
+                game, node.type, node, node.getDirectionTo(newPosition), newPosition
+        );
+        game.state().addEntity(trackConnection);
+        return trackConnection.getEndNode();
+    }
+
+    public static NetworkNode createSplit(Game game, TrackPiece trackPiece, Vector3f point) {
+        NetworkNode aNode = trackPiece.getStartNode();
+        NetworkNode bNode = trackPiece.getEndNode();
+
+        TrackPiece oldPiece = aNode.removeNode(bNode);
+        TrackPiece sameOldPiece = bNode.removeNode(aNode);
+
+        assert oldPiece == sameOldPiece :
+                "Nodes were mutually connected with a different track piece (" + oldPiece + " and " + sameOldPiece + ")";
+        assert oldPiece != null : "Invalid tracks between " + aNode + " and " + bNode;
+        assert oldPiece == trackPiece :
+                "Nodes were connected with double tracks: " + oldPiece + " and " + trackPiece;
+
+        TrackType type = trackPiece.getType();
+
+        Vector3fc aStartDir = new Vector3f(oldPiece.getStartDirection()).negate();
+        oldPiece.dispose();
+
+        TrackPiece aConnection = TrackPiece.getTrackPiece(
+                game, type, aNode, aStartDir, point
+        );
+        game.state().addEntity(aConnection);
+
+        NetworkNode newNode = aConnection.getEndNode();
+        TrackPiece bConnection = TrackPiece.getTrackPiece(
+                game, type, newNode, aConnection.getEndDirection(), bNode
+        );
+        game.state().addEntity(bConnection);
+
+        return newNode;
+    }
+}

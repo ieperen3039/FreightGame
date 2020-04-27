@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Main-Class: NG.Boot
+Class-Path: lib/jackson-core-2.10.2.jar lib/jackson-databind-2.10.2.jar 
+ lib/joml-1.9.22.jar lib/lwjgl-3.2.3-natives-windows.jar lib/lwjgl-3.2.3
+ .jar lib/lwjgl-glfw-3.2.3-natives-windows.jar lib/lwjgl-glfw-3.2.3.jar 
+ lib/lwjgl-jemalloc-3.2.3-natives-windows.jar lib/lwjgl-jemalloc-3.2.3.j
+ ar lib/lwjgl-nanovg-3.2.3-natives-windows.jar lib/lwjgl-nanovg-3.2.3.ja
+ r lib/lwjgl-openal-3.2.3-natives-windows.jar lib/lwjgl-openal-3.2.3.jar
+  lib/lwjgl-opengl-3.2.3-natives-windows.jar lib/lwjgl-opengl-3.2.3.jar 
+ lib/pngdecoder-0.13.jar
+

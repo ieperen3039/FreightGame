@@ -8,7 +8,6 @@ import NG.GUIMenu.Components.SToolBar;
 import NG.GUIMenu.Rendering.BaseLF;
 import NG.GUIMenu.Rendering.NVGOverlay;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
-import NG.InputHandling.MouseScrollListener;
 import NG.InputHandling.MouseTools.MouseTool;
 import NG.Tools.Logger;
 import org.joml.Vector2ic;
@@ -23,7 +22,7 @@ import java.util.*;
 public class FrameManagerImpl implements FrameGUIManager {
     private Game game;
     /** the first element in this list has focus */
-    private Deque<SFrame> frames;
+    private final Deque<SFrame> frames;
     private SComponent modalComponent;
 
     private SFrameLookAndFeel lookAndFeel;
@@ -162,6 +161,14 @@ public class FrameManagerImpl implements FrameGUIManager {
     }
 
     @Override
+    public void clear() {
+        for (SFrame frame : frames) {
+            frame.dispose();
+        }
+        frames.clear();
+    }
+
+    @Override
     public void setToolBar(SToolBar toolBar) {
         this.toolBar = toolBar;
     }
@@ -223,13 +230,6 @@ public class FrameManagerImpl implements FrameGUIManager {
 
     @Override
     public SComponent getComponentAt(int xSc, int ySc) {
-        // check toolbar
-        if (toolBar != null) {
-            if (toolBar.contains(xSc, ySc)) {
-                return toolBar;
-            }
-        }
-
         // check all frames, starting from the front-most frame
         for (SFrame frame : frames) {
             if (frame.isVisible() && frame.contains(xSc, ySc)) {
@@ -240,19 +240,14 @@ public class FrameManagerImpl implements FrameGUIManager {
             }
         }
 
+        // check toolbar
+        if (toolBar != null) {
+            if (toolBar.contains(xSc, ySc)) {
+                return toolBar.getComponentAt(xSc, ySc);
+            }
+        }
+
         return null;
     }
 
-    @Override
-    public boolean checkMouseScroll(int xSc, int ySc, float value) {
-        SComponent component = getComponentAt(xSc, ySc);
-
-        if (component instanceof MouseScrollListener) {
-            MouseScrollListener listener = (MouseScrollListener) component;
-            listener.onScroll(value);
-            return true;
-        }
-
-        return false;
-    }
 }

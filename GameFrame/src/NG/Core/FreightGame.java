@@ -78,9 +78,9 @@ public class FreightGame implements Game, ModLoader {
         GLFWWindow.Settings videoSettings = new GLFWWindow.Settings(settings);
         window = new GLFWWindow(Settings.GAME_NAME, videoSettings, true);
 
-        camera = new TycoonFixedCamera(new Vector3f(), 100);
+        camera = new TycoonFixedCamera(new Vector3f(), 100, 100);
         renderer = new RenderLoop(settings.TARGET_FPS);
-        gameState = new GameLoop(Settings.GAME_NAME, settings.TARGET_TPS);
+        gameState = new GameLoop(settings.TARGET_TPS);
         gameLights = new SingleShadowMapLights();
         gameParticles = new GameParticles();
         gameMap = new HeightMap();
@@ -163,7 +163,9 @@ public class FreightGame implements Game, ModLoader {
 
     @Override
     public void startGame() {
-        mainMenu.setVisible(false);
+        frameManager.removeElement(mainMenu);
+        mainMenu = null;
+
         gameState.unPause();
     }
 
@@ -174,7 +176,9 @@ public class FreightGame implements Game, ModLoader {
         gameMap.cleanup();
         frameManager.setToolBar(null);
         cleanMods();
-        mainMenu.setVisible(true);
+
+        mainMenu = new MainMenu(this, this, renderer::stopLoop);
+        frameManager.addFrame(mainMenu);
     }
 
     @Override

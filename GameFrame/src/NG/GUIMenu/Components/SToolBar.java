@@ -9,6 +9,7 @@ import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
 import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.TOOLBAR_BACKGROUND;
+import static NG.Settings.Settings.TOOL_BAR_HEIGHT;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 
 /**
@@ -16,10 +17,9 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
  */
 public class SToolBar extends SContainer implements MouseReleaseListener, MouseRelativeClickListener {
     public static final int MAX_BAR_ICONS = 20; // TODO look for opportunity of calculating this
-    private static final int TOOL_BAR_HEIGHT = 50;
-    private static int BUTTON_SIZE = TOOL_BAR_HEIGHT - (4 + 4);
+    private static final int BUTTON_SIZE = TOOL_BAR_HEIGHT - (4 + 4);
 
-    private Game game;
+    private final Game game;
     private int nextButtonIndex = 0;
     private SButton clickedButton;
 

@@ -8,7 +8,6 @@ import NG.InputHandling.MouseTools.MouseTool;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.Primitives.Collision;
 import NG.Tools.Toolbox;
-import org.joml.Vector2fc;
 import org.joml.Vector3fc;
 
 import java.util.ArrayList;
@@ -27,13 +26,13 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     private final List<Entity> entities;
     private final Lock entityWriteLock;
     private final Lock entityReadLock;
+    private final Deque<Runnable> postUpdateActionQueue;
 
-    private Deque<Runnable> postUpdateActionQueue;
     private Game game;
     private ClickShader clickShader;
 
-    public GameLoop(String gameName, int targetTps) {
-        super("Gameloop " + gameName, targetTps);
+    public GameLoop(int targetTps) {
+        super("Gameloop", targetTps);
 
         this.entities = new ArrayList<>();
         this.postUpdateActionQueue = new ConcurrentLinkedDeque<>();
@@ -95,28 +94,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     @Override
     public Collision getEntityCollision(Vector3fc from, Vector3fc to) {
         return null;
-    }
-
-    public List<Storage> getIndustriesByRange(Vector2fc position, int range) {
-        final int rangeSq = range * range;
-        List<Storage> industries = new ArrayList<>();
-
-        //TODO efficiency (binary tree?)
-        entityReadLock.lock();
-        try {
-            for (Entity entity : entities) {
-                if (entity instanceof Storage) {
-                    Storage industry = (Storage) entity;
-                    if (industry.getPosition().distanceSquared(position) < rangeSq) {
-                        industries.add(industry);
-                    }
-                }
-            }
-        } finally {
-            entityReadLock.unlock();
-        }
-
-        return industries;
     }
 
     /** executes action after a gameloop completes */

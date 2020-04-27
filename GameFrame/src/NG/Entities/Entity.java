@@ -1,18 +1,15 @@
 package NG.Entities;
 
+import NG.Core.GameObject;
 import NG.Core.GameTimer;
 import NG.Rendering.MatrixStack.SGL;
-import NG.Rendering.Shapes.Primitives.Collision;
-import NG.Rendering.Shapes.Shape;
-import org.joml.Vector3fc;
 
 /**
  * An entity is anything that is both visible in the world, and allows interaction with other entities (including the
  * map). Particles and other visual things are not entities.
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
-public interface Entity {
-
+public interface Entity extends GameObject {
     enum UpdateFrequency {
         EVERY_FRAME, EVERY_TICK, ONCE_PER_SECOND, ONCE_UPON_A_TIME, NEVER
     }
@@ -57,12 +54,4 @@ public interface Entity {
      */
     UpdateFrequency getUpdateFrequency();
 
-    /**
-     * determines the collision of a ray with this entity.
-     * @param origin    the origin of the ray
-     * @param direction the direction of the ray
-     * @return a Collision object resutling from the ray, or null if the ray did not hit
-     * @see Shape#getCollision(Vector3fc, Vector3fc, Vector3fc)
-     */
-    Collision getRayCollision(Vector3fc origin, Vector3fc direction);
 }

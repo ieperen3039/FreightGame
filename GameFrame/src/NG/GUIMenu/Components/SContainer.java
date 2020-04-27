@@ -14,13 +14,21 @@ import java.util.Collection;
  */
 public abstract class SContainer extends SComponent {
     private final SLayoutManager layout;
-    protected ComponentBorder layoutBorder;
+    protected final ComponentBorder layoutBorder;
+
+    /**
+     * a container that uses the given manager for its layout
+     */
+    public SContainer(SLayoutManager layout, ComponentBorder layoutBorder) {
+        this.layout = layout;
+        this.layoutBorder = layoutBorder;
+    }
 
     /**
      * a container that uses the given manager for its layout
      */
     public SContainer(SLayoutManager layout) {
-        this.layout = layout;
+        this(layout, new ComponentBorder(4));
     }
 
     /**
@@ -29,7 +37,7 @@ public abstract class SContainer extends SComponent {
      * @param yElts nr of elements in height
      */
     public SContainer(int xElts, int yElts) {
-        this(new GridLayoutManager(xElts, yElts));
+        this(new GridLayoutManager(xElts, yElts), new ComponentBorder(4));
     }
 
     /**
@@ -122,7 +130,6 @@ public abstract class SContainer extends SComponent {
     private void validateLayoutSize() {
         if (!layoutIsValid()) {
             layout.recalculateProperties();
-            layoutBorder = newLayoutBorder();
         }
     }
 
@@ -135,13 +142,12 @@ public abstract class SContainer extends SComponent {
 
     @Override
     public void doValidateLayout() {
-        // first restructure this container
-        validateLayoutSize();
-
         // ensure minimum width and height
         Vector2i layoutPos = new Vector2i();
         Vector2i layoutDim = new Vector2i(getSize());
         layoutBorder.reduce(layoutPos, layoutDim);
+
+        layout.recalculateProperties();
         layout.placeComponents(layoutPos, layoutDim);
 
         // then restructure the children
@@ -166,16 +172,9 @@ public abstract class SContainer extends SComponent {
         return this;
     }
 
-    /**
-     * Gives the desired border sizes for this container
-     */
-    protected ComponentBorder newLayoutBorder() {
-        return new ComponentBorder(4);
-    }
-
     private static class SGhostContainer extends SContainer {
         public SGhostContainer(SLayoutManager layout) {
-            super(layout);
+            super(layout, new ComponentBorder());
         }
 
         @Override
@@ -188,11 +187,6 @@ public abstract class SContainer extends SComponent {
             SComponent found = super.getComponentAt(xRel, yRel);
             if (found == this) return null;
             return found;
-        }
-
-        @Override
-        protected ComponentBorder newLayoutBorder() {
-            return new ComponentBorder();
         }
     }
 }

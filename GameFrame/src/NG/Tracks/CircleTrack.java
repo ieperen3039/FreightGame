@@ -1,57 +1,78 @@
 package NG.Tracks;
 
+import NG.Core.AbstractGameObject;
 import NG.Core.Game;
+import NG.Network.NetworkNode;
 import NG.Rendering.MatrixStack.SGL;
-import NG.Rendering.Shapes.Primitives.Collision;
+import NG.Rendering.MeshLoading.Mesh;
+import NG.Resources.GeneratorResource;
+import NG.Resources.Resource;
 import NG.Tools.Vectors;
 import org.joml.Math;
 import org.joml.*;
 
-import static NG.Tools.Vectors.cos;
-import static NG.Tools.Vectors.sin;
-import static java.lang.Math.abs;
-
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
  */
-public class CircleTrack implements TrackPiece {
-
-    private final Game game;
+public class CircleTrack extends AbstractGameObject implements TrackPiece {
+    private static final float EPSILON = 1 / 256f;
     private final TrackType type;
-    private final NetworkNodePoint startPoint;
-    private final NetworkNodePoint endPoint;
+    private final NetworkNode startNode;
+    private final NetworkNode endNode;
 
     /** middle of the circle describing the track */
-    private final Vector2fc center;
+    private final Vector3fc center;
 
     private final float radius;
-    private final boolean isClockwise;
     private final float startTheta;
     private final float angle;
     private final float endTheta;
 
+    private final Resource<Mesh> mesh;
+
     private boolean isInvalid = false;
+    private final float heightDiff;
 
     /**
      * @param game           the current game instance
      * @param type           the type of track
-     * @param startPoint     a point A on the map
+     * @param startNode      the point A where this track should start
      * @param startDirection the direction in point A
-     * @param endPoint       another point on the map, different from A.
+     * @param endPosition    the point where this track should end
      */
     public CircleTrack(
-            Game game, TrackType type, NetworkNodePoint startPoint, Vector2fc startDirection,
-            NetworkNodePoint endPoint
+            Game game, TrackType type, NetworkNode startNode, Vector3fc startDirection, Vector3fc endPosition
     ) {
-        this.game = game;
-        this.type = type;
-        this.startPoint = startPoint;
-        this.endPoint = endPoint;
+        this(game, type, startNode, startDirection, endPosition, null);
+    }
 
-        Vector2fc startPosition = startPoint.getPosition();
-        Vector2fc endPosition = endPoint.getPosition();
-        Vector2f startToCenter = new Vector2f(startDirection).perpendicular();
-        Vector2f startToEnd = new Vector2f(endPosition).sub(startPosition);
+    /**
+     * A circle track with known end direction
+     * @param game           the current game instance
+     * @param type           the type of track
+     * @param startNode      point A where this track should start
+     * @param startDirection the direction in point A
+     * @param endNode        point B where this track should end
+     */
+    public CircleTrack(
+            Game game, TrackType type, NetworkNode startNode, Vector3fc startDirection, NetworkNode endNode
+    ) {
+        this(game, type, startNode, startDirection, endNode.getPosition(), endNode);
+    }
+
+    private CircleTrack(
+            Game game, TrackType type, NetworkNode startNode, Vector3fc startDirection, Vector3fc endPosition,
+            NetworkNode optionalEndNode
+    ) {
+        super(game);
+        this.type = type;
+        this.startNode = startNode;
+
+        Vector3fc startPosition = startNode.getPosition();
+        Vector2fc startPosFlat = new Vector2f(startPosition.x(), startPosition.y());
+        Vector2fc endPosFlat = new Vector2f(endPosition.x(), endPosition.y());
+        Vector2f startToCenter = new Vector2f(startDirection.y(), -startDirection.x()); // perpendicular to startDirection
+        Vector2f startToEnd = new Vector2f(endPosFlat).sub(startPosFlat);
 
         float dot = startToEnd.dot(startToCenter);
         if (dot < 0) { // center is on the wrong side of the direction
@@ -63,18 +84,26 @@ public class CircleTrack implements TrackPiece {
         radius = startToEnd.lengthSquared() / (2 * dot);
         startToCenter.normalize(radius);
 
-        center = new Vector2f(startPosition).add(startToCenter);
+        center = new Vector3f(startPosFlat, startPosition.z()).add(startToCenter.x, startToCenter.y, 0);
 
         // dotOfCross = sd.cross(ste).dot(Z)
         float dotOfCross = startDirection.x() * startToEnd.y - startDirection.y() * startToEnd.x;
-        isClockwise = dotOfCross > 0;
+        boolean isClockwise = dotOfCross < 0;
 
         Vector2fc vecToStart = startToCenter.negate();
-        Vector2f vecToEnd = new Vector2f(endPosition).sub(center);
+        Vector2f vecToEnd = new Vector2f(endPosFlat).sub(center.x(), center.y());
 
-        angle = Vectors.angle(vecToStart, vecToEnd);
+        float absAngle = Vectors.angle(vecToStart, vecToEnd);
+        angle = isClockwise ? -absAngle : absAngle;
         startTheta = Vectors.arcTan(vecToStart);
-        endTheta = !isClockwise ? (startTheta - angle) : (startTheta + angle);
+        endTheta = startTheta + angle;
+
+        heightDiff = endPosition.z() - startPosition.z();
+        mesh = new GeneratorResource<>(() -> type.generateCircle(radius, angle, heightDiff), Mesh::dispose);
+
+        this.endNode = (optionalEndNode != null) ? optionalEndNode : new NetworkNode(endPosition, type, getEndDirection());
+        startNode.addNode(this.endNode, this);
+        this.endNode.addNode(startNode, this);
     }
 
     @Override
@@ -86,8 +115,9 @@ public class CircleTrack implements TrackPiece {
     public void draw(SGL gl) {
         gl.pushMatrix();
         {
-            float lowerTheta = Math.min(startTheta, endTheta);
-            type.drawCircle(gl, center, radius, lowerTheta, angle, game.map());
+            gl.translate(center);
+            gl.rotate(startTheta, 0, 0, 1);
+            gl.render(mesh.get(), this);
         }
         gl.popMatrix();
     }
@@ -98,42 +128,21 @@ public class CircleTrack implements TrackPiece {
     }
 
     @Override
-    public Collision getRayCollision(Vector3fc origin, Vector3fc direction) {
-        Vector3f position = game.map().intersectWithRay(origin, direction);
+    public Vector3f getPositionFromDistance(float distanceFromStart) {
+        float length = Math.abs(radius * angle);
+        float fraction = distanceFromStart / length;
 
-        float distanceToCenter = center.distance(position.x, position.y);
-        int clickWidth = game.settings().TRACK_CLICK_WIDTH;
-        if (abs(distanceToCenter - radius) > clickWidth) return null;
-
-        return new Collision(position);
+        if (fraction < 0 || fraction > 1) return null;
+        return getPositionFromFraction(fraction);
     }
 
-    public Vector2f distanceToPosition(float distanceFromStart) {
-        float angleTravelled = (float) (distanceFromStart / (radius * 2 * Math.PI));
-        float currentAngle = angleTravelled + startTheta;
+    private Vector3f getPositionFromFraction(float fraction) {
+        float currentAngle = (fraction * angle) + startTheta;
 
-        if (currentAngle < 0 || currentAngle > angle) {
-            return null;
-        }
-
-        return angleToPosition(currentAngle);
-    }
-
-    protected Vector2f angleToPosition(float currentAngle) {
-        Vector2f offset = new Vector2f(cos(currentAngle), sin(currentAngle));
-        offset.mul(radius);
-        return new Vector2f(center).add(offset);
-    }
-
-    @Override
-    public Vector2f getStartDirection() {
-        return getDirectionOf(startTheta).negate();
-    }
-
-    @Override
-    public Vector2f closestPointOf(Vector2fc position) {
-        Vector2f relative = new Vector2f(position).sub(center);
-        return relative.normalize(radius).add(center);
+        float dx = Math.cos(currentAngle) * radius;
+        float dy = Math.sin(currentAngle) * radius;
+        float dz = fraction * heightDiff;
+        return new Vector3f(center).add(dx, dy, dz);
     }
 
     @Override
@@ -147,40 +156,59 @@ public class CircleTrack implements TrackPiece {
     }
 
     @Override
-    public Vector2f getEndDirection() {
-        return getDirectionOf(endTheta);
+    public Vector3f closestPointOf(Vector3fc origin, Vector3fc direction) {
+        float t = Intersectionf.intersectRayPlane(origin, direction, center, Vectors.Z, EPSILON);
+        Vector3f rayPoint = new Vector3f(direction).mul(t).add(origin);
+        Vector3f vecToPoint = rayPoint.sub(center);
+        float currentAngle = Vectors.arcTan(new Vector2f(vecToPoint.x, vecToPoint.y));
+        // float currentAngle = (fraction * angle) + startTheta;
+        float fraction = (currentAngle - startTheta) / angle;
+        float dx = Math.cos(currentAngle) * radius;
+        float dy = Math.sin(currentAngle) * radius;
+        float dz = fraction * heightDiff;
+        return new Vector3f(center).add(dx, dy, dz);
     }
 
-    protected Vector2f getDirectionOf(float theta) {
-        Vector2f derivative = new Vector2f(-sin(theta), cos(theta));
-        if (!isClockwise) derivative.negate();
-        return derivative;
+    public boolean isClockwise() {
+        return startTheta < endTheta;
     }
 
     @Override
-    public NetworkNodePoint getStartNodePoint() {
-        return startPoint;
+    public TrackType getType() {
+        return type;
+    }
+
+    public NetworkNode getStartNode() {
+        return startNode;
+    }
+
+    public NetworkNode getEndNode() {
+        return endNode;
     }
 
     @Override
-    public NetworkNodePoint getEndNodePoint() {
-        return endPoint;
+    public Vector3fc getStartDirection() {
+        float dx = -Math.sin(startTheta);
+        float dy = Math.cos(startTheta);
+        float dz = heightDiff / (radius * angle);
+
+        if (isClockwise()) {
+            return new Vector3f(-dx, -dy, dz);
+        } else {
+            return new Vector3f(dx, dy, dz);
+        }
     }
 
-    /** check whether the state of this object is correct (test method) */
-    void testAssumptions(Vector2fc startDirection) {
-        if (startPoint.getPosition().distance(angleToPosition(startTheta)) > 0.001f) {
-            throw new IllegalStateException("calculated start position is not equal to the start point: " +
-                    Vectors.toString(startPoint.getPosition()) + " != " + Vectors.toString(angleToPosition(startTheta)));
-        }
-        if (endPoint.getPosition().distance(angleToPosition(endTheta)) > 0.001f) {
-            throw new IllegalStateException("calculated end position is not equal to the end point: " +
-                    Vectors.toString(endPoint.getPosition()) + " != " + Vectors.toString(angleToPosition(endTheta)));
-        }
-        if (startDirection.angle(getStartDirection().negate()) > 0.001f) {
-            Vector2f simulatedStartDirection = startDirection.negate(new Vector2f());
-            throw new IllegalStateException("calculated start direction is not equal to the given start direction: " +
-                    Vectors.toString(simulatedStartDirection) + " != " + Vectors.toString(getStartDirection()));
+    @Override
+    public Vector3fc getEndDirection() {
+        float dx = -Math.sin(endTheta);
+        float dy = Math.cos(endTheta);
+        float dz = heightDiff / (radius * angle);
+
+        if (isClockwise()) { // opposite of getStartDirection
+            return new Vector3f(dx, dy, dz);
+        } else {
+            return new Vector3f(-dx, -dy, dz);
         }
     }
 }

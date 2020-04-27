@@ -63,8 +63,6 @@ public interface FrameGUIManager extends GameAspect, MouseToolListener {
         addFrame((SFrame) component);
     }
 
-    boolean checkMouseScroll(int xSc, int ySc, float value);
-
     /**
      * removes a component from the hud
      * @param component a component previously added
@@ -99,4 +97,9 @@ public interface FrameGUIManager extends GameAspect, MouseToolListener {
      * @param listener a listener that receives the button and screen positions of the next click exactly once.
      */
     void setModalListener(SComponent listener);
+
+    /**
+     * Removes all frames, as if {@link #removeElement(SComponent)} was called on each of them
+     */
+    void clear();
 }

@@ -1,38 +1,70 @@
 package NG.Tracks;
 
+import NG.Core.AbstractGameObject;
 import NG.Core.Game;
+import NG.Network.NetworkNode;
 import NG.Rendering.MatrixStack.SGL;
-import NG.Rendering.Shapes.Primitives.Collision;
-import NG.Tools.Vectors;
-import org.joml.Vector2f;
-import org.joml.Vector2fc;
+import NG.Rendering.MeshLoading.Mesh;
+import NG.Resources.GeneratorResource;
+import NG.Resources.Resource;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
  */
-public class StraightTrack implements TrackPiece {
-    private Game game;
+public class StraightTrack extends AbstractGameObject implements TrackPiece {
     private final TrackType type;
 
-    private final Vector2fc startCoord;
-    private final NetworkNodePoint startNode;
-    private final NetworkNodePoint endNode;
-    private final Vector2fc direction;
-    private final float length;
+    private final NetworkNode startNode;
+    private final NetworkNode endNode;
+
+    private final Vector3fc direction;
 
     private boolean isInvalid;
+    private final Resource<Mesh> mesh;
 
-    public StraightTrack(Game game, TrackType type, NetworkNodePoint startNode, NetworkNodePoint endNode) {
-        this.game = game;
+    /**
+     * create a straight piece of track based on an initial node and an endposition. A new node is generated, and is
+     * accessible as {@link #getEndNode()}
+     * @param type            type of the track
+     * @param startNode       a node this should connect to. The connection is automatically registered.
+     * @param endNodePosition the position of the new end node
+     */
+    public StraightTrack(
+            Game game, TrackType type, NetworkNode startNode, Vector3fc endNodePosition
+    ) {
+        super(game);
         this.type = type;
-        startCoord = new Vector2f(startNode.getPosition());
         this.startNode = startNode;
+        Vector3fc displacement = new Vector3f(endNodePosition).sub(startNode.getPosition());
+        this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
+        this.direction = new Vector3f(displacement).normalize();
+        this.endNode = new NetworkNode(endNodePosition, type, direction);
+
+        startNode.addNode(endNode, this);
+        endNode.addNode(startNode, this);
+    }
+
+    /**
+     * create a new straight piece of track between the two given nodes.
+     * @param type      type of the track
+     * @param startNode
+     * @param endNode
+     */
+    public StraightTrack(
+            Game game, TrackType type, NetworkNode startNode, NetworkNode endNode
+    ) {
+        super(game);
+        this.type = type;
+        this.startNode = startNode;
+        Vector3fc displacement = new Vector3f(endNode.getPosition()).sub(startNode.getPosition());
+        this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
+        this.direction = new Vector3f(displacement).normalize();
         this.endNode = endNode;
-        Vector2f diff = new Vector2f(endNode.getPosition()).sub(startCoord);
-        this.length = diff.length();
-        direction = diff.normalize();
+
+        startNode.addNode(endNode, this);
+        endNode.addNode(startNode, this);
     }
 
     @Override
@@ -44,7 +76,8 @@ public class StraightTrack implements TrackPiece {
     public void draw(SGL gl) {
         gl.pushMatrix();
         {
-            type.drawStraight(gl, startCoord, direction, length, game.map());
+            gl.translate(startNode.getPosition());
+            gl.render(mesh.get(), this);
         }
         gl.popMatrix();
     }
@@ -65,43 +98,46 @@ public class StraightTrack implements TrackPiece {
     }
 
     @Override
-    public Collision getRayCollision(Vector3fc origin, Vector3fc direction) {
-        Vector3f position = game.map().intersectWithRay(origin, direction);
-        Vector2fc coordinate = new Vector2f(position.x, position.y);
-        int clickWidth = game.settings().TRACK_CLICK_WIDTH;
-        float offset = coordinate.distance(closestPointOf(coordinate));
-        if (offset > clickWidth) return null;
-        return new Collision(position);
+    public Vector3f closestPointOf(Vector3fc origin, Vector3fc direction) {
+        // https://en.wikipedia.org/wiki/Skew_lines#Nearest_Points
+        // v1 = this, v2 = (origin, direction)
+        Vector3fc cross = new Vector3f(this.direction).cross(direction); // n
+        Vector3f n2Cross = new Vector3f(direction).cross(cross); // n2
+        Vector3fc thisOrigin = startNode.getPosition();
+
+        float scalar = (new Vector3f(origin).sub(thisOrigin).dot(n2Cross)) / (this.direction.dot(n2Cross));
+        return new Vector3f(this.direction).mul(scalar).add(thisOrigin);
     }
 
     @Override
-    public Vector2fc getEndDirection() {
-        return direction;
+    public TrackType getType() {
+        return type;
     }
 
     @Override
-    public Vector2fc getStartDirection() {
-        return direction;
-    }
-
-    @Override
-    public Vector2fc getDirectionOf(NetworkNodePoint nodePoint) {
-        return direction;
-    }
-
-    @Override
-    public Vector2f closestPointOf(Vector2fc position) {
-        Vector2fc end = endNode.getPosition();
-        return Vectors.getIntersectionPointLine(position, startCoord, end);
-    }
-
-    @Override
-    public NetworkNodePoint getStartNodePoint() {
+    public NetworkNode getStartNode() {
         return startNode;
     }
 
     @Override
-    public NetworkNodePoint getEndNodePoint() {
+    public NetworkNode getEndNode() {
         return endNode;
+    }
+
+    @Override
+    public Vector3fc getEndDirection() {
+        return direction;
+    }
+
+    @Override
+    public Vector3fc getStartDirection() {
+        return new Vector3f(direction).negate();
+    }
+
+    @Override
+    public Vector3f getPositionFromDistance(float distanceFromStart) {
+        return new Vector3f(direction)
+                .mul(distanceFromStart)
+                .add(startNode.getPosition());
     }
 }

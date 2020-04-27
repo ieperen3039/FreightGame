@@ -14,7 +14,7 @@ import org.joml.Vector2i;
  */
 public class BuildMenu extends SFrame {
     public BuildMenu(Game game, TrackType trackType) {
-        super("Build Menu " + trackType.name());
+        super("Build Menu " + trackType.toString());
 
         SPanel mainPanel = new SPanel(1, 2);
 

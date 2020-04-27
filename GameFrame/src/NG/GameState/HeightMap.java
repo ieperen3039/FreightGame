@@ -148,6 +148,7 @@ public class HeightMap implements GameMap {
         Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
 
         Vector3f pos = intersectWithRay(origin, direction);
+        pos.z = getHeightAt(pos.x, pos.y);
 
         tool.apply(pos, xSc, ySc);
 

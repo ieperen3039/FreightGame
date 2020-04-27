@@ -1,9 +1,11 @@
 package NG.InputHandling.MouseTools;
 
 import NG.Core.Game;
+import NG.GUIMenu.Components.SComponent;
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
 import NG.InputHandling.MouseMoveListener;
 import NG.InputHandling.MouseReleaseListener;
+import NG.InputHandling.MouseScrollListener;
 import org.joml.Vector2i;
 
 /**
@@ -24,6 +26,7 @@ public abstract class AbstractMouseTool implements MouseTool {
     @Override
     public void onRelease(int button, int xSc, int ySc) {
         if (button != dragButton) return;
+        dragButton = 0;
 
         dragListener = null;
         if (releaseListener != null) {
@@ -41,6 +44,10 @@ public abstract class AbstractMouseTool implements MouseTool {
     @Override
     public void onClick(int button, int x, int y) {
         setButton(button);
+
+        if (dragButton == 0) { // possibility of pressing multiple buttons: only the first is the drag-button
+            dragButton = button;
+        }
 
         if (game.gui().checkMouseClick(this, x, y)) return;
 
@@ -60,7 +67,19 @@ public abstract class AbstractMouseTool implements MouseTool {
     public void onScroll(float value) {
         Vector2i pos = game.window().getMousePosition();
         FrameGUIManager gui = game.gui();
-        gui.checkMouseScroll(pos.x, pos.y, value);
+
+        SComponent component = gui.getComponentAt(pos.x, pos.y);
+
+        if (component != null) {
+            if (component instanceof MouseScrollListener) {
+                MouseScrollListener listener = (MouseScrollListener) component;
+                listener.onScroll(value);
+            }
+
+            return;
+        }
+
+        game.camera().onScroll(value);
     }
 
     @Override

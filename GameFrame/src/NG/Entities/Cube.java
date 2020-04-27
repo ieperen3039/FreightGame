@@ -1,22 +1,24 @@
 package NG.Entities;
 
+import NG.Core.AbstractGameObject;
+import NG.Core.Game;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.GenericShapes;
-import NG.Rendering.Shapes.Primitives.Collision;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 /**
  * @author Geert van Ieperen created on 9-1-2019.
  */
-public class Cube implements MovingEntity {
+public class Cube extends AbstractGameObject implements MovingEntity {
     private static int nr = 0;
     private final int id;
 
     private boolean isDisposed = false;
     private Vector3f position;
 
-    public Cube(Vector3f position) {
+    public Cube(Game game, Vector3f position) {
+        super(game);
         this.position = position;
         id = nr++;
     }
@@ -49,11 +51,6 @@ public class Cube implements MovingEntity {
     @Override
     public void dispose() {
         isDisposed = true;
-    }
-
-    @Override
-    public Collision getRayCollision(Vector3fc origin, Vector3fc direction) {
-        return null;
     }
 
     @Override

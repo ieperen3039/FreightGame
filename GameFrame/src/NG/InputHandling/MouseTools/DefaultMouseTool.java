@@ -44,7 +44,6 @@ public class DefaultMouseTool extends AbstractMouseTool {
 
         if (component instanceof MouseMoveListener) {
             dragListener = (MouseMoveListener) component;
-            dragButton = getButton();
 
         } else {
             dragListener = null;

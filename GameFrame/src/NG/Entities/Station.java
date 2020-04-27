@@ -3,10 +3,7 @@ package NG.Entities;
 import NG.Core.Game;
 import NG.GUIMenu.Components.SFrame;
 import NG.GameState.Storage;
-import NG.Rendering.Shapes.Primitives.Collision;
 import NG.Tools.Logger;
-import org.joml.Vector2f;
-import org.joml.Vector2fc;
 import org.joml.Vector3fc;
 import org.lwjgl.glfw.GLFW;
 
@@ -17,7 +14,6 @@ public abstract class Station extends Storage {
     private static int nr = 1;
     private final String className = this.getClass().getSimpleName() + " " + (nr++);
 
-    protected Game game;
     protected String stationName = "X";
 
     /** the position and orientation of the station */
@@ -25,8 +21,8 @@ public abstract class Station extends Storage {
     /** whether this station has been placed down. */
     protected boolean isFixed = false;
 
-    public Station(Game game, Vector2f position) {
-        super(position);
+    public Station(Game game, Vector3fc position) {
+        super(position, game);
         this.game = game;
     }
 
@@ -43,7 +39,7 @@ public abstract class Station extends Storage {
     }
 
     @Override
-    public void setPosition(Vector2fc position) {
+    public void setPosition(Vector3fc position) {
         if (isFixed) {
             Logger.ERROR.print("Tried changing state of a fixed station");
             return;
@@ -55,11 +51,6 @@ public abstract class Station extends Storage {
     @Override
     public String toString() {
         return className + " : " + stationName;
-    }
-
-    @Override
-    public Collision getRayCollision(Vector3fc origin, Vector3fc direction) {
-        return null;
     }
 
     @Override

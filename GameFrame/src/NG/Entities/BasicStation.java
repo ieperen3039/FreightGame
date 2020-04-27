@@ -2,9 +2,9 @@ package NG.Entities;
 
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
-import NG.DataStructures.Generic.Pair;
 import NG.GUIMenu.Components.*;
 import NG.InputHandling.MouseTools.SurfaceBuildTool;
+import NG.Network.NetworkNode;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
@@ -12,12 +12,12 @@ import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.GenericShapes;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
-import NG.Tracks.NetworkNode;
+import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
 import org.joml.Vector2f;
-import org.joml.Vector2fc;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 import java.util.function.Consumer;
 
@@ -42,7 +42,7 @@ public class BasicStation extends Station {
     private TrackType type;
 
     public BasicStation(Game game, int nrOfPlatforms, int length, TrackType type) {
-        super(game, new Vector2f());
+        super(game, new Vector3f());
         assert nrOfPlatforms > 0 : "created station with " + nrOfPlatforms + " platforms";
         this.type = type;
 
@@ -71,38 +71,37 @@ public class BasicStation extends Station {
         assert numberOfPlatforms > 0 : "created station with " + numberOfPlatforms + " platforms";
         super.fixPosition();
 
-        Vector2fc forward = new Vector2f(cos(orientation), sin(orientation)).normalize(realLength / 2f);
+        Vector3fc forward = new Vector3f(cos(orientation), sin(orientation), 0).normalize(realLength / 2f);
 
         forwardConnections = new NetworkNode[numberOfPlatforms];
         backwardConnections = new NetworkNode[numberOfPlatforms];
 
         if (numberOfPlatforms > 1) {
-            Vector2fc sideward = new Vector2f(-sin(orientation), cos(orientation)).normalize(realWidth / 2f);
-            Vector2fc sideSkip = new Vector2f(sideward).normalize(PLATFORM_SIZE);
+            Vector3fc toRight = new Vector3f(-sin(orientation), cos(orientation), 0).normalize(realWidth / 2f);
+            Vector3fc rightSkip = new Vector3f(toRight).normalize(PLATFORM_SIZE);
 
-            Vector2f frontPos = new Vector2f(getPosition()).sub(sideward).add(sideSkip.x() / 2, sideSkip.y() / 2);
-            Vector2f backPos = new Vector2f(frontPos).sub(forward);
+            Vector3f frontPos = new Vector3f(getPosition()).sub(toRight).add(rightSkip.x() / 2, rightSkip.y() / 2, 0);
+            Vector3f backPos = new Vector3f(frontPos).sub(forward);
             frontPos.add(forward);
 
             for (int i = 0; i < numberOfPlatforms; i++) {
-                Pair<NetworkNode, NetworkNode> nodePair = NetworkNode.getNodePair(game, type, frontPos, backPos);
+                TrackPiece trackConnection = NetworkNode.createNewTrack(game, type, frontPos, backPos);
 
-                forwardConnections[i] = nodePair.left;
-                backwardConnections[i] = nodePair.right;
+                forwardConnections[i] = trackConnection.getStartNode();
+                backwardConnections[i] = trackConnection.getEndNode();
 
-                frontPos.add(sideSkip);
-                backPos.add(sideSkip);
+                frontPos.add(rightSkip);
+                backPos.add(rightSkip);
             }
 
         } else { // simplified version of above
-            Vector2f frontPos = new Vector2f(getPosition()).add(forward);
-            Vector2f backPos = new Vector2f(getPosition()).sub(forward);
+            Vector3f frontPos = new Vector3f(getPosition()).add(forward);
+            Vector3f backPos = new Vector3f(getPosition()).sub(forward);
 
-            Pair<NetworkNode, NetworkNode> nodePair = NetworkNode.getNodePair(game, type, frontPos, backPos);
+            TrackPiece trackConnection = NetworkNode.createNewTrack(game, type, frontPos, backPos);
 
-            Logger.WARN.print(nodePair);
-            forwardConnections[0] = nodePair.left;
-            backwardConnections[0] = nodePair.right;
+            forwardConnections[0] = trackConnection.getStartNode();
+            backwardConnections[0] = trackConnection.getEndNode();
         }
     }
 
@@ -110,10 +109,9 @@ public class BasicStation extends Station {
     public void draw(SGL gl) {
         gl.pushMatrix();
         {
-            Vector3f position = game.map().getPosition(getPosition());
-            gl.translate(position);
+            gl.translate(getPosition());
             gl.rotate(Vectors.Z, orientation);
-            gl.scale(realLength / 2, realWidth / 2, 5);
+            gl.scale(realLength / 2, realWidth / 2, 0.1f);
 
             ShaderProgram shader = gl.getShader();
             if (shader instanceof MaterialShader) {
@@ -165,7 +163,7 @@ public class BasicStation extends Station {
             selector.dispose();
         }
 
-        public void apply(Vector2fc position) {
+        public void apply(Vector3fc position, int xSc, int ySc) {
             station.setPosition(position);
             game.state().addEntity(station);
 

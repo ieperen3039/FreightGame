@@ -66,7 +66,7 @@ public class DirectionalLight {
     public void setLightSize(float lightSize) {
         lightCubeSize = lightSize;
 
-        float zFar = LIGHT_Z_NEAR + lightSize * 2;
+        float zFar = LIGHT_Z_NEAR + lightSize * 8;
         ortho.setOrtho(-lightSize, lightSize, -lightSize, lightSize, LIGHT_Z_NEAR, zFar);
 
         lightSpaceMatrix = recalculateLightSpace();
