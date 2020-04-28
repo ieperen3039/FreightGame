@@ -18,23 +18,15 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
  * A Button that may execute actions for both left and right clicks upon release.
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SButton extends SComponent implements MouseReleaseListener, MouseClickListener {
+public class SButton extends STextComponent implements MouseReleaseListener, MouseClickListener {
     public static final int BUTTON_MIN_WIDTH = 250;
     public static final int BUTTON_MIN_HEIGHT = 30;
-    public static final NGFonts.TextType TEXT_TYPE = NGFonts.TextType.REGULAR;
-    public static final int BUTTON_MIN_X_BORDER = 15;
+    public static final NGFonts.TextType BUTTON_TEXT_TYPE = NGFonts.TextType.REGULAR;
 
     private Collection<Runnable> leftClickListeners = new ArrayList<>();
     private Collection<Runnable> rightClickListeners = new ArrayList<>();
-    private final int minHeight;
-    private final int minWidth;
 
-    private String text;
     private boolean isPressed = false;
-    private int textWidth;
-
-    /** minimum border to the left and right of the text */
-    private int minXBorder = BUTTON_MIN_X_BORDER;
 
     /**
      * a button with no associated action (a dead button)
@@ -62,9 +54,7 @@ public class SButton extends SComponent implements MouseReleaseListener, MouseCl
      * @see #addLeftClickListener(Runnable)
      */
     public SButton(String text, int width, int height) {
-        this.minHeight = height;
-        this.minWidth = width;
-        setText(text);
+        super(text, BUTTON_TEXT_TYPE, SFrameLookAndFeel.Alignment.CENTER, width, height);
         setSize(width, height);
     }
 
@@ -98,26 +88,16 @@ public class SButton extends SComponent implements MouseReleaseListener, MouseCl
         setGrowthPolicy(properties.doGrowInWidth, properties.doGrowInHeight);
     }
 
-    @Override
-    public int minWidth() {
-        return Math.max(textWidth + 2 * minXBorder, minWidth);
-    }
-
-    @Override
-    public int minHeight() {
-        return minHeight;
-    }
-
     public void setXBorder(int minXBorder) {
         this.minXBorder = minXBorder;
     }
 
-    public SButton addLeftClickListener(Runnable action) {
+    public STextComponent addLeftClickListener(Runnable action) {
         leftClickListeners.add(action);
         return this;
     }
 
-    public SButton addRightClickListeners(Runnable action) {
+    public STextComponent addRightClickListeners(Runnable action) {
         rightClickListeners.add(action);
         return this;
     }
@@ -125,15 +105,7 @@ public class SButton extends SComponent implements MouseReleaseListener, MouseCl
     @Override
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
         design.draw(isPressed ? BUTTON_PRESSED : (isHovered ? BUTTON_HOVERED : BUTTON_ACTIVE), screenPosition, getSize());
-
-        int textWidth = design.getTextWidth(text, TEXT_TYPE);
-        if (this.textWidth != textWidth) {
-            this.textWidth = textWidth;
-            invalidateLayout();
-            validateLayout();
-        }
-
-        design.drawText(screenPosition, getSize(), text, TEXT_TYPE, SFrameLookAndFeel.Alignment.CENTER);
+        super.draw(design, screenPosition);
     }
 
     @Override
@@ -153,14 +125,6 @@ public class SButton extends SComponent implements MouseReleaseListener, MouseCl
             Logger.DEBUG.print("button clicked with " + button + " which has no action");
         }
         isPressed = false;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
     }
 
     @Override

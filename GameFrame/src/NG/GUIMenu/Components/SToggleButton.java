@@ -16,13 +16,9 @@ import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.BUTTON_PRESSED;
  * A button with a state that only changes upon clicking the button
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SToggleButton extends SComponent implements MouseClickListener {
-    private final int minHeight;
-    private final int minWidth;
-    private String text;
-
+public class SToggleButton extends STextComponent implements MouseClickListener {
+    private final List<Consumer<Boolean>> stateChangeListeners = new ArrayList<>();
     private boolean state;
-    private List<Consumer<Boolean>> stateChangeListeners = new ArrayList<>();
 
     /**
      * Create a button with the given properties, starting disabled
@@ -41,9 +37,7 @@ public class SToggleButton extends SComponent implements MouseClickListener {
      * @param initialState the initial state of the button. If true, the button will be enabled
      */
     public SToggleButton(String text, int minWidth, int minHeight, boolean initialState) {
-        this.minHeight = minHeight;
-        this.minWidth = minWidth;
-        this.text = text;
+        super(text, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER, minWidth, minHeight);
         this.state = initialState;
     }
 
@@ -59,20 +53,10 @@ public class SToggleButton extends SComponent implements MouseClickListener {
     }
 
     @Override
-    public int minWidth() {
-        return minWidth;
-    }
-
-    @Override
-    public int minHeight() {
-        return minHeight;
-    }
-
-    @Override
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
         if (getWidth() == 0 || getHeight() == 0) return;
         design.draw(state ? BUTTON_PRESSED : BUTTON_ACTIVE, screenPosition, getSize());
-        design.drawText(screenPosition, getSize(), text, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER);
+        super.draw(design, screenPosition);
     }
 
     @Override
@@ -100,14 +84,6 @@ public class SToggleButton extends SComponent implements MouseClickListener {
                 c.accept(state);
             }
         }
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
     }
 
     @Override

@@ -52,8 +52,8 @@ public class SFrame extends SDecorator {
         }
         bodyComponent = SContainer.singleton(new SFiller());
 
-        contents.add(upperBar, new Vector2i(0, 0));
-        contents.add(bodyComponent, new Vector2i(0, 1));
+        add(upperBar, new Vector2i(0, 0));
+        add(bodyComponent, new Vector2i(0, 1));
 
         setSize(width, height);
         setGrowthPolicy(false, false);
@@ -80,7 +80,7 @@ public class SFrame extends SDecorator {
 
     private SPanel makeUpperBar(String frameTitle) {
         SExtendedTextArea title = new SExtendedTextArea(
-                frameTitle, FRAME_TITLE_BAR_SIZE, 0, true,
+                frameTitle, 0, FRAME_TITLE_BAR_SIZE, true,
                 NGFonts.TextType.TITLE, SFrameLookAndFeel.Alignment.CENTER
         );
         titleComponent = title;
@@ -115,7 +115,7 @@ public class SFrame extends SDecorator {
         if (!isVisible()) return;
         validateLayout();
         design.draw(SFrameLookAndFeel.UIComponent.PANEL, screenPosition, getSize());
-        contents.draw(design, screenPosition);
+        super.draw(design, screenPosition);
     }
 
     @Override

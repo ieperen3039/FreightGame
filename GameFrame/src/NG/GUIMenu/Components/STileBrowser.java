@@ -10,8 +10,8 @@ import org.joml.Vector2ic;
  */
 public class STileBrowser extends SContainer {
     private static final int SCROLL_BUTTON_WIDTH = 50;
-    private final SButton buttonFurther;
-    private final SButton buttonBack;
+    private final STextComponent buttonFurther;
+    private final STextComponent buttonBack;
     private LimitedVisibilityLayout layoutManager;
 
     public STileBrowser(boolean growPolicy, int minWidth, int eltWidth, SComponent... elements) {

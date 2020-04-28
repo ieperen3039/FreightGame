@@ -24,8 +24,8 @@ class SScrollBar extends SComponent {
     private final List<SScrollBarListener> listeners = new ArrayList<>();
     private final SComponent[] elements;
 
-    private final SButton scrollUp;
-    private final SButton scrollDown;
+    private final STextComponent scrollUp;
+    private final STextComponent scrollDown;
     private final SDragBar dragBar;
 
     private int minimumInd;

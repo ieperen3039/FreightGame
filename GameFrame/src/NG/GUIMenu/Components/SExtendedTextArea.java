@@ -16,14 +16,14 @@ public class SExtendedTextArea extends STextArea
     private MouseReleaseListener releaseListener;
 
     public SExtendedTextArea(
-            String frameTitle, int minHeight, int minWidth, boolean doGrowInWidth, NGFonts.TextType textType,
+            String frameTitle, int minWidth, int minHeight, boolean doGrowInWidth, NGFonts.TextType textType,
             SFrameLookAndFeel.Alignment alignment
     ) {
         super(frameTitle, minHeight, minWidth, doGrowInWidth, textType, alignment);
     }
 
     public SExtendedTextArea(STextArea source) {
-        this(source.getText(), source.minWidth(), source.minWidth(), source.wantHorizontalGrow(), source.textType, source.alignment);
+        this(source.getText(), source.minWidth, source.minHeight, source.wantHorizontalGrow(), source.textType, source.alignment);
     }
 
     public SExtendedTextArea(String text, int minHeight, boolean doGrowInWidth) {

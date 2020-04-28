@@ -42,11 +42,11 @@ public class MainMenu extends SFrame {
 
         newGameFrame = new NewGameFrame(game, modLoader);
 
-        SButton newGame = new SButton("Start new game", this::showNewGame, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
+        STextComponent newGame = new SButton("Start new game", this::showNewGame, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
         buttons.add(newGame, onTop());
-        SButton justStart = new SButton("Start Testworld", this::testWorld, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
+        STextComponent justStart = new SButton("Start Testworld", this::testWorld, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
         buttons.add(justStart, onTop());
-        SButton exitGame = new SButton("Exit game", terminateProgram, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
+        STextComponent exitGame = new SButton("Exit game", terminateProgram, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
         buttons.add(exitGame, onBot());
 
         Vector2i mid = onTop();

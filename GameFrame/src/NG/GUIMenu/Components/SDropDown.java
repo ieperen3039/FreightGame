@@ -196,7 +196,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
             for (int i = 0; i < values.length; i++) {
                 final int index = i;
                 SExtendedTextArea option = new SExtendedTextArea(
-                        values[index], dropOptionHeight, minWidth, true, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT
+                        values[index], minWidth, dropOptionHeight, true, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT
                 );
 
                 option.setClickListener((b, x, y) -> {

@@ -10,7 +10,7 @@ import java.util.Collection;
  * @author Geert van Ieperen created on 21-2-2020.
  */
 public abstract class SDecorator extends SComponent {
-    protected final SContainer contents;
+    private final SContainer contents;
 
     public SDecorator(SContainer panel) {
         contents = panel;
@@ -48,7 +48,7 @@ public abstract class SDecorator extends SComponent {
     @Override
     public void doValidateLayout() {
         contents.setSize(getWidth(), getHeight());
-        contents.doValidateLayout();
+        contents.validateLayout();
         setSize(getWidth(), getHeight());
     }
 

@@ -203,8 +203,9 @@ public class BasicStation extends Station {
                 SDropDown capacityChooser = new SDropDown(game.gui(), station.platformCapacity, values);
                 SDropDown widthChooser = new SDropDown(game.gui(), station.numberOfPlatforms, values);
 
-                Consumer<Integer> changeListener = (i) -> station.setSize(capacityChooser.getSelectedIndex(), widthChooser
-                        .getSelectedIndex());
+                Consumer<Integer> changeListener = (i) -> station.setSize(
+                        capacityChooser.getSelectedIndex(), widthChooser.getSelectedIndex()
+                );
 
                 capacityChooser.addStateChangeListener(changeListener);
                 widthChooser.addStateChangeListener(changeListener);
