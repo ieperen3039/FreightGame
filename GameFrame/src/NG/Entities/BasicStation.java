@@ -15,6 +15,7 @@ import NG.Tools.Vectors;
 import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
 import org.joml.*;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.function.Consumer;
 
@@ -145,10 +146,9 @@ public class BasicStation extends Station {
             }
         }
 
-        // TODO remember previous setting
-        private BasicStation station;
+        private final BasicStation station;
+        private final SizeSelector selector;
         private boolean isPositioned = false;
-        private SizeSelector selector;
 
         public Builder(Game game, SToggleButton source, TrackType trackType) {
             super(game, () -> source.setActive(false));
@@ -170,6 +170,8 @@ public class BasicStation extends Station {
         }
 
         public void apply(Vector3fc position, int xSc, int ySc) {
+            if (getButton() != GLFW.GLFW_MOUSE_BUTTON_LEFT) return;
+
             station.setPosition(position);
             game.state().addEntity(station);
 
@@ -205,6 +207,7 @@ public class BasicStation extends Station {
         }
 
         private class SizeSelector extends SFrame {
+            // TODO remember previous setting
             SizeSelector() {
                 super("Station Size");
                 SPanel panel = new SPanel(2, 2);

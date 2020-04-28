@@ -204,7 +204,7 @@ public class FrameManagerImpl implements FrameGUIManager {
             return true;
         }
 
-        if (modalComponent != null && modalComponent.contains(xSc, ySc)) {
+        if (modalComponent != null && modalComponent.isVisible() && modalComponent.contains(xSc, ySc)) {
             return true;
         }
 
@@ -220,7 +220,7 @@ public class FrameManagerImpl implements FrameGUIManager {
     @Override
     public boolean checkMouseClick(int button, final int xSc, final int ySc) {
         // check modal dialogues
-        if (modalComponent != null) {
+        if (modalComponent != null && modalComponent.isVisible()) {
             if (modalComponent.contains(xSc, ySc)) {
                 processClick(button, modalComponent, xSc, ySc);
             }

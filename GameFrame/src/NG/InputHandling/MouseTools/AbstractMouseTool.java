@@ -5,6 +5,7 @@ import NG.GUIMenu.Components.SComponent;
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
 import NG.InputHandling.MouseReleaseListener;
 import NG.InputHandling.MouseScrollListener;
+import NG.Tools.Logger;
 import org.joml.Vector2i;
 
 /**
@@ -26,7 +27,10 @@ public abstract class AbstractMouseTool implements MouseTool {
 
     @Override
     public void onClick(int button, int x, int y) {
-        if (pressedButton != -1) return;
+        if (pressedButton != -1) {
+            Logger.WARN.print(pressedButton);
+            return;
+        }
         pressedButton = button;
 
         if (game.gui().checkMouseClick(button, x, y)) {
@@ -37,13 +41,19 @@ public abstract class AbstractMouseTool implements MouseTool {
         game.camera().onClick(button, x, y);
         releaseListener = game.camera();
 
-        if (game.state().checkMouseClick(this, x, y)) return;
+        if (game.state().checkMouseClick(this, x, y)) {
+            return;
+        }
+
         game.map().checkMouseClick(this, x, y);
     }
 
     @Override
     public void onRelease(int button, int xSc, int ySc) {
-        if (button != pressedButton) return;
+        if (button != pressedButton) {
+            return;
+        }
+
         pressedButton = -1;
 
         releaseListener.onRelease(button, xSc, ySc);

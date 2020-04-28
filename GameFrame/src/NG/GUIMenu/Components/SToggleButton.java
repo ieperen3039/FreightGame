@@ -3,6 +3,7 @@ package NG.GUIMenu.Components;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.InputHandling.MouseClickListener;
+import NG.InputHandling.MouseReleaseListener;
 import org.joml.Vector2ic;
 
 import java.util.ArrayList;
@@ -16,9 +17,10 @@ import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.BUTTON_PRESSED;
  * A button with a state that only changes upon clicking the button
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SToggleButton extends STextComponent implements MouseClickListener {
+public class SToggleButton extends STextComponent implements MouseClickListener, MouseReleaseListener {
     private final List<Consumer<Boolean>> stateChangeListeners = new ArrayList<>();
     private boolean state;
+    private boolean isPressed;
 
     /**
      * Create a button with the given properties, starting disabled
@@ -39,6 +41,7 @@ public class SToggleButton extends STextComponent implements MouseClickListener 
     public SToggleButton(String text, int minWidth, int minHeight, boolean initialState) {
         super(text, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER, minWidth, minHeight);
         this.state = initialState;
+        this.isPressed = initialState;
     }
 
     /**
@@ -55,12 +58,17 @@ public class SToggleButton extends STextComponent implements MouseClickListener 
     @Override
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
         if (getWidth() == 0 || getHeight() == 0) return;
-        design.draw(state ? BUTTON_PRESSED : BUTTON_ACTIVE, screenPosition, getSize());
+        design.draw(isPressed ? BUTTON_PRESSED : BUTTON_ACTIVE, screenPosition, getSize());
         super.draw(design, screenPosition);
     }
 
     @Override
     public void onClick(int button, int xSc, int ySc) {
+        isPressed = !state;
+    }
+
+    @Override
+    public void onRelease(int button, int xSc, int ySc) {
         setActive(!state);
     }
 
