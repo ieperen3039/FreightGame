@@ -63,6 +63,7 @@ public class MainMenu extends SFrame {
 
         // random map
         List<Mod> mods = modLoader.allMods();
+//        MapGeneratorMod mapGenerator = new FlatMapGenerator();
         MapGeneratorMod mapGenerator = mods.stream()
                 .filter(m -> m instanceof MapGeneratorMod)
                 .findAny() // any generator

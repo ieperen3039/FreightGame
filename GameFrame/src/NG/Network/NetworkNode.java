@@ -1,6 +1,7 @@
 package NG.Network;
 
 import NG.Core.Game;
+import NG.DataStructures.Generic.Pair;
 import NG.Tools.Vectors;
 import NG.Tracks.StraightTrack;
 import NG.Tracks.TrackPiece;
@@ -160,7 +161,27 @@ public class NetworkNode {
                 game, node.type, node, node.getDirectionTo(newPosition), newPosition
         );
         game.state().addEntity(trackConnection);
+
         return trackConnection.getEndNode();
+    }
+
+    /**
+     * connects the given two nodes together by means of a single straight track and a single circle track. The tracks
+     * are added to the game state, and the new node inbetween is returned.
+     * @param game  the game instance
+     * @param aNode one node to connect
+     * @param bNode another node to connect
+     * @return the node that had to be created to connect the two nodes.
+     */
+    public static NetworkNode createConnection(Game game, NetworkNode aNode, NetworkNode bNode) {
+        Pair<TrackPiece, TrackPiece> trackPieces = TrackPiece.getTrackPiece(
+                game, aNode.type, aNode, aNode.getDirectionTo(bNode), bNode, bNode.getDirectionTo(aNode)
+        );
+
+        game.state().addEntity(trackPieces.left);
+        game.state().addEntity(trackPieces.right);
+
+        return trackPieces.left.getEndNode();
     }
 
     public static NetworkNode createSplit(Game game, TrackPiece trackPiece, Vector3f point) {

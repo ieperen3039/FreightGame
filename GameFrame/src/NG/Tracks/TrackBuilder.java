@@ -82,21 +82,27 @@ public class TrackBuilder extends SurfaceBuildTool {
                 NetworkNode targetNode;
                 if (distToStart < distToEnd) {
                     targetNode = startNode;
+
                 } else {
                     targetNode = endNode;
                 }
 
                 if (firstNode == null) {
                     firstNode = targetNode;
+
                 } else {
-                    Logger.ERROR.print("Connect to endpoint: Not implemented yet :(");
+                    NetworkNode.createConnection(game, firstNode, targetNode);
+                    firstNode = null;
                 }
 
             } else {
                 if (firstNode == null) {
                     firstNode = NetworkNode.createSplit(game, trackPiece, closestPoint);
+
                 } else {
-                    Logger.ERROR.print("Connect halfway existing track: Not implemented yet :(");
+                    NetworkNode targetNode = NetworkNode.createSplit(game, trackPiece, closestPoint);
+                    NetworkNode.createConnection(game, firstNode, targetNode);
+                    firstNode = null;
                 }
             }
         }

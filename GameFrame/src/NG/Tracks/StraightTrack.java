@@ -124,8 +124,9 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     public Vector3f closestPointOf(Vector3fc origin, Vector3fc direction) {
         // https://en.wikipedia.org/wiki/Skew_lines#Nearest_Points
         // v1 = this, v2 = (origin, direction)
-        Vector3fc cross = new Vector3f(this.direction).cross(direction); // n
-        Vector3f n2Cross = new Vector3f(direction).cross(cross); // n2
+        Vector3fc nDirection = new Vector3f(direction).normalize();
+        Vector3fc cross = new Vector3f(this.direction).cross(nDirection); // n
+        Vector3f n2Cross = new Vector3f(nDirection).cross(cross); // n2
         Vector3fc thisOrigin = startNode.getPosition();
 
         float scalar = (new Vector3f(origin).sub(thisOrigin).dot(n2Cross)) / (this.direction.dot(n2Cross));

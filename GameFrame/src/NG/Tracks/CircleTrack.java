@@ -82,7 +82,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         float dot = startToEnd.dot(startToCenter);
         if (dot < 0) { // center is on the wrong side of the direction
             startToCenter.negate();
-            dot = startToEnd.dot(startToCenter);
+            dot = -dot;
         }
 
         // derivation: see bottom
