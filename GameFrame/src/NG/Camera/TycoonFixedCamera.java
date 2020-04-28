@@ -2,30 +2,31 @@ package NG.Camera;
 
 import NG.Core.Game;
 import NG.Rendering.GLFWWindow;
-import NG.Settings.KeyBinding;
 import NG.Settings.Settings;
 import NG.Tools.Vectors;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import static NG.Camera.TycoonFixedCamera.MoveDirection.*;
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
 /**
  * A camera implementation that can be moved by holding the mouse to the corners of the screen
  * @author Geert van Ieperen. Created on 18-11-2018.
  */
 public class TycoonFixedCamera implements Camera {
-    private static final int SCREEN_MOVE_BORDER_SIZE = 20;
+    private static final int SCREEN_MOVE_BORDER_SIZE = 50;
+    private static final int SCREEN_DEAD_ZONE = 30;
+
     private static final float ZOOM_SPEED_LIMIT = 0.03f;
-    private static final float ROTATION_MODIFIER = 1f;
+    private static final float ROTATION_MODIFIER = 0.01f;
     private static final float MOVE_SPEED = 0.5f;
     private final Vector3f focus = new Vector3f();
     private final Vector3f eyeOffset;
 
     private Game game;
-    private int mouseXPos;
-    private int mouseYPos;
-    private MoveDirection cameraRotation = NOT;
+    private float mouseXPos;
+    private float mouseYPos;
+    private boolean isBeingRotated;
 
     /**
      * a camera that always has the same angle to the ground. The angle can be set by the ratio between eyeOffset and
@@ -53,7 +54,7 @@ public class TycoonFixedCamera implements Camera {
     @Override
     public void updatePosition(float deltaTime) {
         // prevent overshooting when camera is not updated.
-        if (deltaTime > 0.5f) return;
+        if (deltaTime > 0.5f || isBeingRotated) return;
 
         Vector3f eyeDir = new Vector3f(eyeOffset);
         GLFWWindow window = game.window();
@@ -61,8 +62,8 @@ public class TycoonFixedCamera implements Camera {
         int height = window.getHeight();
 
         // correction for toolbar
-        int corrMouseYPos = this.mouseYPos;
-        int corrMouseXPos = this.mouseXPos;
+        int corrMouseYPos = (int) mouseYPos;
+        int corrMouseXPos = (int) mouseXPos;
 
         // x movement
         if (corrMouseXPos < SCREEN_MOVE_BORDER_SIZE) {
@@ -93,12 +94,6 @@ public class TycoonFixedCamera implements Camera {
                 eyeDir.normalize(value);
                 focus.add(eyeDir.x, eyeDir.y, 0);
             }
-        }
-
-        if (cameraRotation != NOT) {
-            float angle = deltaTime * ROTATION_MODIFIER;
-            if (cameraRotation == RIGHT) angle = -angle;
-            eyeOffset.rotateZ(angle);
         }
     }
 
@@ -157,47 +152,33 @@ public class TycoonFixedCamera implements Camera {
      */
     protected float positionToMovement(int pixels) {
         if (pixels >= SCREEN_MOVE_BORDER_SIZE) return 0;
-        return (SCREEN_MOVE_BORDER_SIZE - pixels) * eyeOffset.length() * MOVE_SPEED * (1f / SCREEN_MOVE_BORDER_SIZE);
-    }
 
-    public void keyPressed(int keyCode) {
-        switch (KeyBinding.get(keyCode)) {
-            case CAMERA_LEFT:
-                cameraRotation = LEFT;
-                break;
-            case CAMERA_RIGHT:
-                cameraRotation = RIGHT;
-                break;
-        }
-    }
-
-    public void keyReleased(int keyCode) {
-        switch (KeyBinding.get(keyCode)) {
-            case CAMERA_LEFT:
-            case CAMERA_RIGHT:
-                cameraRotation = NOT;
-                break;
-        }
-    }
-
-    enum MoveDirection {
-        LEFT, NOT, RIGHT
+        int offset = Math.min(SCREEN_MOVE_BORDER_SIZE - pixels, SCREEN_DEAD_ZONE);
+        return offset * (1f / (SCREEN_MOVE_BORDER_SIZE - SCREEN_DEAD_ZONE)) * MOVE_SPEED * eyeOffset.length();
     }
 
     @Override
-    public void mouseMoved(int xDelta, int yDelta, int xPos, int yPos) {
+    public void mouseMoved(int xDelta, int yDelta, float xPos, float yPos) {
+//        float exactDelta = xPos - mouseXPos;
         mouseXPos = xPos;
         mouseYPos = yPos;
+
+        if (isBeingRotated) {
+            float angle = -xDelta * ROTATION_MODIFIER;
+            eyeOffset.rotateZ(angle);
+        }
     }
 
     @Override
-    public void onClick(int button, int xRel, int yRel) {
-
+    public void onClick(int button, int xPos, int yPos) {
+        if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+            isBeingRotated = true;
+        }
     }
 
     @Override
     public void onRelease(int button, int xSc, int ySc) {
-
+        isBeingRotated = false;
     }
 }
 

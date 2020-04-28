@@ -40,7 +40,7 @@ public class SExtendedTextArea extends STextArea
     /**
      * returns the movement of the mouse
      */
-    public void mouseMoved(int xDelta, int yDelta, int xPos, int yPos) {
+    public void mouseMoved(int xDelta, int yDelta, float xPos, float yPos) {
         if (dragListener == null) return;
         dragListener.mouseMoved(xDelta, yDelta, xPos, yPos);
     }

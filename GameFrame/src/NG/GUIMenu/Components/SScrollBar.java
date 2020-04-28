@@ -220,7 +220,7 @@ class SScrollBar extends SComponent {
         }
 
         @Override
-        public void mouseMoved(int xDelta, int yDelta, int xPos, int yPos) {
+        public void mouseMoved(int xDelta, int yDelta, float xPos, float yPos) {
             mouseMoved(xDelta, yDelta);
         }
     }

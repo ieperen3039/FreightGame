@@ -76,7 +76,7 @@ public abstract class AbstractMouseTool implements MouseTool {
     }
 
     @Override
-    public void mouseMoved(int xDelta, int yDelta, int xPos, int yPos) {
+    public void mouseMoved(int xDelta, int yDelta, float xPos, float yPos) {
         game.gui().mouseMoved(xDelta, yDelta, xPos, yPos);
         game.camera().mouseMoved(xDelta, yDelta, xPos, yPos);
     }

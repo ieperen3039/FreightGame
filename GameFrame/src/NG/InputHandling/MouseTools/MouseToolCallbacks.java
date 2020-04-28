@@ -21,7 +21,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 public class MouseToolCallbacks implements GameAspect {
     private MouseTool DEFAULT_MOUSE_TOOL;
 
-    private final ExecutorService taskScheduler = Executors.newSingleThreadExecutor();
+    private final ExecutorService taskScheduler = Executors.newFixedThreadPool(2);
 
     private Game game;
     private MouseTool currentTool;
@@ -101,12 +101,14 @@ public class MouseToolCallbacks implements GameAspect {
         public void invoke(long window, double xpos, double ypos) {
             int xDiff = (int) (xpos - xGiven);
             int yDiff = (int) (ypos - yGiven);
+            float xFloat = (float) xpos;
+            float yFloat = (float) ypos;
 
-            if (xDiff != 0 && yDiff != 0) {
+            if (xDiff != 0 || yDiff != 0) {
                 xGiven += xDiff;
                 yGiven += yDiff;
-                execute(() -> currentTool.mouseMoved(xDiff, yDiff, xGiven, yGiven));
             }
+            execute(() -> currentTool.mouseMoved(xDiff, yDiff, xFloat, yFloat));
         }
     }
 

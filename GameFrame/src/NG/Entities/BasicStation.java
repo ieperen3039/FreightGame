@@ -172,7 +172,7 @@ public class BasicStation extends Station {
         }
 
         @Override
-        public void mouseMoved(int xDelta, int yDelta, int xPos, int yPos) {
+        public void mouseMoved(int xDelta, int yDelta, float xPos, float yPos) {
             super.mouseMoved(xDelta, yDelta, xPos, yPos);
             if (!isPositioned) return;
 
