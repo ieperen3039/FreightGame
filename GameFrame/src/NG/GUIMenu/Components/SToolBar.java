@@ -3,7 +3,7 @@ package NG.GUIMenu.Components;
 import NG.Core.Game;
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
-import NG.InputHandling.MouseRelativeClickListener;
+import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseReleaseListener;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
@@ -15,7 +15,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 /**
  * @author Geert van Ieperen. Created on 1-11-2018.
  */
-public class SToolBar extends SContainer implements MouseReleaseListener, MouseRelativeClickListener {
+public class SToolBar extends SContainer implements MouseReleaseListener, MouseClickListener {
     public static final int MAX_BAR_ICONS = 20; // TODO look for opportunity of calculating this
     private static final int BUTTON_SIZE = TOOL_BAR_HEIGHT - (4 + 4);
 

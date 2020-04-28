@@ -39,8 +39,15 @@ public class SDragEdge extends SComponent implements MouseMoveListener {
         design.drawText(screenPosition, getSize(), "+", NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT);
     }
 
-    @Override
+    /**
+     * returns the movement of the mouse
+     */
     public void mouseMoved(int xDelta, int yDelta) {
         parent.addToSize(xDelta, yDelta);
+    }
+
+    @Override
+    public void mouseMoved(int xDelta, int yDelta, int xPos, int yPos) {
+        mouseMoved(xDelta, yDelta);
     }
 }

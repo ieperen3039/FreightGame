@@ -2,9 +2,12 @@ package NG.Tracks;
 
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
+import NG.InputHandling.ClickShader;
 import NG.Network.NetworkNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
+import NG.Rendering.Shaders.MaterialShader;
+import NG.Rendering.Shaders.ShaderProgram;
 import NG.Resources.GeneratorResource;
 import NG.Resources.Resource;
 import NG.Tools.Vectors;
@@ -29,9 +32,11 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     private final float endTheta;
 
     private final Resource<Mesh> mesh;
+    private final Resource<Mesh> clickBox;
 
     private boolean isInvalid = false;
     private final float heightDiff;
+    private boolean renderClickBox = false;
 
     /**
      * @param game           the current game instance
@@ -100,6 +105,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
 
         heightDiff = endPosition.z() - startPosition.z();
         mesh = new GeneratorResource<>(() -> type.generateCircle(radius, angle, heightDiff), Mesh::dispose);
+        clickBox = new GeneratorResource<>(() -> TrackType.clickBoxCircle(radius, angle, heightDiff), Mesh::dispose);
 
         this.endNode = (optionalEndNode != null) ? optionalEndNode : new NetworkNode(endPosition, type, getEndDirection());
         startNode.addNode(this.endNode, this);
@@ -113,11 +119,25 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
 
     @Override
     public void draw(SGL gl) {
+        ShaderProgram shader = gl.getShader();
+        Mesh meshToRender;
+
+        if (renderClickBox || shader instanceof ClickShader) {
+            meshToRender = clickBox.get();
+
+        } else {
+            meshToRender = mesh.get();
+        }
+
+        if (shader instanceof MaterialShader) {
+            type.setMaterial((MaterialShader) shader);
+        }
+
         gl.pushMatrix();
         {
             gl.translate(center);
             gl.rotate(startTheta, 0, 0, 1);
-            gl.render(mesh.get(), this);
+            gl.render(meshToRender, this);
         }
         gl.popMatrix();
     }
@@ -210,6 +230,11 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         } else {
             return new Vector3f(-dx, -dy, dz);
         }
+    }
+
+    @Override
+    public void doRenderClickBox(boolean renderClickBox) {
+        this.renderClickBox = renderClickBox;
     }
 }
 

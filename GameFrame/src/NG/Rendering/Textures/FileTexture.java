@@ -1,6 +1,5 @@
 package NG.Rendering.Textures;
 
-import NG.Tools.Logger;
 import de.matthiasmann.twl.utils.PNGDecoder;
 
 import java.io.FileInputStream;
@@ -51,8 +50,6 @@ public class FileTexture implements Texture {
 
         // Generate Mip Map
         glGenerateMipmap(GL_TEXTURE_2D);
-
-        Logger.DEBUG.printf("loaded texture %s: (%d, %d)", path.getFileName(), width, height);
     }
 
     @Override

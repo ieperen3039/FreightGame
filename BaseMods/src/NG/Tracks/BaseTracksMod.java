@@ -2,8 +2,11 @@ package NG.Tracks;
 
 import NG.Core.Game;
 import NG.Core.Version;
+import NG.DataStructures.Generic.Color4f;
 import NG.Mods.Mod;
+import NG.Rendering.Material;
 import NG.Rendering.MeshLoading.Mesh;
+import NG.Rendering.Shaders.MaterialShader;
 import org.joml.Vector3fc;
 
 /**
@@ -48,6 +51,11 @@ public class BaseTracksMod implements Mod {
         @Override
         public Mesh generateStraight(Vector3fc displacement) {
             return TrackType.clickBoxStraight(displacement);
+        }
+
+        @Override
+        public void setMaterial(MaterialShader shader) {
+            shader.setMaterial(Material.ROUGH, Color4f.WHITE);
         }
 
         @Override

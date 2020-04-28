@@ -1,12 +1,8 @@
 package NG.InputHandling;
 
 /**
- * @author Geert van Ieperen. Created on 23-9-2018.
+ * @author Geert van Ieperen created on 27-4-2020.
  */
 public interface MouseMoveListener {
-
-    /**
-     * returns the movement of the mouse
-     */
-    void mouseMoved(int xDelta, int yDelta);
+    void mouseMoved(int xDelta, int yDelta, int xPos, int yPos);
 }

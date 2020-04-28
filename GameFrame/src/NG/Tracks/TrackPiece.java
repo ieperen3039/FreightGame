@@ -58,6 +58,11 @@ public interface TrackPiece extends Entity {
     Vector3f getPositionFromDistance(float distanceFromStart);
 
     /**
+     * @param renderClickBox if true, render the area that can be clicked on. Otherwise, render the track itself.
+     */
+    void doRenderClickBox(boolean renderClickBox);
+
+    /**
      * factory method for creating an arbitrary track between two points
      * @param game        the game instance
      * @param type        the track type

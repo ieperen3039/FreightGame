@@ -2,7 +2,7 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.InputHandling.KeyPressListener;
-import NG.InputHandling.MouseRelativeClickListener;
+import NG.InputHandling.MouseClickListener;
 import org.joml.Vector2ic;
 
 import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.SELECTION;
@@ -10,7 +10,7 @@ import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.SELECTION;
 /**
  * @author Geert van Ieperen. Created on 5-10-2018.
  */
-public class STextInput extends STextArea implements KeyPressListener, MouseRelativeClickListener {
+public class STextInput extends STextArea implements KeyPressListener, MouseClickListener {
     public STextInput(int minHeight, boolean doGrowInWidth) {
         super("", minHeight);
     }

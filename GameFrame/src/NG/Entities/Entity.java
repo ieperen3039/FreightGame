@@ -2,6 +2,7 @@ package NG.Entities;
 
 import NG.Core.GameObject;
 import NG.Core.GameTimer;
+import NG.InputHandling.MouseClickListener;
 import NG.Rendering.MatrixStack.SGL;
 
 /**
@@ -34,7 +35,7 @@ public interface Entity extends GameObject {
      * Executes when the user clicks on this entity. When {@code button == GLFW_LEFT_MOUSE_BUTTON} is clicked, an {@link
      * NG.GUIMenu.Components.SFrame} with information or settings of this Entity is usually opened, and when {@code
      * button == GLFW_RIGHT_MOUSE_BUTTON} is clicked, the 'active' state of this entity may toggle.
-     * @param button the button that is clicked as defined in {@link NG.InputHandling.MouseRelativeClickListener}
+     * @param button the button that is clicked as defined in {@link MouseClickListener}
      */
     void onClick(int button);
 

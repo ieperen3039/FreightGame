@@ -2,9 +2,12 @@ package NG.Tracks;
 
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
+import NG.InputHandling.ClickShader;
 import NG.Network.NetworkNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
+import NG.Rendering.Shaders.MaterialShader;
+import NG.Rendering.Shaders.ShaderProgram;
 import NG.Resources.GeneratorResource;
 import NG.Resources.Resource;
 import org.joml.Vector3f;
@@ -23,6 +26,8 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
 
     private boolean isInvalid;
     private final Resource<Mesh> mesh;
+    private final Resource<Mesh> clickBox;
+    private boolean renderClickBox = false;
 
     /**
      * create a straight piece of track based on an initial node and an endposition. A new node is generated, and is
@@ -38,9 +43,11 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
         this.type = type;
         this.startNode = startNode;
         Vector3fc displacement = new Vector3f(endNodePosition).sub(startNode.getPosition());
-        this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
         this.direction = new Vector3f(displacement).normalize();
         this.endNode = new NetworkNode(endNodePosition, type, direction);
+
+        this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
+        this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
 
         startNode.addNode(endNode, this);
         endNode.addNode(startNode, this);
@@ -59,9 +66,11 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
         this.type = type;
         this.startNode = startNode;
         Vector3fc displacement = new Vector3f(endNode.getPosition()).sub(startNode.getPosition());
-        this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
         this.direction = new Vector3f(displacement).normalize();
         this.endNode = endNode;
+
+        this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
+        this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
 
         startNode.addNode(endNode, this);
         endNode.addNode(startNode, this);
@@ -74,10 +83,24 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
 
     @Override
     public void draw(SGL gl) {
+        ShaderProgram shader = gl.getShader();
+        Mesh meshToRender;
+
+        if (renderClickBox || shader instanceof ClickShader) {
+            meshToRender = clickBox.get();
+
+        } else {
+            meshToRender = mesh.get();
+        }
+
+        if (shader instanceof MaterialShader) {
+            type.setMaterial((MaterialShader) shader);
+        }
+
         gl.pushMatrix();
         {
             gl.translate(startNode.getPosition());
-            gl.render(mesh.get(), this);
+            gl.render(meshToRender, this);
         }
         gl.popMatrix();
     }
@@ -139,5 +162,9 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
         return new Vector3f(direction)
                 .mul(distanceFromStart)
                 .add(startNode.getPosition());
+    }
+
+    public void doRenderClickBox(boolean renderClickBox) {
+        this.renderClickBox = renderClickBox;
     }
 }

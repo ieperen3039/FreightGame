@@ -1,6 +1,7 @@
 package NG.Tracks;
 
 import NG.Rendering.MeshLoading.Mesh;
+import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shapes.CustomShape;
 import NG.Settings.Settings;
 import NG.Tools.Vectors;
@@ -34,6 +35,13 @@ public interface TrackType {
      *                            endHeight)
      */
     Mesh generateStraight(Vector3fc displacement);
+
+    /**
+     * sets the material properties of this track in the shader. for example: {@code shader.setMaterial(Material.ROUGH,
+     * Color4f.WHITE);}
+     * @param shader the current shader
+     */
+    void setMaterial(MaterialShader shader);
 
     /**
      * Given a circle radius, gives the maximum speed of this track.

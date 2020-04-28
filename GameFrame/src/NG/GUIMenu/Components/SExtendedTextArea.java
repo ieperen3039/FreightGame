@@ -2,17 +2,17 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseMoveListener;
-import NG.InputHandling.MouseRelativeClickListener;
 import NG.InputHandling.MouseReleaseListener;
 
 /**
  * @author Geert van Ieperen. Created on 25-9-2018.
  */
 public class SExtendedTextArea extends STextArea
-        implements MouseRelativeClickListener, MouseMoveListener, MouseReleaseListener {
+        implements MouseClickListener, MouseReleaseListener, MouseMoveListener {
     private MouseMoveListener dragListener;
-    private MouseRelativeClickListener clickListener;
+    private MouseClickListener clickListener;
     private MouseReleaseListener releaseListener;
 
     public SExtendedTextArea(
@@ -37,10 +37,12 @@ public class SExtendedTextArea extends STextArea
         clickListener.onClick(button, xRel, yRel);
     }
 
-    @Override
-    public void mouseMoved(int xDelta, int yDelta) {
+    /**
+     * returns the movement of the mouse
+     */
+    public void mouseMoved(int xDelta, int yDelta, int xPos, int yPos) {
         if (dragListener == null) return;
-        dragListener.mouseMoved(xDelta, yDelta);
+        dragListener.mouseMoved(xDelta, yDelta, xPos, yPos);
     }
 
     @Override
@@ -53,7 +55,7 @@ public class SExtendedTextArea extends STextArea
         this.dragListener = dragListener;
     }
 
-    public void setClickListener(MouseRelativeClickListener clickListener) {
+    public void setClickListener(MouseClickListener clickListener) {
         this.clickListener = clickListener;
     }
 

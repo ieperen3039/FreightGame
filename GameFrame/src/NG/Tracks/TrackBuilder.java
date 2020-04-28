@@ -91,12 +91,6 @@ public class TrackBuilder extends SurfaceBuildTool {
     }
 
     @Override
-    public void mouseMoved(int xDelta, int yDelta) {
-        super.mouseMoved(xDelta, yDelta);
-        // TODO implement multiple build-possibilities
-    }
-
-    @Override
     public String toString() {
         return "Track Builder (" + type + ")";
     }

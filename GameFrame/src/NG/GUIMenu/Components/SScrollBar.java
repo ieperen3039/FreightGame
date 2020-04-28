@@ -171,7 +171,7 @@ class SScrollBar extends SComponent {
     /**
      * @author Geert van Ieperen created on 13-5-2019.
      */
-    public class SDragBar extends SComponent implements MouseMoveListener, MouseReleaseListener {
+    public class SDragBar extends SComponent implements MouseReleaseListener, MouseMoveListener {
 
         SDragBar() {
             setGrowthPolicy(true, false);
@@ -193,7 +193,9 @@ class SScrollBar extends SComponent {
             design.draw(SCROLL_BAR_DRAG_ELEMENT, screenPosition, getSize());
         }
 
-        @Override
+        /**
+         * returns the movement of the mouse
+         */
         public void mouseMoved(int xDelta, int yDelta) {
             dragBarOffsetFraction += ((float) yDelta / getDragBarSpace());
             dragBarOffsetFraction = Math.max(0, Math.min(1, dragBarOffsetFraction));
@@ -215,6 +217,11 @@ class SScrollBar extends SComponent {
         @Override
         public void onRelease(int button, int xSc, int ySc) {
             alignDragBar();
+        }
+
+        @Override
+        public void mouseMoved(int xDelta, int yDelta, int xPos, int yPos) {
+            mouseMoved(xDelta, yDelta);
         }
     }
 

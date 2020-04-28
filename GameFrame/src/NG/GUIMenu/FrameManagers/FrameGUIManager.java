@@ -6,13 +6,17 @@ import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Components.SToolBar;
 import NG.GUIMenu.Rendering.NVGOverlay;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
-import NG.InputHandling.MouseTools.MouseToolListener;
+import NG.InputHandling.KeyTypeListener;
+import NG.InputHandling.MouseClickListener;
+import NG.InputHandling.MouseMoveListener;
+import NG.InputHandling.MouseReleaseListener;
 
 /**
  * A class that manages frames of a game. New {@link SFrame} objects can be added using {@link #addFrame(SFrame)}
  * @author Geert van Ieperen. Created on 29-9-2018.
  */
-public interface FrameGUIManager extends GameAspect, MouseToolListener {
+public interface FrameGUIManager
+        extends GameAspect, KeyTypeListener, MouseClickListener, MouseReleaseListener, MouseMoveListener {
 
     /**
      * draws the elements of this HUD
@@ -82,6 +86,13 @@ public interface FrameGUIManager extends GameAspect, MouseToolListener {
      */
     boolean hasLookAndFeel();
 
+    @Override
+    default void onClick(int button, int xRel, int yRel) {
+        checkMouseClick(button, xRel, yRel);
+    }
+
+    boolean checkMouseClick(int button, int xSc, int ySc);
+
     SComponent getComponentAt(int xSc, int ySc);
 
     /**
@@ -98,8 +109,11 @@ public interface FrameGUIManager extends GameAspect, MouseToolListener {
      */
     void setModalListener(SComponent listener);
 
+    void setTextListener(KeyTypeListener listener);
+
     /**
      * Removes all frames, as if {@link #removeElement(SComponent)} was called on each of them
      */
     void clear();
+
 }

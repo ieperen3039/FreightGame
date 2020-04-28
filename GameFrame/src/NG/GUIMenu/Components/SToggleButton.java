@@ -2,7 +2,7 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
-import NG.InputHandling.MouseRelativeClickListener;
+import NG.InputHandling.MouseClickListener;
 import org.joml.Vector2ic;
 
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.BUTTON_PRESSED;
  * A button with a state that only changes upon clicking the button
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SToggleButton extends SComponent implements MouseRelativeClickListener {
+public class SToggleButton extends SComponent implements MouseClickListener {
     private final int minHeight;
     private final int minWidth;
     private String text;

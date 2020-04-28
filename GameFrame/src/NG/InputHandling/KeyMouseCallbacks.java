@@ -1,19 +1,16 @@
 package NG.InputHandling;
 
-import NG.InputHandling.MouseTools.MouseTool;
+import NG.Camera.TycoonFixedCamera;
 
 /**
  * A class that allows binding callbacks of key and mouse listeners.
  * @author Geert van Ieperen. Created on 18-11-2018.
  */
 public interface KeyMouseCallbacks {
-    /** @return the mouse tool obtained from {@code setMouseTool(null); getMouseTool()} */
-    MouseTool getDefaultMouseTool();
-
     /**
-     * @param listener when the mouse moves, the {@link MousePositionListener#mouseMoved(int, int)} method is called
+     * @param listener when the mouse moves, the {@link MousePositionListener#mouseMoved2(int, int)} method is called
      */
-    void addMousePositionListener(MousePositionListener listener);
+    void addMousePositionListener(TycoonFixedCamera listener);
 
     void addMouseScrollListener(MouseScrollListener listener);
 
@@ -32,15 +29,4 @@ public interface KeyMouseCallbacks {
      */
     @SuppressWarnings("SuspiciousMethodCalls")
     boolean removeListener(Object listener);
-
-    /**
-     * sets the mouse tool to the new value, overwriting the previous tool.
-     * @param tool any mouse tool, or null to reset the tool to the default
-     */
-    void setMouseTool(MouseTool tool);
-
-    /**
-     * @return the last selected mouse tool, or null when the default tool is selected.
-     */
-    MouseTool getMouseTool();
 }

@@ -1,27 +1,14 @@
 package NG.InputHandling.MouseTools;
 
 import NG.Entities.Entity;
-import NG.GUIMenu.Components.SComponent;
-import NG.InputHandling.MouseMoveListener;
-import NG.InputHandling.MouseRelativeClickListener;
-import NG.InputHandling.MouseReleaseListener;
-import NG.InputHandling.MouseScrollListener;
+import NG.InputHandling.MouseListener;
 import org.joml.Vector3fc;
 
 /**
  * Determines the behaviour of clicking
  * @author Geert van Ieperen. Created on 22-11-2018.
  */
-public interface MouseTool
-        extends MouseMoveListener, MouseReleaseListener, MouseRelativeClickListener, MouseScrollListener {
-
-    /**
-     * applies the functionality of this tool to the given component
-     * @param component a component where has been clicked on
-     * @param xSc       screen x position of the mouse in pixels from left
-     * @param ySc       screen y position of the mouse in pixels from top
-     */
-    void apply(SComponent component, int xSc, int ySc);
+public interface MouseTool extends MouseListener {
 
     /**
      * applies the functionality of this tool to the given entity
@@ -43,4 +30,5 @@ public interface MouseTool
      * sets this mousetool to be no longer used.
      */
     void dispose();
+
 }

@@ -84,7 +84,7 @@ public class SFrame extends SDecorator {
                 NGFonts.TextType.TITLE, SFrameLookAndFeel.Alignment.CENTER
         );
         titleComponent = title;
-        title.setDragListener(this::addToPosition);
+        title.setDragListener((dx, dy, x, y) -> addToPosition(dx, dy));
 
         return new SPanel(SContainer.row(
                 title, new SCloseButton(this)

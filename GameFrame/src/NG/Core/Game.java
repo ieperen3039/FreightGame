@@ -4,7 +4,7 @@ import NG.Camera.Camera;
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
-import NG.InputHandling.KeyMouseCallbacks;
+import NG.InputHandling.MouseTools.MouseToolCallbacks;
 import NG.Mods.TypeCollection;
 import NG.Particles.GameParticles;
 import NG.Rendering.GLFWWindow;
@@ -38,7 +38,7 @@ public interface Game {
 
     GLFWWindow window();
 
-    KeyMouseCallbacks inputHandling();
+    MouseToolCallbacks inputHandling();
 
     FrameGUIManager gui();
 

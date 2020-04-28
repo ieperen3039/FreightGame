@@ -2,7 +2,7 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
-import NG.InputHandling.MouseRelativeClickListener;
+import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseReleaseListener;
 import org.joml.Vector2ic;
 
@@ -13,7 +13,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 /**
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SCloseButton extends SComponent implements MouseReleaseListener, MouseRelativeClickListener {
+public class SCloseButton extends SComponent implements MouseReleaseListener, MouseClickListener {
     private Runnable closeAction;
     private boolean state = false;
 

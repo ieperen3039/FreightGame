@@ -9,7 +9,6 @@ import NG.GameState.GameLoop;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
 import NG.GameState.HeightMap;
-import NG.InputHandling.KeyMouseCallbacks;
 import NG.InputHandling.MouseTools.MouseToolCallbacks;
 import NG.Mods.InitialisationMod;
 import NG.Mods.Mod;
@@ -52,7 +51,8 @@ public class FreightGame implements Game, ModLoader {
     private final GLFWWindow window;
     private final MouseToolCallbacks inputHandler;
     private final FrameGUIManager frameManager;
-    private final TypeCollection typeCollection;
+
+    private TypeCollection typeCollection;
     private MainMenu mainMenu;
 
     private List<Mod> allMods;
@@ -90,7 +90,6 @@ public class FreightGame implements Game, ModLoader {
 
         // load mods
         allMods = JarModReader.loadMods(Directory.mods);
-        typeCollection = new TypeCollection();
     }
 
     /**
@@ -133,6 +132,7 @@ public class FreightGame implements Game, ModLoader {
     public void initMods(List<Mod> mods) {
         assert activeMods.isEmpty() : "Already mods loaded";
         activeMods = new ArrayList<>(mods);
+        typeCollection = new TypeCollection();
 
         // init mods
         for (Mod mod : activeMods) {
@@ -222,7 +222,7 @@ public class FreightGame implements Game, ModLoader {
     }
 
     @Override
-    public KeyMouseCallbacks inputHandling() {
+    public MouseToolCallbacks inputHandling() {
         return inputHandler;
     }
 
@@ -284,5 +284,6 @@ public class FreightGame implements Game, ModLoader {
     public void cleanMods() {
         activeMods.forEach(Mod::cleanup);
         activeMods.clear();
+        typeCollection = null;
     }
 }

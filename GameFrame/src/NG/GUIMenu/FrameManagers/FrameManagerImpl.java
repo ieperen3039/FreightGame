@@ -8,8 +8,12 @@ import NG.GUIMenu.Components.SToolBar;
 import NG.GUIMenu.Rendering.BaseLF;
 import NG.GUIMenu.Rendering.NVGOverlay;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
-import NG.InputHandling.MouseTools.MouseTool;
+import NG.InputHandling.KeyTypeListener;
+import NG.InputHandling.MouseClickListener;
+import NG.InputHandling.MouseMoveListener;
+import NG.InputHandling.MouseReleaseListener;
 import NG.Tools.Logger;
+import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
 import java.util.*;
@@ -21,9 +25,13 @@ import java.util.*;
  */
 public class FrameManagerImpl implements FrameGUIManager {
     private Game game;
-    /** the first element in this list has focus */
-    private final Deque<SFrame> frames;
+    private final Deque<SFrame> frames; // the first element in this list has focus
     private SComponent modalComponent;
+
+    protected int dragButton = 0;
+    protected MouseMoveListener dragListener = null;
+    protected MouseReleaseListener releaseListener = null;
+    protected KeyTypeListener typeListener = null;
 
     private SFrameLookAndFeel lookAndFeel;
     private SToolBar toolBar = null;
@@ -161,6 +169,11 @@ public class FrameManagerImpl implements FrameGUIManager {
     }
 
     @Override
+    public void setTextListener(KeyTypeListener listener) {
+        typeListener = listener;
+    }
+
+    @Override
     public void clear() {
         for (SFrame frame : frames) {
             frame.dispose();
@@ -180,7 +193,6 @@ public class FrameManagerImpl implements FrameGUIManager {
 
     @Override
     public void cleanup() {
-        game.inputHandling().removeListener(this);
         frames.forEach(SFrame::dispose);
         frames.clear();
     }
@@ -205,27 +217,48 @@ public class FrameManagerImpl implements FrameGUIManager {
     }
 
     @Override
-    public boolean checkMouseClick(MouseTool tool, final int xSc, final int ySc) {
-        SComponent component;
-
+    public boolean checkMouseClick(int button, final int xSc, final int ySc) {
         // check modal dialogues
         if (modalComponent != null) {
             if (modalComponent.contains(xSc, ySc)) {
-                tool.apply(modalComponent, xSc, ySc);
+                this.apply(button, modalComponent, xSc, ySc);
             }
             modalComponent = null;
             return true;
 
         } else {
-            component = getComponentAt(xSc, ySc);
+            SComponent component = getComponentAt(xSc, ySc);
 
             if (component != null) {
-                tool.apply(component, xSc, ySc);
+                this.apply(button, component, xSc, ySc);
                 return true;
             }
         }
 
         return false;
+    }
+
+    private void apply(int button, SComponent component, int xSc, int ySc) {
+        if (component instanceof MouseClickListener) {
+            MouseClickListener cl = (MouseClickListener) component;
+            // by def. of MouseRelativeClickListener, give relative coordinates
+            Vector2i pos = component.getScreenPosition();
+            cl.onClick(button, xSc - pos.x, ySc - pos.y);
+        }
+
+        if (component instanceof MouseMoveListener) {
+            dragListener = (MouseMoveListener) component;
+
+        } else {
+            dragListener = null;
+        }
+
+        if (component instanceof MouseReleaseListener) {
+            releaseListener = (MouseReleaseListener) component;
+
+        } else {
+            releaseListener = null;
+        }
     }
 
     @Override
@@ -250,4 +283,21 @@ public class FrameManagerImpl implements FrameGUIManager {
         return null;
     }
 
+    @Override
+    public void keyTyped(char letter) {
+        if (typeListener == null) return;
+        typeListener.keyTyped(letter);
+    }
+
+    @Override
+    public void onRelease(int button, int xSc, int ySc) {
+        if (releaseListener == null) return;
+        releaseListener.onRelease(button, xSc, ySc);
+    }
+
+    @Override
+    public void mouseMoved(int xDelta, int yDelta, int xPos, int yPos) {
+        if (dragListener == null) return;
+        dragListener.mouseMoved(xDelta, yDelta, xPos, yPos);
+    }
 }

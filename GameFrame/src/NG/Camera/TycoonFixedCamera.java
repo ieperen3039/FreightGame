@@ -1,7 +1,6 @@
 package NG.Camera;
 
 import NG.Core.Game;
-import NG.InputHandling.*;
 import NG.Rendering.GLFWWindow;
 import NG.Settings.KeyBinding;
 import NG.Settings.Settings;
@@ -15,8 +14,7 @@ import static NG.Camera.TycoonFixedCamera.MoveDirection.*;
  * A camera implementation that can be moved by holding the mouse to the corners of the screen
  * @author Geert van Ieperen. Created on 18-11-2018.
  */
-public class TycoonFixedCamera
-        implements Camera, MousePositionListener, MouseScrollListener, KeyPressListener, KeyReleaseListener {
+public class TycoonFixedCamera implements Camera {
     private static final int SCREEN_MOVE_BORDER_SIZE = 20;
     private static final float ZOOM_SPEED_LIMIT = 0.03f;
     private static final float ROTATION_MODIFIER = 1f;
@@ -45,10 +43,6 @@ public class TycoonFixedCamera
     @Override
     public void init(Game game) {
         this.game = game;
-        KeyMouseCallbacks callbacks = game.inputHandling();
-        callbacks.addMousePositionListener(this);
-        callbacks.addKeyPressListener(this);
-        callbacks.addKeyReleaseListener(this);
     }
 
     @Override
@@ -154,13 +148,6 @@ public class TycoonFixedCamera
 
     @Override
     public void cleanup() {
-        game.inputHandling().removeListener(this);
-    }
-
-    @Override
-    public void mouseMoved(int xPos, int yPos) {
-        mouseXPos = xPos;
-        mouseYPos = yPos;
     }
 
     /**
@@ -173,7 +160,6 @@ public class TycoonFixedCamera
         return (SCREEN_MOVE_BORDER_SIZE - pixels) * eyeOffset.length() * MOVE_SPEED * (1f / SCREEN_MOVE_BORDER_SIZE);
     }
 
-    @Override
     public void keyPressed(int keyCode) {
         switch (KeyBinding.get(keyCode)) {
             case CAMERA_LEFT:
@@ -185,7 +171,6 @@ public class TycoonFixedCamera
         }
     }
 
-    @Override
     public void keyReleased(int keyCode) {
         switch (KeyBinding.get(keyCode)) {
             case CAMERA_LEFT:
@@ -197,6 +182,22 @@ public class TycoonFixedCamera
 
     enum MoveDirection {
         LEFT, NOT, RIGHT
+    }
+
+    @Override
+    public void mouseMoved(int xDelta, int yDelta, int xPos, int yPos) {
+        mouseXPos = xPos;
+        mouseYPos = yPos;
+    }
+
+    @Override
+    public void onClick(int button, int xRel, int yRel) {
+
+    }
+
+    @Override
+    public void onRelease(int button, int xSc, int ySc) {
+
     }
 }
 

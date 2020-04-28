@@ -3,7 +3,7 @@ package NG.GUIMenu.Components;
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
-import NG.InputHandling.MouseRelativeClickListener;
+import NG.InputHandling.MouseClickListener;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
@@ -18,7 +18,7 @@ import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.DROP_DOWN_HEAD_
  * A menu item that may assume different options, where the player can choose from using a drop-down selection.
  * @author Geert van Ieperen. Created on 5-10-2018.
  */
-public class SDropDown extends SComponent implements MouseRelativeClickListener {
+public class SDropDown extends SComponent implements MouseClickListener {
     public static final NGFonts.TextType TEXT_TYPE = NGFonts.TextType.REGULAR;
     private final String[] values;
     private final DropDownOptions optionPane;
@@ -188,7 +188,7 @@ public class SDropDown extends SComponent implements MouseRelativeClickListener 
         optionPane.setVisible(false);
     }
 
-    private class DropDownOptions extends SDecorator implements MouseRelativeClickListener {
+    private class DropDownOptions extends SDecorator implements MouseClickListener {
         private DropDownOptions(String[] values) {
             super(new SPanel(1, values.length));
             setVisible(false);

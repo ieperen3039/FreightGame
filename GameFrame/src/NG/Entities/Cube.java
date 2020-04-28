@@ -2,7 +2,11 @@ package NG.Entities;
 
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
+import NG.DataStructures.Generic.Color4f;
+import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.Shaders.MaterialShader;
+import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.GenericShapes;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -35,6 +39,13 @@ public class Cube extends AbstractGameObject implements MovingEntity {
 
     @Override
     public void draw(SGL gl) {
+        ShaderProgram shader = gl.getShader();
+
+        if (shader instanceof MaterialShader) {
+            MaterialShader materialShader = (MaterialShader) shader;
+            materialShader.setMaterial(Material.ROUGH, Color4f.GREY);
+        }
+
         gl.pushMatrix();
         {
             gl.translate(position);

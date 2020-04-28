@@ -9,9 +9,11 @@ import org.joml.SimplexNoise;
  * @author Geert van Ieperen. Created on 27-9-2018.
  */
 public class SimpleMapGenerator implements MapGeneratorMod {
-    public static final int EDGDE_LENGTH = 1;
-    private static final float PRIMARY_DENSITY = 50f;
+    private static final int EDGDE_LENGTH = 1;
+    private static final float PRIMARY_DENSITY = 100f;
     private static final float SECONDARY_DENSITY = 20f;
+    private static final float SECONDARY_INTENSITY = 0.1f;
+    private static final float PRIMARY_INTENSITY = 1f;
     private float progress = 0;
     private int seed;
     private int width;
@@ -28,8 +30,8 @@ public class SimpleMapGenerator implements MapGeneratorMod {
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                map[x][y] = SimplexNoise.noise(x / PRIMARY_DENSITY, y / PRIMARY_DENSITY);
-                map[x][y] += 0.1f * SimplexNoise.noise(x / SECONDARY_DENSITY, y / SECONDARY_DENSITY);
+                map[x][y] = PRIMARY_INTENSITY * SimplexNoise.noise(x / PRIMARY_DENSITY, y / PRIMARY_DENSITY);
+                map[x][y] += SECONDARY_INTENSITY * SimplexNoise.noise(x / SECONDARY_DENSITY, y / SECONDARY_DENSITY);
             }
             progress = (float) width / x;
         }

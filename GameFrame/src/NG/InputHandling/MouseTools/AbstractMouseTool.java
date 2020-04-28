@@ -3,7 +3,6 @@ package NG.InputHandling.MouseTools;
 import NG.Core.Game;
 import NG.GUIMenu.Components.SComponent;
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
-import NG.InputHandling.MouseMoveListener;
 import NG.InputHandling.MouseReleaseListener;
 import NG.InputHandling.MouseScrollListener;
 import org.joml.Vector2i;
@@ -12,55 +11,43 @@ import org.joml.Vector2i;
  * @author Geert van Ieperen created on 24-4-2020.
  */
 public abstract class AbstractMouseTool implements MouseTool {
-    protected int dragButton = 0;
-    protected MouseMoveListener dragListener = null;
-    protected MouseReleaseListener releaseListener = null;
     protected Game game;
 
-    private int button;
+    private MouseReleaseListener releaseListener;
+    private int pressedButton = -1;
 
     public AbstractMouseTool(Game game) {
         this.game = game;
     }
 
-    @Override
-    public void onRelease(int button, int xSc, int ySc) {
-        if (button != dragButton) return;
-        dragButton = 0;
-
-        dragListener = null;
-        if (releaseListener != null) {
-            releaseListener.onRelease(button, xSc, ySc);
-            releaseListener = null;
-        }
-    }
-
-    @Override
-    public void mouseMoved(int xDelta, int yDelta) {
-        if (dragListener == null) return;
-        dragListener.mouseMoved(xDelta, yDelta);
+    protected int getButton() {
+        return pressedButton;
     }
 
     @Override
     public void onClick(int button, int x, int y) {
-        setButton(button);
+        if (pressedButton != -1) return;
+        pressedButton = button;
 
-        if (dragButton == 0) { // possibility of pressing multiple buttons: only the first is the drag-button
-            dragButton = button;
+        if (game.gui().checkMouseClick(button, x, y)) {
+            releaseListener = game.gui();
+            return;
         }
 
-        if (game.gui().checkMouseClick(this, x, y)) return;
+        game.camera().onClick(button, x, y);
+        releaseListener = game.camera();
 
         if (game.state().checkMouseClick(this, x, y)) return;
         game.map().checkMouseClick(this, x, y);
     }
 
-    private void setButton(int button) {
-        this.button = button;
-    }
+    @Override
+    public void onRelease(int button, int xSc, int ySc) {
+        if (button != pressedButton) return;
+        pressedButton = -1;
 
-    protected int getButton() {
-        return button;
+        releaseListener.onRelease(button, xSc, ySc);
+        releaseListener = null;
     }
 
     @Override
@@ -79,11 +66,18 @@ public abstract class AbstractMouseTool implements MouseTool {
             return;
         }
 
+        // camera
         game.camera().onScroll(value);
     }
 
     @Override
     public String toString() {
         return getClass().getSimpleName();
+    }
+
+    @Override
+    public void mouseMoved(int xDelta, int yDelta, int xPos, int yPos) {
+        game.gui().mouseMoved(xDelta, yDelta, xPos, yPos);
+        game.camera().mouseMoved(xDelta, yDelta, xPos, yPos);
     }
 }

@@ -19,7 +19,6 @@ import NG.Rendering.Textures.Texture;
 import NG.Settings.Settings;
 import NG.Tools.*;
 import org.joml.Vector3f;
-import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,12 +70,6 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
         });
 
         uiShader = new PhongShader();
-
-        game.inputHandling().addKeyPressListener(k -> {
-            if (k == GLFW.GLFW_KEY_PERIOD) {
-                Logger.DEBUG.print("\n" + timeObserver.resultsTable());
-            }
-        });
     }
 
     /**

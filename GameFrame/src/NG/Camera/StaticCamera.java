@@ -9,7 +9,6 @@ import org.joml.Vector3fc;
  * @author Geert van Ieperen created on 22-12-2017. a camera that doesn't move
  */
 public class StaticCamera implements Camera {
-
     private Vector3fc eye, focus;
     private Vector3fc up;
 
@@ -56,11 +55,6 @@ public class StaticCamera implements Camera {
     }
 
     @Override
-    public void onScroll(float value) {
-
-    }
-
-    @Override
     public void cleanup() {
 
     }
@@ -68,5 +62,25 @@ public class StaticCamera implements Camera {
     @Override
     public boolean isIsometric() {
         return true;
+    }
+
+    @Override
+    public void mouseMoved(int xDelta, int yDelta, int xPos, int yPos) {
+
+    }
+
+    @Override
+    public void onScroll(float value) {
+
+    }
+
+    @Override
+    public void onClick(int button, int xRel, int yRel) {
+
+    }
+
+    @Override
+    public void onRelease(int button, int xSc, int ySc) {
+
     }
 }

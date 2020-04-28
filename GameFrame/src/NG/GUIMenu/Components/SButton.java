@@ -2,7 +2,7 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
-import NG.InputHandling.MouseRelativeClickListener;
+import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseReleaseListener;
 import NG.Tools.Logger;
 import org.joml.Vector2ic;
@@ -19,7 +19,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
  * A Button that may execute actions for both left and right clicks upon release.
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
-public class SButton extends SComponent implements MouseReleaseListener, MouseRelativeClickListener {
+public class SButton extends SComponent implements MouseReleaseListener, MouseClickListener {
     public static final int BUTTON_MIN_WIDTH = 250;
     public static final int BUTTON_MIN_HEIGHT = 30;
     public static final NGFonts.TextType TEXT_TYPE = NGFonts.TextType.REGULAR;

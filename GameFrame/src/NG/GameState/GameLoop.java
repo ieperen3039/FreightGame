@@ -7,7 +7,6 @@ import NG.InputHandling.ClickShader;
 import NG.InputHandling.MouseTools.MouseTool;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shapes.Primitives.Collision;
-import NG.Tools.Toolbox;
 import org.joml.Vector3fc;
 
 import java.util.ArrayList;
@@ -81,7 +80,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     public void draw(SGL gl) {
         entityReadLock.lock();
         try {
-            Toolbox.drawAxisFrame(gl);
             for (Entity entity : entities) {
                 entity.draw(gl);
             }
@@ -98,7 +96,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
 
     /** executes action after a gameloop completes */
     public void defer(Runnable action) {
-        // TODO make a 'modifyingDefer'
         postUpdateActionQueue.offer(action);
     }
 
