@@ -126,14 +126,17 @@ public abstract class SComponent {
     /**
      * sets the position of this component relative to its parent. If this component is part of a layout, then this
      * method should only be called by the layout manager.
+     * @return this
      */
-    public void setPosition(int x, int y) {
+    public SComponent setPosition(int x, int y) {
         position.set(x, y);
+        return this;
     }
 
     /** @see #setPosition(int, int) */
-    public void setPosition(Vector2ic position) {
+    public SComponent setPosition(Vector2ic position) {
         this.position.set(position);
+        return this;
     }
 
     /** Adds the given x and y to the position, like a call of {@code setPosition(getX() + xDelta, getY() + yDelta);} */
@@ -141,12 +144,20 @@ public abstract class SComponent {
         position.add(xDelta, yDelta);
     }
 
-    public final void setSize(int width, int height) {
+    /**
+     * sets the size of this component. If any of the given dimensions are smaller than the minimum ({@link
+     * #minWidth()}, {@link #minHeight()}), then that dimension is set to the minimum
+     * @param width  the preferred width
+     * @param height the preferred height
+     * @return this
+     */
+    public final SComponent setSize(int width, int height) {
         width = Math.max(width, minWidth());
         height = Math.max(height, minHeight());
 
         dimensions.set(width, height);
         invalidateLayout();
+        return this;
     }
 
     public void addToSize(int xDelta, int yDelta) {
@@ -220,6 +231,10 @@ public abstract class SComponent {
         return Optional.ofNullable(parent);
     }
 
+    /**
+     * @return true iff the dimensions of this component are validated. If not, a call to {@link #validateLayout()}
+     * should fix this.
+     */
     public boolean layoutIsValid() {
         return layoutIsValid;
     }
@@ -229,6 +244,10 @@ public abstract class SComponent {
         return this.getClass().getSimpleName();
     }
 
+    /**
+     * sets whether the cursor is hovering over this component.
+     * @param hovered true if the mouse is on this component, false if not
+     */
     public void setHovered(boolean hovered) {
         isHovered = hovered;
     }

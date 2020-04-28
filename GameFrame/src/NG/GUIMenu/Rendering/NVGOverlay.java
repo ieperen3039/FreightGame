@@ -476,6 +476,8 @@ public final class NVGOverlay {
          * @return the width of the text displayed in pixels
          */
         public int getTextWidth(String text, float size, NGFonts font) {
+            nvgFontSize(vg, size);
+            nvgFontFace(vg, font.name);
             return (int) nvgTextBounds(vg, 0, 0, text, (FloatBuffer) null);
         }
 

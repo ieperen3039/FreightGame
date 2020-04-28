@@ -72,7 +72,7 @@ public class FrameManagerImpl implements FrameGUIManager {
         }
 
         if (toolBar != null) {
-            toolBar.draw(lookAndFeel, null);
+            toolBar.draw(lookAndFeel, new Vector2i(0, 0));
         }
     }
 

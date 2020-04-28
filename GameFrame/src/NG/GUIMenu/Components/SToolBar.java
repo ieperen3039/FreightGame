@@ -17,7 +17,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
  */
 public class SToolBar extends SContainer implements MouseReleaseListener, MouseClickListener {
     public static final int MAX_BAR_ICONS = 20; // TODO look for opportunity of calculating this
-    private static final int BUTTON_SIZE = TOOL_BAR_HEIGHT - (4 + 4);
+    private static final int BUTTON_SIZE = TOOL_BAR_HEIGHT - (4 + 4); // where did the 4 come from? / where did it go? / where did you come from, cotton-eyed joe
 
     private final Game game;
     private int nextButtonIndex = 0;
@@ -44,25 +44,25 @@ public class SToolBar extends SContainer implements MouseReleaseListener, MouseC
     }
 
     /**
-     * adds a button to the end of the toolbar. The button is square and should display only a few characters TODO:
-     * create an icon button constructor
+     * adds a button to the end of the toolbar. The button is square and should display only a few characters
      * @param text   characters displayed on the button.
      * @param action the action to occur when this button is pressed.
-     */
+     *///TODO create an icon button constructor
     public void addButton(String text, Runnable action) {
         addButton(text, action, BUTTON_SIZE);
     }
 
     /**
-     * adds a button to the end of the toolbar. The button is square and should display only a few characters TODO:
-     * create an icon button constructor
+     * adds a button to the end of the toolbar. The button is square and should display only a few characters
      * @param text   characters displayed on the button.
      * @param action the action to occur when this button is pressed.
      * @param width  the width of the button
-     */
+     *///TODO create an icon button constructor
     public void addButton(String text, Runnable action, int width) {
         SButton newButton = new SButton(text, action, width, BUTTON_SIZE);
         newButton.setSize(0, 0);
+        newButton.setGrowthPolicy(false, false);
+        newButton.setXBorder(BUTTON_SIZE / 2);
         add(newButton, null);
     }
 
@@ -78,8 +78,8 @@ public class SToolBar extends SContainer implements MouseReleaseListener, MouseC
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
         validateLayout();
         int scWidth = game.window().getWidth();
-        design.draw(TOOLBAR_BACKGROUND, new Vector2i(0, 0), new Vector2i(scWidth, TOOL_BAR_HEIGHT));
-        drawChildren(design, new Vector2i());
+        design.draw(TOOLBAR_BACKGROUND, screenPosition, new Vector2i(scWidth, TOOL_BAR_HEIGHT));
+        drawChildren(design, screenPosition);
     }
 
     @Override
@@ -105,5 +105,8 @@ public class SToolBar extends SContainer implements MouseReleaseListener, MouseC
     public void doValidateLayout() {
         setSize(game.window().getWidth(), TOOL_BAR_HEIGHT);
         super.doValidateLayout();
+
+//        Logger.WARN.print(children().stream().map(SComponent::getWidth).collect(Collectors.toList()));
+//        Logger.WARN.print(children().stream().map(SComponent::minWidth).collect(Collectors.toList()));
     }
 }

@@ -22,6 +22,7 @@ public class SButton extends SComponent implements MouseReleaseListener, MouseCl
     public static final int BUTTON_MIN_WIDTH = 250;
     public static final int BUTTON_MIN_HEIGHT = 30;
     public static final NGFonts.TextType TEXT_TYPE = NGFonts.TextType.REGULAR;
+    public static final int BUTTON_MIN_X_BORDER = 15;
 
     private Collection<Runnable> leftClickListeners = new ArrayList<>();
     private Collection<Runnable> rightClickListeners = new ArrayList<>();
@@ -31,6 +32,9 @@ public class SButton extends SComponent implements MouseReleaseListener, MouseCl
     private String text;
     private boolean isPressed = false;
     private int textWidth;
+
+    /** minimum border to the left and right of the text */
+    private int minXBorder = BUTTON_MIN_X_BORDER;
 
     /**
      * a button with no associated action (a dead button)
@@ -96,12 +100,16 @@ public class SButton extends SComponent implements MouseReleaseListener, MouseCl
 
     @Override
     public int minWidth() {
-        return Math.max(textWidth, minWidth);
+        return Math.max(textWidth + 2 * minXBorder, minWidth);
     }
 
     @Override
     public int minHeight() {
         return minHeight;
+    }
+
+    public void setXBorder(int minXBorder) {
+        this.minXBorder = minXBorder;
     }
 
     public SButton addLeftClickListener(Runnable action) {
@@ -122,6 +130,7 @@ public class SButton extends SComponent implements MouseReleaseListener, MouseCl
         if (this.textWidth != textWidth) {
             this.textWidth = textWidth;
             invalidateLayout();
+            validateLayout();
         }
 
         design.drawText(screenPosition, getSize(), text, TEXT_TYPE, SFrameLookAndFeel.Alignment.CENTER);
