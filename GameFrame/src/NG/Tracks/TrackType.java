@@ -61,7 +61,8 @@ public interface TrackType {
     static Mesh clickBoxStraight(Vector3fc displacement) {
         return generateFunctional(
                 t -> Vectors.newZeroVector().lerp(displacement, t),
-                t -> new Vector3f(displacement).normalize()
+                t -> new Vector3f(displacement).normalize(),
+                Settings.CLICK_BOX_WIDTH / 2, Settings.CLICK_BOX_HEIGHT / 2
         );
     }
 
@@ -70,15 +71,18 @@ public interface TrackType {
 
         return generateFunctional(
                 t -> new Vector3f(radius * Math.cos(angle * t), radius * Math.sin(angle * t), endHeight * t),
-                t -> new Vector3f(-Math.sin(angle * t), Math.cos(angle * t), hDelta).normalize()
+                t -> new Vector3f(-Math.sin(angle * t), Math.cos(angle * t), hDelta).normalize(),
+                Settings.CLICK_BOX_WIDTH / 2, Settings.CLICK_BOX_HEIGHT / 2
         );
     }
 
-    static Mesh generateFunctional(Function<Float, Vector3f> function, Function<Float, Vector3f> derivative) {
+    static Mesh generateFunctional(
+            Function<Float, Vector3f> function, Function<Float, Vector3f> derivative, float width, float height
+    ) {
         Vector3fc startPos = function.apply(0f);
         Vector3f startDir = derivative.apply(0f);
-        Vector3f pointSide = new Vector3f(startDir).cross(Vectors.Z).normalize(Settings.CLICK_BOX_WIDTH / 2);
-        Vector3f pointUp = new Vector3f(pointSide).cross(startDir).normalize(Settings.CLICK_BOX_HEIGHT / 2);
+        Vector3f pointSide = new Vector3f(startDir).cross(Vectors.Z).normalize(width);
+        Vector3f pointUp = new Vector3f(pointSide).cross(startDir).normalize(height);
 
         CustomShape frame = new CustomShape();
 
@@ -107,8 +111,8 @@ public interface TrackType {
             point1 = function.apply(t);
             dir1 = derivative.apply(t);
 
-            pointSide.set(dir1).cross(Vectors.Z).normalize(Settings.CLICK_BOX_WIDTH / 2);
-            pointUp.set(pointSide).cross(dir1).normalize(Settings.CLICK_BOX_HEIGHT / 2);
+            pointSide.set(dir1).cross(Vectors.Z).normalize(width);
+            pointUp.set(pointSide).cross(dir1).normalize(height);
 
             pp1.set(point1).add(pointSide).add(pointUp);
             pn1.set(point1).add(pointSide).sub(pointUp);

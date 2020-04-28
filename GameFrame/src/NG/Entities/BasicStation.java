@@ -26,9 +26,10 @@ import static NG.Tools.Vectors.sin;
  * @author Geert van Ieperen created on 27-1-2019.
  */
 public class BasicStation extends Station {
-
     private static final float PLATFORM_SIZE = 2;
     private static final float WAGON_LENGTH = 3;
+    public static final float HEIGHT = 0.1f;
+
     private int numberOfPlatforms;
     private int platformCapacity;
     private float realLength;
@@ -77,7 +78,8 @@ public class BasicStation extends Station {
             Vector3fc toRight = new Vector3f(-sin(orientation), cos(orientation), 0).normalize(realWidth / 2f);
             Vector3fc rightSkip = new Vector3f(toRight).normalize(PLATFORM_SIZE);
 
-            Vector3f frontPos = new Vector3f(getPosition()).sub(toRight).add(rightSkip.x() / 2, rightSkip.y() / 2, 0);
+            Vector3f frontPos = new Vector3f(getPosition()).sub(toRight)
+                    .add(rightSkip.x() / 2, rightSkip.y() / 2, getElevation());
             Vector3f backPos = new Vector3f(frontPos).sub(forward);
             frontPos.add(forward);
 
@@ -92,8 +94,8 @@ public class BasicStation extends Station {
             }
 
         } else { // simplified version of above
-            Vector3f frontPos = new Vector3f(getPosition()).add(forward);
-            Vector3f backPos = new Vector3f(getPosition()).sub(forward);
+            Vector3f frontPos = new Vector3f(getPosition()).add(forward).add(0, 0, getElevation());
+            Vector3f backPos = new Vector3f(getPosition()).sub(forward).add(0, 0, getElevation());
 
             TrackPiece trackConnection = NetworkNode.createNewTrack(game, type, frontPos, backPos);
 
@@ -103,20 +105,27 @@ public class BasicStation extends Station {
     }
 
     @Override
+    public float getElevation() {
+        return HEIGHT;
+    }
+
+    @Override
     public void draw(SGL gl) {
         gl.pushMatrix();
         {
             gl.translate(getPosition());
             gl.rotate(Vectors.Z, orientation);
-            gl.scale(realLength / 2, realWidth / 2, 0.1f);
 
             ShaderProgram shader = gl.getShader();
             if (shader instanceof MaterialShader) {
                 MaterialShader matShader = (MaterialShader) shader;
-                matShader.setMaterial(Material.ROUGH, isFixed ? Color4f.GREEN : Color4f.WHITE);
+                matShader.setMaterial(Material.ROUGH, isFixed ? Color4f.GREY : Color4f.WHITE);
             }
 
-            gl.render(GenericShapes.CUBE, this);
+            { // draw cube
+                gl.scale(realLength / 2, realWidth / 2, HEIGHT); // half below ground
+                gl.render(GenericShapes.CUBE, this);
+            }
         }
         gl.popMatrix();
     }
@@ -184,7 +193,7 @@ public class BasicStation extends Station {
             Vector3f point = Vectors.getFromRay(ray, f);
 
             Vector2f direction = new Vector2f(point.x - stationPos.x(), point.y - stationPos.y());
-            station.setOrientation(-Vectors.arcTan(direction));
+            station.setOrientation(Vectors.arcTan(direction));
         }
 
         @Override

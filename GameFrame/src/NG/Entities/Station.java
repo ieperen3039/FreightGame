@@ -48,6 +48,8 @@ public abstract class Station extends Storage {
         super.setPosition(position);
     }
 
+    public abstract float getElevation();
+
     @Override
     public String toString() {
         return className + " : " + stationName;

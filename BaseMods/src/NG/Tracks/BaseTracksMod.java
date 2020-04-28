@@ -7,6 +7,9 @@ import NG.Mods.Mod;
 import NG.Rendering.Material;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Rendering.Shaders.MaterialShader;
+import NG.Tools.Vectors;
+import org.joml.Math;
+import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 /**
@@ -37,6 +40,8 @@ public class BaseTracksMod implements Mod {
 
 
     private static class DebugTrack implements TrackType {
+        public static final float WIDTH = 0.4f;
+        public static final float HEIGHT = 0.1f;
 
         @Override
         public String toString() {
@@ -45,12 +50,22 @@ public class BaseTracksMod implements Mod {
 
         @Override
         public Mesh generateCircle(float radius, float angle, float endHeight) {
-            return TrackType.clickBoxCircle(radius, angle, endHeight);
+            float hDelta = endHeight / (angle * radius);
+
+            return TrackType.generateFunctional(
+                    t -> new Vector3f(radius * Math.cos(angle * t), radius * Math.sin(angle * t), endHeight * t),
+                    t -> new Vector3f(-Math.sin(angle * t), Math.cos(angle * t), hDelta).normalize(),
+                    WIDTH, HEIGHT
+            );
         }
 
         @Override
         public Mesh generateStraight(Vector3fc displacement) {
-            return TrackType.clickBoxStraight(displacement);
+            return TrackType.generateFunctional(
+                    t -> Vectors.newZeroVector().lerp(displacement, t),
+                    t -> new Vector3f(displacement).normalize(),
+                    WIDTH, HEIGHT
+            );
         }
 
         @Override
