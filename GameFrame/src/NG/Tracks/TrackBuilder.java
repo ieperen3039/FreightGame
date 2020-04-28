@@ -73,19 +73,31 @@ public class TrackBuilder extends SurfaceBuildTool {
 
             Vector3f closestPoint = trackPiece.closestPointOf(origin, direction);
 
-            if (firstNode == null) {
-                firstNode = NetworkNode.createSplit(game, trackPiece, closestPoint);
-            } else {
-                Logger.ERROR.print("Not implemented yet :(");
-            }
+            if (game.keyControl().isControlPressed()) {
+                NetworkNode startNode = trackPiece.getStartNode();
+                NetworkNode endNode = trackPiece.getEndNode();
+                float distToStart = closestPoint.distanceSquared(startNode.getPosition());
+                float distToEnd = closestPoint.distanceSquared(endNode.getPosition());
 
-        } else if (entity instanceof TrackConnectionPoint) {
-            if (firstNode == null) {
-                TrackConnectionPoint nodePoint = (TrackConnectionPoint) entity;
-                firstNode = nodePoint.getNode();
+                NetworkNode targetNode;
+                if (distToStart < distToEnd) {
+                    targetNode = startNode;
+                } else {
+                    targetNode = endNode;
+                }
+
+                if (firstNode == null) {
+                    firstNode = targetNode;
+                } else {
+                    Logger.ERROR.print("Connect to endpoint: Not implemented yet :(");
+                }
 
             } else {
-                Logger.ERROR.print("Not implemented yet :(");
+                if (firstNode == null) {
+                    firstNode = NetworkNode.createSplit(game, trackPiece, closestPoint);
+                } else {
+                    Logger.ERROR.print("Connect halfway existing track: Not implemented yet :(");
+                }
             }
         }
     }

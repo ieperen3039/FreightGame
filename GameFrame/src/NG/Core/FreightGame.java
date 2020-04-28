@@ -9,6 +9,7 @@ import NG.GameState.GameLoop;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
 import NG.GameState.HeightMap;
+import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.MouseToolCallbacks;
 import NG.Mods.InitialisationMod;
 import NG.Mods.Mod;
@@ -51,6 +52,7 @@ public class FreightGame implements Game, ModLoader {
     private final GLFWWindow window;
     private final MouseToolCallbacks inputHandler;
     private final FrameGUIManager frameManager;
+    private final KeyControl keyControl;
 
     private TypeCollection typeCollection;
     private MainMenu mainMenu;
@@ -85,6 +87,7 @@ public class FreightGame implements Game, ModLoader {
         gameParticles = new GameParticles();
         gameMap = new HeightMap();
         inputHandler = new MouseToolCallbacks();
+        keyControl = inputHandler.getKeyControl();
         frameManager = new FrameManagerImpl();
         mainThread = Thread.currentThread();
 
@@ -224,6 +227,11 @@ public class FreightGame implements Game, ModLoader {
     @Override
     public MouseToolCallbacks inputHandling() {
         return inputHandler;
+    }
+
+    @Override
+    public KeyControl keyControl() {
+        return keyControl;
     }
 
     @Override

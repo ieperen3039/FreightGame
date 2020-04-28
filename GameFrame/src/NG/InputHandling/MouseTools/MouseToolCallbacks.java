@@ -2,7 +2,7 @@ package NG.InputHandling.MouseTools;
 
 import NG.Core.Game;
 import NG.Core.GameAspect;
-import NG.InputHandling.HotkeyControl;
+import NG.InputHandling.KeyControl;
 import NG.Rendering.GLFWWindow;
 import NG.Tools.Logger;
 import org.joml.Vector2i;
@@ -21,11 +21,11 @@ import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 public class MouseToolCallbacks implements GameAspect {
     private MouseTool DEFAULT_MOUSE_TOOL;
 
-    private final ExecutorService taskScheduler = Executors.newFixedThreadPool(2);
+    private final ExecutorService taskScheduler = Executors.newSingleThreadExecutor();
+    private final KeyControl keyControl = new KeyControl();
 
     private Game game;
     private MouseTool currentTool;
-    private HotkeyControl hotkeys;
 
     @Override
     public void init(Game game) {
@@ -60,15 +60,19 @@ public class MouseToolCallbacks implements GameAspect {
         return DEFAULT_MOUSE_TOOL;
     }
 
+    public KeyControl getKeyControl() {
+        return keyControl;
+    }
+
     private class KeyPressCallback extends GLFWKeyCallback {
         @Override
         public void invoke(long window, int keyCode, int scanCode, int action, int mods) {
             if (keyCode < 0) return;
             if (action == GLFW_PRESS) {
-                execute(() -> hotkeys.keyPressed(keyCode));
+                execute(() -> keyControl.keyPressed(keyCode));
 
             } else if (action == GLFW_RELEASE) {
-                execute(() -> hotkeys.keyReleased(keyCode));
+                execute(() -> keyControl.keyReleased(keyCode));
             }
         }
     }

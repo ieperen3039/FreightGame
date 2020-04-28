@@ -14,10 +14,7 @@ import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
-import org.joml.Vector2f;
-import org.joml.Vector2i;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
+import org.joml.*;
 
 import java.util.function.Consumer;
 
@@ -131,6 +128,7 @@ public class BasicStation extends Station {
 
     public static class Builder extends SurfaceBuildTool {
         private static final String[] values = new String[12];
+        private static final float EPSILON = 1 / 128f;
 
         static {
             for (int i = 0; i < values.length; i++) {
@@ -140,7 +138,6 @@ public class BasicStation extends Station {
 
         // TODO remember previous setting
         private BasicStation station;
-        private Vector2i relative = new Vector2i();
         private boolean isPositioned = false;
         private SizeSelector selector;
 
@@ -167,7 +164,6 @@ public class BasicStation extends Station {
             station.setPosition(position);
             game.state().addEntity(station);
 
-            relative = new Vector2i();
             isPositioned = true;
         }
 
@@ -175,10 +171,19 @@ public class BasicStation extends Station {
         public void mouseMoved(int xDelta, int yDelta, float xPos, float yPos) {
             super.mouseMoved(xDelta, yDelta, xPos, yPos);
             if (!isPositioned) return;
+            Vector3fc stationPos = station.getPosition();
 
-            relative.add(xDelta, yDelta);
+            Rayf ray = Vectors.windowCoordToRay(game, (int) xPos, (int) yPos);
 
-            Vector2f direction = new Vector2f(relative).normalize();
+            // Planef plane = new Planef(station.getPosition(), Vectors.Z);
+            // float f = Intersectionf.intersectRayPlane(ray, plane, EPSILON);
+            float f = Intersectionf.intersectRayPlane(
+                    ray.oX, ray.oY, ray.oZ, ray.dX, ray.dY, ray.dZ,
+                    0, 0, 1, -stationPos.z(), EPSILON
+            );
+            Vector3f point = Vectors.getFromRay(ray, f);
+
+            Vector2f direction = new Vector2f(point.x - stationPos.x(), point.y - stationPos.y());
             station.setOrientation(-Vectors.arcTan(direction));
         }
 

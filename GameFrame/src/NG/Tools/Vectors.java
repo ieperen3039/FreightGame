@@ -312,6 +312,13 @@ public final class Vectors {
         projection.unprojectRay(winCoords, viewport, origin, direction);
     }
 
+    public static Rayf windowCoordToRay(Game game, int xSc, int ySc) {
+        Vector3f origin = new Vector3f();
+        Vector3f direction = new Vector3f();
+        windowCoordToRay(game, xSc, ySc, origin, direction);
+        return new Rayf(origin, direction);
+    }
+
     public static Vector2i toVector2i(Vector3ic coordinate) {
         return new Vector2i(coordinate.x(), coordinate.y());
     }
@@ -332,6 +339,15 @@ public final class Vectors {
 
     public static boolean almostEqual(Vector3fc alpha, Vector3fc beta) {
         return alpha.distanceSquared(beta) < VECTOR_EQUALITY_DIST_SQ;
+    }
+
+    /**
+     * answers the ray equation <i>origin + t * dir</i>
+     * @param ray a ray with (origin, direction)
+     * @param t   the value of t to fill in
+     */
+    public static Vector3f getFromRay(Rayf ray, float t) {
+        return new Vector3f(ray.oX + ray.dX * t, ray.oY + ray.dY * t, ray.oZ + ray.dZ * t);
     }
 
     public static final class Scaling {

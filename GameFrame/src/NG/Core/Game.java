@@ -4,6 +4,7 @@ import NG.Camera.Camera;
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
+import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.MouseToolCallbacks;
 import NG.Mods.TypeCollection;
 import NG.Particles.GameParticles;
@@ -41,6 +42,8 @@ public interface Game {
     MouseToolCallbacks inputHandling();
 
     FrameGUIManager gui();
+
+    KeyControl keyControl();
 
     Version getVersionNumber();
 
