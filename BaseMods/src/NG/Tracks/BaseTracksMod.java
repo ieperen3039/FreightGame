@@ -41,7 +41,7 @@ public class BaseTracksMod implements Mod {
 
     private static class DebugTrack implements TrackType {
         public static final float WIDTH = 0.4f;
-        public static final float HEIGHT = 0.1f;
+        public static final float HEIGHT = 0.2f;
 
         @Override
         public String toString() {
@@ -51,20 +51,22 @@ public class BaseTracksMod implements Mod {
         @Override
         public Mesh generateCircle(float radius, float angle, float endHeight) {
             float hDelta = endHeight / (angle * radius);
+            float length = Math.abs(radius * angle);
 
             return TrackType.generateFunctional(
                     t -> new Vector3f(radius * Math.cos(angle * t), radius * Math.sin(angle * t), endHeight * t),
                     t -> new Vector3f(-Math.sin(angle * t), Math.cos(angle * t), hDelta).normalize(),
-                    WIDTH, HEIGHT
+                    WIDTH, HEIGHT, (int) (length * 10)
             );
         }
 
         @Override
         public Mesh generateStraight(Vector3fc displacement) {
+            float length = displacement.length();
             return TrackType.generateFunctional(
                     t -> Vectors.newZeroVector().lerp(displacement, t),
-                    t -> new Vector3f(displacement).normalize(),
-                    WIDTH, HEIGHT
+                    t -> new Vector3f(displacement).div(length),
+                    WIDTH, HEIGHT, (int) (length * 10)
             );
         }
 

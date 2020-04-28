@@ -62,7 +62,7 @@ public interface TrackType {
         return generateFunctional(
                 t -> Vectors.newZeroVector().lerp(displacement, t),
                 t -> new Vector3f(displacement).normalize(),
-                Settings.CLICK_BOX_WIDTH / 2, Settings.CLICK_BOX_HEIGHT / 2
+                Settings.CLICK_BOX_WIDTH / 2, Settings.CLICK_BOX_HEIGHT / 2, Settings.RESOLUTION
         );
     }
 
@@ -72,12 +72,13 @@ public interface TrackType {
         return generateFunctional(
                 t -> new Vector3f(radius * Math.cos(angle * t), radius * Math.sin(angle * t), endHeight * t),
                 t -> new Vector3f(-Math.sin(angle * t), Math.cos(angle * t), hDelta).normalize(),
-                Settings.CLICK_BOX_WIDTH / 2, Settings.CLICK_BOX_HEIGHT / 2
+                Settings.CLICK_BOX_WIDTH / 2, Settings.CLICK_BOX_HEIGHT / 2, Settings.RESOLUTION
         );
     }
 
     static Mesh generateFunctional(
-            Function<Float, Vector3f> function, Function<Float, Vector3f> derivative, float width, float height
+            Function<Float, Vector3f> function, Function<Float, Vector3f> derivative, float width, float height,
+            int resolution
     ) {
         Vector3fc startPos = function.apply(0f);
         Vector3f startDir = derivative.apply(0f);
@@ -99,9 +100,9 @@ public interface TrackType {
         Vector3f np2 = new Vector3f();
         Vector3f nn2 = new Vector3f();
 
-        float delta = 1f / Settings.RESOLUTION;
-        for (int i = 1; i <= Settings.RESOLUTION; i++) {
-            float t = (i == Settings.RESOLUTION) ? 1f : (i * delta);
+        float delta = 1f / resolution;
+        for (int i = 1; i <= resolution; i++) {
+            float t = (i == resolution) ? 1f : (i * delta);
 
             pp2.set(pp1);
             pn2.set(pn1);
