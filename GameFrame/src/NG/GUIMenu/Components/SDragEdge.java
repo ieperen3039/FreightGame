@@ -2,7 +2,7 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
-import NG.InputHandling.MouseMoveListener;
+import NG.InputHandling.MouseDragListener;
 import org.joml.Vector2ic;
 
 import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.BUTTON_ACTIVE;
@@ -10,7 +10,7 @@ import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.BUTTON_ACTIVE;
 /**
  * @author Geert van Ieperen. Created on 25-9-2018.
  */
-public class SDragEdge extends SComponent implements MouseMoveListener {
+public class SDragEdge extends SComponent implements MouseDragListener {
     private final SComponent parent;
     private final int width;
     private final int height;
@@ -39,15 +39,8 @@ public class SDragEdge extends SComponent implements MouseMoveListener {
         design.drawText(screenPosition, getSize(), "+", NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT);
     }
 
-    /**
-     * returns the movement of the mouse
-     */
-    public void mouseMoved(int xDelta, int yDelta) {
-        parent.addToSize(xDelta, yDelta);
-    }
-
     @Override
-    public void mouseMoved(int xDelta, int yDelta, float xPos, float yPos) {
-        mouseMoved(xDelta, yDelta);
+    public void mouseDragged(int xDelta, int yDelta, float xPos, float yPos) {
+        parent.addToSize(xDelta, yDelta);
     }
 }

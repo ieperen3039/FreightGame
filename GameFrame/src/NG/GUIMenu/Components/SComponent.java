@@ -15,6 +15,8 @@ public abstract class SComponent {
     private boolean isVisible = true;
     private SComponent parent = null;
 
+    protected boolean isHovered = false;
+
     private final Vector2i position = new Vector2i();
     private final Vector2i dimensions = new Vector2i();
 
@@ -225,5 +227,9 @@ public abstract class SComponent {
     @Override
     public String toString() {
         return this.getClass().getSimpleName();
+    }
+
+    public void setHovered(boolean hovered) {
+        isHovered = hovered;
     }
 }

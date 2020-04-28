@@ -10,7 +10,7 @@ import NG.GUIMenu.Rendering.NVGOverlay;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.InputHandling.KeyTypeListener;
 import NG.InputHandling.MouseClickListener;
-import NG.InputHandling.MouseMoveListener;
+import NG.InputHandling.MouseDragListener;
 import NG.InputHandling.MouseReleaseListener;
 import NG.Tools.Logger;
 import org.joml.Vector2i;
@@ -24,14 +24,15 @@ import java.util.*;
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
 public class FrameManagerImpl implements FrameGUIManager {
-    private Game game;
-    private final Deque<SFrame> frames; // the first element in this list has focus
-    private SComponent modalComponent;
+    protected Game game;
 
-    protected int dragButton = 0;
-    protected MouseMoveListener dragListener = null;
+    protected MouseDragListener dragListener = null;
     protected MouseReleaseListener releaseListener = null;
     protected KeyTypeListener typeListener = null;
+
+    private final Deque<SFrame> frames; // the first element in this list has focus
+    private SComponent modalComponent;
+    private SComponent hoveredComponent;
 
     private SFrameLookAndFeel lookAndFeel;
     private SToolBar toolBar = null;
@@ -221,7 +222,7 @@ public class FrameManagerImpl implements FrameGUIManager {
         // check modal dialogues
         if (modalComponent != null) {
             if (modalComponent.contains(xSc, ySc)) {
-                this.apply(button, modalComponent, xSc, ySc);
+                processClick(button, modalComponent, xSc, ySc);
             }
             modalComponent = null;
             return true;
@@ -230,7 +231,7 @@ public class FrameManagerImpl implements FrameGUIManager {
             SComponent component = getComponentAt(xSc, ySc);
 
             if (component != null) {
-                this.apply(button, component, xSc, ySc);
+                processClick(button, component, xSc, ySc);
                 return true;
             }
         }
@@ -238,7 +239,7 @@ public class FrameManagerImpl implements FrameGUIManager {
         return false;
     }
 
-    private void apply(int button, SComponent component, int xSc, int ySc) {
+    private void processClick(int button, SComponent component, int xSc, int ySc) {
         if (component instanceof MouseClickListener) {
             MouseClickListener cl = (MouseClickListener) component;
             // by def. of MouseRelativeClickListener, give relative coordinates
@@ -246,23 +247,25 @@ public class FrameManagerImpl implements FrameGUIManager {
             cl.onClick(button, xSc - pos.x, ySc - pos.y);
         }
 
-        if (component instanceof MouseMoveListener) {
-            dragListener = (MouseMoveListener) component;
-
-        } else {
-            dragListener = null;
+        if (component instanceof MouseDragListener) {
+            dragListener = (MouseDragListener) component;
         }
 
         if (component instanceof MouseReleaseListener) {
             releaseListener = (MouseReleaseListener) component;
-
-        } else {
-            releaseListener = null;
         }
     }
 
     @Override
     public SComponent getComponentAt(int xSc, int ySc) {
+
+        // check toolbar
+        if (toolBar != null) {
+            if (toolBar.contains(xSc, ySc)) {
+                return toolBar.getComponentAt(xSc, ySc);
+            }
+        }
+
         // check all frames, starting from the front-most frame
         for (SFrame frame : frames) {
             if (frame.isVisible() && frame.contains(xSc, ySc)) {
@@ -270,13 +273,6 @@ public class FrameManagerImpl implements FrameGUIManager {
                 int xr = xSc - frame.getX();
                 int yr = ySc - frame.getY();
                 return frame.getComponentAt(xr, yr);
-            }
-        }
-
-        // check toolbar
-        if (toolBar != null) {
-            if (toolBar.contains(xSc, ySc)) {
-                return toolBar.getComponentAt(xSc, ySc);
             }
         }
 
@@ -291,13 +287,20 @@ public class FrameManagerImpl implements FrameGUIManager {
 
     @Override
     public void onRelease(int button, int xSc, int ySc) {
+        dragListener = null;
         if (releaseListener == null) return;
         releaseListener.onRelease(button, xSc, ySc);
+        releaseListener = null;
     }
 
     @Override
     public void mouseMoved(int xDelta, int yDelta, float xPos, float yPos) {
-        if (dragListener == null) return;
-        dragListener.mouseMoved(xDelta, yDelta, xPos, yPos);
+        if (hoveredComponent != null) hoveredComponent.setHovered(false);
+        hoveredComponent = getComponentAt((int) xPos, (int) yPos);
+        if (hoveredComponent != null) hoveredComponent.setHovered(true);
+
+        if (dragListener != null) {
+            dragListener.mouseDragged(xDelta, yDelta, xPos, yPos);
+        }
     }
 }

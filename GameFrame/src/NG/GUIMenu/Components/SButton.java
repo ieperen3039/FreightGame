@@ -10,8 +10,7 @@ import org.joml.Vector2ic;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.BUTTON_ACTIVE;
-import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.BUTTON_PRESSED;
+import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.*;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
@@ -117,7 +116,7 @@ public class SButton extends SComponent implements MouseReleaseListener, MouseCl
 
     @Override
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
-        design.draw(isPressed ? BUTTON_PRESSED : BUTTON_ACTIVE, screenPosition, getSize());
+        design.draw(isPressed ? BUTTON_PRESSED : (isHovered ? BUTTON_HOVERED : BUTTON_ACTIVE), screenPosition, getSize());
 
         int textWidth = design.getTextWidth(text, TEXT_TYPE);
         if (this.textWidth != textWidth) {

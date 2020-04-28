@@ -82,6 +82,10 @@ public class BaseLF implements SFrameLookAndFeel {
                 drawRoundedRectangle(x, y, width, height, BUTTON_COLOR);
                 break;
 
+            case BUTTON_HOVERED:
+                drawRoundedRectangle(x, y, width, height, BUTTON_COLOR.intensify(0.1f));
+                break;
+
             case BUTTON_PRESSED:
                 drawRoundedRectangle(x, y, width, height, BUTTON_COLOR.darken(0.5f));
                 break;

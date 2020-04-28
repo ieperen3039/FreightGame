@@ -38,7 +38,7 @@ public interface SFrameLookAndFeel extends InitialisationMod {
 
     enum UIComponent {
         /** a simple button, either held down or not held down */
-        BUTTON_PRESSED, BUTTON_ACTIVE, BUTTON_INACTIVE,
+        BUTTON_PRESSED, BUTTON_HOVERED, BUTTON_ACTIVE, BUTTON_INACTIVE,
         /** draw a button with an image on it. The image should be scaled uniformly to fit the button */
         ICON_BUTTON_ACTIVE, ICON_BUTTON_INACTIVE,
         /** The top panel of a dropdown menu. */

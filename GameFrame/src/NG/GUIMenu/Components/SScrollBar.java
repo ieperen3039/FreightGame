@@ -1,7 +1,7 @@
 package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
-import NG.InputHandling.MouseMoveListener;
+import NG.InputHandling.MouseDragListener;
 import NG.InputHandling.MouseReleaseListener;
 import NG.Tools.Toolbox;
 import org.joml.Vector2i;
@@ -171,7 +171,7 @@ class SScrollBar extends SComponent {
     /**
      * @author Geert van Ieperen created on 13-5-2019.
      */
-    public class SDragBar extends SComponent implements MouseReleaseListener, MouseMoveListener {
+    public class SDragBar extends SComponent implements MouseReleaseListener, MouseDragListener {
 
         SDragBar() {
             setGrowthPolicy(true, false);
@@ -193,10 +193,8 @@ class SScrollBar extends SComponent {
             design.draw(SCROLL_BAR_DRAG_ELEMENT, screenPosition, getSize());
         }
 
-        /**
-         * returns the movement of the mouse
-         */
-        public void mouseMoved(int xDelta, int yDelta) {
+        @Override
+        public void mouseDragged(int xDelta, int yDelta, float xPos, float yPos) {
             dragBarOffsetFraction += ((float) yDelta / getDragBarSpace());
             dragBarOffsetFraction = Math.max(0, Math.min(1, dragBarOffsetFraction));
             positionDragbar(dragBarOffsetFraction);
@@ -217,11 +215,6 @@ class SScrollBar extends SComponent {
         @Override
         public void onRelease(int button, int xSc, int ySc) {
             alignDragBar();
-        }
-
-        @Override
-        public void mouseMoved(int xDelta, int yDelta, float xPos, float yPos) {
-            mouseMoved(xDelta, yDelta);
         }
     }
 
