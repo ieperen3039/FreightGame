@@ -114,7 +114,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
 
     @Override
     public void update() {
-
+        doRenderClickBox(game.keyControl().isShiftPressed());
     }
 
     @Override

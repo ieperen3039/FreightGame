@@ -37,7 +37,7 @@ public class Settings {
     public static int TOOL_BAR_HEIGHT = 80;
     public static final float CLICK_BOX_WIDTH = 2f;
     public static final float CLICK_BOX_HEIGHT = 0.25f;
-    public static final int RESOLUTION = 10;
+    public static final float CLICK_BOX_RESOLUTION = 0.5f;
 
     // in-game functional settings
     public static int STATION_RANGE = 5;

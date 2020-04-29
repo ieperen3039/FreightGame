@@ -59,27 +59,34 @@ public interface TrackType {
     float minimumRadius();
 
     static Mesh clickBoxStraight(Vector3fc displacement) {
+        float length = displacement.length();
+
         return generateFunctional(
-                t -> Vectors.newZeroVector().lerp(displacement, t),
-                t -> new Vector3f(displacement).normalize(),
-                Settings.CLICK_BOX_WIDTH / 2, Settings.CLICK_BOX_HEIGHT / 2, Settings.RESOLUTION
-        );
+                t -> new Vector3f(displacement).mul(t),
+                t -> new Vector3f(displacement).div(length),
+                Settings.CLICK_BOX_WIDTH / 2, Settings.CLICK_BOX_HEIGHT / 2, 2
+        ).toFlatMesh();
     }
 
     static Mesh clickBoxCircle(float radius, float angle, float endHeight) {
         float hDelta = endHeight / (angle * radius);
+        float length = Math.abs(radius * angle);
+
+        int resolution = (int) Math.max(Settings.CLICK_BOX_RESOLUTION * length, Math.abs((8 / Math.PI) * angle));
 
         return generateFunctional(
                 t -> new Vector3f(radius * Math.cos(angle * t), radius * Math.sin(angle * t), endHeight * t),
                 t -> new Vector3f(-Math.sin(angle * t), Math.cos(angle * t), hDelta).normalize(),
-                Settings.CLICK_BOX_WIDTH / 2, Settings.CLICK_BOX_HEIGHT / 2, Settings.RESOLUTION
-        );
+                Settings.CLICK_BOX_WIDTH / 2, Settings.CLICK_BOX_HEIGHT / 2, resolution
+        ).toFlatMesh();
     }
 
-    static Mesh generateFunctional(
-            Function<Float, Vector3f> function, Function<Float, Vector3f> derivative, float width, float height,
-            int resolution
+    static CustomShape generateFunctional(
+            Function<Float, Vector3f> function, Function<Float, Vector3f> derivative,
+            float width, float height, int resolution
     ) {
+        resolution = Math.max(1, resolution);
+
         Vector3fc startPos = function.apply(0f);
         Vector3f startDir = derivative.apply(0f);
         Vector3f pointSide = new Vector3f(startDir).cross(Vectors.Z).normalize(width);
@@ -127,7 +134,6 @@ public interface TrackType {
         }
 
         frame.addQuad(pp1, pn1, nn1, np1, dir1);
-
-        return frame.toFlatMesh();
+        return frame;
     }
 }

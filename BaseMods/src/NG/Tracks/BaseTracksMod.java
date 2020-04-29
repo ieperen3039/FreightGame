@@ -7,7 +7,7 @@ import NG.Mods.Mod;
 import NG.Rendering.Material;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Rendering.Shaders.MaterialShader;
-import NG.Tools.Vectors;
+import NG.Rendering.Shapes.CustomShape;
 import org.joml.Math;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -42,6 +42,7 @@ public class BaseTracksMod implements Mod {
     private static class DebugTrack implements TrackType {
         public static final float WIDTH = 0.4f;
         public static final float HEIGHT = 0.2f;
+        public static final int RESOLUTION = 5;
 
         @Override
         public String toString() {
@@ -53,21 +54,26 @@ public class BaseTracksMod implements Mod {
             float hDelta = endHeight / (angle * radius);
             float length = Math.abs(radius * angle);
 
-            return TrackType.generateFunctional(
+            CustomShape frame = TrackType.generateFunctional(
                     t -> new Vector3f(radius * Math.cos(angle * t), radius * Math.sin(angle * t), endHeight * t),
                     t -> new Vector3f(-Math.sin(angle * t), Math.cos(angle * t), hDelta).normalize(),
-                    WIDTH, HEIGHT, (int) (length * 10)
+                    WIDTH, HEIGHT, (int) (length * RESOLUTION)
             );
+
+            return frame.toFlatMesh();
         }
 
         @Override
         public Mesh generateStraight(Vector3fc displacement) {
             float length = displacement.length();
-            return TrackType.generateFunctional(
-                    t -> Vectors.newZeroVector().lerp(displacement, t),
+
+            CustomShape frame = TrackType.generateFunctional(
+                    t -> new Vector3f(displacement).mul(t),
                     t -> new Vector3f(displacement).div(length),
-                    WIDTH, HEIGHT, (int) (length * 10)
+                    WIDTH, HEIGHT, (int) (length * RESOLUTION)
             );
+
+            return frame.toFlatMesh();
         }
 
         @Override
