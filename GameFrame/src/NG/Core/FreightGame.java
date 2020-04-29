@@ -9,6 +9,7 @@ import NG.GameState.GameLoop;
 import NG.GameState.GameMap;
 import NG.GameState.GameState;
 import NG.GameState.HeightMap;
+import NG.InputHandling.ClickShader;
 import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.MouseToolCallbacks;
 import NG.Mods.InitialisationMod;
@@ -53,6 +54,7 @@ public class FreightGame implements Game, ModLoader {
     private final MouseToolCallbacks inputHandler;
     private final FrameGUIManager frameManager;
     private final KeyControl keyControl;
+    private final ClickShader clickShader;
 
     private TypeCollection typeCollection;
     private MainMenu mainMenu;
@@ -79,10 +81,11 @@ public class FreightGame implements Game, ModLoader {
         time = new GameTimer(0);
         GLFWWindow.Settings videoSettings = new GLFWWindow.Settings(settings);
         window = new GLFWWindow(Settings.GAME_NAME, videoSettings, true);
+        clickShader = new ClickShader();
 
         camera = new TycoonFixedCamera(new Vector3f(), 100, 100);
         renderer = new RenderLoop(settings.TARGET_FPS);
-        gameState = new GameLoop(settings.TARGET_TPS);
+        gameState = new GameLoop(settings.TARGET_TPS, clickShader);
         gameLights = new SingleShadowMapLights();
         gameParticles = new GameParticles();
         gameMap = new HeightMap();
@@ -117,10 +120,14 @@ public class FreightGame implements Game, ModLoader {
         renderer.renderSequence(new BlinnPhongShader())
                 .add((gl, game) -> game.lights().draw(gl))
                 .add((gl, game) -> game.map().draw(gl))
-                .add((gl, game) -> game.state().draw(gl));
+                .add((gl, game) -> game.state().draw(gl))
+                .add((gl, game) -> game.inputHandling().getMouseTool().draw(gl));
         // particles
         renderer.renderSequence(new ParticleShader())
                 .add((gl, game) -> game.particles().draw(gl));
+        // click shader
+        renderer.renderSequence(clickShader)
+                .add((gl, game) -> game.state().draw(gl));
         // GUIs
         renderer.addHudItem(frameManager::draw);
 

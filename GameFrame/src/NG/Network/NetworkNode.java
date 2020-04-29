@@ -47,6 +47,10 @@ public class NetworkNode {
         this.direction = new Vector3f(direction);
     }
 
+    public NetworkNode(NetworkNode target) {
+        this(target.position, target.type, target.direction);
+    }
+
     /**
      * @param other another node
      * @return the direction of track leaving this node if it were to connect to other
@@ -115,7 +119,7 @@ public class NetworkNode {
         }
     }
 
-    protected Vector3fc getDirectionTo(Vector3fc point) {
+    public Vector3fc getDirectionTo(Vector3fc point) {
         Vector3f thisToOther = new Vector3f(point).sub(position);
         boolean isSameDirection = thisToOther.dot(direction) > 0;
         return isSameDirection ? direction : new Vector3f(direction).negate();

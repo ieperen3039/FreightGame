@@ -25,6 +25,8 @@ import java.util.regex.Pattern;
 
 import static org.lwjgl.openal.AL10.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.GL_INVALID_FRAMEBUFFER_OPERATION;
+import static org.lwjgl.opengl.GL45.GL_CONTEXT_LOST;
 
 /**
  * Created by Geert van Ieperen on 31-1-2017. a class with various tools
@@ -158,6 +160,11 @@ public final class Toolbox {
                 return "Stack Underflow";
             case GL_OUT_OF_MEMORY:
                 return "Out of Memory";
+            case GL_INVALID_FRAMEBUFFER_OPERATION:
+                return "Invalid Framebuffer Operation";
+            case GL_CONTEXT_LOST:
+                return "Context Lost";
+
         }
         return "Unknown Error";
     }

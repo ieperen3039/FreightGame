@@ -26,15 +26,15 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     private final Lock entityWriteLock;
     private final Lock entityReadLock;
     private final Deque<Runnable> postUpdateActionQueue;
-
+    private final ClickShader clickShader;
     private Game game;
-    private ClickShader clickShader;
 
-    public GameLoop(int targetTps) {
+    public GameLoop(int targetTps, ClickShader clickShader) {
         super("Gameloop", targetTps);
-
+        this.clickShader = clickShader;
         this.entities = new ArrayList<>();
         this.postUpdateActionQueue = new ConcurrentLinkedDeque<>();
+
         ReadWriteLock rwl = new ReentrantReadWriteLock(false);
         this.entityWriteLock = rwl.writeLock();
         this.entityReadLock = rwl.readLock();
@@ -43,7 +43,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     @Override
     public void init(Game game) throws Exception {
         this.game = game;
-        this.clickShader = game.computeOnRenderThread(ClickShader::new).get();
     }
 
     /**
@@ -117,7 +116,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     }
 
     @Override
-    public boolean checkMouseClick(MouseTool tool, int xSc, int ySc) {
+    public boolean checkMouse(MouseTool tool, int xSc, int ySc) {
         Entity entity = clickShader.getEntity(game, xSc, ySc);
         if (entity == null) return false;
 

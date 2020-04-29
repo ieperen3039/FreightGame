@@ -23,6 +23,7 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     private final NetworkNode endNode;
 
     private final Vector3fc direction;
+    private final float length;
 
     private boolean isInvalid;
     private final Resource<Mesh> mesh;
@@ -43,7 +44,8 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
         this.type = type;
         this.startNode = startNode;
         Vector3fc displacement = new Vector3f(endNodePosition).sub(startNode.getPosition());
-        this.direction = new Vector3f(displacement).normalize();
+        this.length = displacement.length();
+        this.direction = new Vector3f(displacement).div(length);
         this.endNode = new NetworkNode(endNodePosition, type, direction);
 
         this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
@@ -66,7 +68,8 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
         this.type = type;
         this.startNode = startNode;
         Vector3fc displacement = new Vector3f(endNode.getPosition()).sub(startNode.getPosition());
-        this.direction = new Vector3f(displacement).normalize();
+        this.length = displacement.length();
+        this.direction = new Vector3f(displacement).div(length);
         this.endNode = endNode;
 
         this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
@@ -121,7 +124,7 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     }
 
     @Override
-    public Vector3f closestPointOf(Vector3fc origin, Vector3fc direction) {
+    public float getFractionOfClosest(Vector3fc origin, Vector3fc direction) {
         // https://en.wikipedia.org/wiki/Skew_lines#Nearest_Points
         // v1 = this, v2 = (origin, direction)
         Vector3fc nDirection = new Vector3f(direction).normalize();
@@ -130,7 +133,7 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
         Vector3fc thisOrigin = startNode.getPosition();
 
         float scalar = (new Vector3f(origin).sub(thisOrigin).dot(n2Cross)) / (this.direction.dot(n2Cross));
-        return new Vector3f(this.direction).mul(scalar).add(thisOrigin);
+        return scalar / length;
     }
 
     @Override
@@ -163,6 +166,21 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
         return new Vector3f(direction)
                 .mul(distanceFromStart)
                 .add(startNode.getPosition());
+    }
+
+    @Override
+    public Vector3f getDirectionFromDistance(float distanceFromStart) {
+        return new Vector3f(direction);
+    }
+
+    @Override
+    public float getLength() {
+        return length;
+    }
+
+    @Override
+    public Vector3f getDirectionFromFraction(float fraction) {
+        return new Vector3f(direction);
     }
 
     public void doRenderClickBox(boolean renderClickBox) {

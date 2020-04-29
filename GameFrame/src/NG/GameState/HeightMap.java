@@ -141,7 +141,9 @@ public class HeightMap implements GameMap {
     }
 
     @Override
-    public boolean checkMouseClick(MouseTool tool, int xSc, int ySc) {
+    public boolean checkMouse(MouseTool tool, int xSc, int ySc) {
+        if (heightmap == null) return false;
+
         Vector3f origin = new Vector3f();
         Vector3f direction = new Vector3f();
 

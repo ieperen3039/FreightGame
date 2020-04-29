@@ -47,7 +47,7 @@ public class ShadowMap implements Texture {
 
         // Error Check
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-            throw new ShaderException("ShadowMap could not create FrameBuffer");
+            throw new ShaderException("ShadowMap could not init FrameBuffer");
         }
 
         // Unbind Depth Map and FBO

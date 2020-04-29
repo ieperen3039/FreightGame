@@ -11,10 +11,8 @@ import NG.Rendering.Shaders.ShaderException;
 import NG.Rendering.Shaders.ShaderProgram;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
-import org.joml.Matrix4f;
-import org.joml.Matrix4fc;
-import org.joml.Vector3f;
-import org.joml.Vector3i;
+import NG.Tools.Toolbox;
+import org.joml.*;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
@@ -26,13 +24,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 
 import static NG.Rendering.Shaders.ShaderProgram.createShader;
 import static NG.Rendering.Shaders.ShaderProgram.loadText;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL30.*;
 
 /**
  * @author Geert van Ieperen created on 7-1-2019.
@@ -43,11 +40,21 @@ public class ClickShader implements ShaderProgram {
     private static final Path FRAGMENT_PATH = Directory.shaders.getPath("Click", "click.frag");
     private final Map<String, Integer> uniforms;
 
-    private ArrayList<Entity> mapping;
-    private Entity lastEntity;
+    private final int frameBuffer;
+    private final int colorBuffer;
+    private final int depthBuffer;
+
     private int programId;
     private int vertexShaderID;
     private int fragmentShaderID;
+
+    private ArrayList<Entity> mapping;
+    private Entity lastEntity;
+    private int windowWidth = 0;
+    private int windowHeight = 0;
+
+    private Entity cachedEntity = null;
+    private Vector2i mousePosition;
 
     public ClickShader() {
         this.uniforms = new HashMap<>();
@@ -79,22 +86,120 @@ public class ClickShader implements ShaderProgram {
         createUniform("modelMatrix");
         createUniform("color");
         mapping = new ArrayList<>();
+
+        // we generate one-pixel buffers, as we only render one pixel to check
+        frameBuffer = glGenFramebuffers();
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+
+        // color buffer to write to
+        colorBuffer = glGenRenderbuffers();
+        glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, 0, 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer);
+
+        // depth buffer to use for depth testing
+        depthBuffer = glGenRenderbuffers();
+        glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, 0, 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+        Toolbox.checkGLError(this.toString());
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     @Override
     public void initialize(Game game) {
         mapping.clear();
+
+        if (mousePosition == null) {
+            Logger.printOnline(() -> String.format("(%4d, %4d) : %s", mousePosition.x, mousePosition.y, cachedEntity));
+        }
+
+        GLFWWindow window = game.window();
+        mousePosition = window.getMousePosition();
+
+        // if the screen size changed, resize buffers to match the new dimensions
+        int newWidth = window.getWidth();
+        int newHeight = window.getHeight();
+        if (newWidth != windowWidth || newHeight != windowHeight) {
+            windowWidth = newWidth;
+            windowHeight = newHeight;
+            glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, newWidth, newHeight);
+            glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, newWidth, newHeight);
+            glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        }
+
+        int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (status != GL_FRAMEBUFFER_COMPLETE) {
+            throw new ShaderException("ClickShader could not init FrameBuffer : error " + Toolbox.asHex(status));
+        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // only render where the mouse is
+//        glViewport(mousePosition.x, mousePosition.y, 1, 1);
+        Toolbox.checkGLError(this.toString());
+    }
+
+    @Override
+    public void bind() {
+        glUseProgram(programId);
+    }
+
+    @Override
+    public void unbind() {
+        Toolbox.checkGLError(this.toString());
+
+        // first get our result
+        this.cachedEntity = getEntity();
+
+        // then reset
+        glUseProgram(0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//        glViewport(0, 0, windowWidth, windowHeight);
+    }
+
+    private Entity getEntity() {
+        ByteBuffer buffer = BufferUtils.createByteBuffer(3); // one for each color
+        glReadPixels(mousePosition.x, windowHeight - mousePosition.y, 1, 1, GL_RGB, GL11.GL_UNSIGNED_BYTE, buffer);
+
+        int r = Byte.toUnsignedInt(buffer.get(0));
+        int g = Byte.toUnsignedInt(buffer.get(1));
+        int b = Byte.toUnsignedInt(buffer.get(2));
+        assert !(r < 0 || g < 0 || b < 0) : String.format("got (%d, %d, %d)", r, g, b);
+        buffer.clear();
+
+        // convert to local
+        int entityIndex = colorToNumber(new Vector3i(r, g, b));
+
+        if (entityIndex == 0) return null;
+        return mapping.get(entityIndex - 1);
     }
 
     @Override
     public SGL getGL(Game game) {
         GLFWWindow window = game.window();
         Camera camera = game.camera();
-        boolean doIsometric = game.settings().ISOMETRIC_VIEW;
         int windowWidth = window.getWidth();
         int windowHeight = window.getHeight();
 
-        return new ClickShaderGL(windowWidth, windowHeight, camera, doIsometric);
+        return new ClickShaderGL(windowWidth, windowHeight, camera);
+    }
+
+    @Override
+    public void cleanup() {
+        unbind();
+        if (programId != 0) {
+            glDeleteProgram(programId);
+        }
+
+        glDeleteFramebuffers(frameBuffer);
+        glDeleteRenderbuffers(colorBuffer);
+        glDeleteRenderbuffers(depthBuffer);
     }
 
     private void setEntity(Entity entity) {
@@ -112,24 +217,6 @@ public class ClickShader implements ShaderProgram {
 
     private void unsetEntity() {
         setColor(new Vector3i());
-    }
-
-    @Override
-    public void bind() {
-        glUseProgram(programId);
-    }
-
-    @Override
-    public void unbind() {
-        glUseProgram(0);
-    }
-
-    @Override
-    public void cleanup() {
-        unbind();
-        if (programId != 0) {
-            glDeleteProgram(programId);
-        }
     }
 
     private void link() throws ShaderException {
@@ -214,7 +301,7 @@ public class ClickShader implements ShaderProgram {
     /**
      * if the number is not divisible by 4, move the number up or down such that it is
      * @param i a number
-     * @return the closest value divisible by 4, or the number itself if multiple are nearest
+     * @return the closest value divisible by 4
      */
     private static int nearest(int i) {
         int mod = i % 4;
@@ -223,29 +310,9 @@ public class ClickShader implements ShaderProgram {
         } else if (mod == 3) {
             i += 1;
         } else if (mod == 2) {
-            Logger.ASSERT.printf("Color to number failed for i = %d", i);
+            i -= 2;
         }
         return i;
-    }
-
-    /**
-     * @param xPos x screen coordinate of the pixel
-     * @param yPos y screen coordinate of the pixel
-     * @return the color of a given pixel in (r, g, b) value
-     */
-    private static Vector3i getPixelValue(int xPos, int yPos) {
-        glReadBuffer(GL11.GL_BACK);
-        int bpp = 4; // Assuming a 32-bit display with a byte each for red, green, blue, and alpha.
-        ByteBuffer buffer = BufferUtils.createByteBuffer(bpp);
-        glReadPixels(xPos, yPos, 1, 1, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
-
-        int r = Byte.toUnsignedInt(buffer.get(0));
-        int g = Byte.toUnsignedInt(buffer.get(1));
-        int b = Byte.toUnsignedInt(buffer.get(2));
-        assert !(r < 0 || g < 0 || b < 0) : String.format("got (%d, %d, %d)", r, g, b);
-        buffer.clear();
-
-        return new Vector3i(r, g, b);
     }
 
     /**
@@ -256,42 +323,7 @@ public class ClickShader implements ShaderProgram {
      * @return the entity that is visible on the given pixel coordinate.
      */
     public Entity getEntity(Game game, int xPos, int yPos) {
-        Callable<Entity> task = () -> {
-            synchronized (this) {
-                initialize(game);
-                bind();
-                // Clear framebuffer
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                SGL flatColorRender = getGL(game);
-                game.state().draw(flatColorRender);
-
-                unbind();
-
-                GLFWWindow window = game.window();
-                int windowHeight = window.getHeight();
-
-                if (game.settings().WRITE_CLICK_SHADER_IMAGE) {
-                    window.printScreen(Directory.screenshots, "click", GL11.GL_BACK);
-                }
-
-                Vector3i value = ClickShader.getPixelValue(xPos, windowHeight - yPos);
-                glClear(GL_COLOR_BUFFER_BIT);
-
-                int i = colorToNumber(value);
-
-                if (i == 0) return null;
-                return mapping.get(i - 1);
-            }
-        };
-
-        try {
-            return game.computeOnRenderThread(task).get();
-
-        } catch (ExecutionException | InterruptedException e) {
-            Logger.ERROR.print(e);
-            return null;
-        }
+        return cachedEntity;
     }
 
     /**
@@ -300,11 +332,8 @@ public class ClickShader implements ShaderProgram {
     public class ClickShaderGL extends AbstractSGL {
         private final Matrix4f viewProjectionMatrix;
 
-        ClickShaderGL(
-                int windowWidth, int windowHeight, Camera viewpoint, boolean isometric
-        ) {
+        ClickShaderGL(int windowWidth, int windowHeight, Camera viewpoint) {
             viewProjectionMatrix = viewpoint.getViewProjection((float) windowWidth / windowHeight);
-
         }
 
         @Override

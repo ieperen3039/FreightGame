@@ -12,6 +12,6 @@ public interface MouseToolListener {
      * @param ySc  the screen y position of the mouse
      * @return true iff the click has been handled by this object
      */
-    boolean checkMouseClick(MouseTool tool, int xSc, int ySc);
+    boolean checkMouse(MouseTool tool, int xSc, int ySc);
 
 }

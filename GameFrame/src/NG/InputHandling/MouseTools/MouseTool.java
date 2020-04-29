@@ -2,6 +2,7 @@ package NG.InputHandling.MouseTools;
 
 import NG.Entities.Entity;
 import NG.InputHandling.MouseListener;
+import NG.Rendering.MatrixStack.SGL;
 import org.joml.Vector3fc;
 
 /**
@@ -9,6 +10,12 @@ import org.joml.Vector3fc;
  * @author Geert van Ieperen. Created on 22-11-2018.
  */
 public interface MouseTool extends MouseListener {
+
+    /**
+     * draws any visual indications used by this tool
+     * @param gl the rendering context
+     */
+    void draw(SGL gl);
 
     /**
      * applies the functionality of this tool to the given entity

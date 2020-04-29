@@ -149,20 +149,46 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
 
     @Override
     public Vector3f getPositionFromDistance(float distanceFromStart) {
-        float length = Math.abs(radius * angle);
-        float fraction = distanceFromStart / length;
-
+        float fraction = distanceFromStart / getLength();
         if (fraction < 0 || fraction > 1) return null;
         return getPositionFromFraction(fraction);
     }
 
-    private Vector3f getPositionFromFraction(float fraction) {
+    @Override
+    public Vector3f getDirectionFromDistance(float distanceFromStart) {
+        float targetAngle = angle * (distanceFromStart / getLength());
+        return getDirectionFromAngle(targetAngle);
+    }
+
+    @Override
+    public float getLength() {
+        return Math.abs(radius * angle);
+    }
+
+    public Vector3f getDirectionFromAngle(float targetAngle) {
+        float dx = -Math.sin(targetAngle);
+        float dy = Math.cos(targetAngle);
+        float dz = heightDiff / (radius * angle);
+
+        if (isClockwise()) {
+            return new Vector3f(-dx, -dy, dz);
+        } else {
+            return new Vector3f(dx, dy, dz);
+        }
+    }
+
+    public Vector3f getPositionFromFraction(float fraction) {
         float currentAngle = (fraction * angle) + startTheta;
 
         float dx = Math.cos(currentAngle) * radius;
         float dy = Math.sin(currentAngle) * radius;
         float dz = fraction * heightDiff;
         return new Vector3f(center).add(dx, dy, dz);
+    }
+
+    @Override
+    public Vector3f getDirectionFromFraction(float fraction) {
+        return getDirectionFromAngle(fraction * angle);
     }
 
     @Override
@@ -176,17 +202,14 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     }
 
     @Override
-    public Vector3f closestPointOf(Vector3fc origin, Vector3fc direction) {
+    public float getFractionOfClosest(Vector3fc origin, Vector3fc direction) {
         float t = Intersectionf.intersectRayPlane(origin, direction, center, Vectors.Z, EPSILON);
         Vector3f rayPoint = new Vector3f(direction).mul(t).add(origin);
         Vector3f vecToPoint = rayPoint.sub(center);
         float currentAngle = Vectors.arcTan(new Vector2f(vecToPoint.x, vecToPoint.y));
+
         // float currentAngle = (fraction * angle) + startTheta;
-        float fraction = (currentAngle - startTheta) / angle;
-        float dx = Math.cos(currentAngle) * radius;
-        float dy = Math.sin(currentAngle) * radius;
-        float dz = fraction * heightDiff;
-        return new Vector3f(center).add(dx, dy, dz);
+        return (currentAngle - startTheta) / angle;
     }
 
     public boolean isClockwise() {
@@ -208,28 +231,12 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
 
     @Override
     public Vector3fc getStartDirection() {
-        float dx = -Math.sin(startTheta);
-        float dy = Math.cos(startTheta);
-        float dz = heightDiff / (radius * angle);
-
-        if (isClockwise()) {
-            return new Vector3f(-dx, -dy, dz);
-        } else {
-            return new Vector3f(dx, dy, dz);
-        }
+        return getDirectionFromAngle(startTheta);
     }
 
     @Override
     public Vector3fc getEndDirection() {
-        float dx = -Math.sin(endTheta);
-        float dy = Math.cos(endTheta);
-        float dz = heightDiff / (radius * angle);
-
-        if (isClockwise()) { // opposite of getStartDirection
-            return new Vector3f(dx, dy, dz);
-        } else {
-            return new Vector3f(-dx, -dy, dz);
-        }
+        return getDirectionFromAngle(endTheta).negate();
     }
 
     @Override

@@ -18,7 +18,13 @@ public interface TrackPiece extends Entity {
         return UpdateFrequency.NEVER;
     }
 
-    Vector3f closestPointOf(Vector3fc origin, Vector3fc direction);
+    float getFractionOfClosest(Vector3fc origin, Vector3fc direction);
+
+    default Vector3f closestPointOf(Vector3fc origin, Vector3fc direction) {
+        return getPositionFromFraction(getFractionOfClosest(origin, direction));
+    }
+
+    ;
 
     TrackType getType();
 
@@ -39,23 +45,27 @@ public interface TrackPiece extends Entity {
     Vector3fc getStartDirection();
 
     /**
-     * @param node on of the two node points on this track
-     * @return the associated direction of the track on that point
-     */
-    default Vector3fc getDirectionOf(NetworkNode node) {
-        if (node.equals(getStartNode())) {
-            return getStartDirection();
-        } else {
-            assert node.equals(getEndNode());
-            return getEndDirection();
-        }
-    }
-
-    /**
      * @param distanceFromStart distance traveled (no units)
      * @return the position after traveling {@code distanceFromStart} on this track, measured from the start.
      */
     Vector3f getPositionFromDistance(float distanceFromStart);
+
+    /**
+     * @param distanceFromStart distance traveled (no units)
+     * @return the direction from start to end after traveling {@code distanceFromStart} on this track, measured from
+     * the start.
+     */
+    Vector3f getDirectionFromDistance(float distanceFromStart);
+
+    float getLength();
+
+    default Vector3f getPositionFromFraction(float fraction) {
+        return getPositionFromDistance(fraction * getLength());
+    }
+
+    default Vector3f getDirectionFromFraction(float fraction) {
+        return getDirectionFromDistance(fraction * getLength());
+    }
 
     /**
      * @param renderClickBox if true, render the area that can be clicked on. Otherwise, render the track itself.
@@ -88,11 +98,9 @@ public interface TrackPiece extends Entity {
 
         float dot = vecToB.x * direction.x + vecToB.y * direction.y;
         if ((dot * dot) > 127 / 128f) {
-            Logger.DEBUG.print("Creating straight track", aNode.getPosition(), endPosition, "dot = " + dot);
             return new StraightTrack(game, type, aNode, endPosition);
 
         } else {
-            Logger.DEBUG.print("Creating circle track", aNode.getPosition(), endPosition, "dot = " + dot);
             return new CircleTrack(game, type, aNode, direction, endPosition);
         }
     }

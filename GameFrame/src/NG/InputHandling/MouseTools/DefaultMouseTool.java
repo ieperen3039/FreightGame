@@ -25,12 +25,16 @@ public class DefaultMouseTool extends AbstractMouseTool {
 
     @Override
     public void apply(Entity entity, int xSc, int ySc) {
-        Logger.DEBUG.print("Clicked on " + entity);
+        if (getMouseAction() == MouseAction.PRESS_ACTIVATE) {
+            Logger.DEBUG.print("Clicked on " + entity);
+        }
     }
 
     @Override
     public void apply(Vector3fc position, int xSc, int ySc) {
-        Logger.DEBUG.print("Clicked at " + Vectors.toString(position));
+        if (getMouseAction() == MouseAction.PRESS_ACTIVATE) {
+            Logger.DEBUG.print("Clicked at " + Vectors.toString(position));
+        }
     }
 
     @Override

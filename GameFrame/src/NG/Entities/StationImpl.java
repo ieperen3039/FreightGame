@@ -219,32 +219,31 @@ public class StationImpl extends Storage implements Station {
         }
 
         public void apply(Vector3fc position, int xSc, int ySc) {
-            if (getButton() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-                station.setPosition(position);
-                game.state().addEntity(station);
+            switch (getMouseAction()) {
+                case PRESS_ACTIVATE:
+                    station.setPosition(position);
+                    game.state().addEntity(station);
 
-                isPositioned = true;
+                    isPositioned = true;
+                    break;
+
+                case DRAG_ACTIVATE:
+                    if (!isPositioned) return;
+                    Vector3fc stationPos = station.getPosition();
+
+                    Rayf ray = Vectors.windowCoordToRay(game, xSc, ySc);
+
+                    // Planef plane = new Planef(station.getPosition(), Vectors.Z);
+                    // float f = Intersectionf.intersectRayPlane(ray, plane, EPSILON);
+                    float f = Intersectionf.intersectRayPlane(
+                            ray.oX, ray.oY, ray.oZ, ray.dX, ray.dY, ray.dZ,
+                            0, 0, 1, -stationPos.z(), EPSILON
+                    );
+                    Vector3f point = Vectors.getFromRay(ray, f);
+
+                    Vector2f direction = new Vector2f(point.x - stationPos.x(), point.y - stationPos.y());
+                    station.setOrientation(Vectors.arcTan(direction));
             }
-        }
-
-        @Override
-        public void mouseMoved(int xDelta, int yDelta, float xPos, float yPos) {
-            super.mouseMoved(xDelta, yDelta, xPos, yPos);
-            if (!isPositioned) return;
-            Vector3fc stationPos = station.getPosition();
-
-            Rayf ray = Vectors.windowCoordToRay(game, (int) xPos, (int) yPos);
-
-            // Planef plane = new Planef(station.getPosition(), Vectors.Z);
-            // float f = Intersectionf.intersectRayPlane(ray, plane, EPSILON);
-            float f = Intersectionf.intersectRayPlane(
-                    ray.oX, ray.oY, ray.oZ, ray.dX, ray.dY, ray.dZ,
-                    0, 0, 1, -stationPos.z(), EPSILON
-            );
-            Vector3f point = Vectors.getFromRay(ray, f);
-
-            Vector2f direction = new Vector2f(point.x - stationPos.x(), point.y - stationPos.y());
-            station.setOrientation(Vectors.arcTan(direction));
         }
 
         @Override
