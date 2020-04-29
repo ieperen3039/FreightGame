@@ -87,7 +87,7 @@ public interface TrackPiece extends Entity {
         Vector2f vecToB = new Vector2f(relPosB).normalize();
 
         float dot = vecToB.x * direction.x + vecToB.y * direction.y;
-        if ((dot * dot) > 255 / 256f) {
+        if ((dot * dot) > 127 / 128f) {
             Logger.DEBUG.print("Creating straight track", aNode.getPosition(), endPosition, "dot = " + dot);
             return new StraightTrack(game, type, aNode, endPosition);
 
@@ -125,7 +125,7 @@ public interface TrackPiece extends Entity {
         Vector2f vecToB = new Vector2f(relPosB).normalize();
 
         float dot = vecToB.x * direction.x + vecToB.y * direction.y;
-        if ((dot * dot) > 255 / 256f) {
+        if ((dot * dot) > 127 / 128f) {
             Logger.DEBUG.print("Creating straight track", aPos, bPos, "dot = " + dot);
             return new StraightTrack(game, type, aNode, bNode);
 

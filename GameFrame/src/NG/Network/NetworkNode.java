@@ -42,7 +42,7 @@ public class NetworkNode {
     private final TrackType type;
 
     public NetworkNode(Vector3fc nodePoint, TrackType type, Vector3fc direction) {
-        this.position = nodePoint;
+        this.position = new Vector3f(nodePoint);
         this.type = type;
         this.direction = new Vector3f(direction);
     }
@@ -188,19 +188,10 @@ public class NetworkNode {
         NetworkNode aNode = trackPiece.getStartNode();
         NetworkNode bNode = trackPiece.getEndNode();
 
-        TrackPiece oldPiece = aNode.removeNode(bNode);
-        TrackPiece sameOldPiece = bNode.removeNode(aNode);
-
-        assert oldPiece == sameOldPiece :
-                "Nodes were mutually connected with a different track piece (" + oldPiece + " and " + sameOldPiece + ")";
-        assert oldPiece != null : "Invalid tracks between " + aNode + " and " + bNode;
-        assert oldPiece == trackPiece :
-                "Nodes were connected with double tracks: " + oldPiece + " and " + trackPiece;
-
         TrackType type = trackPiece.getType();
+        Vector3fc aStartDir = new Vector3f(trackPiece.getStartDirection()).negate();
 
-        Vector3fc aStartDir = new Vector3f(oldPiece.getStartDirection()).negate();
-        oldPiece.dispose();
+        removeTrack(trackPiece);
 
         TrackPiece aConnection = TrackPiece.getTrackPiece(
                 game, type, aNode, aStartDir, point
@@ -214,5 +205,21 @@ public class NetworkNode {
         game.state().addEntity(bConnection);
 
         return newNode;
+    }
+
+    public static void removeTrack(TrackPiece trackPiece) {
+        NetworkNode aNode = trackPiece.getStartNode();
+        NetworkNode bNode = trackPiece.getEndNode();
+
+        TrackPiece oldPiece = aNode.removeNode(bNode);
+        TrackPiece sameOldPiece = bNode.removeNode(aNode);
+
+        assert oldPiece == sameOldPiece :
+                "Nodes were mutually connected with a different track piece (" + oldPiece + " and " + sameOldPiece + ")";
+        assert oldPiece != null : "Invalid tracks between " + aNode + " and " + bNode;
+        assert oldPiece == trackPiece :
+                "Nodes were connected with double tracks: " + oldPiece + " and " + trackPiece;
+
+        trackPiece.dispose();
     }
 }

@@ -5,10 +5,10 @@ import NG.Core.Game;
 /**
  * @author Geert van Ieperen created on 27-1-2019.
  */
-public abstract class SurfaceBuildTool extends AbstractMouseTool {
+public abstract class ToggleMouseTool extends AbstractMouseTool {
     protected final Runnable deactivation;
 
-    public SurfaceBuildTool(Game game, Runnable deactivation) {
+    public ToggleMouseTool(Game game, Runnable deactivation) {
         super(game);
         this.deactivation = deactivation;
     }

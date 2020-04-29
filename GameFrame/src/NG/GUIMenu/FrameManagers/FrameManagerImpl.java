@@ -14,7 +14,6 @@ import NG.InputHandling.MouseDragListener;
 import NG.InputHandling.MouseReleaseListener;
 import NG.Tools.Logger;
 import org.joml.Vector2i;
-import org.joml.Vector2ic;
 
 import java.util.*;
 
@@ -103,17 +102,11 @@ public class FrameManagerImpl implements FrameGUIManager {
         int x = 50;
         int y = 50 + toolbarHeight;
 
-        // reposition frame not to overlap other frames (greedy)
-        for (Iterator<SFrame> iterator = frames.descendingIterator(); iterator.hasNext(); ) {
-            SFrame other = iterator.next();
-            if (other.isDisposed() || !other.isVisible()) continue;
+        SComponent component = getComponentAt(x, y);
+        while (component != null) {
+            x += component.getWidth();
 
-            Vector2ic otherPos = other.getScreenPosition();
-
-            if (otherPos.x() == x && otherPos.y() == y) {
-                x += 20;
-                y += 20; // MS windows-style
-            }
+            component = getComponentAt(x, y);
         }
 
         addFrame(frame, x, y);

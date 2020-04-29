@@ -3,19 +3,20 @@ package NG.Tracks;
 import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
-import NG.InputHandling.MouseTools.SurfaceBuildTool;
+import NG.InputHandling.MouseTools.ToggleMouseTool;
 import NG.Network.NetworkNode;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
 /**
  * @author Geert van Ieperen created on 16-12-2018.
  */
-public class TrackBuilder extends SurfaceBuildTool {
+public class TrackBuilder extends ToggleMouseTool {
     private final TrackType type;
     private NetworkNode firstNode;
     private Vector3fc firstPosition;
@@ -33,27 +34,32 @@ public class TrackBuilder extends SurfaceBuildTool {
 
     @Override
     public void apply(Vector3fc position, int xSc, int ySc) {
-        if (getButton() == GLFW_MOUSE_BUTTON_RIGHT) {
-            dispose();
-            return;
-        }
+        switch (getButton()) {
+            case GLFW_MOUSE_BUTTON_RIGHT:
+                dispose();
+                return;
 
-        Logger.DEBUG.print("Clicked on position " + Vectors.toString(position));
+            case GLFW_MOUSE_BUTTON_LEFT:
+                Logger.DEBUG.print("Clicked on position " + Vectors.toString(position));
 
-        if (firstNode != null) {
-            Logger.DEBUG.print("Placing track from " + Vectors.toString(firstNode.getPosition()) +
-                    " to " + Vectors.toString(position));
+                if (firstNode != null) {
+                    Logger.DEBUG.print("Placing track from " + Vectors.toString(firstNode.getPosition()) +
+                            " to " + Vectors.toString(position));
 
-            firstNode = NetworkNode.createNew(game, firstNode, position);
+                    firstNode = NetworkNode.createNew(game, firstNode, position);
 
-        } else if (firstPosition != null) {
-            TrackPiece trackConnection = NetworkNode.createNewTrack(game, type, firstPosition, position);
-            firstPosition = null;
-            firstNode = trackConnection.getEndNode();
+                } else if (firstPosition != null) {
+                    TrackPiece trackConnection = NetworkNode.createNewTrack(game, type, firstPosition, position);
+                    firstPosition = null;
+                    firstNode = trackConnection.getEndNode();
 
-        } else {
-            // TODO error message: you must connect to another track or a building of yours.
-            firstPosition = new Vector3f(position);
+                } else {
+                    // TODO error message: you must connect to another track or a building of yours.
+                    firstPosition = new Vector3f(position);
+                }
+
+                return;
+            default:
         }
     }
 

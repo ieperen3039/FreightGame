@@ -87,6 +87,7 @@ public class SToggleButton extends STextComponent implements MouseClickListener,
     public void setActive(boolean state) {
         if (this.state != state) {
             this.state = state;
+            this.isPressed = state;
 
             for (Consumer<Boolean> c : stateChangeListeners) {
                 c.accept(state);

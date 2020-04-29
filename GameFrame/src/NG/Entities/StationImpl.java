@@ -3,7 +3,8 @@ package NG.Entities;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.GUIMenu.Components.*;
-import NG.InputHandling.MouseTools.SurfaceBuildTool;
+import NG.GameState.Storage;
+import NG.InputHandling.MouseTools.ToggleMouseTool;
 import NG.Network.NetworkNode;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
@@ -26,10 +27,17 @@ import static NG.Tools.Vectors.sin;
  * A basic implementation of a station. There is likely no need for another station
  * @author Geert van Ieperen created on 27-1-2019.
  */
-public class BasicStation extends Station {
+public class StationImpl extends Storage implements Station {
     private static final float PLATFORM_SIZE = 2;
     private static final float WAGON_LENGTH = 3;
     public static final float HEIGHT = 0.1f;
+    private final String className = this.getClass().getSimpleName() + " " + (nr++);
+    private static int nr = 1;
+    protected String stationName = "X";
+    /** the position and orientation of the station */
+    protected float orientation = 0;
+    /** whether this station has been placed down. */
+    protected boolean isFixed = false;
 
     private int numberOfPlatforms;
     private int platformCapacity;
@@ -40,8 +48,9 @@ public class BasicStation extends Station {
     private NetworkNode[] backwardConnections;
     private TrackType type;
 
-    public BasicStation(Game game, int nrOfPlatforms, int length, TrackType type) {
-        super(game, new Vector3f());
+    public StationImpl(Game game, int nrOfPlatforms, int length, TrackType type) {
+        super(new Vector3f(), game);
+        this.game = game;
         assert nrOfPlatforms > 0 : "created station with " + nrOfPlatforms + " platforms";
         this.type = type;
 
@@ -65,10 +74,9 @@ public class BasicStation extends Station {
 
     }
 
-    @Override
     public void fixPosition() {
         assert numberOfPlatforms > 0 : "created station with " + numberOfPlatforms + " platforms";
-        super.fixPosition();
+        isFixed = true;
 
         Vector3fc forward = new Vector3f(cos(orientation), sin(orientation), 0).normalize(realLength / 2f);
 
@@ -76,13 +84,15 @@ public class BasicStation extends Station {
         backwardConnections = new NetworkNode[numberOfPlatforms];
 
         if (numberOfPlatforms > 1) {
-            Vector3fc toRight = new Vector3f(-sin(orientation), cos(orientation), 0).normalize(realWidth / 2f);
+            Vector3fc toRight = new Vector3f(sin(orientation), -cos(orientation), 0).normalize(realWidth / 2f);
             Vector3fc rightSkip = new Vector3f(toRight).normalize(PLATFORM_SIZE);
 
-            Vector3f frontPos = new Vector3f(getPosition()).sub(toRight)
+            Vector3f rightMiddle = new Vector3f(getPosition())
+                    .sub(toRight)
                     .add(rightSkip.x() / 2, rightSkip.y() / 2, getElevation());
-            Vector3f backPos = new Vector3f(frontPos).sub(forward);
-            frontPos.add(forward);
+
+            Vector3f backPos = new Vector3f(rightMiddle).sub(forward);
+            Vector3f frontPos = rightMiddle.add(forward);
 
             for (int i = 0; i < numberOfPlatforms; i++) {
                 TrackPiece trackConnection = NetworkNode.createNewTrack(game, type, frontPos, backPos);
@@ -136,23 +146,62 @@ public class BasicStation extends Station {
         return UpdateFrequency.NEVER;
     }
 
-    public static class Builder extends SurfaceBuildTool {
-        private static final String[] values = new String[12];
+    public void setOrientation(float orientation) {
+        if (isFixed) {
+            Logger.ERROR.print("Tried changing state of a fixed station");
+            return;
+        }
+
+        this.orientation = orientation;
+    }
+
+    @Override
+    public void setPosition(Vector3fc position) {
+        if (isFixed) {
+            Logger.ERROR.print("Tried changing state of a fixed station");
+            return;
+        }
+
+        super.setPosition(position);
+    }
+
+    @Override
+    public String toString() {
+        return className + " : " + stationName;
+    }
+
+    @Override
+    public void onClick(int button) {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            game.gui().addFrame(new StationUI());
+        }
+    }
+
+    protected class StationUI extends SFrame {
+        StationUI() {
+            super(StationImpl.this.toString(), 500, 300);
+
+            // add buttons etc.
+        }
+    }
+
+    public static class Builder extends ToggleMouseTool {
         private static final float EPSILON = 1 / 128f;
+        private static final String[] numbers = new String[12];
 
         static {
-            for (int i = 0; i < values.length; i++) {
-                values[i] = String.valueOf(i);
+            for (int i = 0; i < numbers.length; i++) {
+                numbers[i] = String.valueOf(i);
             }
         }
 
-        private final BasicStation station;
+        private final StationImpl station;
         private final SizeSelector selector;
         private boolean isPositioned = false;
 
         public Builder(Game game, SToggleButton source, TrackType trackType) {
             super(game, () -> source.setActive(false));
-            this.station = new BasicStation(game, 1, 3, trackType);
+            this.station = new StationImpl(game, 1, 3, trackType);
 
             selector = new SizeSelector();
             game.gui().addFrame(selector);
@@ -165,17 +214,17 @@ public class BasicStation extends Station {
 
         @Override
         public void dispose() {
-            super.dispose();
             selector.dispose();
+            super.dispose();
         }
 
         public void apply(Vector3fc position, int xSc, int ySc) {
-            if (getButton() != GLFW.GLFW_MOUSE_BUTTON_LEFT) return;
+            if (getButton() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+                station.setPosition(position);
+                game.state().addEntity(station);
 
-            station.setPosition(position);
-            game.state().addEntity(station);
-
-            isPositioned = true;
+                isPositioned = true;
+            }
         }
 
         @Override
@@ -212,23 +261,31 @@ public class BasicStation extends Station {
                 super("Station Size");
                 SPanel panel = new SPanel(2, 2);
 
-                SDropDown capacityChooser = new SDropDown(game.gui(), station.platformCapacity, values);
-                SDropDown widthChooser = new SDropDown(game.gui(), station.numberOfPlatforms, values);
+                SDropDown platformCapacityChooser = new SDropDown(game.gui(), station.platformCapacity, numbers);
+                SDropDown nrOfPlatormChooser = new SDropDown(game.gui(), station.numberOfPlatforms, numbers);
 
                 Consumer<Integer> changeListener = (i) -> station.setSize(
-                        capacityChooser.getSelectedIndex(), widthChooser.getSelectedIndex()
+                        nrOfPlatormChooser.getSelectedIndex(), platformCapacityChooser.getSelectedIndex()
                 );
 
-                capacityChooser.addStateChangeListener(changeListener);
-                widthChooser.addStateChangeListener(changeListener);
+                platformCapacityChooser.addStateChangeListener(changeListener);
+                nrOfPlatormChooser.addStateChangeListener(changeListener);
 
-                panel.add(new STextArea("Wagons per platform", capacityChooser.minHeight()), new Vector2i(0, 0));
-                panel.add(capacityChooser, new Vector2i(1, 0));
-                panel.add(new STextArea("Number of platforms", widthChooser.minHeight()), new Vector2i(0, 1));
-                panel.add(widthChooser, new Vector2i(1, 1));
+                panel.add(new STextArea("Wagons per platform", platformCapacityChooser.minHeight()), new Vector2i(0, 0));
+                panel.add(platformCapacityChooser, new Vector2i(1, 0));
+                panel.add(new STextArea("Number of platforms", nrOfPlatormChooser.minHeight()), new Vector2i(0, 1));
+                panel.add(nrOfPlatormChooser, new Vector2i(1, 1));
 
                 setMainPanel(panel);
                 pack();
+            }
+
+            @Override
+            public void dispose() {
+                if (!isDisposed()) {
+                    super.dispose();
+                    Builder.this.dispose();
+                }
             }
         }
     }
