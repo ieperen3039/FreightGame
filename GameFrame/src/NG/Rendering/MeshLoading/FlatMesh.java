@@ -35,13 +35,12 @@ public class FlatMesh extends AbstractMesh {
     ) {
         if (facesList.isEmpty()) return;
 
-        int faceSize = facesList.get(0).size();
         // Create position array in the order it has been declared. faces have (nOfEdges) vertices of 3 indices
-        int nrOf3VecElements = facesList.size() * 3 * faceSize;
-        setElementCount(nrOf3VecElements);
-        float[] posArr = new float[nrOf3VecElements];
-        float[] normArr = new float[nrOf3VecElements];
-        float[] colorArr = colorList == null ? null : new float[facesList.size() * 4 * faceSize];
+        int nrOfVecElements = facesList.size() * 3;
+        setElementCount(nrOfVecElements);
+        float[] posArr = new float[nrOfVecElements * 3];
+        float[] normArr = new float[nrOfVecElements * 3];
+        float[] colorArr = colorList == null ? null : new float[nrOfVecElements * 4];
 
         for (int i = 0; i < facesList.size(); i++) {
             Mesh.Face face = facesList.get(i);
@@ -81,7 +80,7 @@ public class FlatMesh extends AbstractMesh {
      */
     private void writeToGL(float[] positions, float[] normals, float[] colors) {
         if (getVAO() != 0) throw new IllegalStateException("Tried loading a mesh that was already loaded");
-        assert testAssumptions(positions, normals, colors);
+//        assert testAssumptions(positions, normals, colors);
 
         initMesh();
         // all 0's

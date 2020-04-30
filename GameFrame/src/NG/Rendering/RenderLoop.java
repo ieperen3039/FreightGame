@@ -128,7 +128,8 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
         int windowWidth = window.getWidth();
         int windowHeight = window.getHeight();
         if (accurateTiming) timeObserver.startTiming("GUI");
-        overlay.draw(windowWidth, windowHeight, 10, 50, 16);
+        game.settings();
+        overlay.draw(windowWidth, windowHeight, 10, Settings.TOOL_BAR_HEIGHT + 10, 12);
 
         if (accurateTiming) {
             glFinish();

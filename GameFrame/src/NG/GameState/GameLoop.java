@@ -2,10 +2,14 @@ package NG.GameState;
 
 import NG.Core.AbstractGameLoop;
 import NG.Core.Game;
+import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.MouseTools.MouseTool;
+import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.Shaders.MaterialShader;
+import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.Primitives.Collision;
 import org.joml.Vector3fc;
 
@@ -79,7 +83,15 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     public void draw(SGL gl) {
         entityReadLock.lock();
         try {
+            MaterialShader matShader = (d, s, r) -> {};
+
+            ShaderProgram shader = gl.getShader();
+            if (shader instanceof MaterialShader) {
+                matShader = (MaterialShader) shader;
+            }
+
             for (Entity entity : entities) {
+                matShader.setMaterial(Material.ROUGH, Color4f.MAGENTA);
                 entity.draw(gl);
             }
 

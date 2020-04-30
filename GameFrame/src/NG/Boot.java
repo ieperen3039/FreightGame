@@ -2,6 +2,7 @@ package NG;
 
 import NG.Core.FreightGame;
 import NG.Tools.Logger;
+import org.lwjgl.system.Configuration;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +18,7 @@ public class Boot {
 
         if (args.contains("-debug")) {
             Logger.setLoggingLevel(Logger.DEBUG);
+            Configuration.DEBUG.set(true);
 
         } else if (args.contains("-quiet")) {
             Logger.setLoggingLevel(Logger.ERROR);

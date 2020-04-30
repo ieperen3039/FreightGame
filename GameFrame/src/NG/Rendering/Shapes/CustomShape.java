@@ -161,7 +161,7 @@ public class CustomShape {
             throw new IllegalArgumentException("Customshape.addNormal(Vector3fc): invalid normal: " + normal);
         }
 
-        normals.add(normal);
+        normals.add(new Vector3f(normal));
         return normals.size() - 1;
     }
 

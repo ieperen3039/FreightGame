@@ -31,8 +31,8 @@ public final class NVGOverlay {
     private NVGColor nvgColorBuffer;
     private NVGPaint paint;
 
-    /* fontbuffer MUST be a field */
-    @SuppressWarnings("FieldCanBeLocal")
+
+    @SuppressWarnings("FieldCanBeLocal") /* fontbuffer MUST be a field */
     private final ByteBuffer[] fontBuffer = new ByteBuffer[NGFonts.values().length];
     private Map<Path, Integer> imageBuffer = new HashMap<>();
 
@@ -354,9 +354,11 @@ public final class NVGOverlay {
          *                  </tr></table>
          * @param color     the color of the text
          * @param text      the text to write
+         * @param maxWidth
          */
         public void text(
-                int x, int y, float size, NGFonts font, EnumSet<Alignment> alignment, Color4f color, String text
+                int x, int y, float size, NGFonts font, EnumSet<Alignment> alignment, Color4f color, String text,
+                float maxWidth
         ) {
             int alignFlags = getAlignFlags(alignment);
 
@@ -364,7 +366,7 @@ public final class NVGOverlay {
             nvgFontFace(vg, font.name);
             nvgTextAlign(vg, alignFlags);
             nvgFillColor(vg, toBuffer(color));
-            nvgText(vg, x, y, text);
+            nvgTextBox(vg, x, y, maxWidth, text);
 
             nvgFillColor(vg, toBuffer(fillColor));
         }
@@ -395,7 +397,7 @@ public final class NVGOverlay {
         public void printRoll(String text) {
             int y = yPrintRoll + ((printRollSize + 5) * printRollEntry);
 
-            text(xPrintRoll, y, printRollSize, NGFonts.LUCIDA_CONSOLE, EnumSet.of(Alignment.ALIGN_LEFT), textColor, text);
+            text(xPrintRoll, y, printRollSize, NGFonts.LUCIDA_CONSOLE, EnumSet.of(Alignment.ALIGN_LEFT), textColor, text, windowWidth - xPrintRoll);
             printRollEntry++;
         }
 

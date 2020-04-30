@@ -168,22 +168,22 @@ public class BaseLF implements SFrameLookAndFeel {
         switch (align) {
             case LEFT:
                 hud.text(x, y + (height / 2), actualSize,
-                        font, EnumSet.of(ALIGN_LEFT), textColor, text
+                        font, EnumSet.of(ALIGN_LEFT), textColor, text, width
                 );
                 break;
             case CENTER:
-                hud.text(x + (width / 2), y + (height / 2), actualSize,
-                        font, EnumSet.noneOf(NVGOverlay.Alignment.class), textColor, text
+                hud.text(x, y + (height / 2), actualSize,
+                        font, EnumSet.noneOf(NVGOverlay.Alignment.class), textColor, text, width
                 );
                 break;
             case CENTER_TOP:
-                hud.text(x + (width / 2), y, actualSize,
-                        font, EnumSet.of(ALIGN_TOP), textColor, text
+                hud.text(x, y, actualSize,
+                        font, EnumSet.of(ALIGN_TOP), textColor, text, width
                 );
                 break;
             case RIGHT:
-                hud.text(x + width, y + (height / 2), actualSize,
-                        font, EnumSet.of(ALIGN_RIGHT), textColor, text
+                hud.text(x, y + (height / 2), actualSize,
+                        font, EnumSet.of(ALIGN_RIGHT), textColor, text, width
                 );
                 break;
         }

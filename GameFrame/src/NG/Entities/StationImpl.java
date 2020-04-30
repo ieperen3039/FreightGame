@@ -2,9 +2,8 @@ package NG.Entities;
 
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
-import NG.GUIMenu.Components.*;
+import NG.GUIMenu.Components.SFrame;
 import NG.GameState.Storage;
-import NG.InputHandling.MouseTools.ToggleMouseTool;
 import NG.Network.NetworkNode;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
@@ -15,10 +14,9 @@ import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
-import org.joml.*;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.lwjgl.glfw.GLFW;
-
-import java.util.function.Consumer;
 
 import static NG.Tools.Vectors.cos;
 import static NG.Tools.Vectors.sin;
@@ -177,6 +175,14 @@ public class StationImpl extends Storage implements Station {
         }
     }
 
+    public int getPlatformCapacity() {
+        return platformCapacity;
+    }
+
+    public int getNumberOfPlatforms() {
+        return numberOfPlatforms;
+    }
+
     protected class StationUI extends SFrame {
         StationUI() {
             super(StationImpl.this.toString(), 500, 300);
@@ -185,107 +191,4 @@ public class StationImpl extends Storage implements Station {
         }
     }
 
-    public static class Builder extends ToggleMouseTool {
-        private static final float EPSILON = 1 / 128f;
-        private static final String[] numbers = new String[12];
-
-        static {
-            for (int i = 0; i < numbers.length; i++) {
-                numbers[i] = String.valueOf(i);
-            }
-        }
-
-        private final StationImpl station;
-        private final SizeSelector selector;
-        private boolean isPositioned = false;
-
-        public Builder(Game game, SToggleButton source, TrackType trackType) {
-            super(game, () -> source.setActive(false));
-            this.station = new StationImpl(game, 1, 3, trackType);
-
-            selector = new SizeSelector();
-            game.gui().addFrame(selector);
-        }
-
-        @Override
-        public void apply(Entity entity, int xSc, int ySc) {
-            // do nothing
-        }
-
-        @Override
-        public void dispose() {
-            selector.dispose();
-            super.dispose();
-        }
-
-        public void apply(Vector3fc position, int xSc, int ySc) {
-            switch (getMouseAction()) {
-                case PRESS_ACTIVATE:
-                    station.setPosition(position);
-                    game.state().addEntity(station);
-
-                    isPositioned = true;
-                    break;
-
-                case DRAG_ACTIVATE:
-                    if (!isPositioned) return;
-                    Vector3fc stationPos = station.getPosition();
-
-                    Rayf ray = Vectors.windowCoordToRay(game, xSc, ySc);
-
-                    // Planef plane = new Planef(station.getPosition(), Vectors.Z);
-                    // float f = Intersectionf.intersectRayPlane(ray, plane, EPSILON);
-                    float f = Intersectionf.intersectRayPlane(
-                            ray.oX, ray.oY, ray.oZ, ray.dX, ray.dY, ray.dZ,
-                            0, 0, 1, -stationPos.z(), EPSILON
-                    );
-                    Vector3f point = Vectors.getFromRay(ray, f);
-
-                    Vector2f direction = new Vector2f(point.x - stationPos.x(), point.y - stationPos.y());
-                    station.setOrientation(Vectors.arcTan(direction));
-            }
-        }
-
-        @Override
-        public void onRelease(int button, int xSc, int ySc) {
-            super.onRelease(button, xSc, ySc);
-            if (!isPositioned) return;
-            station.fixPosition();
-            dispose();
-        }
-
-        private class SizeSelector extends SFrame {
-            // TODO remember previous setting
-            SizeSelector() {
-                super("Station Size");
-                SPanel panel = new SPanel(2, 2);
-
-                SDropDown platformCapacityChooser = new SDropDown(game.gui(), station.platformCapacity, numbers);
-                SDropDown nrOfPlatormChooser = new SDropDown(game.gui(), station.numberOfPlatforms, numbers);
-
-                Consumer<Integer> changeListener = (i) -> station.setSize(
-                        nrOfPlatormChooser.getSelectedIndex(), platformCapacityChooser.getSelectedIndex()
-                );
-
-                platformCapacityChooser.addStateChangeListener(changeListener);
-                nrOfPlatormChooser.addStateChangeListener(changeListener);
-
-                panel.add(new STextArea("Wagons per platform", platformCapacityChooser.minHeight()), new Vector2i(0, 0));
-                panel.add(platformCapacityChooser, new Vector2i(1, 0));
-                panel.add(new STextArea("Number of platforms", nrOfPlatormChooser.minHeight()), new Vector2i(0, 1));
-                panel.add(nrOfPlatormChooser, new Vector2i(1, 1));
-
-                setMainPanel(panel);
-                pack();
-            }
-
-            @Override
-            public void dispose() {
-                if (!isDisposed()) {
-                    super.dispose();
-                    Builder.this.dispose();
-                }
-            }
-        }
-    }
 }
