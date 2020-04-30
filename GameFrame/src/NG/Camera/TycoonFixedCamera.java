@@ -18,7 +18,7 @@ public class TycoonFixedCamera implements Camera {
     private static final int SCREEN_DEAD_ZONE = 30;
 
     private static final float ZOOM_SPEED_LIMIT = 0.03f;
-    private static final float ROTATION_MODIFIER = 0.01f;
+    private static final float ROTATION_MODIFIER = 0.002f;
     private static final float MOVE_SPEED = 0.5f;
     private final Vector3f focus = new Vector3f();
     private final Vector3f eyeOffset;

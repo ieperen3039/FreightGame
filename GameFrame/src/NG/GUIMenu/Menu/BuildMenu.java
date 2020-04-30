@@ -1,7 +1,7 @@
 package NG.GUIMenu.Menu;
 
 import NG.Core.Game;
-import NG.Entities.StationImpl;
+import NG.Entities.StationBuilder;
 import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Components.SToggleButton;
@@ -25,7 +25,7 @@ public class BuildMenu extends SFrame {
         SToggleButton buildStation = new SToggleButton("Build Station", 250, 50);
         buildStation.addStateChangeListener(
                 (active) -> game.inputHandling()
-                        .setMouseTool(active ? new StationImpl.Builder(game, buildStation, trackType) : null)
+                        .setMouseTool(active ? new StationBuilder(game, buildStation, trackType) : null)
         );
 
         SToggleButton removeElement = new SToggleButton("Remove", 250, 50);

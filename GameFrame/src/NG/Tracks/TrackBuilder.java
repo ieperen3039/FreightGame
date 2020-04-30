@@ -11,6 +11,7 @@ import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * @author Geert van Ieperen created on 16-12-2018.
@@ -37,12 +38,18 @@ public class TrackBuilder extends ToggleMouseTool {
     }
 
     @Override
+    public void onClick(int button, int x, int y) {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+            dispose();
+
+        } else {
+            super.onClick(button, x, y);
+        }
+    }
+
+    @Override
     public void apply(Vector3fc position, int xSc, int ySc) {
         switch (getMouseAction()) {
-            case PRESS_DEACTIVATE:
-                dispose();
-                return;
-
             case PRESS_ACTIVATE:
                 Logger.DEBUG.print("Clicked on position " + Vectors.toString(position));
 
@@ -87,10 +94,6 @@ public class TrackBuilder extends ToggleMouseTool {
     @Override
     public void apply(Entity entity, int xSc, int ySc) {
         switch (getMouseAction()) {
-            case PRESS_DEACTIVATE:
-                dispose();
-                return;
-
             case PRESS_ACTIVATE:
                 Logger.DEBUG.print("Clicked on entity " + entity);
                 if (entity instanceof TrackPiece) {
