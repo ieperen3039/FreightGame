@@ -4,7 +4,7 @@ import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.GUIMenu.Components.SFrame;
 import NG.GameState.Storage;
-import NG.Network.NetworkNode;
+import NG.Network.RailNode;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
@@ -42,8 +42,8 @@ public class StationImpl extends Storage implements Station {
     private float realLength;
     private float realWidth;
 
-    private NetworkNode[] forwardConnections;
-    private NetworkNode[] backwardConnections;
+    private RailNode[] forwardConnections;
+    private RailNode[] backwardConnections;
     private TrackType type;
 
     public StationImpl(Game game, int nrOfPlatforms, int length, TrackType type) {
@@ -78,8 +78,8 @@ public class StationImpl extends Storage implements Station {
 
         Vector3fc forward = new Vector3f(cos(orientation), sin(orientation), 0).normalize(realLength / 2f);
 
-        forwardConnections = new NetworkNode[numberOfPlatforms];
-        backwardConnections = new NetworkNode[numberOfPlatforms];
+        forwardConnections = new RailNode[numberOfPlatforms];
+        backwardConnections = new RailNode[numberOfPlatforms];
 
         if (numberOfPlatforms > 1) {
             Vector3fc toRight = new Vector3f(sin(orientation), -cos(orientation), 0).normalize(realWidth / 2f);
@@ -93,7 +93,7 @@ public class StationImpl extends Storage implements Station {
             Vector3f frontPos = rightMiddle.add(forward);
 
             for (int i = 0; i < numberOfPlatforms; i++) {
-                TrackPiece trackConnection = NetworkNode.createNewTrack(game, type, frontPos, backPos);
+                TrackPiece trackConnection = RailNode.createNewTrack(game, type, frontPos, backPos);
 
                 forwardConnections[i] = trackConnection.getStartNode();
                 backwardConnections[i] = trackConnection.getEndNode();
@@ -106,7 +106,7 @@ public class StationImpl extends Storage implements Station {
             Vector3f frontPos = new Vector3f(getPosition()).add(forward).add(0, 0, getElevation());
             Vector3f backPos = new Vector3f(getPosition()).sub(forward).add(0, 0, getElevation());
 
-            TrackPiece trackConnection = NetworkNode.createNewTrack(game, type, frontPos, backPos);
+            TrackPiece trackConnection = RailNode.createNewTrack(game, type, frontPos, backPos);
 
             forwardConnections[0] = trackConnection.getStartNode();
             backwardConnections[0] = trackConnection.getEndNode();

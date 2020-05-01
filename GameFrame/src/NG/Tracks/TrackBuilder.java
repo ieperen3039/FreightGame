@@ -5,7 +5,7 @@ import NG.DataStructures.Generic.Pair;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.InputHandling.MouseTools.ToggleMouseTool;
-import NG.Network.NetworkNode;
+import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
@@ -18,7 +18,7 @@ import org.lwjgl.glfw.GLFW;
  */
 public class TrackBuilder extends ToggleMouseTool {
     private final TrackType type;
-    private NetworkNode firstNode;
+    private RailNode firstNode;
     private Vector3fc firstPosition;
 
     private final TrackTypeGhost ghostType;
@@ -57,10 +57,10 @@ public class TrackBuilder extends ToggleMouseTool {
                     Logger.DEBUG.print("Placing track from " + Vectors.toString(firstNode.getPosition()) +
                             " to " + Vectors.toString(position));
 
-                    firstNode = NetworkNode.createNew(game, firstNode, position);
+                    firstNode = RailNode.createNew(game, firstNode, position);
 
                 } else if (firstPosition != null) {
-                    TrackPiece trackConnection = NetworkNode.createNewTrack(game, type, firstPosition, position);
+                    TrackPiece trackConnection = RailNode.createNewTrack(game, type, firstPosition, position);
                     firstPosition = null;
                     firstNode = trackConnection.getEndNode();
 
@@ -75,14 +75,14 @@ public class TrackBuilder extends ToggleMouseTool {
 
                 if (firstNode != null) {
                     Vector3fc direction = firstNode.getDirectionTo(position);
-                    NetworkNode ghostNode = new NetworkNode(firstNode.getPosition(), ghostType, direction);
+                    RailNode ghostNode = new RailNode(firstNode.getPosition(), ghostType, direction);
                     ghostTrack1 = TrackPiece.getTrackPiece(
                             game, ghostType, ghostNode, direction, position
                     );
 
                 } else if (firstPosition != null) {
                     Vector3f toNode = new Vector3f(position).sub(firstPosition);
-                    NetworkNode ghostNode = new NetworkNode(firstPosition, ghostType, toNode);
+                    RailNode ghostNode = new RailNode(firstPosition, ghostType, toNode);
                     ghostTrack1 = TrackPiece.getTrackPiece(
                             game, ghostType, ghostNode, toNode, position
                     );
@@ -104,18 +104,18 @@ public class TrackBuilder extends ToggleMouseTool {
 
                     Vector3f closestPoint = trackPiece.closestPointOf(origin, direction);
 
-                    NetworkNode targetNode;
+                    RailNode targetNode;
                     if (game.keyControl().isControlPressed()) {
                         targetNode = getClosestNode(trackPiece, closestPoint);
                     } else {
-                        targetNode = NetworkNode.createSplit(game, trackPiece, closestPoint);
+                        targetNode = RailNode.createSplit(game, trackPiece, closestPoint);
                     }
 
                     if (firstNode == null) {
                         firstNode = targetNode;
 
                     } else {
-                        NetworkNode.createConnection(game, firstNode, targetNode);
+                        RailNode.createConnection(game, firstNode, targetNode);
                         firstNode = null;
                     }
                 }
@@ -137,15 +137,15 @@ public class TrackBuilder extends ToggleMouseTool {
 
                     } else {
                         Vector3fc fDirection = firstNode.getDirectionTo(closestPoint);
-                        NetworkNode ghostNodeFirst = new NetworkNode(firstNode.getPosition(), ghostType, fDirection);
+                        RailNode ghostNodeFirst = new RailNode(firstNode.getPosition(), ghostType, fDirection);
 
-                        NetworkNode ghostNodeTarget;
+                        RailNode ghostNodeTarget;
                         if (game.keyControl().isControlPressed()) {
                             ghostNodeTarget = getClosestNode(trackPiece, closestPoint);
 
                         } else {
                             Vector3f dir = trackPiece.getDirectionFromFraction(fraction);
-                            ghostNodeTarget = new NetworkNode(closestPoint, ghostType, dir);
+                            ghostNodeTarget = new RailNode(closestPoint, ghostType, dir);
                         }
 
                         Vector3fc tDirection = ghostNodeTarget.getDirectionTo(ghostNodeFirst.getPosition());
@@ -173,13 +173,13 @@ public class TrackBuilder extends ToggleMouseTool {
         }
     }
 
-    private static NetworkNode getClosestNode(TrackPiece trackPiece, Vector3f point) {
-        NetworkNode startNode = trackPiece.getStartNode();
-        NetworkNode endNode = trackPiece.getEndNode();
+    private static RailNode getClosestNode(TrackPiece trackPiece, Vector3f point) {
+        RailNode startNode = trackPiece.getStartNode();
+        RailNode endNode = trackPiece.getEndNode();
         float distToStart = point.distanceSquared(startNode.getPosition());
         float distToEnd = point.distanceSquared(endNode.getPosition());
 
-        NetworkNode targetNode;
+        RailNode targetNode;
         if (distToStart < distToEnd) {
             targetNode = startNode;
 

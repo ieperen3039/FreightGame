@@ -3,7 +3,7 @@ package NG.Tracks;
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.InputHandling.ClickShader;
-import NG.Network.NetworkNode;
+import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Rendering.Shaders.MaterialShader;
@@ -20,8 +20,8 @@ import org.joml.*;
 public class CircleTrack extends AbstractGameObject implements TrackPiece {
     private static final float EPSILON = 1 / 256f;
     private final TrackType type;
-    private final NetworkNode startNode;
-    private final NetworkNode endNode;
+    private final RailNode startNode;
+    private final RailNode endNode;
 
     /** middle of the circle describing the track */
     private final Vector3fc center;
@@ -46,7 +46,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
      * @param endPosition    the point where this track should end
      */
     public CircleTrack(
-            Game game, TrackType type, NetworkNode startNode, Vector3fc startDirection, Vector3fc endPosition
+            Game game, TrackType type, RailNode startNode, Vector3fc startDirection, Vector3fc endPosition
     ) {
         this(game, type, startNode, startDirection, endPosition, null);
     }
@@ -60,14 +60,14 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
      * @param endNode        point B where this track should end
      */
     public CircleTrack(
-            Game game, TrackType type, NetworkNode startNode, Vector3fc startDirection, NetworkNode endNode
+            Game game, TrackType type, RailNode startNode, Vector3fc startDirection, RailNode endNode
     ) {
         this(game, type, startNode, startDirection, endNode.getPosition(), endNode);
     }
 
     private CircleTrack(
-            Game game, TrackType type, NetworkNode startNode, Vector3fc startDirection, Vector3fc endPosition,
-            NetworkNode optionalEndNode
+            Game game, TrackType type, RailNode startNode, Vector3fc startDirection, Vector3fc endPosition,
+            RailNode optionalEndNode
     ) {
         super(game);
         this.type = type;
@@ -107,7 +107,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         mesh = new GeneratorResource<>(() -> type.generateCircle(radius, angle, heightDiff), Mesh::dispose);
         clickBox = new GeneratorResource<>(() -> TrackType.clickBoxCircle(radius, angle, heightDiff), Mesh::dispose);
 
-        this.endNode = (optionalEndNode != null) ? optionalEndNode : new NetworkNode(endPosition, type, getEndDirection());
+        this.endNode = (optionalEndNode != null) ? optionalEndNode : new RailNode(endPosition, type, getEndDirection());
         startNode.addNode(this.endNode, this);
         this.endNode.addNode(startNode, this);
     }
@@ -221,11 +221,11 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         return type;
     }
 
-    public NetworkNode getStartNode() {
+    public RailNode getStartNode() {
         return startNode;
     }
 
-    public NetworkNode getEndNode() {
+    public RailNode getEndNode() {
         return endNode;
     }
 

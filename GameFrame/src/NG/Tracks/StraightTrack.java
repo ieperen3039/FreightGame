@@ -3,7 +3,7 @@ package NG.Tracks;
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.InputHandling.ClickShader;
-import NG.Network.NetworkNode;
+import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Rendering.Shaders.MaterialShader;
@@ -19,8 +19,8 @@ import org.joml.Vector3fc;
 public class StraightTrack extends AbstractGameObject implements TrackPiece {
     private final TrackType type;
 
-    private final NetworkNode startNode;
-    private final NetworkNode endNode;
+    private final RailNode startNode;
+    private final RailNode endNode;
 
     private final Vector3fc direction;
     private final float length;
@@ -38,7 +38,7 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
      * @param endNodePosition the position of the new end node
      */
     public StraightTrack(
-            Game game, TrackType type, NetworkNode startNode, Vector3fc endNodePosition
+            Game game, TrackType type, RailNode startNode, Vector3fc endNodePosition
     ) {
         super(game);
         this.type = type;
@@ -46,7 +46,7 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
         Vector3fc displacement = new Vector3f(endNodePosition).sub(startNode.getPosition());
         this.length = displacement.length();
         this.direction = new Vector3f(displacement).div(length);
-        this.endNode = new NetworkNode(endNodePosition, type, direction);
+        this.endNode = new RailNode(endNodePosition, type, direction);
 
         this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
         this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
@@ -62,7 +62,7 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
      * @param endNode
      */
     public StraightTrack(
-            Game game, TrackType type, NetworkNode startNode, NetworkNode endNode
+            Game game, TrackType type, RailNode startNode, RailNode endNode
     ) {
         super(game);
         this.type = type;
@@ -142,12 +142,12 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     }
 
     @Override
-    public NetworkNode getStartNode() {
+    public RailNode getStartNode() {
         return startNode;
     }
 
     @Override
-    public NetworkNode getEndNode() {
+    public RailNode getEndNode() {
         return endNode;
     }
 

@@ -6,7 +6,7 @@ import NG.Entities.Station;
 import NG.Entities.StationImpl;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.InputHandling.MouseTools.ToggleMouseTool;
-import NG.Network.NetworkNode;
+import NG.Network.RailNode;
 import org.joml.Vector3fc;
 
 /**
@@ -20,7 +20,7 @@ public class Remover extends ToggleMouseTool {
     @Override
     public void apply(Entity entity, int xSc, int ySc) {
         if (entity instanceof TrackPiece) {
-            NetworkNode.removeTrack((TrackPiece) entity);
+            RailNode.removeTrack((TrackPiece) entity);
 
         } else if (entity instanceof StationImpl) {
             Station station = (Station) entity;

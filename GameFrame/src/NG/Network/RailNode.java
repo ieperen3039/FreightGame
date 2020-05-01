@@ -14,10 +14,10 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * A single node from the train network.
+ * A node that connects two track pieces together
  * @author Geert van Ieperen created on 16-12-2018.
  */
-public class NetworkNode {
+public class RailNode {
     /*
      * Representation Invariants
      * for all NetworkNodes n in aNodes {
@@ -30,8 +30,8 @@ public class NetworkNode {
      * }
      */
 
-    private final List<NetworkNode> aNodes = new ArrayList<>(1);
-    private final List<NetworkNode> bNodes = new ArrayList<>(1);
+    private final List<RailNode> aNodes = new ArrayList<>(1);
+    private final List<RailNode> bNodes = new ArrayList<>(1);
     private final List<TrackPiece> aTracks = new ArrayList<>(1);
     private final List<TrackPiece> bTracks = new ArrayList<>(1);
     private final Vector3fc direction;
@@ -41,13 +41,13 @@ public class NetworkNode {
     /** type of tracks that this node connects */
     private final TrackType type;
 
-    public NetworkNode(Vector3fc nodePoint, TrackType type, Vector3fc direction) {
+    public RailNode(Vector3fc nodePoint, TrackType type, Vector3fc direction) {
         this.position = new Vector3f(nodePoint);
         this.type = type;
         this.direction = new Vector3f(direction);
     }
 
-    public NetworkNode(NetworkNode target) {
+    public RailNode(RailNode target) {
         this(target.position, target.type, target.direction);
     }
 
@@ -55,11 +55,11 @@ public class NetworkNode {
      * @param other another node
      * @return the direction of track leaving this node if it were to connect to other
      */
-    public Vector3fc getDirectionTo(NetworkNode other) {
+    public Vector3fc getDirectionTo(RailNode other) {
         return isSameDirection(other) ? direction : new Vector3f(direction).negate();
     }
 
-    private boolean isSameDirection(NetworkNode other) {
+    private boolean isSameDirection(RailNode other) {
         Vector3f thisToOther = new Vector3f(other.position).sub(position);
         return thisToOther.dot(direction) > 0;
     }
@@ -69,7 +69,7 @@ public class NetworkNode {
      * @param newNode the new node to add
      * @param track   the track that connects these two nodes
      */
-    public void addNode(NetworkNode newNode, TrackPiece track) {
+    public void addNode(RailNode newNode, TrackPiece track) {
         if (isSameDirection(newNode)) {
             aNodes.add(newNode);
             aTracks.add(track);
@@ -87,7 +87,7 @@ public class NetworkNode {
      * @return the track connecting the two nodes iff the target was indeed connected to this node, and has now been
      * removed. If there is no such connection, this returns null
      */
-    protected TrackPiece removeNode(NetworkNode target) {
+    protected TrackPiece removeNode(RailNode target) {
         int i = aNodes.indexOf(target);
         if (i != -1) {
             aNodes.remove(i);
@@ -109,7 +109,7 @@ public class NetworkNode {
      * @param previous the node you just left
      * @return the logical next node on the track
      */
-    public Collection<NetworkNode> getNext(NetworkNode previous) {
+    public Collection<RailNode> getNext(RailNode previous) {
         if (aNodes.contains(previous)) {
             return bNodes;
 
@@ -144,7 +144,7 @@ public class NetworkNode {
      */
     public static TrackPiece createNewTrack(Game game, TrackType type, Vector3fc aPosition, Vector3fc bPosition) {
         Vector3f AToB = new Vector3f(bPosition).sub(aPosition);
-        NetworkNode A = new NetworkNode(aPosition, type, AToB);
+        RailNode A = new RailNode(aPosition, type, AToB);
 
         TrackPiece trackConnection = TrackPiece.getTrackPiece(
                 game, A.type, A, AToB, bPosition
@@ -160,7 +160,7 @@ public class NetworkNode {
      * @param newPosition the position of the new node
      * @return the new node
      */
-    public static NetworkNode createNew(Game game, NetworkNode node, Vector3fc newPosition) {
+    public static RailNode createNew(Game game, RailNode node, Vector3fc newPosition) {
         TrackPiece trackConnection = TrackPiece.getTrackPiece(
                 game, node.type, node, node.getDirectionTo(newPosition), newPosition
         );
@@ -177,7 +177,7 @@ public class NetworkNode {
      * @param bNode another node to connect
      * @return the node that had to be created to connect the two nodes.
      */
-    public static NetworkNode createConnection(Game game, NetworkNode aNode, NetworkNode bNode) {
+    public static RailNode createConnection(Game game, RailNode aNode, RailNode bNode) {
         Pair<TrackPiece, TrackPiece> trackPieces = TrackPiece.getTrackPiece(
                 game, aNode.type, aNode, aNode.getDirectionTo(bNode), bNode, bNode.getDirectionTo(aNode)
         );
@@ -188,9 +188,9 @@ public class NetworkNode {
         return trackPieces.left.getEndNode();
     }
 
-    public static NetworkNode createSplit(Game game, TrackPiece trackPiece, Vector3f point) {
-        NetworkNode aNode = trackPiece.getStartNode();
-        NetworkNode bNode = trackPiece.getEndNode();
+    public static RailNode createSplit(Game game, TrackPiece trackPiece, Vector3f point) {
+        RailNode aNode = trackPiece.getStartNode();
+        RailNode bNode = trackPiece.getEndNode();
 
         TrackType type = trackPiece.getType();
         Vector3fc aStartDir = new Vector3f(trackPiece.getStartDirection()).negate();
@@ -202,7 +202,7 @@ public class NetworkNode {
         );
         game.state().addEntity(aConnection);
 
-        NetworkNode newNode = aConnection.getEndNode();
+        RailNode newNode = aConnection.getEndNode();
         TrackPiece bConnection = TrackPiece.getTrackPiece(
                 game, type, newNode, aConnection.getEndDirection(), bNode
         );
@@ -212,8 +212,8 @@ public class NetworkNode {
     }
 
     public static void removeTrack(TrackPiece trackPiece) {
-        NetworkNode aNode = trackPiece.getStartNode();
-        NetworkNode bNode = trackPiece.getEndNode();
+        RailNode aNode = trackPiece.getStartNode();
+        RailNode bNode = trackPiece.getEndNode();
 
         TrackPiece oldPiece = aNode.removeNode(bNode);
         TrackPiece sameOldPiece = bNode.removeNode(aNode);

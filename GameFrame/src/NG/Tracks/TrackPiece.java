@@ -3,7 +3,7 @@ package NG.Tracks;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Pair;
 import NG.Entities.Entity;
-import NG.Network.NetworkNode;
+import NG.Network.RailNode;
 import NG.Tools.Logger;
 import org.joml.Math;
 import org.joml.*;
@@ -28,9 +28,9 @@ public interface TrackPiece extends Entity {
 
     TrackType getType();
 
-    NetworkNode getStartNode();
+    RailNode getStartNode();
 
-    NetworkNode getEndNode();
+    RailNode getEndNode();
 
     /**
      * gives the normalized direction of the track at the endNodePoint pointing outward.
@@ -84,7 +84,7 @@ public interface TrackPiece extends Entity {
      * @see CircleTrack
      */
     static TrackPiece getTrackPiece(
-            Game game, TrackType type, NetworkNode aNode, Vector3fc aDirection, Vector3fc endPosition
+            Game game, TrackType type, RailNode aNode, Vector3fc aDirection, Vector3fc endPosition
     ) {
         Vector3fc aPos = aNode.getPosition();
         Vector2f relPosB = new Vector2f(endPosition.x() - aPos.x(), endPosition.y() - aPos.y());
@@ -117,7 +117,7 @@ public interface TrackPiece extends Entity {
      * @see CircleTrack
      */
     static TrackPiece getTrackPiece(
-            Game game, TrackType type, NetworkNode aNode, Vector3fc aDirection, NetworkNode bNode
+            Game game, TrackType type, RailNode aNode, Vector3fc aDirection, RailNode bNode
     ) {
         assert aDirection.lengthSquared() > 0;
 
@@ -156,8 +156,8 @@ public interface TrackPiece extends Entity {
      * @see CircleTrack
      */
     static Pair<TrackPiece, TrackPiece> getTrackPiece(
-            Game game, TrackType type, NetworkNode aNode, Vector3fc aDirection,
-            NetworkNode bNode, Vector3fc bDirection
+            Game game, TrackType type, RailNode aNode, Vector3fc aDirection,
+            RailNode bNode, Vector3fc bDirection
     ) {
         Vector3fc bPos = bNode.getPosition();
         Vector3fc aPos = aNode.getPosition();
