@@ -50,9 +50,6 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
 
         this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
         this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
-
-        startNode.addNode(endNode, this);
-        endNode.addNode(startNode, this);
     }
 
     /**
@@ -74,14 +71,11 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
 
         this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
         this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
-
-        startNode.addNode(endNode, this);
-        endNode.addNode(startNode, this);
     }
 
     @Override
     public void update() {
-        doRenderClickBox(game.keyControl().isShiftPressed());
+        this.renderClickBox = game.keyControl().isShiftPressed();
     }
 
     @Override
@@ -152,28 +146,6 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     }
 
     @Override
-    public Vector3fc getEndDirection() {
-        return direction;
-    }
-
-    @Override
-    public Vector3fc getStartDirection() {
-        return new Vector3f(direction).negate();
-    }
-
-    @Override
-    public Vector3f getPositionFromDistance(float distanceFromStart) {
-        return new Vector3f(direction)
-                .mul(distanceFromStart)
-                .add(startNode.getPosition());
-    }
-
-    @Override
-    public Vector3f getDirectionFromDistance(float distanceFromStart) {
-        return new Vector3f(direction);
-    }
-
-    @Override
     public float getLength() {
         return length;
     }
@@ -183,7 +155,10 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
         return new Vector3f(direction);
     }
 
-    public void doRenderClickBox(boolean renderClickBox) {
-        this.renderClickBox = renderClickBox;
+    @Override
+    public Vector3f getPositionFromFraction(float fraction) {
+        return new Vector3f(direction)
+                .mul(fraction * length)
+                .add(startNode.getPosition());
     }
 }

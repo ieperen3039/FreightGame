@@ -71,7 +71,7 @@ public final class Vectors {
         float phi = Toolbox.random.nextFloat() * 6.2832f;
         float costheta = (Toolbox.random.nextFloat() * 2) - 1;
 
-        float theta = (float) Math.acos(costheta);
+        float theta = Math.acos(costheta);
         float r = (float) java.lang.Math.cbrt(Toolbox.random.nextFloat());
 
         float x = (r * sin(theta) * cos(phi));
@@ -113,20 +113,24 @@ public final class Vectors {
 
     // a few mathematical shortcuts
     public static float cos(float theta) {
-        return (float) Math.cos(theta);
+        return Math.cos(theta);
     }
 
     public static float sin(float theta) {
-        return (float) Math.sin(theta);
+        return Math.sin(theta);
     }
 
     /**
+     * Returns the angle <i>theta</i> from the conversion of rectangular coordinates ({@code x},&nbsp;{@code y}) to
+     * polar coordinates (r,&nbsp;<i>theta</i>). This method computes the phase <i>theta</i> by computing an arc tangent
+     * of {@code y/x} in the range of -<i>pi</i> to <i>pi</i>.
      * @param vector any vector
      * @return theta such that a vector with {@code x = {@link #cos(float)}} and {@code y = {@link #sin(float)}} gives
      * {@code vector}, normalized.
+     * @see java.lang.Math#atan2(double, double)
      */
     public static float arcTan(Vector2fc vector) {
-        return (float) Math.atan2(vector.y(), vector.x());
+        return Math.atan2(vector.y(), vector.x());
     }
 
     /**
@@ -310,6 +314,7 @@ public final class Vectors {
         Vector2f winCoords = new Vector2f(xSc, windowHeight - ySc);
         int[] viewport = {0, 0, windowWidth, windowHeight};
         projection.unprojectRay(winCoords, viewport, origin, direction);
+        direction.normalize();
     }
 
     public static Rayf windowCoordToRay(Game game, int xSc, int ySc) {

@@ -18,13 +18,16 @@ public class Boot {
 
         if (args.contains("-debug")) {
             Logger.setLoggingLevel(Logger.DEBUG);
-            Configuration.DEBUG.set(true);
 
         } else if (args.contains("-quiet")) {
             Logger.setLoggingLevel(Logger.ERROR);
 
         } else {
             Logger.setLoggingLevel(Logger.INFO);
+        }
+
+        if (args.contains("-lwjgl-debug")) {
+            Configuration.DEBUG.set(true);
         }
 
         new FreightGame().root();

@@ -6,6 +6,7 @@ import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.InputHandling.MouseTools.ToggleMouseTool;
 import NG.Network.RailNode;
+import NG.Network.RailTools;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
@@ -57,10 +58,10 @@ public class TrackBuilder extends ToggleMouseTool {
                     Logger.DEBUG.print("Placing track from " + Vectors.toString(firstNode.getPosition()) +
                             " to " + Vectors.toString(position));
 
-                    firstNode = RailNode.createNew(game, firstNode, position);
+                    firstNode = RailTools.createNew(game, firstNode, position);
 
                 } else if (firstPosition != null) {
-                    TrackPiece trackConnection = RailNode.createNewTrack(game, type, firstPosition, position);
+                    TrackPiece trackConnection = RailTools.createNewTrack(game, type, firstPosition, position);
                     firstPosition = null;
                     firstNode = trackConnection.getEndNode();
 
@@ -76,14 +77,14 @@ public class TrackBuilder extends ToggleMouseTool {
                 if (firstNode != null) {
                     Vector3fc direction = firstNode.getDirectionTo(position);
                     RailNode ghostNode = new RailNode(firstNode.getPosition(), ghostType, direction);
-                    ghostTrack1 = TrackPiece.getTrackPiece(
+                    ghostTrack1 = RailTools.getTrackPiece(
                             game, ghostType, ghostNode, direction, position
                     );
 
                 } else if (firstPosition != null) {
                     Vector3f toNode = new Vector3f(position).sub(firstPosition);
                     RailNode ghostNode = new RailNode(firstPosition, ghostType, toNode);
-                    ghostTrack1 = TrackPiece.getTrackPiece(
+                    ghostTrack1 = RailTools.getTrackPiece(
                             game, ghostType, ghostNode, toNode, position
                     );
                 }
@@ -102,20 +103,27 @@ public class TrackBuilder extends ToggleMouseTool {
                     Vector3f direction = new Vector3f();
                     Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
 
-                    Vector3f closestPoint = trackPiece.closestPointOf(origin, direction);
+                    float fraction = trackPiece.getFractionOfClosest(origin, direction);
 
                     RailNode targetNode;
                     if (game.keyControl().isControlPressed()) {
-                        targetNode = getClosestNode(trackPiece, closestPoint);
+                        if (fraction < 0.5f) {
+                            targetNode = trackPiece.getStartNode();
+                        } else {
+                            targetNode = trackPiece.getEndNode();
+                        }
                     } else {
-                        targetNode = RailNode.createSplit(game, trackPiece, closestPoint);
+                        if (!(fraction >= 0) || !(fraction <= 1)) {
+                            throw new AssertionError(fraction);
+                        }
+                        targetNode = RailTools.createSplit(game, trackPiece, fraction);
                     }
 
                     if (firstNode == null) {
                         firstNode = targetNode;
 
                     } else {
-                        RailNode.createConnection(game, firstNode, targetNode);
+                        RailTools.createConnection(game, firstNode, targetNode);
                         firstNode = null;
                     }
                 }
@@ -130,6 +138,8 @@ public class TrackBuilder extends ToggleMouseTool {
                     Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
 
                     float fraction = trackPiece.getFractionOfClosest(origin, direction);
+                    if (fraction < 0 || fraction > 1) return;
+
                     Vector3f closestPoint = trackPiece.getPositionFromFraction(fraction);
 
                     if (firstNode == null) {
@@ -148,9 +158,8 @@ public class TrackBuilder extends ToggleMouseTool {
                             ghostNodeTarget = new RailNode(closestPoint, ghostType, dir);
                         }
 
-                        Vector3fc tDirection = ghostNodeTarget.getDirectionTo(ghostNodeFirst.getPosition());
-                        Pair<TrackPiece, TrackPiece> trackPieces = TrackPiece.getTrackPiece(
-                                game, ghostType, ghostNodeFirst, fDirection, ghostNodeTarget, tDirection
+                        Pair<TrackPiece, TrackPiece> trackPieces = RailTools.getTrackPiece(
+                                game, ghostType, ghostNodeFirst, ghostNodeTarget
                         );
 
                         ghostTrack1 = trackPieces.left;

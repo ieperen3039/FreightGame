@@ -100,21 +100,22 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
 
         float absAngle = Vectors.angle(vecToStart, vecToEnd);
         angle = isClockwise ? -absAngle : absAngle;
-        startTheta = Vectors.arcTan(vecToStart);
+        float arcTan = Vectors.arcTan(vecToStart);
+        if (arcTan < 0) arcTan += 2 * Math.PI;
+
+        startTheta = arcTan;
         endTheta = startTheta + angle;
 
         heightDiff = endPosition.z() - startPosition.z();
         mesh = new GeneratorResource<>(() -> type.generateCircle(radius, angle, heightDiff), Mesh::dispose);
         clickBox = new GeneratorResource<>(() -> TrackType.clickBoxCircle(radius, angle, heightDiff), Mesh::dispose);
 
-        this.endNode = (optionalEndNode != null) ? optionalEndNode : new RailNode(endPosition, type, getEndDirection());
-        startNode.addNode(this.endNode, this);
-        this.endNode.addNode(startNode, this);
+        this.endNode = (optionalEndNode != null) ? optionalEndNode : new RailNode(endPosition, type, angleToDirection(endTheta));
     }
 
     @Override
     public void update() {
-        doRenderClickBox(game.keyControl().isShiftPressed());
+        this.renderClickBox = game.keyControl().isShiftPressed();
     }
 
     @Override
@@ -148,47 +149,41 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     }
 
     @Override
-    public Vector3f getPositionFromDistance(float distanceFromStart) {
-        float fraction = distanceFromStart / getLength();
-        if (fraction < 0 || fraction > 1) return null;
-        return getPositionFromFraction(fraction);
-    }
-
-    @Override
-    public Vector3f getDirectionFromDistance(float distanceFromStart) {
-        float targetAngle = angle * (distanceFromStart / getLength());
-        return getDirectionFromAngle(targetAngle);
-    }
-
-    @Override
     public float getLength() {
         return Math.abs(radius * angle);
     }
 
-    public Vector3f getDirectionFromAngle(float targetAngle) {
-        float dx = -Math.sin(targetAngle);
-        float dy = Math.cos(targetAngle);
-        float dz = heightDiff / (radius * angle);
-
-        if (isClockwise()) {
-            return new Vector3f(-dx, -dy, dz);
-        } else {
-            return new Vector3f(dx, dy, dz);
-        }
-    }
-
+    @Override
     public Vector3f getPositionFromFraction(float fraction) {
+        assert (fraction >= 0 && fraction <= 1) : fraction;
+
         float currentAngle = (fraction * angle) + startTheta;
 
         float dx = Math.cos(currentAngle) * radius;
         float dy = Math.sin(currentAngle) * radius;
         float dz = fraction * heightDiff;
+
         return new Vector3f(center).add(dx, dy, dz);
     }
 
     @Override
     public Vector3f getDirectionFromFraction(float fraction) {
-        return getDirectionFromAngle(fraction * angle);
+        assert (fraction >= 0 && fraction <= 1) : fraction;
+
+        float targetAngle = (fraction * angle) + startTheta;
+        return angleToDirection(targetAngle);
+    }
+
+    private Vector3f angleToDirection(float absoluteAngle) {
+        float dx = -Math.sin(absoluteAngle);
+        float dy = Math.cos(absoluteAngle);
+        float dz = heightDiff / (radius * angle);
+
+        if (!isClockwise()) {
+            return new Vector3f(-dx, -dy, -dz);
+        } else {
+            return new Vector3f(dx, dy, dz);
+        }
     }
 
     @Override
@@ -203,10 +198,17 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
 
     @Override
     public float getFractionOfClosest(Vector3fc origin, Vector3fc direction) {
-        float t = Intersectionf.intersectRayPlane(origin, direction, center, Vectors.Z, EPSILON);
+        float t = (center.z() - origin.z()) / direction.z();
         Vector3f rayPoint = new Vector3f(direction).mul(t).add(origin);
         Vector3f vecToPoint = rayPoint.sub(center);
         float currentAngle = Vectors.arcTan(new Vector2f(vecToPoint.x, vecToPoint.y));
+
+        if (currentAngle < Math.min(startTheta, endTheta)) {
+            currentAngle += (Math.PI * 2);
+        }
+        if (currentAngle > Math.max(startTheta, endTheta)) {
+            currentAngle -= (Math.PI * 2);
+        }
 
         // float currentAngle = (fraction * angle) + startTheta;
         return (currentAngle - startTheta) / angle;
@@ -229,20 +231,6 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         return endNode;
     }
 
-    @Override
-    public Vector3fc getStartDirection() {
-        return getDirectionFromAngle(startTheta);
-    }
-
-    @Override
-    public Vector3fc getEndDirection() {
-        return getDirectionFromAngle(endTheta).negate();
-    }
-
-    @Override
-    public void doRenderClickBox(boolean renderClickBox) {
-        this.renderClickBox = renderClickBox;
-    }
 }
 
 /* derivation of radius calculation

@@ -3,12 +3,12 @@ package NG.GUIMenu.Menu;
 import NG.Camera.Camera;
 import NG.Core.Game;
 import NG.Core.ModLoader;
-import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Cube;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.*;
 import NG.GameState.MapGeneratorMod;
 import NG.Mods.Mod;
+import NG.Settings.Settings;
 import NG.Tracks.TrackType;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
@@ -58,6 +58,7 @@ public class MainMenu extends SFrame {
     }
 
     private void testWorld() {
+        Settings settings = game.settings();
         int xSize = 100;
         int ySize = 100;
 
@@ -85,7 +86,8 @@ public class MainMenu extends SFrame {
         Entity cube = new Cube(game, pos);
         game.state().addEntity(cube);
 
-        game.lights().addDirectionalLight(new Vector3f(1, 1.5f, 0.5f), Color4f.WHITE, 0.5f);
+        game.lights()
+                .addDirectionalLight(new Vector3f(1, 1.5f, 0.5f), settings.SUNLIGHT_COLOR, settings.SUNLIGHT_INTENSITY);
 
         SToolBar toolBar = new SToolBar(game, true);
         for (TrackType trackType : game.objectTypes().getTrackTypes()) {

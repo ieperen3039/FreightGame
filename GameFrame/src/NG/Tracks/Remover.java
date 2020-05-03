@@ -6,7 +6,7 @@ import NG.Entities.Station;
 import NG.Entities.StationImpl;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.InputHandling.MouseTools.ToggleMouseTool;
-import NG.Network.RailNode;
+import NG.Network.RailTools;
 import org.joml.Vector3fc;
 
 /**
@@ -19,12 +19,15 @@ public class Remover extends ToggleMouseTool {
 
     @Override
     public void apply(Entity entity, int xSc, int ySc) {
-        if (entity instanceof TrackPiece) {
-            RailNode.removeTrack((TrackPiece) entity);
+        switch (getMouseAction()) {
+            case PRESS_ACTIVATE:
+                if (entity instanceof TrackPiece) {
+                    RailTools.removeTrackPiece((TrackPiece) entity);
 
-        } else if (entity instanceof StationImpl) {
-            Station station = (Station) entity;
-            station.dispose();
+                } else if (entity instanceof StationImpl) {
+                    Station station = (Station) entity;
+                    station.dispose();
+                }
         }
     }
 

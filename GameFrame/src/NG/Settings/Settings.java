@@ -44,4 +44,6 @@ public class Settings {
 
     // in-game appearance settings
     public Color4f AMBIENT_LIGHT = new Color4f(1, 1, 1, 0.2f);
+    public Color4f SUNLIGHT_COLOR = Color4f.WHITE;
+    public float SUNLIGHT_INTENSITY = 0.8f;
 }

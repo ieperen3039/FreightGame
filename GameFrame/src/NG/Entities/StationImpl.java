@@ -4,7 +4,10 @@ import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.GUIMenu.Components.SFrame;
 import NG.GameState.Storage;
+import NG.InputHandling.ClickShader;
 import NG.Network.RailNode;
+import NG.Network.RailTools;
+import NG.Network.SpecialRailNode;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
@@ -12,6 +15,7 @@ import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.GenericShapes;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
+import NG.Tracks.StraightTrack;
 import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
 import org.joml.Vector3f;
@@ -42,8 +46,8 @@ public class StationImpl extends Storage implements Station {
     private float realLength;
     private float realWidth;
 
-    private RailNode[] forwardConnections;
-    private RailNode[] backwardConnections;
+    private SpecialRailNode[] forwardConnections;
+    private SpecialRailNode[] backwardConnections;
     private TrackType type;
 
     public StationImpl(Game game, int nrOfPlatforms, int length, TrackType type) {
@@ -78,8 +82,8 @@ public class StationImpl extends Storage implements Station {
 
         Vector3fc forward = new Vector3f(cos(orientation), sin(orientation), 0).normalize(realLength / 2f);
 
-        forwardConnections = new RailNode[numberOfPlatforms];
-        backwardConnections = new RailNode[numberOfPlatforms];
+        forwardConnections = new SpecialRailNode[numberOfPlatforms];
+        backwardConnections = new SpecialRailNode[numberOfPlatforms];
 
         if (numberOfPlatforms > 1) {
             Vector3fc toRight = new Vector3f(sin(orientation), -cos(orientation), 0).normalize(realWidth / 2f);
@@ -91,13 +95,19 @@ public class StationImpl extends Storage implements Station {
 
             Vector3f backPos = new Vector3f(rightMiddle).sub(forward);
             Vector3f frontPos = rightMiddle.add(forward);
+            Vector3f AToB = new Vector3f(forward).normalize();
+            Vector3f BToA = new Vector3f(AToB).negate();
 
             for (int i = 0; i < numberOfPlatforms; i++) {
-                TrackPiece trackConnection = RailNode.createNewTrack(game, type, frontPos, backPos);
+                SpecialRailNode A = new SpecialRailNode(backPos, type, AToB);
+                SpecialRailNode B = new SpecialRailNode(frontPos, type, BToA);
 
-                forwardConnections[i] = trackConnection.getStartNode();
-                backwardConnections[i] = trackConnection.getEndNode();
+                TrackPiece trackConnection = new StraightTrack(game, type, A, B);
+                RailNode.addConnection(trackConnection, A, B);
+                game.state().addEntity(trackConnection);
 
+                forwardConnections[i] = A;
+                backwardConnections[i] = B;
                 frontPos.add(rightSkip);
                 backPos.add(rightSkip);
             }
@@ -105,11 +115,16 @@ public class StationImpl extends Storage implements Station {
         } else { // simplified version of above
             Vector3f frontPos = new Vector3f(getPosition()).add(forward).add(0, 0, getElevation());
             Vector3f backPos = new Vector3f(getPosition()).sub(forward).add(0, 0, getElevation());
+            Vector3f AToB = new Vector3f(forward).normalize();
+            Vector3f BToA = new Vector3f(AToB).negate();
+            forwardConnections[0] = new SpecialRailNode(backPos, type, AToB);
+            backwardConnections[0] = new SpecialRailNode(frontPos, type, BToA);
 
-            TrackPiece trackConnection = RailNode.createNewTrack(game, type, frontPos, backPos);
-
-            forwardConnections[0] = trackConnection.getStartNode();
-            backwardConnections[0] = trackConnection.getEndNode();
+            TrackPiece trackConnection = RailTools.getTrackPiece(
+                    game, type, forwardConnections[0], AToB, backwardConnections[0]
+            );
+            RailNode.addConnection(trackConnection);
+            game.state().addEntity(trackConnection);
         }
     }
 
@@ -131,7 +146,7 @@ public class StationImpl extends Storage implements Station {
                 matShader.setMaterial(Material.ROUGH, isFixed ? Color4f.GREY : Color4f.WHITE);
             }
 
-            { // draw cube
+            if (!(shader instanceof ClickShader)) { // draw cube
                 gl.scale(realLength / 2, realWidth / 2, HEIGHT); // half below ground
                 gl.render(GenericShapes.CUBE, this);
             }
