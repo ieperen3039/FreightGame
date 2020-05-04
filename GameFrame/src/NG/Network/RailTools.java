@@ -3,7 +3,6 @@ package NG.Network;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Pair;
 import NG.Tools.Logger;
-import NG.Tools.Vectors;
 import NG.Tracks.CircleTrack;
 import NG.Tracks.StraightTrack;
 import NG.Tracks.TrackPiece;
@@ -24,13 +23,15 @@ public final class RailTools {
      * @param bPosition another position on the map
      * @return a {@link StraightTrack} piece that connects the
      */
-    public static TrackPiece createNewTrack(Game game, TrackType type, Vector3fc aPosition, Vector3fc bPosition) {
+    public static TrackPiece createNew(Game game, TrackType type, Vector3fc aPosition, Vector3fc bPosition) {
         Vector3f AToB = new Vector3f(bPosition).sub(aPosition);
         RailNode A = new RailNode(aPosition, type, AToB);
 
         TrackPiece trackConnection = new StraightTrack(game, type, A, bPosition);
         RailNode.addConnection(trackConnection);
         game.state().addEntity(trackConnection);
+
+        assert trackConnection.isValid() : trackConnection;
 
         return trackConnection;
     }
@@ -48,6 +49,8 @@ public final class RailTools {
         );
         RailNode.addConnection(trackConnection);
         game.state().addEntity(trackConnection);
+
+        assert trackConnection.isValid() : trackConnection;
 
         return trackConnection.getNot(node);
     }
@@ -69,6 +72,9 @@ public final class RailTools {
         game.state().addEntity(trackPieces.left);
         RailNode.addConnection(trackPieces.right);
         game.state().addEntity(trackPieces.right);
+
+        assert trackPieces.left.isValid() : trackPieces.left;
+        assert trackPieces.right.isValid() : trackPieces.right;
 
         return trackPieces.left.getNot(aNode);
     }
@@ -98,17 +104,15 @@ public final class RailTools {
         // this replaces the addConnection
         RailNode.insertNode(aNode, bNode, newNode, aConnection, bConnection);
 
+        assert aConnection.isValid() : aConnection;
+        assert bConnection.isValid() : bConnection;
+
         trackPiece.dispose();
         return newNode;
     }
 
-    private static void assertEqual(Vector3fc a, Vector3fc b) {
-        assert a.equals(b) : String.format(
-                "%s does not equal %s", Vectors.toString(a), Vectors.toString(b)
-        );
-    }
-
     public static void removeTrackPiece(TrackPiece trackPiece) {
+        assert trackPiece.isValid();
         RailNode aNode = trackPiece.getStartNode();
         RailNode bNode = trackPiece.getEndNode();
 

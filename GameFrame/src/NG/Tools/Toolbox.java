@@ -453,4 +453,41 @@ public final class Toolbox {
             }
         };
     }
+
+    public static <T> List<T> combinedList(List<T> a, List<T> b) {
+        return new AbstractList<>() {
+            final List<T> aList = a;
+            final List<T> bList = b;
+
+            @Override
+            public T get(int index) {
+                int aSize = aList.size();
+                if (index > aSize) return bList.get(index - aSize);
+                return aList.get(index);
+            }
+
+            @Override
+            public int size() {
+                return aList.size() + bList.size();
+            }
+
+            @Override
+            public Iterator<T> iterator() {
+                return new Iterator<T>() {
+                    final Iterator<T> aItr = aList.iterator();
+                    final Iterator<T> bItr = bList.iterator();
+
+                    @Override
+                    public boolean hasNext() {
+                        return bItr.hasNext() || aItr.hasNext();
+                    }
+
+                    @Override
+                    public T next() {
+                        return aItr.hasNext() ? aItr.next() : bItr.next();
+                    }
+                };
+            }
+        };
+    }
 }

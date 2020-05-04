@@ -206,7 +206,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         if (currentAngle < Math.min(startTheta, endTheta)) {
             currentAngle += (Math.PI * 2);
         }
-        if (currentAngle > Math.max(startTheta, endTheta)) {
+        while (currentAngle > Math.max(startTheta, endTheta)) {
             currentAngle -= (Math.PI * 2);
         }
 

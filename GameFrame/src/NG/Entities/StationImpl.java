@@ -73,7 +73,6 @@ public class StationImpl extends Storage implements Station {
 
     @Override
     public void update() {
-
     }
 
     public void fixPosition() {

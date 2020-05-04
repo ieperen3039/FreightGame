@@ -1,7 +1,7 @@
 package NG.Network;
 
 import NG.DataStructures.Generic.Pair;
-import NG.Tools.Logger;
+import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
 import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
@@ -69,27 +69,31 @@ public class RailNode {
      * entry of this switch pointing back to this. If no switch exists in this direction (= this is a dead end) returns
      * null.
      */
-    private Pair<RailNode, Direction> getFirstSwitchRecursive(RailNode next) {
+    private Pair<RailNode, Direction> getFirstNetworkNodeRecursive(RailNode next) {
         if (next.isNetworkNode()) {
             Direction thisAsEntry = next.getEntryOf(this);
+            assert thisAsEntry != null : next;
             return new Pair<>(next, thisAsEntry);
         }
-        List<Direction> options = next.getNext(this);
-        if (options.isEmpty()) return null;
+        List<Direction> nextNext = next.getNext(this);
+        if (nextNext.isEmpty()) return null;
 
-        assert options.size() == 1;
-        return getFirstSwitchRecursive(options.get(0).railNode);
+        assert nextNext.size() == 1;
+        return next.getFirstNetworkNodeRecursive(nextNext.get(0).railNode);
     }
 
     /**
-     * @return the Direction of the given node in the direction lists of this node.
+     * @return the Direction of the given node in the direction lists of this node, or null if the given node is not
+     * connected to this node.
      */
-    private Direction getEntryOf(RailNode railNode) {
+    public Direction getEntryOf(RailNode railNode) {
         int i = getIndexOf(aDirection, railNode);
         if (i != -1) {
             return aDirection.get(i);
         } else {
-            return bDirection.get(getIndexOf(bDirection, railNode));
+            int i2 = getIndexOf(bDirection, railNode);
+            if (i2 == -1) return null;
+            return bDirection.get(i2);
         }
     }
 
@@ -113,6 +117,10 @@ public class RailNode {
         }
 
         return null;
+    }
+
+    public Iterable<Direction> getAllEntries() {
+        return Toolbox.combinedList(aDirection, bDirection);
     }
 
     /** returns the index of the element containing the given node, or -1 if no such element exists */
@@ -188,59 +196,8 @@ public class RailNode {
      * connects oneNode with twoNode using the given track.
      */
     public static void addConnection(TrackPiece track, RailNode oneNode, RailNode twoNode) {
-        List<Direction> oneTwoDirection;
-        List<Direction> oneAntiDirection;
-        List<Direction> twoOneDirection;
-        List<Direction> twoAntiDirection;
-
-        if (oneNode.isInDirectionOf(twoNode)) {
-            oneTwoDirection = oneNode.aDirection;
-            oneAntiDirection = oneNode.bDirection;
-        } else {
-            oneTwoDirection = oneNode.bDirection;
-            oneAntiDirection = oneNode.aDirection;
-        }
-        if (twoNode.isInDirectionOf(oneNode)) {
-            twoOneDirection = twoNode.aDirection;
-            twoAntiDirection = twoNode.bDirection;
-        } else {
-            twoOneDirection = twoNode.bDirection;
-            twoAntiDirection = twoNode.aDirection;
-        }
-
-        Direction oneDirection = new Direction(twoNode, track);
-        Direction twoDirection = new Direction(oneNode, track);
-        oneTwoDirection.add(oneDirection);
-        twoOneDirection.add(twoDirection);
-
-        Pair<RailNode, Direction> oneSideSwitch = getSwitch(oneNode, oneDirection, oneAntiDirection);
-        Pair<RailNode, Direction> twoSideSwitch = getSwitch(twoNode, twoDirection, twoAntiDirection);
-
-        if (!twoNode.isEnd()) {
-            Object oneside = oneSideSwitch == null ? "null" : oneSideSwitch.left;
-            Object twoside = twoSideSwitch == null ? "null" : twoSideSwitch.left;
-            Logger.WARN.print(oneside, twoside);
-        }
-
-        if (oneSideSwitch != null && twoSideSwitch != null) {
-            NetworkNode.createNetworkNode(oneSideSwitch.left, oneSideSwitch.right, twoSideSwitch.left, twoSideSwitch.right);
-        }
-    }
-
-    private static Pair<RailNode, Direction> getSwitch(
-            RailNode node, Direction direction, List<Direction> antiDirections
-    ) {
-        if (node.isNetworkNode() || node.isStraight()) {
-            return new Pair<>(node, direction);
-
-        } else if (antiDirections.isEmpty()) {
-            // the node is an unconnected node
-            return null;
-
-        } else {
-            Direction oneBDir = antiDirections.get(0);
-            return node.getFirstSwitchRecursive(oneBDir.railNode);
-        }
+        oneNode.addEntry(new Direction(twoNode, track));
+        twoNode.addEntry(new Direction(oneNode, track));
     }
 
     /**
@@ -251,14 +208,8 @@ public class RailNode {
      * #addConnection(TrackPiece, RailNode, RailNode)}
      */
     static TrackPiece removeConnection(RailNode aNode, RailNode bNode) {
-        // remove the networknode describing this connection (if any)
-        Pair<RailNode, Direction> bSideSwitch = bNode.getFirstSwitchRecursive(aNode);
-        if (bSideSwitch != null) bSideSwitch.right.networkNode = null;
+        assert aNode.getEntryOf(bNode) != null && bNode.getEntryOf(aNode) != null;
 
-        Pair<RailNode, Direction> aSideSwitch = aNode.getFirstSwitchRecursive(bNode);
-        if (aSideSwitch != null) aSideSwitch.right.networkNode = null;
-
-        // now remove the connection itself
         TrackPiece oldPiece = aNode.removeNode(bNode);
         TrackPiece sameOldPiece = bNode.removeNode(aNode);
 
@@ -302,17 +253,20 @@ public class RailNode {
 
         oneList.set(twoIndex, new Direction(newNode, newTrack));
 
-        if (newNode.isInDirectionOf(oneNode)) {
-            newNode.aDirection.add(new Direction(oneNode, newTrack));
+        newNode.addEntry(new Direction(oneNode, newTrack));
+    }
+
+    private void addEntry(Direction entry) {
+        if (isInDirectionOf(entry.railNode)) {
+            aDirection.add(entry);
         } else {
-            newNode.bDirection.add(new Direction(oneNode, newTrack));
+            bDirection.add(entry);
         }
     }
 
     public static class Direction {
         public final RailNode railNode;
         public final TrackPiece trackPiece;
-        public NetworkNode networkNode = null;
 
         public Direction(RailNode railNode, TrackPiece trackPiece) {
             this.railNode = railNode;

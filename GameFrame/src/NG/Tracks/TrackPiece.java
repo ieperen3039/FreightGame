@@ -39,4 +39,9 @@ public interface TrackPiece extends Entity {
     Vector3f getDirectionFromFraction(float fraction);
 
     float getLength();
+
+    default boolean isValid() {
+        return getStartNode().getEntryOf(getEndNode()) != null &&
+                getEndNode().getEntryOf(getStartNode()) != null;
+    }
 }

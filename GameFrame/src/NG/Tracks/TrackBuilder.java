@@ -61,7 +61,7 @@ public class TrackBuilder extends ToggleMouseTool {
                     firstNode = RailTools.createNew(game, firstNode, position);
 
                 } else if (firstPosition != null) {
-                    TrackPiece trackConnection = RailTools.createNewTrack(game, type, firstPosition, position);
+                    TrackPiece trackConnection = RailTools.createNew(game, type, firstPosition, position);
                     firstPosition = null;
                     firstNode = trackConnection.getEndNode();
 
@@ -99,6 +99,8 @@ public class TrackBuilder extends ToggleMouseTool {
                 Logger.DEBUG.print("Clicked on entity " + entity);
                 if (entity instanceof TrackPiece) {
                     TrackPiece trackPiece = (TrackPiece) entity;
+                    assert trackPiece.isValid() : trackPiece;
+
                     Vector3f origin = new Vector3f();
                     Vector3f direction = new Vector3f();
                     Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
@@ -113,9 +115,7 @@ public class TrackBuilder extends ToggleMouseTool {
                             targetNode = trackPiece.getEndNode();
                         }
                     } else {
-                        if (!(fraction >= 0) || !(fraction <= 1)) {
-                            throw new AssertionError(fraction);
-                        }
+                        assert fraction >= 0 && fraction <= 1 : fraction;
                         targetNode = RailTools.createSplit(game, trackPiece, fraction);
                     }
 
