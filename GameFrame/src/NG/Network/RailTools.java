@@ -15,6 +15,9 @@ import org.joml.*;
  * @author Geert van Ieperen created on 1-5-2020.
  */
 public final class RailTools {
+    private static final float STRAIGHT_MAX_ANGLE_DEG = 1f;
+    private static final float STRAIGHT_DOT_LIMIT = Math.cos(Math.toRadians(STRAIGHT_MAX_ANGLE_DEG));
+
     /**
      * creates two nodes that are only connected together with a straight piece of track.
      * @param game      the current game instance
@@ -27,7 +30,7 @@ public final class RailTools {
         Vector3f AToB = new Vector3f(bPosition).sub(aPosition);
         RailNode A = new RailNode(aPosition, type, AToB);
 
-        TrackPiece trackConnection = new StraightTrack(game, type, A, bPosition);
+        TrackPiece trackConnection = new StraightTrack(game, type, A, bPosition, true);
         RailNode.addConnection(trackConnection);
         game.state().addEntity(trackConnection);
 
@@ -70,11 +73,13 @@ public final class RailTools {
 
         RailNode.addConnection(trackPieces.left);
         game.state().addEntity(trackPieces.left);
-        RailNode.addConnection(trackPieces.right);
-        game.state().addEntity(trackPieces.right);
-
         assert trackPieces.left.isValid() : trackPieces.left;
-        assert trackPieces.right.isValid() : trackPieces.right;
+
+        if (trackPieces.right != null) {
+            RailNode.addConnection(trackPieces.right);
+            game.state().addEntity(trackPieces.right);
+            assert trackPieces.right.isValid() : trackPieces.right;
+        }
 
         return trackPieces.left.getNot(aNode);
     }
@@ -141,15 +146,15 @@ public final class RailTools {
         Vector2f relPosB = new Vector2f(endPosition.x() - aPos.x(), endPosition.y() - aPos.y());
         if (relPosB.lengthSquared() < 1 / 256f) {
             Logger.ASSERT.print("Created track of length 0");
-            return new StraightTrack(game, type, aNode, endPosition);
+            return new StraightTrack(game, type, aNode, endPosition, true);
         }
 
         Vector3f direction = new Vector3f(aDirection).normalize();
         Vector2f vecToB = new Vector2f(relPosB).normalize();
 
         float dot = vecToB.x * direction.x + vecToB.y * direction.y;
-        if ((dot * dot) > 127 / 128f) {
-            return new StraightTrack(game, type, aNode, endPosition);
+        if (Math.abs(dot) > STRAIGHT_DOT_LIMIT) {
+            return new StraightTrack(game, type, aNode, endPosition, true);
 
         } else {
             return new CircleTrack(game, type, aNode, direction, endPosition);
@@ -177,7 +182,7 @@ public final class RailTools {
         Vector2f relPosB = new Vector2f(bPos.x() - aPos.x(), bPos.y() - aPos.y());
         if (relPosB.lengthSquared() < 1 / 256f) {
             Logger.ASSERT.print("Created track of length 0");
-            return new StraightTrack(game, type, aNode, bNode);
+            return new StraightTrack(game, type, aNode, bNode, true);
         }
 
         Vector3f direction = new Vector3f(aDirection).normalize();
@@ -186,7 +191,7 @@ public final class RailTools {
         float dot = vecToB.x * direction.x + vecToB.y * direction.y;
         if ((dot * dot) > 127 / 128f) {
             Logger.DEBUG.print("Creating straight track", aPos, bPos, "dot = " + dot);
-            return new StraightTrack(game, type, aNode, bNode);
+            return new StraightTrack(game, type, aNode, bNode, true);
 
         } else {
             Logger.DEBUG.print("Creating circle track", aPos, bPos, "dot = " + dot);
@@ -200,7 +205,8 @@ public final class RailTools {
      * @param type  the track type
      * @param aNode an existing node A
      * @param bNode an existing node B
-     * @return two track pieces: Left starts in A, with direction D. Right starts in B with direction E.
+     * @return two track pieces: Left starts in A, right starts in B. If one piece can connect A and B, then left is
+     * that track and B is null.
      * @see StraightTrack
      * @see CircleTrack
      */
@@ -213,7 +219,7 @@ public final class RailTools {
         Vector3fc bDirection = bNode.getDirectionTo(aPos);
 
         Vector2f intersect = new Vector2f();
-        Intersectionf.intersectLineLine(
+        boolean doesIntersect = Intersectionf.intersectLineLine(
                 aPos.x(), aPos.y(), aPos.x() + aDirection.x(), aPos.y() + aDirection.y(),
                 bPos.x(), bPos.y(), bPos.x() + bDirection.x(), bPos.y() + bDirection.y(),
                 intersect
@@ -232,11 +238,16 @@ public final class RailTools {
         float bDistance = intersect.distance(bPos.x(), bPos.y());
         float aDistance = intersect.distance(aPos.x(), aPos.y());
 
-        if (aDistance > bDistance) {
+        if (!doesIntersect || aDistance == bDistance) {
+            return new Pair<>(
+                    new CircleTrack(game, type, aNode, aNode.getDirectionTo(bPos), bNode),
+                    null
+            );
+        } else if (aDistance > bDistance) {
             // situation: connect straight to A and circle to B
             Vector3f middle = getMiddlePosition(aDirection, bDirection, aPos, bPos, aDistance, bDistance);
             return new Pair<>(
-                    new StraightTrack(game, type, aNode, middle),
+                    new StraightTrack(game, type, aNode, middle, true),
                     new CircleTrack(game, type, bNode, bDirection, middle)
             );
 
@@ -244,7 +255,7 @@ public final class RailTools {
             Vector3f middle = getMiddlePosition(bDirection, aDirection, bPos, aPos, bDistance, aDistance);
             return new Pair<>(
                     new CircleTrack(game, type, aNode, aDirection, middle),
-                    new StraightTrack(game, type, bNode, middle)
+                    new StraightTrack(game, type, bNode, middle, true)
             );
         }
     }

@@ -66,7 +66,6 @@ public class TrackBuilder extends ToggleMouseTool {
                     firstNode = trackConnection.getEndNode();
 
                 } else {
-                    // TODO error message: you must connect to another track or a building of yours.
                     firstPosition = new Vector3f(position);
                 }
 
@@ -84,9 +83,7 @@ public class TrackBuilder extends ToggleMouseTool {
                 } else if (firstPosition != null) {
                     Vector3f toNode = new Vector3f(position).sub(firstPosition);
                     RailNode ghostNode = new RailNode(firstPosition, ghostType, toNode);
-                    ghostTrack1 = RailTools.getTrackPiece(
-                            game, ghostType, ghostNode, toNode, position
-                    );
+                    ghostTrack1 = new StraightTrack(game, type, ghostNode, position, true);
                 }
             default:
         }
@@ -108,14 +105,17 @@ public class TrackBuilder extends ToggleMouseTool {
                     float fraction = trackPiece.getFractionOfClosest(origin, direction);
 
                     RailNode targetNode;
-                    if (game.keyControl().isControlPressed()) {
+                    if (game.keyControl().isControlPressed() || !trackPiece.canBeModified()) {
                         if (fraction < 0.5f) {
                             targetNode = trackPiece.getStartNode();
                         } else {
                             targetNode = trackPiece.getEndNode();
                         }
                     } else {
-                        assert fraction >= 0 && fraction <= 1 : fraction;
+                        if (fraction < 0) {
+                            fraction = 0;
+                        } else if (fraction > 1) fraction = 1;
+
                         targetNode = RailTools.createSplit(game, trackPiece, fraction);
                     }
 
@@ -150,8 +150,12 @@ public class TrackBuilder extends ToggleMouseTool {
                         RailNode ghostNodeFirst = new RailNode(firstNode.getPosition(), ghostType, fDirection);
 
                         RailNode ghostNodeTarget;
-                        if (game.keyControl().isControlPressed()) {
-                            ghostNodeTarget = getClosestNode(trackPiece, closestPoint);
+                        if (game.keyControl().isControlPressed() || !trackPiece.canBeModified()) {
+                            if (fraction < 0.5f) {
+                                ghostNodeTarget = trackPiece.getStartNode();
+                            } else {
+                                ghostNodeTarget = trackPiece.getEndNode();
+                            }
 
                         } else {
                             Vector3f dir = trackPiece.getDirectionFromFraction(fraction);

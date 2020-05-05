@@ -6,7 +6,6 @@ import NG.GUIMenu.Components.SFrame;
 import NG.GameState.Storage;
 import NG.InputHandling.ClickShader;
 import NG.Network.RailNode;
-import NG.Network.RailTools;
 import NG.Network.SpecialRailNode;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
@@ -80,10 +79,13 @@ public class StationImpl extends Storage implements Station {
         isFixed = true;
 
         Vector3fc forward = new Vector3f(cos(orientation), sin(orientation), 0).normalize(realLength / 2f);
+        Vector3f AToB = new Vector3f(forward).normalize();
+        Vector3f BToA = new Vector3f(AToB).negate();
 
         forwardConnections = new SpecialRailNode[numberOfPlatforms];
         backwardConnections = new SpecialRailNode[numberOfPlatforms];
 
+        // create nodes
         if (numberOfPlatforms > 1) {
             Vector3fc toRight = new Vector3f(sin(orientation), -cos(orientation), 0).normalize(realWidth / 2f);
             Vector3fc rightSkip = new Vector3f(toRight).normalize(PLATFORM_SIZE);
@@ -94,19 +96,11 @@ public class StationImpl extends Storage implements Station {
 
             Vector3f backPos = new Vector3f(rightMiddle).sub(forward);
             Vector3f frontPos = rightMiddle.add(forward);
-            Vector3f AToB = new Vector3f(forward).normalize();
-            Vector3f BToA = new Vector3f(AToB).negate();
 
             for (int i = 0; i < numberOfPlatforms; i++) {
-                SpecialRailNode A = new SpecialRailNode(backPos, type, AToB);
-                SpecialRailNode B = new SpecialRailNode(frontPos, type, BToA);
+                forwardConnections[i] = new SpecialRailNode(backPos, type, AToB);
+                backwardConnections[i] = new SpecialRailNode(frontPos, type, BToA);
 
-                TrackPiece trackConnection = new StraightTrack(game, type, A, B);
-                RailNode.addConnection(trackConnection, A, B);
-                game.state().addEntity(trackConnection);
-
-                forwardConnections[i] = A;
-                backwardConnections[i] = B;
                 frontPos.add(rightSkip);
                 backPos.add(rightSkip);
             }
@@ -114,15 +108,18 @@ public class StationImpl extends Storage implements Station {
         } else { // simplified version of above
             Vector3f frontPos = new Vector3f(getPosition()).add(forward).add(0, 0, getElevation());
             Vector3f backPos = new Vector3f(getPosition()).sub(forward).add(0, 0, getElevation());
-            Vector3f AToB = new Vector3f(forward).normalize();
-            Vector3f BToA = new Vector3f(AToB).negate();
+
             forwardConnections[0] = new SpecialRailNode(backPos, type, AToB);
             backwardConnections[0] = new SpecialRailNode(frontPos, type, BToA);
+        }
 
-            TrackPiece trackConnection = RailTools.getTrackPiece(
-                    game, type, forwardConnections[0], AToB, backwardConnections[0]
-            );
-            RailNode.addConnection(trackConnection);
+        // create tracks
+        for (int i = 0; i < numberOfPlatforms; i++) {
+            SpecialRailNode A = forwardConnections[i];
+            SpecialRailNode B = backwardConnections[i];
+
+            TrackPiece trackConnection = new StraightTrack(game, type, A, B, false);
+            RailNode.addConnection(trackConnection, A, B);
             game.state().addEntity(trackConnection);
         }
     }

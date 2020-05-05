@@ -24,6 +24,7 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
 
     private final Vector3fc direction;
     private final float length;
+    private final boolean isModifiable;
 
     private boolean isInvalid;
     private final Resource<Mesh> mesh;
@@ -32,13 +33,14 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
 
     /**
      * create a straight piece of track based on an initial node and an endposition. A new node is generated, and is
-     * accessible as {@link #getEndNode()}
+     * accessible as {@link #getEndNode()}. The connection is automatically registered.
      * @param type            type of the track
-     * @param startNode       a node this should connect to. The connection is automatically registered.
+     * @param startNode       a node this should connect to.
      * @param endNodePosition the position of the new end node
+     * @param modifiable      sets the canBeModified flag
      */
     public StraightTrack(
-            Game game, TrackType type, RailNode startNode, Vector3fc endNodePosition
+            Game game, TrackType type, RailNode startNode, Vector3fc endNodePosition, boolean modifiable
     ) {
         super(game);
         this.type = type;
@@ -50,16 +52,18 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
 
         this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
         this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
+        isModifiable = modifiable;
     }
 
     /**
-     * create a new straight piece of track between the two given nodes.
-     * @param type      type of the track
-     * @param startNode
-     * @param endNode
+     * create a new straight piece of track between the two given nodes. The connection is automatically registered.
+     * @param type       type of the track
+     * @param startNode  one node to connect
+     * @param endNode    another no to connect
+     * @param modifiable sets the canBeModified flag
      */
     public StraightTrack(
-            Game game, TrackType type, RailNode startNode, RailNode endNode
+            Game game, TrackType type, RailNode startNode, RailNode endNode, boolean modifiable
     ) {
         super(game);
         this.type = type;
@@ -71,6 +75,13 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
 
         this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
         this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
+        isModifiable = modifiable;
+
+        assert new Vector3f(startNode.getDirectionTo(endNode.getPosition())).normalize()
+                .dot(direction) > 0.95f;
+
+        assert new Vector3f(endNode.getDirectionTo(startNode.getPosition())).normalize()
+                .dot(direction) < -0.95f;
     }
 
     @Override
@@ -148,6 +159,11 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     @Override
     public float getLength() {
         return length;
+    }
+
+    @Override
+    public boolean canBeModified() {
+        return isModifiable;
     }
 
     @Override

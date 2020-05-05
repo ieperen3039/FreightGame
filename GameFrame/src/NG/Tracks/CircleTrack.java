@@ -33,6 +33,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
 
     private final Resource<Mesh> mesh;
     private final Resource<Mesh> clickBox;
+    private final boolean isModifiable;
 
     private boolean isInvalid = false;
     private final float heightDiff;
@@ -48,7 +49,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     public CircleTrack(
             Game game, TrackType type, RailNode startNode, Vector3fc startDirection, Vector3fc endPosition
     ) {
-        this(game, type, startNode, startDirection, endPosition, null);
+        this(game, type, startNode, startDirection, endPosition, null, true);
     }
 
     /**
@@ -62,16 +63,17 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     public CircleTrack(
             Game game, TrackType type, RailNode startNode, Vector3fc startDirection, RailNode endNode
     ) {
-        this(game, type, startNode, startDirection, endNode.getPosition(), endNode);
+        this(game, type, startNode, startDirection, endNode.getPosition(), endNode, true);
     }
 
     private CircleTrack(
             Game game, TrackType type, RailNode startNode, Vector3fc startDirection, Vector3fc endPosition,
-            RailNode optionalEndNode
+            RailNode optionalEndNode, boolean modifiable
     ) {
         super(game);
         this.type = type;
         this.startNode = startNode;
+        this.isModifiable = modifiable;
 
         Vector3fc startPosition = startNode.getPosition();
         Vector2fc startPosFlat = new Vector2f(startPosition.x(), startPosition.y());
@@ -151,6 +153,11 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     @Override
     public float getLength() {
         return Math.abs(radius * angle);
+    }
+
+    @Override
+    public boolean canBeModified() {
+        return isModifiable;
     }
 
     @Override

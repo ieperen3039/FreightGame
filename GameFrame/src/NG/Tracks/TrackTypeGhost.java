@@ -14,7 +14,7 @@ import org.joml.Vector3fc;
 public class TrackTypeGhost implements TrackType {
     public static final float WIDTH = 0.5f;
     public static final float HEIGHT = 0.1f;
-    public static final int RESOLUTION = 1;
+    public static final float RESOLUTION = 1;
     private final TrackType source;
 
     public TrackTypeGhost(TrackType source) {
@@ -25,11 +25,12 @@ public class TrackTypeGhost implements TrackType {
     public Mesh generateCircle(float radius, float angle, float endHeight) {
         float hDelta = endHeight / (angle * radius);
         float length = Math.abs(radius * angle);
+        int resolution = (int) Math.max(RESOLUTION * length, Math.abs((8 / Math.PI) * angle));
 
         CustomShape frame = TrackType.generateFunctional(
                 t -> new Vector3f(radius * Math.cos(angle * t), radius * Math.sin(angle * t), endHeight * t),
                 t -> new Vector3f(-Math.sin(angle * t), Math.cos(angle * t), hDelta).normalize(),
-                WIDTH, HEIGHT, (int) (length * RESOLUTION)
+                WIDTH, HEIGHT, resolution
         );
 
         return frame.toFlatMesh();
