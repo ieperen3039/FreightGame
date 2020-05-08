@@ -44,7 +44,7 @@ public interface TrackPiece extends Entity {
      * some special rail pieces can't be split or removed by themself, for instance rails in stations.
      * @return false iff this track may not be removed or split by standard user-controlled rail builders.
      */
-    boolean canBeModified();
+    boolean isStatic();
 
     default boolean isValid() {
         return getStartNode().getEntryOf(getEndNode()) != null &&

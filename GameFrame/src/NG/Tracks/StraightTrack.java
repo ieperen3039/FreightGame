@@ -163,8 +163,8 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     }
 
     @Override
-    public boolean canBeModified() {
-        return isModifiable;
+    public boolean isStatic() {
+        return !isModifiable;
     }
 
     @Override
@@ -187,5 +187,10 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
         return new Vector3f(direction)
                 .mul(fraction * length)
                 .add(startNode.getPosition());
+    }
+
+    @Override
+    public String toString() {
+        return "StraightTrack{startNode=" + startNode + ", endNode=" + endNode + ", length=" + length + "}";
     }
 }

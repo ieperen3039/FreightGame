@@ -79,7 +79,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         Vector3fc startPosition = startNode.getPosition();
         Vector2fc startPosFlat = new Vector2f(startPosition.x(), startPosition.y());
         Vector2fc endPosFlat = new Vector2f(endPosition.x(), endPosition.y());
-        Vector2f startToCenter = new Vector2f(startDirection.y(), -startDirection.x()); // perpendicular to startDirection
+        Vector2f startToCenter = new Vector2f(startDirection.y(), -startDirection.x()).normalize(); // perpendicular to startDirection
         Vector2f startToEnd = new Vector2f(endPosFlat).sub(startPosFlat);
 
         float dot = startToEnd.dot(startToCenter);
@@ -157,8 +157,8 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     }
 
     @Override
-    public boolean canBeModified() {
-        return isModifiable;
+    public boolean isStatic() {
+        return !isModifiable;
     }
 
     @Override
@@ -249,6 +249,10 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         return endNode;
     }
 
+    @Override
+    public String toString() {
+        return "CircleTrack{center=" + Vectors.toString(center) + ", radius=" + radius + ", angle=" + angle + "}";
+    }
 }
 
 /* derivation of radius calculation

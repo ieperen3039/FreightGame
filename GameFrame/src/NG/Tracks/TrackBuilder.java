@@ -104,7 +104,7 @@ public class TrackBuilder extends ToggleMouseTool {
                     float fraction = trackPiece.getFractionOfClosest(origin, direction);
 
                     RailNode targetNode;
-                    if (game.keyControl().isControlPressed() || !trackPiece.canBeModified()) {
+                    if (game.keyControl().isControlPressed() || trackPiece.isStatic()) {
                         if (fraction < 0.5f) {
                             targetNode = trackPiece.getStartNode();
                         } else {
@@ -149,7 +149,7 @@ public class TrackBuilder extends ToggleMouseTool {
                         RailNode ghostNodeFirst = new RailNode(firstNode.getPosition(), ghostType, fDirection);
 
                         RailNode ghostNodeTarget;
-                        if (game.keyControl().isControlPressed() || !trackPiece.canBeModified()) {
+                        if (game.keyControl().isControlPressed() || trackPiece.isStatic()) {
                             if (fraction < 0.5f) {
                                 ghostNodeTarget = trackPiece.getStartNode();
                             } else {

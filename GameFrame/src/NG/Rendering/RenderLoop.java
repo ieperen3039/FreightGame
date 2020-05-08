@@ -108,7 +108,6 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
             timeObserver.endTiming("ShadowMaps");
         }
 
-        GLFWWindow window = game.window();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, window.getWidth(), window.getHeight());
         glEnable(GL_LINE_SMOOTH);

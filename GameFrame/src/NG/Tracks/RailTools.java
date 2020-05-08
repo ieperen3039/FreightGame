@@ -243,16 +243,18 @@ public final class RailTools {
         } else if (aDistance > bDistance) {
             // situation: connect straight to A and circle to B
             Vector3f middle = getMiddlePosition(aDirection, bDirection, aPos, bPos, aDistance, bDistance);
+            StraightTrack straightTrack = new StraightTrack(game, type, aNode, middle, true);
             return new Pair<>(
-                    new StraightTrack(game, type, aNode, middle, true),
-                    new CircleTrack(game, type, bNode, bDirection, middle)
+                    straightTrack,
+                    new CircleTrack(game, type, bNode, bDirection, straightTrack.getNot(aNode))
             );
 
         } else {
             Vector3f middle = getMiddlePosition(bDirection, aDirection, bPos, aPos, bDistance, aDistance);
+            StraightTrack straightTrack = new StraightTrack(game, type, bNode, middle, true);
             return new Pair<>(
-                    new CircleTrack(game, type, aNode, aDirection, middle),
-                    new StraightTrack(game, type, bNode, middle, true)
+                    new CircleTrack(game, type, aNode, aDirection, straightTrack.getNot(bNode)),
+                    straightTrack
             );
         }
     }
@@ -267,11 +269,11 @@ public final class RailTools {
         Vector2f middlePointXY = new Vector2f(straightVector).add(straightPos.x(), straightPos.y());
 
         // remainder is purely to calculate circle length to compute the height of the middle
-        Vector2f startToCenter = new Vector2f(circleDir.y(), -circleDir.x());
+        Vector2f startToCenter = new Vector2f(circleDir.y(), -circleDir.x()).normalize();
         Vector2f startToEnd = new Vector2f(middlePointXY.x() - circlePos.x(), middlePointXY.y() - circlePos.y());
         float dot = startToEnd.dot(startToCenter);
 
-        float radius = startToEnd.lengthSquared() / (2 * org.joml.Math.abs(dot));
+        float radius = startToEnd.lengthSquared() / (2 * Math.abs(dot));
         float angle = straightVector.angle(circleVector);
         float circleLength = Math.abs(radius * angle);
 

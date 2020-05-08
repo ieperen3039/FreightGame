@@ -190,7 +190,7 @@ public class RailNode {
 
     @Override
     public String toString() {
-        return "Node " + aDirection.size() + ":" + bDirection.size() + " " + Vectors.toString(position) + "";
+        return "Node{" + aDirection.size() + ":" + bDirection.size() + " @" + Vectors.toString(position) + "}";
     }
 
     /**

@@ -41,17 +41,17 @@ public class Locomotive extends AbstractGameObject implements MovingEntity {
     public Locomotive(Game game, TrackPiece startPiece, float fraction) {
         super(game);
         this.spawnTime = game.timer().getGametime();
-        this.positionEngine = new RailMovement(game, this, spawnTime, startPiece, fraction);
+        this.positionEngine = new RailMovement(game, this, spawnTime, startPiece, fraction, true);
 
         this.mesh = Mesh.createResource(Directory.meshes, "locos", "LittleRedDiesel.ply");
-        positionEngine.setAcceleration(10f);
+        positionEngine.setAcceleration(0.1f);
     }
 
     @Override
     public void update() {
         positionEngine.update();
 
-        if (positionEngine.getSpeed() > 10) {
+        if (positionEngine.getSpeed() > 5f) {
             positionEngine.setAcceleration(0);
         }
     }

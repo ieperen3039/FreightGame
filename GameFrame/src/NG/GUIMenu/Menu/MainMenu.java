@@ -80,7 +80,7 @@ public class MainMenu extends SFrame {
         // set camera to middle of map
         Vector3f cameraFocus = new Vector3f(xSize / 2f, ySize / 2f, 0);
         Camera cam = game.camera();
-        Vector3f cameraEye = new Vector3f(cameraFocus).add(-50, -50, 50);
+        Vector3f cameraEye = new Vector3f(cameraFocus).add(-20, -20, 20);
         cam.set(cameraFocus, cameraEye);
 
         Vector3f pos = new Vector3f(cameraFocus).add(0, 0, 20);
