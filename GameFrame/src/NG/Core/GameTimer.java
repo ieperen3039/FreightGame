@@ -104,4 +104,10 @@ public class GameTimer {
     public boolean isPaused() {
         return isPaused;
     }
+
+    public static GameTimer create(float fps, float tps) {
+        float tickDuration = (1f / tps);
+        float frameDuration = (1f / fps);
+        return new GameTimer(tickDuration + frameDuration);
+    }
 }

@@ -1,11 +1,11 @@
 package NG.DataStructures.Generic;
 
+import NG.Tools.AutoLock;
+
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A {@link TimedQueue} that uses ArrayDeque for implementation. Includes synchronized adding and deletion. Items added
@@ -15,11 +15,11 @@ import java.util.concurrent.locks.ReentrantLock;
 public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
 
     /** prevents race-conditions upon adding and removing */
-    private Lock changeGuard;
+    protected transient final AutoLock changeLock = new AutoLock.Instance();
 
     /** timestamps in seconds. Private, as semaphore must be handled */
-    private Deque<Float> timeStamps;
-    private Deque<T> elements;
+    protected final Deque<Float> timeStamps;
+    protected final Deque<T> elements;
 
     /**
      * @param capacity the initial expected maximum number of entries
@@ -27,43 +27,68 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
     public BlockingTimedArrayQueue(int capacity) {
         timeStamps = new ArrayDeque<>(capacity);
         elements = new ArrayDeque<>(capacity);
-        changeGuard = new ReentrantLock();
     }
 
     @Override
     public void add(T element, float timeStamp) {
-        changeGuard.lock();
+        try (AutoLock.Section section = changeLock.open()) {
+            // act as refinement
+            while (!timeStamps.isEmpty() && timeStamps.peekLast() > timeStamp) {
+                timeStamps.removeLast();
+                elements.removeLast();
+            }
 
-        // act as refinement
-        while (!timeStamps.isEmpty() && timeStamps.peekLast() > timeStamp) {
-            timeStamps.removeLast();
-            elements.removeLast();
+            timeStamps.add(timeStamp);
+            elements.add(element);
         }
-
-        timeStamps.add(timeStamp);
-        elements.add(element);
-        changeGuard.unlock();
     }
 
     @Override
     public T getActive(float timeStamp) {
-        // if (activeTimeStamp < timeStamp), there is no element available
-        return (nextTimeStamp() < timeStamp) ? null : nextElement();
+        try (AutoLock.Section section = changeLock.open()) {
+            if (timeStamps.isEmpty()) return null;
+
+            Iterator<Float> times = timeStamps.iterator();
+            Iterator<T> things = elements.iterator();
+
+            // there is no action until the first timestamp
+            T element = null;
+            float nextElementStart = times.next();
+
+            while (nextElementStart < timeStamp) {
+                if (!times.hasNext()) return things.next();
+
+                element = things.next();
+                nextElementStart = times.next();
+            }
+
+            return element;
+        }
     }
 
     @Override
     public float timeUntilNext(float timeStamp) {
-        return (nextTimeStamp() - timeStamp);
+        try (AutoLock.Section section = changeLock.open()) {
+            if (timeStamps.isEmpty()) throw new IllegalStateException("empty");
+
+            Iterator<Float> times = timeStamps.iterator();
+            float nextActionStart = times.next();
+
+            while (nextActionStart < timeStamp && times.hasNext()) {
+                nextActionStart = times.next();
+            }
+
+            return nextActionStart - timeStamp;
+        }
     }
 
     @Override
-    public void updateTime(float timeStamp) {
-        changeGuard.lock();
-
-        while ((timeStamps.size() > 1) && (timeStamp > nextTimeStamp())) {
-            progress();
+    public void removeUntil(float timeStamp) {
+        try (AutoLock.Section section = changeLock.open()) {
+            while ((timeStamps.size() > 1) && (timeStamp > nextTimeStamp())) {
+                progress();
+            }
         }
-        changeGuard.unlock();
     }
 
     /**
@@ -87,7 +112,7 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
     @Override
     public String toString() {
         Iterator<Float> times = timeStamps.iterator();
-        Iterator elts = elements.iterator();
+        Iterator<T> elts = elements.iterator();
 
         StringBuilder s = new StringBuilder();
         s.append("TimedArray:");

@@ -1,6 +1,6 @@
 package NG.DataStructures;
 
-import NG.Entities.Freight;
+import NG.Freight.Freight;
 import NG.Mods.FreightType;
 import NG.Tools.Logger;
 

@@ -30,6 +30,7 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     private final Resource<Mesh> mesh;
     private final Resource<Mesh> clickBox;
     private boolean renderClickBox = false;
+    private boolean isOccupied = false;
 
     /**
      * create a straight piece of track based on an initial node and an endposition. A new node is generated, and is
@@ -164,6 +165,16 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     @Override
     public boolean canBeModified() {
         return isModifiable;
+    }
+
+    @Override
+    public void setOccupied(boolean occupied) {
+        this.isOccupied = occupied;
+    }
+
+    @Override
+    public boolean isOccupied() {
+        return isOccupied;
     }
 
     @Override

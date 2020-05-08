@@ -28,7 +28,7 @@ public class Cube extends AbstractGameObject implements MovingEntity {
     }
 
     @Override
-    public Vector3fc getPosition() {
+    public Vector3fc getPosition(float time) {
         return position;
     }
 

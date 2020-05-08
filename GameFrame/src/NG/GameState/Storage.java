@@ -4,7 +4,7 @@ import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.DataStructures.FreightStorage;
 import NG.Entities.Entity;
-import NG.Entities.Freight;
+import NG.Freight.Freight;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 

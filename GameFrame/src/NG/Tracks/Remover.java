@@ -6,7 +6,6 @@ import NG.Entities.Station;
 import NG.Entities.StationImpl;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.InputHandling.MouseTools.ToggleMouseTool;
-import NG.Network.RailTools;
 import org.joml.Vector3fc;
 
 /**

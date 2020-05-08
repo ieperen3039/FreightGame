@@ -1,12 +1,9 @@
-package NG.Network;
+package NG.Tracks;
 
 import NG.Core.Game;
 import NG.DataStructures.Generic.Pair;
+import NG.Network.RailNode;
 import NG.Tools.Logger;
-import NG.Tracks.CircleTrack;
-import NG.Tracks.StraightTrack;
-import NG.Tracks.TrackPiece;
-import NG.Tracks.TrackType;
 import org.joml.Math;
 import org.joml.*;
 

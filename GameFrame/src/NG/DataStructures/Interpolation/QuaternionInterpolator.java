@@ -31,9 +31,8 @@ public class QuaternionInterpolator extends LinearInterpolator<Quaternionf> {
     }
 
     @Override
-    public Quaternionf getDerivative() {
-        Quaternionf dx = activeElement.difference(nextElement(), new Quaternionf());
-        float dy = getTimeDifference();
-        return dx.scale(1 / dy);
+    protected Quaternionf derivative(Quaternionf firstElt, Quaternionf secondElt, float deltaTime) {
+        Quaternionf dx = new Quaternionf(firstElt).difference(secondElt);
+        return dx.scale(1 / deltaTime);
     }
 }

@@ -78,7 +78,7 @@ public class FreightGame implements Game, ModLoader {
 
         // these are not GameAspects, and thus the init() rule does not apply.
         settings = new Settings();
-        time = new GameTimer(0);
+        time = GameTimer.create(settings.TARGET_FPS, settings.TARGET_TPS);
         GLFWWindow.Settings videoSettings = new GLFWWindow.Settings(settings);
         window = new GLFWWindow(Settings.GAME_NAME, videoSettings, true);
         clickShader = new ClickShader();

@@ -49,42 +49,6 @@ public final class Toolbox {
             "Look at what you have done", "Please ignore the following message", "Congratulations!"
     };
 
-    /**
-     * Draws the x-axis (red), y-axis (green), z-axis (blue), and origin (yellow).
-     */
-    public static void drawAxisFrame(SGL gl) {
-        String source = Logger.getCallingMethod(1);
-        if (!Logger.callerBlacklist.contains(source)) {
-            Vector3f position = gl.getPosition(Vectors.O);
-            Logger.DEBUG.printFrom(2, " - draws axis frame on " + Vectors.toString(position));
-            Logger.callerBlacklist.add(source);
-        }
-
-        Material mat = Material.ROUGH;
-        ShaderProgram shader = gl.getShader();
-        MaterialShader matShader = (diffuse, specular, reflectance) -> {};
-
-        if (shader instanceof MaterialShader) {
-            matShader = (MaterialShader) shader;
-        }
-
-        gl.pushMatrix();
-        {
-            matShader.setMaterial(mat, Color4f.BLUE);
-            gl.render(GenericShapes.ARROW, null);
-
-            gl.rotate((float) Math.toRadians(90), 0f, 1f, 0f);
-            matShader.setMaterial(mat, Color4f.RED);
-            gl.render(GenericShapes.ARROW, null);
-            gl.rotate((float) Math.toRadians(-90), 1f, 0f, 0f);
-            matShader.setMaterial(mat, Color4f.GREEN);
-            gl.render(GenericShapes.ARROW, null);
-
-            matShader.setMaterial(Material.ROUGH, Color4f.WHITE);
-        }
-        gl.popMatrix();
-    }
-
     public static void draw3DPointer(SGL gl) {
         Material mat = Material.ROUGH;
         ShaderProgram shader = gl.getShader();
@@ -489,5 +453,13 @@ public final class Toolbox {
                 };
             }
         };
+    }
+
+    /** @return f such that interpolate(a, b, f) = target */
+    public static float getFraction(float a, float b, float target) {
+//        target = ((b - a) * f) + a;
+//        target - a = (b - a) * f;
+//        (target - a) / (b - a) = f;
+        return (target - a) / (b - a);
     }
 }

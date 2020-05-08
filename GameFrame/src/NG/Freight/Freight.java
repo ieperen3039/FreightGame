@@ -1,7 +1,8 @@
-package NG.Entities;
+package NG.Freight;
 
 import NG.Core.GameTimer;
 import NG.DataStructures.Valuta;
+import NG.Entities.Entity;
 import NG.Mods.FreightType;
 
 /**

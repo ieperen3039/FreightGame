@@ -36,10 +36,4 @@ public class DefaultMouseTool extends AbstractMouseTool {
             Logger.DEBUG.print("Clicked at " + Vectors.toString(position));
         }
     }
-
-    @Override
-    public void dispose() {
-        // no
-    }
-
 }

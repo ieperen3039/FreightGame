@@ -38,6 +38,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     private boolean isInvalid = false;
     private final float heightDiff;
     private boolean renderClickBox = false;
+    private boolean isOccupied = false;
 
     /**
      * @param game           the current game instance
@@ -158,6 +159,16 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     @Override
     public boolean canBeModified() {
         return isModifiable;
+    }
+
+    @Override
+    public void setOccupied(boolean occupied) {
+        isOccupied = occupied;
+    }
+
+    @Override
+    public boolean isOccupied() {
+        return isOccupied;
     }
 
     @Override

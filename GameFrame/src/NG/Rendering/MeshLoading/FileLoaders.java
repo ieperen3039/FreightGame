@@ -148,7 +148,7 @@ public final class FileLoaders {
         List<Color4f> colors = new ArrayList<>();
 
         // TODO allow variable properties
-        if (numberOfProperties != 10) {
+        if (numberOfProperties < 10) {
             throw new IOException("Wrong number of properties " + numberOfProperties);
         }
 

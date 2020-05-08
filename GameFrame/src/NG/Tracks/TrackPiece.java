@@ -50,4 +50,8 @@ public interface TrackPiece extends Entity {
         return getStartNode().getEntryOf(getEndNode()) != null &&
                 getEndNode().getEntryOf(getStartNode()) != null;
     }
+
+    void setOccupied(boolean occupied);
+
+    boolean isOccupied();
 }

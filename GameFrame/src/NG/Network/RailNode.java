@@ -135,8 +135,7 @@ public class RailNode {
     }
 
     /**
-     * returns the node that follows from passing this node from the direction of the given previous node, according to
-     * the state of this node. If {@link #isSwitch()} returns true, this is guaranteed to be at most one element
+     * returns the nodes that follows from passing this node from the direction of the given previous node.
      * @param previous the node you just left
      * @return the logical next nodes on the track
      */
@@ -148,6 +147,15 @@ public class RailNode {
             assert getIndexOf(bDirection, previous) != -1 : "Not connected to node " + previous;
             return aDirection;
         }
+    }
+
+    /**
+     * returns the nodes that follows from passing this node from the direction of the given leaving track.
+     * @param track one track connected to this node
+     * @return the logical next nodes on the track
+     */
+    public List<Direction> getNext(TrackPiece track) {
+        return getNext(track.getNot(this));
     }
 
     public Vector3fc getDirectionTo(Vector3fc point) {
@@ -207,7 +215,7 @@ public class RailNode {
      * @return an unmodified track piece. This should be disposed, but could potentially be re-inserted with {@link
      * #addConnection(TrackPiece, RailNode, RailNode)}
      */
-    static TrackPiece removeConnection(RailNode aNode, RailNode bNode) {
+    public static TrackPiece removeConnection(RailNode aNode, RailNode bNode) {
         assert aNode.getEntryOf(bNode) != null && bNode.getEntryOf(aNode) != null;
 
         TrackPiece oldPiece = aNode.removeNode(bNode);
@@ -271,6 +279,11 @@ public class RailNode {
         public Direction(RailNode railNode, TrackPiece trackPiece) {
             this.railNode = railNode;
             this.trackPiece = trackPiece;
+        }
+
+        @Override
+        public String toString() {
+            return "{" + railNode + ", " + trackPiece + "}";
         }
     }
 }

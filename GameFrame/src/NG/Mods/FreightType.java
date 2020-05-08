@@ -1,7 +1,7 @@
 package NG.Mods;
 
 import NG.DataStructures.Valuta;
-import NG.Entities.Freight;
+import NG.Freight.Freight;
 
 /**
  * A material that can be transported.

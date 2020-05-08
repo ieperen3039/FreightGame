@@ -74,6 +74,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         runPostUpdateActions();
         runCleaning();
 
+        game.timer().updateGameTime();
         entities.forEach(Entity::update);
 
         runPostUpdateActions();

@@ -34,8 +34,11 @@ public interface MouseTool extends MouseListener {
     void apply(Vector3fc position, int xSc, int ySc);
 
     /**
-     * sets this mousetool to be no longer used.
+     * activates when this mousetool is deactivated
      */
-    void dispose();
+    default void dispose() {
+    }
+
+    ;
 
 }

@@ -41,7 +41,7 @@ public class BaseTracksMod implements Mod {
 
     private static class DebugTrack implements TrackType {
         public static final float WIDTH = 0.4f;
-        public static final float HEIGHT = 0.2f;
+        public static final float HEIGHT = 0.1f;
         public static final int RESOLUTION = 5;
 
         @Override
@@ -55,7 +55,7 @@ public class BaseTracksMod implements Mod {
             float length = Math.abs(radius * angle);
 
             CustomShape frame = TrackType.generateFunctional(
-                    t -> new Vector3f(radius * Math.cos(angle * t), radius * Math.sin(angle * t), endHeight * t),
+                    t -> new Vector3f(radius * Math.cos(angle * t), radius * Math.sin(angle * t), endHeight * t - HEIGHT / 2),
                     t -> new Vector3f(-Math.sin(angle * t), Math.cos(angle * t), hDelta).normalize(),
                     WIDTH, HEIGHT, (int) (length * RESOLUTION)
             );
@@ -68,7 +68,7 @@ public class BaseTracksMod implements Mod {
             float length = displacement.length();
 
             CustomShape frame = TrackType.generateFunctional(
-                    t -> new Vector3f(displacement).mul(t),
+                    t -> new Vector3f(displacement).mul(t).sub(0, 0, HEIGHT / 2),
                     t -> new Vector3f(displacement).div(length),
                     WIDTH, HEIGHT, (int) (length * RESOLUTION)
             );

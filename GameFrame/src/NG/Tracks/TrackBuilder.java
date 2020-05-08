@@ -6,7 +6,6 @@ import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.InputHandling.MouseTools.ToggleMouseTool;
 import NG.Network.RailNode;
-import NG.Network.RailTools;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
@@ -184,22 +183,6 @@ public class TrackBuilder extends ToggleMouseTool {
             ghostTrack2.dispose();
             ghostTrack2 = null;
         }
-    }
-
-    private static RailNode getClosestNode(TrackPiece trackPiece, Vector3f point) {
-        RailNode startNode = trackPiece.getStartNode();
-        RailNode endNode = trackPiece.getEndNode();
-        float distToStart = point.distanceSquared(startNode.getPosition());
-        float distToEnd = point.distanceSquared(endNode.getPosition());
-
-        RailNode targetNode;
-        if (distToStart < distToEnd) {
-            targetNode = startNode;
-
-        } else {
-            targetNode = endNode;
-        }
-        return targetNode;
     }
 
     @Override

@@ -35,8 +35,8 @@ public class Settings {
 
     // UI settings
     public static int TOOL_BAR_HEIGHT = 80;
-    public static final float CLICK_BOX_WIDTH = 2f;
-    public static final float CLICK_BOX_HEIGHT = 0.25f;
+    public static final float CLICK_BOX_WIDTH = 1f;
+    public static final float CLICK_BOX_HEIGHT = 0.1f;
     public static final float CLICK_BOX_RESOLUTION = 0.5f;
 
     // in-game functional settings

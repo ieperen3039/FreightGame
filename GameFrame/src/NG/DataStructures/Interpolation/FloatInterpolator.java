@@ -1,5 +1,7 @@
 package NG.DataStructures.Interpolation;
 
+import NG.Tools.Toolbox;
+
 /**
  * @author Geert van Ieperen created on 15-12-2017.
  */
@@ -11,14 +13,11 @@ public class FloatInterpolator extends LinearInterpolator<Float> {
 
     @Override
     protected Float interpolate(Float firstElt, Float secondElt, float fraction) {
-        float difference = secondElt - firstElt;
-
-        return firstElt + (difference * fraction);
+        return Toolbox.interpolate(firstElt, secondElt, fraction);
     }
 
     @Override
-    public Float getDerivative() {
-        float dx = nextElement() - activeElement;
-        return dx / getTimeDifference();
+    protected Float derivative(Float firstElt, Float secondElt, float deltaTime) {
+        return (secondElt - firstElt) / deltaTime;
     }
 }
