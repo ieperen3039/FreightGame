@@ -40,7 +40,7 @@ vec3 calcSurface(Light light, vec3 vNorm, vec3 unitToLight, vec3 eye){
         vec3 virtualLightPosition = normalize(-lightReflect);
         float linearSpec = max(0.0, dot(virtualLightPosition, normalize(eye)));
         float shine = pow(linearSpec, material.reflectance);
-        result += shine * shine * light.color * material.specular.xyz * material.specular.w;
+        result += shine * light.color * material.specular.xyz * material.specular.w;
     }
 
     return result;

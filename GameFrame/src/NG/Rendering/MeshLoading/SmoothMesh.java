@@ -1,7 +1,6 @@
 package NG.Rendering.MeshLoading;
 
 import NG.Rendering.Shaders.ShaderProgram;
-import NG.Tools.Logger;
 import NG.Tools.Toolbox;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
@@ -16,19 +15,20 @@ import static org.lwjgl.opengl.GL15.glBindBuffer;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 
 /**
+ * A mesh with indexing, where the entire surface is smoothed. Allows textures but no colors.
  * @author Geert van Ieperen created on 1-2-2019.
  */
-public class TexturedMesh extends AbstractMesh {
+public class SmoothMesh extends AbstractMesh {
 
-    public TexturedMesh(MeshFile model) {
-        if (!model.isTextured()) Logger.ASSERT.print("Created a textured mesh of an untextured object");
-
-        int nrOfVertices = model.getVertices().size();
+    public SmoothMesh(
+            List<Vector3fc> vertices, List<Vector3fc> normals, List<Vector2fc> textureCoords, List<Face> faces
+    ) {
+        int nrOfVertices = vertices.size();
 
         // prepare empty normals
-        List<Vector3f> normals = new ArrayList<>(nrOfVertices);
+        List<Vector3f> secNormals = new ArrayList<>(nrOfVertices);
         for (int i = 0; i < nrOfVertices; i++) {
-            normals.add(new Vector3f());
+            secNormals.add(new Vector3f());
         }
 
         // prepare mapping attributes to integers
@@ -36,12 +36,12 @@ public class TexturedMesh extends AbstractMesh {
         int attributeSize = 0;
 
         // combination of triplets of face indices
-        int[] indices = new int[model.getFaces().size() * 3];
+        int[] indices = new int[faces.size() * 3];
         int faceAttributeIndex = 0;
 
         // collect all non-overlapping texture coordinates
         // average all normals
-        for (Face face : model.getFaces()) {
+        for (Face face : faces) {
             assert face.size() == 3;
 
             for (int i = 0; i < 3; i++) {
@@ -49,12 +49,13 @@ public class TexturedMesh extends AbstractMesh {
                 int texInd = face.tex[i];
                 int normInd = face.norm[i];
 
-                Vector3fc vertex = model.getVertices().get(posInd);
-                Vector3fc normal = model.getNormals().get(normInd);
-                Vector2fc coord = model.getTextureCoords().get(texInd);
+                Vector3fc vertex = vertices.get(posInd);
+                Vector3fc normal = normals.get(normInd);
+                Vector2fc coord = textureCoords.get(texInd);
 
-                // add all normal vectors of a given position vector
-                Vector3f accNormal = normals.get(posInd).add(normal);
+                // the MeshFile allows multiple normals per position vertex
+                // we take the average normal of all normals of any one vertex
+                Vector3f accNormal = secNormals.get(posInd).add(normal);
 
                 Attribute att = new Attribute(vertex, accNormal, coord);
                 Integer index = attributes.get(att);
@@ -124,7 +125,7 @@ public class TexturedMesh extends AbstractMesh {
         Toolbox.checkGLError(toString());
     }
 
-    private class Attribute {
+    private static class Attribute {
         Vector3fc vertex;
         Vector3f normal;
         Vector2fc texCoord;

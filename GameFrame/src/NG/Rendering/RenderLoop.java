@@ -7,7 +7,6 @@ import NG.Core.Game;
 import NG.Core.GameAspect;
 import NG.DataStructures.Generic.Color4f;
 import NG.GUIMenu.Rendering.NVGOverlay;
-import NG.Rendering.Lights.GameLights;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MatrixStack.SceneShaderGL;
 import NG.Rendering.Shaders.PhongShader;
@@ -100,8 +99,7 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
         game.camera().updatePosition(deltaTime); // real-time deltatime
 
         if (accurateTiming) timeObserver.startTiming("ShadowMaps");
-        GameLights lights = game.lights();
-        lights.renderShadowMaps();
+        game.lights().renderShadowMaps();
 
         if (accurateTiming) {
             glFinish();

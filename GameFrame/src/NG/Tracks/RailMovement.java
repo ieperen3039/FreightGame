@@ -72,7 +72,8 @@ public class RailMovement extends AbstractGameObject {
     private void stepTo(float gameTime) {
         while (true) {
             float deltaTime = gameTime - lastUpdateTime;
-            float movement = speed * deltaTime;
+            // s = vt + at^2
+            float movement = speed * deltaTime + acceleration * deltaTime * deltaTime;
             float trackLength = currentTrack.getLength();
             float newDistance = currentDistance + ((positiveDirection) ? movement : -movement);
 

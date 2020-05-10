@@ -5,6 +5,7 @@ import NG.DataStructures.Generic.Color4f;
 import NG.Rendering.Lights.DirectionalLight;
 import NG.Rendering.Textures.GenericTextures;
 import NG.Rendering.Textures.Texture;
+import NG.Settings.Settings;
 import NG.Tools.Directory;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -25,7 +26,7 @@ public class BlinnPhongShader extends SceneShader implements TextureShader {
     private static final Path VERTEX_PATH = Directory.shaders.getPath("BlinnPhong", "blinnphong.vert");
     private static final Path FRAGMENT_PATH = Directory.shaders.getPath("BlinnPhong", "blinnphong.frag");
     private static final int MAX_POINT_LIGHTS = 10;
-    private static final float SPECULAR_POWER = 10f;
+    private static final float SPECULAR_POWER = 1f;
 
     private int nextLightIndex = 0;
 
@@ -58,20 +59,21 @@ public class BlinnPhongShader extends SceneShader implements TextureShader {
         createUniform("cameraPosition");
 
         createUniform("hasTexture");
-        createUniform("hasColor");
     }
 
     @Override
     public void initialize(Game game) {
         // Base variables
         Vector3fc eye = game.camera().getEye();
-        setUniform("ambientLight", game.settings().AMBIENT_LIGHT.toVector3f());
+        Settings settings = game.settings();
+
+        setUniform("ambientLight", settings.AMBIENT_LIGHT.toVector3f());
         setUniform("cameraPosition", eye);
         setUniform("specularPower", SPECULAR_POWER);
-        setUniform("directionalLight.shadowEnable", game.settings().STATIC_SHADOW_RESOLUTION > 0);
+        boolean doShadows = settings.STATIC_SHADOW_RESOLUTION > 0 || settings.DYNAMIC_SHADOW_RESOLUTION > 0;
+        setUniform("directionalLight.shadowEnable", doShadows);
 
         setUniform("hasTexture", false);
-        setUniform("hasColor", false);
 
         // Texture for the model
         setUniform("texture_sampler", 0);

@@ -10,6 +10,7 @@ import org.joml.Vector3fc;
 import org.lwjgl.opengl.GL;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
@@ -17,7 +18,7 @@ import static org.lwjgl.opengl.GL15.glBindBuffer;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 
 /**
- * A mesh that supports (only) flat shading. Per-vertex coloring is supported, no textures.
+ * A mesh that supports (only) flat shading. Allows colors, but no textures
  * @author Geert van Ieperen created on 17-11-2017.
  */
 public class FlatMesh extends AbstractMesh {
@@ -40,7 +41,10 @@ public class FlatMesh extends AbstractMesh {
         setElementCount(nrOfVecElements);
         float[] posArr = new float[nrOfVecElements * 3];
         float[] normArr = new float[nrOfVecElements * 3];
-        float[] colorArr = colorList == null ? null : new float[nrOfVecElements * 4];
+        float[] colorArr = new float[nrOfVecElements * 4];
+
+        // all opaque white
+        if (colorList == null) Arrays.fill(colorArr, 1.0f);
 
         for (int i = 0; i < facesList.size(); i++) {
             Mesh.Face face = facesList.get(i);
@@ -94,9 +98,7 @@ public class FlatMesh extends AbstractMesh {
         createVBO(normals, ShaderProgram.NORMAL_LOCATION, 3);
 
         // Vertex color VBO
-        if (colors != null) {
-            createVBO(colors, ShaderProgram.COLOR_LOCATION, 4);
-        }
+        createVBO(colors, ShaderProgram.COLOR_LOCATION, 4);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
@@ -224,7 +226,7 @@ public class FlatMesh extends AbstractMesh {
 
         int vectorIndex = faceNumber * 3;
         for (int i = 0; i < 3; i++) {
-            Color4f color = colorList.get(face.vert[i]);
+            Color4f color = colorList.get(face.col[i]);
             int offset = (vectorIndex + i) * 4;
 
             colorArr[offset] = color.red;

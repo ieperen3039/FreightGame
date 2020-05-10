@@ -8,9 +8,10 @@ import NG.DataStructures.Generic.Color4f;
  */
 public enum Material {
     ROUGH(Color4f.GREY, Color4f.INVISIBLE, 1),
-    METAL(Color4f.BLACK, Color4f.WHITE, 50),
-    PLASTIC(Color4f.BLACK, Color4f.WHITE, 2),
+    METAL(Color4f.WHITE, Color4f.WHITE, 20),
+    PLASTIC(Color4f.WHITE, Color4f.GREY, 2),
 
+    PEARL(Color4f.WHITE, Color4f.MAGENTA, 100),
     SILVER(new Color4f(0.8f, 0.8f, 0.8f), new Color4f(0.9f, 0.9f, 1f), 40);
 
     public final Color4f baseColor;

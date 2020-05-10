@@ -2,7 +2,6 @@ package NG.Entities;
 
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
-import NG.DataStructures.Generic.Color4f;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Network.RailNode;
 import NG.Rendering.Material;
@@ -44,7 +43,7 @@ public class Locomotive extends AbstractGameObject implements MovingEntity {
         this.positionEngine = new RailMovement(game, this, spawnTime, startPiece, fraction, true);
 
         this.mesh = Mesh.createResource(Directory.meshes, "locos", "LittleRedDiesel.ply");
-        positionEngine.setAcceleration(0.1f);
+        positionEngine.setAcceleration(0.2f);
     }
 
     @Override
@@ -70,9 +69,8 @@ public class Locomotive extends AbstractGameObject implements MovingEntity {
         ShaderProgram shader = gl.getShader();
 
         if (shader instanceof MaterialShader) {
-            ((MaterialShader) shader).setMaterial(Material.METAL, Color4f.WHITE);
+            ((MaterialShader) shader).setMaterial(Material.METAL);
         }
-
 
         gl.pushMatrix();
         {

@@ -45,6 +45,8 @@ uniform PointLight pointLights[MAX_POINT_LIGHTS];
 uniform DirectionalLight directionalLight;
 
 uniform sampler2D texture_sampler;
+uniform bool hasTexture;
+
 uniform vec3 ambientLight;
 uniform float specularPower;
 
@@ -54,27 +56,24 @@ uniform sampler2D dynamicShadowMap;
 uniform vec3 cameraPosition;
 uniform mat4 viewProjectionMatrix;
 
-uniform bool hasTexture;
-uniform bool hasColor;
-
 // global variables
 vec4 diffuse_color;
 vec4 specular_color;
 
 // Blinn-Phong lighting
 // calculates the diffuse and specular color component caused by one light
-vec3 calcBlinnPhong(vec3 light_color, vec3 position, vec3 light_direction, vec3 normal, float attenuatedIntensity) {
+vec3 calcBlinnPhong(vec3 light_color, vec3 position, vec3 light_direction, vec3 normal, float light_intensity) {
     // Diffuse component
-    float diff = max(dot(normal, light_direction), 0.0) * attenuatedIntensity;
+    float diff = max(dot(normal, light_direction), 0.0);
     vec3 diffuse = diffuse_color.xyz * light_color * diff;
 
     // Specular component
     vec3 viewDir = normalize(cameraPosition - position);
     vec3 halfwayDir = normalize(light_direction + viewDir);
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), specularPower);
-    vec3 specular = specular_color.xyz * attenuatedIntensity * spec * material.reflectance * light_color;
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), specularPower * material.reflectance);
+    vec3 specular = specular_color.xyz * spec * light_color;
 
-    return (diffuse + specular);
+    return (diffuse + specular) * light_intensity;
 }
 
 // Calculate Attenuation
@@ -127,7 +126,6 @@ vec3 calcPointLightComponents(PointLight light) {
 
 // caluclates the color addition caused by an infinitely far away light, including shadows.
 vec3 calcDirectionalLightComponents(DirectionalLight light) {
-
     if (light.intensity == 0.0){
         return vec3(0, 0, 0);
 
@@ -155,15 +153,11 @@ float sigm(float x){
 
 void main() {
     // Setup Material
-    // TODO combine these options
     if (hasTexture){
         diffuse_color = texture(texture_sampler, mTexCoord);
 
-    } else if (hasColor){
-        diffuse_color = mColor;
-
     } else {
-        diffuse_color = material.diffuse;
+        diffuse_color = mColor * material.diffuse;
     }
 
     specular_color = material.specular;

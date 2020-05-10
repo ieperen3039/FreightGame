@@ -273,4 +273,14 @@ public class Color4f implements Serializable {
         colorBuffer.put((byte) (blue * 255));
         colorBuffer.put((byte) (alpha * 255));
     }
+
+    @Override
+    public String toString() {
+        return "Color (" +
+                (int) (red * 255) + ", " +
+                (int) (green * 255) + ", " +
+                (int) (blue * 255) + ")" +
+                (alpha < 1 ? String.format(" %5.03f", alpha) : "")
+                ;
+    }
 }

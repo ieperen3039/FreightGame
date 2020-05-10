@@ -87,8 +87,9 @@ public class MainMenu extends SFrame {
         Entity cube = new Cube(game, pos);
         game.state().addEntity(cube);
 
-        game.lights()
-                .addDirectionalLight(new Vector3f(1, 1.5f, 0.5f), settings.SUNLIGHT_COLOR, settings.SUNLIGHT_INTENSITY);
+        game.lights().addDirectionalLight(
+                new Vector3f(1, 1.5f, 0.5f), settings.SUNLIGHT_COLOR, settings.SUNLIGHT_INTENSITY
+        );
 
         SToolBar toolBar = new SToolBar(game, true);
         for (TrackType trackType : game.objectTypes().getTrackTypes()) {

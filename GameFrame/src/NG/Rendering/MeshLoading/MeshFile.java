@@ -92,7 +92,11 @@ public class MeshFile {
 
     public Mesh getMesh() {
         if (isTextured()) {
-            return new TexturedMesh(this);
+            return new SmoothMesh(getVertices(), getNormals(), getTextureCoords(), getFaces());
+
+        } else if (isColored()) {
+            return new FlatMesh(getVertices(), getNormals(), getColors(), getFaces());
+
         } else {
             return new FlatMesh(getVertices(), getNormals(), getFaces());
         }

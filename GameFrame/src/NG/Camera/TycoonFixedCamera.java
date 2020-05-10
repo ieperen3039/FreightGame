@@ -128,7 +128,7 @@ public class TycoonFixedCamera implements Camera {
     public void onScroll(float value) {
         Settings s = game.settings();
         float zoomSpeed = s.CAMERA_ZOOM_SPEED;
-        int maxZoom = s.MAX_CAMERA_DIST;
+        float maxZoom = s.MAX_CAMERA_DIST;
 
         float v = Math.max(Math.min(zoomSpeed * -value, ZOOM_SPEED_LIMIT), -ZOOM_SPEED_LIMIT);
         eyeOffset.mul(v + 1f);

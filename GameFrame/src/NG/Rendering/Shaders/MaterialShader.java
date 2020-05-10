@@ -7,11 +7,14 @@ import NG.Rendering.Material;
  * @author Geert van Ieperen created on 1-2-2019.
  */
 public interface MaterialShader {
+    default void setMaterial(Material material) {
+        setMaterial(material.baseColor, material.specular, material.reflectance);
+    }
+
     /**
      * sets the material properties to be shaded
      * @param material the base properties of the material
-     * @param color    a blending color, such that the result is a colored version of the material. Use {@link
-     *                 Color4f#BLACK} for no coloring.
+     * @param color    a blending color, such that the result is a colored version of the material.
      */
     default void setMaterial(Material material, Color4f color) {
         Color4f baseColor = material.baseColor.overlay(color);
