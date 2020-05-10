@@ -7,7 +7,8 @@ import NG.Entities.Cube;
 import NG.Entities.Entity;
 import NG.Entities.Locomotive;
 import NG.GUIMenu.Components.*;
-import NG.GameState.MapGeneratorMod;
+import NG.GameState.HeightMapGenerator;
+import NG.GameState.SimpleMapGenerator;
 import NG.Mods.Mod;
 import NG.Settings.Settings;
 import NG.Tracks.TrackType;
@@ -65,17 +66,13 @@ public class MainMenu extends SFrame {
 
         // random map
         List<Mod> mods = modLoader.allMods();
-//        MapGeneratorMod mapGenerator = new FlatMapGenerator();
-        MapGeneratorMod mapGenerator = mods.stream()
-                .filter(m -> m instanceof MapGeneratorMod)
-                .findAny() // any generator
-                .map(m -> (MapGeneratorMod) m)
-                .orElseThrow();
+        HeightMapGenerator mapGenerator = new SimpleMapGenerator();
         mapGenerator.setXSize(xSize);
         mapGenerator.setYSize(ySize);
 
         modLoader.initMods(mods);
-        game.map().generateNew(mapGenerator);
+        game.map().setMapGenerator(mapGenerator);
+        game.map().generateNew();
 
         // set camera to middle of map
         Vector3f cameraFocus = new Vector3f(xSize / 2f, ySize / 2f, 0);

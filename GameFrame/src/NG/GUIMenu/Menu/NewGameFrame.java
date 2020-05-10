@@ -5,7 +5,7 @@ import NG.Core.Game;
 import NG.Core.ModLoader;
 import NG.DataStructures.Generic.PairList;
 import NG.GUIMenu.Components.*;
-import NG.GameState.MapGeneratorMod;
+import NG.GameState.HeightMapGenerator;
 import NG.Mods.Mod;
 import NG.Tools.Logger;
 import org.joml.Vector2i;
@@ -61,7 +61,7 @@ public class NewGameFrame extends SFrame implements Runnable {
         SContainer modPanel = new SPanel(1, nOfMods);
         Vector2i pos = new Vector2i(0, -1);
         for (Mod mod : modList) {
-            if (mod instanceof MapGeneratorMod) continue;
+            if (mod instanceof HeightMapGenerator) continue;
             SToggleButton button = new SToggleButton(mod.getModName(), MainMenu.BUTTON_MIN_WIDTH, MainMenu.BUTTON_MIN_HEIGHT);
             button.setGrowthPolicy(true, false);
             toggleList.add(button, mod);
@@ -72,7 +72,7 @@ public class NewGameFrame extends SFrame implements Runnable {
         // generator selection
         List<String> generatorNames = new ArrayList<>();
         for (Mod m : modList) {
-            if (m instanceof MapGeneratorMod) {
+            if (m instanceof HeightMapGenerator) {
                 String modName = m.getModName();
                 generatorNames.add(modName);
             }
@@ -96,7 +96,7 @@ public class NewGameFrame extends SFrame implements Runnable {
         try {
             // get and install map generator
             int selected = generatorSelector.getSelectedIndex();
-            MapGeneratorMod generatorMod = (MapGeneratorMod) modList.get(selected);
+            HeightMapGenerator generatorMod = (HeightMapGenerator) modList.get(selected);
 
             int xSize = Integer.parseInt(xSizeSelector.getSelected());
             int ySize = Integer.parseInt(ySizeSelector.getSelected());
@@ -109,7 +109,7 @@ public class NewGameFrame extends SFrame implements Runnable {
                 if (toggleList.left(i).isActive()) {
                     Mod mod = toggleList.right(i);
 
-                    if (mod instanceof MapGeneratorMod) {
+                    if (mod instanceof HeightMapGenerator) {
                         Logger.ASSERT.print("map generator mod found in modlist");
 
                     } else {
@@ -121,12 +121,13 @@ public class NewGameFrame extends SFrame implements Runnable {
             modLoader.initMods(targets);
 
             if (targets.isEmpty()) throw new ModLoader.IllegalNumberOfModulesException("No mods selected");
-            this.game.map().generateNew(generatorMod);
+            game.map().setMapGenerator(generatorMod);
+            game.map().generateNew();
 
             // set camera to middle of map
             Vector3f cameraFocus = new Vector3f(xSize / 2f, ySize / 2f, 0);
             Vector3f cameraEye = cameraFocus.add(10, 10, 10, new Vector3f());
-            this.game.camera().set(cameraFocus, cameraEye);
+            game.camera().set(cameraFocus, cameraEye);
 
             // start
             modLoader.startGame();

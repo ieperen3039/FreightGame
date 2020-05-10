@@ -157,7 +157,7 @@ public class FlatMesh extends AbstractMesh {
                 Vector3f vertex = new Vector3f(
                         x * edgeSize,
                         y * edgeSize,
-                        height
+                        height * edgeSize
                 );
                 vertices.add(vertex);
 

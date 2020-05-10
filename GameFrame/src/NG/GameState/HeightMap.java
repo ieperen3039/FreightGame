@@ -36,8 +36,9 @@ public class HeightMap implements GameMap {
     private float[][] heightmap;
     private final Collection<Resource<Mesh>> meshOfTheWorld = new CopyOnWriteArrayList<>();
 
-    private int edgeLength;
+    private float edgeLength = 1f;
     private float meshProgress;
+    private HeightMapGenerator mapGenerator;
 
     @Override
     public void init(Game game) {
@@ -45,7 +46,13 @@ public class HeightMap implements GameMap {
     }
 
     @Override
-    public void generateNew(MapGeneratorMod mapGenerator) {
+    public void setMapGenerator(HeightMapGenerator mapGenerator) {
+        this.mapGenerator = mapGenerator;
+        mapGenerator.setEdgeLength(edgeLength);
+    }
+
+    @Override
+    public void generateNew() {
         SFrame frame = new SFrame("Generating map...", 500, 200);
         SPanel panel = new SPanel();
         panel.add(new SFiller(), SPanel.NORTHEAST);
@@ -55,13 +62,12 @@ public class HeightMap implements GameMap {
         frame.setVisible(true);
         game.gui().addFrame(frame);
 
-        generate(mapGenerator);
+        generate();
         frame.dispose();
     }
 
-    private void generate(MapGeneratorMod mapGenerator) {
+    private void generate() {
         meshProgress = 0f;
-        edgeLength = mapGenerator.getEdgeLength();
 
         // height map generation
         heightmap = mapGenerator.generateHeightMap();
@@ -104,8 +110,8 @@ public class HeightMap implements GameMap {
     @Override
     public float getHeightAt(float x, float y) {
         // ASSUMPTION: map (0, 0) is on heightmap [0, 0]
-        float xFloat = x / edgeLength;
-        float yFloat = y / edgeLength;
+        float xFloat = x * edgeLength;
+        float yFloat = y * edgeLength;
         int xMin = (int) xFloat;
         int yMin = (int) yFloat;
 

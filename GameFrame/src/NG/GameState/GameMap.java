@@ -13,11 +13,12 @@ import org.joml.Vector3fc;
  * @author Geert van Ieperen. Created on 29-9-2018.
  */
 public interface GameMap extends GameAspect, MouseToolListener {
+    void setMapGenerator(HeightMapGenerator mapGenerator);
+
     /**
      * generate a map using the provided generator. This method should be run in a separate thread
-     * @param mapGenerator the generator to use for this map.
      */
-    void generateNew(MapGeneratorMod mapGenerator);
+    void generateNew();
 
     /**
      * @param position a position in (x, y) coordinates
@@ -59,7 +60,7 @@ public interface GameMap extends GameAspect, MouseToolListener {
     Vector3f intersectWithRay(Vector3fc origin, Vector3fc direction);
 
     /**
-     * allows objects to listen for when this map is changed, as a result of {@link #generateNew(MapGeneratorMod)} or
+     * allows objects to listen for when this map is changed, as a result of {@link #generateNew(HeightMapGenerator)} or
      * possibly an internal reason. Any call to {@link #draw(SGL)}, {@link #getHeightAt(float, float)} etc. will
      * represent the new values as soon as this callback is activated.
      * @param listener the object to notify

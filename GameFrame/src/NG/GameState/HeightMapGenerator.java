@@ -1,11 +1,9 @@
 package NG.GameState;
 
-import NG.Mods.Mod;
-
 /**
  * @author Geert van Ieperen. Created on 29-9-2018.
  */
-public interface MapGeneratorMod extends Mod {
+public interface HeightMapGenerator {
 
     /**
      * generate a heightmap which will be used to render the world.
@@ -14,9 +12,9 @@ public interface MapGeneratorMod extends Mod {
     float[][] generateHeightMap();
 
     /**
-     * @return the real distance between two vertices in the height map. Must be constant per generated map.
+     * @param edgeLength
      */
-    int getEdgeLength();
+    void setEdgeLength(float edgeLength);
 
     /**
      * @return the seed used to create the map

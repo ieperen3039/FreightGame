@@ -40,10 +40,10 @@ const int MAX_POINT_LIGHTS = 10;
 const float ATT_LIN = 0.1f;
 const float ATT_EXP = 0.01f;
 
-const float LINE_SIZE = 0.001f;
-const float LINE_DENSITY = 500;// 500 seems alright
-const float LINE_ALPHA = 0.8f;
-const float MINIMUM_LINE_DIST = 0.01f;
+const float LINE_SIZE = 0.00008f;
+const float LINE_DENSITY = 200;// 500 seems to be the max
+const float LINE_ALPHA = 0.15f;
+const float MINIMUM_LINE_DIST = 0.1f;
 
 uniform Material material;
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
@@ -158,7 +158,7 @@ float sigm(float x){
 }
 
 void main() {
-    float line_component = 0;
+    float line_visibility = 0;
 
     float camera_dist = length(cameraPosition - mVertexPosition);
     float target_line_dist = (camera_dist) / LINE_DENSITY;
@@ -178,11 +178,12 @@ void main() {
         if (distance_from_level != mod(fragment_level, marker_level_dist << 1)){
             // foo slightly above 0 means that the camera is almost close enough for solid
             float foo = ((target_level_dist - marker_level_dist) / marker_level_dist);
-            line_component = max(0, 1 - foo);
+            line_visibility = max(0, 1 - foo);
 
         } else {
-            line_component = 1;
+            line_visibility = 1;
         }
+        line_visibility *= LINE_ALPHA;
     }
 
     if (hasTexture){
@@ -213,6 +214,10 @@ void main() {
     diffuseSpecular += calcPointLightComponents(pointLights[9]);
 
     vec4 col = diffuse_color * vec4(ambientLight, 1.0) + vec4(diffuseSpecular, 0.0);
+    vec4 col_component = vec4(sigm(col.x), sigm(col.y), sigm(col.z), col.w);
 
-    fragColor = vec4(sigm(col.x), sigm(col.y), sigm(col.z), col.w) * (1 - line_component * LINE_ALPHA);
+    float x_component = min(1, max(0, (5 * mVertexNormal.x) + 0.5));
+    float y_component = min(1, max(0, (5 * mVertexNormal.y) + 0.5));
+    vec4 line_component = vec4(x_component - y_component, 0, y_component - x_component, 1.0);
+    fragColor = (1 - line_visibility) * col_component + line_visibility * line_component;
 }
