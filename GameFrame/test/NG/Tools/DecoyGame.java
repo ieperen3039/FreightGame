@@ -5,7 +5,7 @@ import NG.Core.Game;
 import NG.Core.GameTimer;
 import NG.Core.Version;
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
-import NG.GameState.GameMap;
+import NG.GameMap.GameMap;
 import NG.GameState.GameState;
 import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.MouseToolCallbacks;

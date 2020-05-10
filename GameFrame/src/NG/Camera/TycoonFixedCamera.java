@@ -126,6 +126,8 @@ public class TycoonFixedCamera implements Camera {
 
     @Override
     public void onScroll(float value) {
+        resetFocus();
+
         Settings s = game.settings();
         float zoomSpeed = s.CAMERA_ZOOM_SPEED;
         float maxZoom = s.MAX_CAMERA_DIST;
@@ -173,6 +175,25 @@ public class TycoonFixedCamera implements Camera {
     public void onClick(int button, int xPos, int yPos) {
         if (button == GLFW_MOUSE_BUTTON_RIGHT) {
             isBeingRotated = true;
+            resetFocus();
+        }
+    }
+
+    private void resetFocus() {
+        // set focus to middle of screen
+        Vector3f eyeMidOrigin = new Vector3f();
+        Vector3f eyeMidDirection = new Vector3f();
+        int width = game.window().getWidth();
+        int height = game.window().getHeight();
+
+        Vectors.windowCoordToRay(game, width / 2, height / 2, eyeMidOrigin, eyeMidDirection);
+        eyeMidDirection.normalize(Settings.Z_FAR - Settings.Z_NEAR);
+        Float tFrac = game.map().gridMapIntersection(eyeMidOrigin, eyeMidDirection);
+
+        if (tFrac != null) {
+            Vector3fc eyePos = getEye();
+            focus.set(eyeMidDirection).mul(tFrac).add(eyeMidOrigin);
+            eyeOffset.set(eyePos).sub(focus);
         }
     }
 

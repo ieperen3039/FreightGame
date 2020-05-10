@@ -2,7 +2,7 @@ package NG.Core;
 
 import NG.Camera.Camera;
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
-import NG.GameState.GameMap;
+import NG.GameMap.GameMap;
 import NG.GameState.GameState;
 import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.MouseToolCallbacks;

@@ -40,9 +40,9 @@ const int MAX_POINT_LIGHTS = 10;
 const float ATT_LIN = 0.1f;
 const float ATT_EXP = 0.01f;
 
-const float LINE_SIZE = 0.00008f;
-const float LINE_DENSITY = 200;// 500 seems to be the max
-const float LINE_ALPHA = 0.15f;
+const float LINE_SIZE = 0.0001f;
+const float LINE_DENSITY = 100;// 500 seems to be the max
+const float LINE_ALPHA = 0.3f;
 const float MINIMUM_LINE_DIST = 0.1f;
 
 uniform Material material;

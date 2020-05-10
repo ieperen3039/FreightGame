@@ -186,7 +186,7 @@ public class RailMovement extends AbstractGameObject {
         float pitchAngle = Math.atan2(direction.z, hzMovement);
 
         return new Quaternionf()
-                .rotateAxis(pitchAngle, 1, 0, 0)
+                .rotateAxis(pitchAngle, -1, 0, 0)
                 .rotateAxis(yawAngle, 0, 0, 1);
     }
 }

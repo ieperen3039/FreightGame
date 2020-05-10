@@ -6,7 +6,10 @@ import NG.GUIMenu.FrameManagers.FrameGUIManager;
 import NG.InputHandling.MouseReleaseListener;
 import NG.InputHandling.MouseScrollListener;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Settings.Settings;
+import NG.Tools.Vectors;
 import org.joml.Vector2i;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
 import static NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction.*;
@@ -55,11 +58,7 @@ public abstract class AbstractMouseTool implements MouseTool {
         game.camera().onClick(button, x, y);
         releaseListener = game.camera();
 
-        if (game.state().checkMouse(this, x, y)) {
-            return;
-        }
-
-        game.map().checkMouse(this, x, y);
+        checkMapAndEntities(x, y);
     }
 
     @Override
@@ -107,8 +106,23 @@ public abstract class AbstractMouseTool implements MouseTool {
         game.camera().mouseMoved(xDelta, yDelta, xPos, yPos);
 
         // TODO don't check if the result is unused
-        if (game.state().checkMouse(this, (int) xPos, (int) yPos)) return;
-        game.map().checkMouse(this, (int) xPos, (int) yPos);
+
+        checkMapAndEntities((int) xPos, (int) yPos);
+    }
+
+    /**
+     * runs {@code checkMouseClick} for the game state and game map
+     * @param xSc
+     * @param ySc
+     */
+    private void checkMapAndEntities(int xSc, int ySc) {
+        Vector3f origin = new Vector3f();
+        Vector3f direction = new Vector3f();
+        Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
+        direction.normalize(Settings.Z_FAR - Settings.Z_NEAR);
+
+        if (game.state().checkMouseClick(this, xSc, ySc, origin, direction)) return;
+        game.map().checkMouseClick(this, xSc, ySc, origin, direction);
     }
 
     @Override

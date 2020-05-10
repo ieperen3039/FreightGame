@@ -5,10 +5,10 @@ import NG.Camera.TycoonFixedCamera;
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
 import NG.GUIMenu.FrameManagers.FrameManagerImpl;
 import NG.GUIMenu.Menu.MainMenu;
+import NG.GameMap.GameMap;
+import NG.GameMap.HeightMap;
 import NG.GameState.GameLoop;
-import NG.GameState.GameMap;
 import NG.GameState.GameState;
-import NG.GameState.HeightMap;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.MouseToolCallbacks;
@@ -83,13 +83,13 @@ public class FreightGame implements Game, ModLoader {
         GLFWWindow.Settings videoSettings = new GLFWWindow.Settings(settings);
         window = new GLFWWindow(Settings.GAME_NAME, videoSettings, true);
         clickShader = new ClickShader();
+        gameMap = new HeightMap();
 
         camera = new TycoonFixedCamera(new Vector3f(), 100, 100);
         renderer = new RenderLoop(settings.TARGET_FPS);
         gameState = new GameLoop(settings.TARGET_TPS, clickShader);
         gameLights = new SingleShadowMapLights();
         gameParticles = new GameParticles();
-        gameMap = new HeightMap();
         inputHandler = new MouseToolCallbacks();
         keyControl = inputHandler.getKeyControl();
         frameManager = new FrameManagerImpl();
@@ -111,7 +111,6 @@ public class FreightGame implements Game, ModLoader {
         gameState.init(this);
         gameLights.init(this);
         gameParticles.init(this);
-        gameMap.init(this);
         inputHandler.init(this);
         frameManager.init(this);
 

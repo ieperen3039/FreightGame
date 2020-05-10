@@ -11,6 +11,7 @@ import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.Primitives.Collision;
+import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.ArrayList;
@@ -129,7 +130,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     }
 
     @Override
-    public boolean checkMouse(MouseTool tool, int xSc, int ySc) {
+    public boolean checkMouseClick(MouseTool tool, int xSc, int ySc, Vector3f origin, Vector3f direction) {
         Entity entity = clickShader.getEntity(game, xSc, ySc);
         if (entity == null) return false;
 
