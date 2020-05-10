@@ -40,16 +40,18 @@ const int MAX_POINT_LIGHTS = 10;
 const float ATT_LIN = 0.1f;
 const float ATT_EXP = 0.01f;
 
-const float BORDER_SIZE = 0.01f;
-
-uniform vec2 tileSize;
-uniform vec2 tileOffset;
+const float LINE_SIZE = 0.001f;
+const float LINE_DENSITY = 500;// 500 seems alright
+const float LINE_ALPHA = 0.8f;
+const float MINIMUM_LINE_DIST = 0.01f;
 
 uniform Material material;
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
 uniform DirectionalLight directionalLight;
 
 uniform sampler2D texture_sampler;
+uniform bool hasTexture;
+
 uniform vec3 ambientLight;
 uniform float specularPower;
 
@@ -59,27 +61,24 @@ uniform sampler2D dynamicShadowMap;
 uniform vec3 cameraPosition;
 uniform mat4 viewProjectionMatrix;
 
-uniform bool hasTexture;
-uniform bool hasColor;
-
 // global variables
 vec4 diffuse_color;
 vec4 specular_color;
 
 // Blinn-Phong lighting
 // calculates the diffuse and specular color component caused by one light
-vec3 calcBlinnPhong(vec3 light_color, vec3 position, vec3 light_direction, vec3 normal, float attenuatedIntensity) {
+vec3 calcBlinnPhong(vec3 light_color, vec3 position, vec3 light_direction, vec3 normal, float light_intensity) {
     // Diffuse component
-    float diff = max(dot(normal, light_direction), 0.0) * attenuatedIntensity;
+    float diff = max(dot(normal, light_direction), 0.0);
     vec3 diffuse = diffuse_color.xyz * light_color * diff;
 
     // Specular component
     vec3 viewDir = normalize(cameraPosition - position);
     vec3 halfwayDir = normalize(light_direction + viewDir);
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), specularPower);
-    vec3 specular = specular_color.xyz * attenuatedIntensity * spec * material.reflectance * light_color;
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), specularPower * material.reflectance);
+    vec3 specular = specular_color.xyz * spec * light_color;
 
-    return (diffuse + specular);
+    return (diffuse + specular) * light_intensity;
 }
 
 // Calculate Attenuation
@@ -159,27 +158,38 @@ float sigm(float x){
 }
 
 void main() {
-    // if normal is not flat enough
-    if (mVertexNormal.z > 0.1f){
-        float fx = fract((mVertexPosition.x + tileOffset.x) / tileSize.x);
-        float fy = fract((mVertexPosition.y + tileOffset.y) / tileSize.y);
-        // part of border
-        if (fx < BORDER_SIZE || fx > (1 - BORDER_SIZE) || fy < BORDER_SIZE || fy > (1 - BORDER_SIZE)){
-            fragColor = vec4(0.0, 0.0, 0.0, 1.0);
-            return;
+    float line_component = 0;
+
+    float camera_dist = length(cameraPosition - mVertexPosition);
+    float target_line_dist = (camera_dist) / LINE_DENSITY;
+    float target_level_dist = target_line_dist / MINIMUM_LINE_DIST;
+
+    // calculate distance between markers
+    int marker_shift = max(0, int(floor(log2(target_level_dist))));
+    int marker_level_dist = 1 << min(marker_shift, 31);
+
+    // calculate distance to nearest marker
+    float fragment_level = mVertexPosition.z / MINIMUM_LINE_DIST;
+    float distance_from_level = mod(fragment_level, marker_level_dist);
+    float distance_from_height_line = distance_from_level * MINIMUM_LINE_DIST;
+
+    if (abs(distance_from_height_line) < LINE_SIZE * camera_dist){
+        // if the next marker_level_dist doesn't activate this, fade out
+        if (distance_from_level != mod(fragment_level, marker_level_dist << 1)){
+            // foo slightly above 0 means that the camera is almost close enough for solid
+            float foo = ((target_level_dist - marker_level_dist) / marker_level_dist);
+            line_component = max(0, 1 - foo);
+
+        } else {
+            line_component = 1;
         }
     }
 
-    // Setup Material
-    // TODO combine these options
     if (hasTexture){
         diffuse_color = texture(texture_sampler, mTexCoord);
 
-    } else if (hasColor){
-        diffuse_color = mColor;
-
     } else {
-        diffuse_color = material.diffuse;
+        diffuse_color = mColor * material.diffuse;
     }
 
     specular_color = material.specular;
@@ -204,5 +214,5 @@ void main() {
 
     vec4 col = diffuse_color * vec4(ambientLight, 1.0) + vec4(diffuseSpecular, 0.0);
 
-    fragColor = vec4(sigm(col.x), sigm(col.y), sigm(col.z), col.w);
+    fragColor = vec4(sigm(col.x), sigm(col.y), sigm(col.z), col.w) * (1 - line_component * LINE_ALPHA);
 }
