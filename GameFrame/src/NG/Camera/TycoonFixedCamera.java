@@ -4,9 +4,11 @@ import NG.Core.Game;
 import NG.Rendering.GLFWWindow;
 import NG.Settings.Settings;
 import NG.Tools.Vectors;
+import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_MIDDLE;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
 /**
@@ -14,19 +16,22 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
  * @author Geert van Ieperen. Created on 18-11-2018.
  */
 public class TycoonFixedCamera implements Camera {
+    private static final float BORDER_MOVE_SPEED = 0.6f;
     private static final int SCREEN_MOVE_BORDER_SIZE = 50;
     private static final int SCREEN_DEAD_ZONE = 30;
 
     private static final float ZOOM_SPEED_LIMIT = 0.03f;
     private static final float ROTATION_MODIFIER = 0.002f;
-    private static final float MOVE_SPEED = 0.5f;
+    public static final float DRAG_MODIFIER = 0.0015f;
+
     private final Vector3f focus = new Vector3f();
     private final Vector3f eyeOffset;
 
     private Game game;
     private float mouseXPos;
     private float mouseYPos;
-    private boolean isBeingRotated;
+    private boolean isBeingRotated = false;
+    private boolean isBeginMoved = false;
 
     /**
      * a camera that always has the same angle to the ground. The angle can be set by the ratio between eyeOffset and
@@ -44,6 +49,10 @@ public class TycoonFixedCamera implements Camera {
     @Override
     public void init(Game game) {
         this.game = game;
+
+        Vector2i mousePosition = game.window().getMousePosition();
+        mouseXPos = mousePosition.x;
+        mouseYPos = mousePosition.y;
     }
 
     @Override
@@ -53,8 +62,10 @@ public class TycoonFixedCamera implements Camera {
 
     @Override
     public void updatePosition(float deltaTime) {
+        // prevents side-of-window movement when rotating or dragging
+        if (isBeingRotated || isBeginMoved) return;
         // prevent overshooting when camera is not updated.
-        if (deltaTime > 0.5f || isBeingRotated) return;
+        deltaTime = Math.min(deltaTime, 0.5f);
 
         Vector3f eyeDir = new Vector3f(eyeOffset);
         GLFWWindow window = game.window();
@@ -156,7 +167,7 @@ public class TycoonFixedCamera implements Camera {
         if (pixels >= SCREEN_MOVE_BORDER_SIZE) return 0;
 
         int offset = Math.min(SCREEN_MOVE_BORDER_SIZE - pixels, SCREEN_DEAD_ZONE);
-        return offset * (1f / (SCREEN_MOVE_BORDER_SIZE - SCREEN_DEAD_ZONE)) * MOVE_SPEED * eyeOffset.length();
+        return offset * (1f / (SCREEN_MOVE_BORDER_SIZE - SCREEN_DEAD_ZONE)) * BORDER_MOVE_SPEED * eyeOffset.length();
     }
 
     @Override
@@ -168,14 +179,27 @@ public class TycoonFixedCamera implements Camera {
         if (isBeingRotated) {
             float angle = -xDelta * ROTATION_MODIFIER;
             eyeOffset.rotateZ(angle);
+
+        } else if (isBeginMoved) {
+            // x movement
+            Vector3f eyeDir = new Vector3f(eyeOffset);
+            eyeDir.mul(xDelta * DRAG_MODIFIER).cross(getUpVector());
+            focus.add(eyeDir.x, eyeDir.y, 0);
+
+            // y movement
+            eyeDir.set(eyeOffset).mul(yDelta * DRAG_MODIFIER);
+            focus.sub(eyeDir.x, eyeDir.y, 0);
         }
     }
 
     @Override
     public void onClick(int button, int xPos, int yPos) {
-        if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+        if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
             isBeingRotated = true;
             resetFocus();
+
+        } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+            isBeginMoved = true;
         }
     }
 
@@ -200,6 +224,7 @@ public class TycoonFixedCamera implements Camera {
     @Override
     public void onRelease(int button, int xSc, int ySc) {
         isBeingRotated = false;
+        isBeginMoved = false;
     }
 }
 

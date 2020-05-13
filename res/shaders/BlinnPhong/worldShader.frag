@@ -40,9 +40,10 @@ const int MAX_POINT_LIGHTS = 10;
 const float ATT_LIN = 0.1f;
 const float ATT_EXP = 0.01f;
 
-const float LINE_SIZE = 0.0001f;
-const float LINE_DENSITY = 100;// 500 seems to be the max
+const float LINE_SIZE = 0.0004f;
+const float LINE_DENSITY = 80;// 500 seems to be the max
 const float LINE_ALPHA = 0.3f;
+const float LINE_COLOR_SENSITIVITY = 2;
 const float MINIMUM_LINE_DIST = 0.1f;
 
 uniform Material material;
@@ -216,8 +217,8 @@ void main() {
     vec4 col = diffuse_color * vec4(ambientLight, 1.0) + vec4(diffuseSpecular, 0.0);
     vec4 col_component = vec4(sigm(col.x), sigm(col.y), sigm(col.z), col.w);
 
-    float x_component = min(1, max(0, (5 * mVertexNormal.x) + 0.5));
-    float y_component = min(1, max(0, (5 * mVertexNormal.y) + 0.5));
-    vec4 line_component = vec4(x_component - y_component, 0, y_component - x_component, 1.0);
+    float x_component = min(1, max(0, (LINE_COLOR_SENSITIVITY * mVertexNormal.x) + 0.5));
+    float y_component = min(1, max(0, (LINE_COLOR_SENSITIVITY * mVertexNormal.y) + 0.5));
+    vec4 line_component = vec4(max(y_component, 0), abs(x_component), max(-y_component, 0), 1.0);
     fragColor = (1 - line_visibility) * col_component + line_visibility * line_component;
 }
