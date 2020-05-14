@@ -35,7 +35,7 @@ public class HeightMap extends GridMap {
     private float meshProgress;
 
     private float[][] heightmap;
-    private float edgeLength = 1f;
+    private float edgeLength = 0.5f;
     private int xSize;
     private int ySize;
 
@@ -43,25 +43,31 @@ public class HeightMap extends GridMap {
 
     @Override
     Float getTileIntersect(Vector3fc origin, Vector3fc direction, int xCoord, int yCoord) {
-        if (xCoord < 0 || yCoord < 0 || xCoord >= xSize || yCoord >= ySize) return null;
+        if (xCoord < 0 || yCoord < 0 || xCoord >= (xSize - 1) || yCoord >= (ySize - 1)) return null;
 
-        float t1 = Intersectionf.intersectRayTriangle(
-                origin, direction,
-                getPosition(xCoord, yCoord), getPosition(xCoord + 1, yCoord),
-                getPosition(xCoord, yCoord + 1),
-                EPSILON
+        Vector3f a = getPosition(xCoord, yCoord);
+        Vector3f b = getPosition(xCoord + 1, yCoord);
+        Vector3f c = getPosition(xCoord, yCoord + 1);
+        Vector3f d = getPosition(xCoord + 1, yCoord + 1);
+
+        AABBf boundingBox = new AABBf().union(a).union(b).union(c).union(d);
+        boolean hits = Intersectionf.intersectRayAab(
+                origin.x(), origin.y(), origin.z(),
+                direction.x(), direction.y(), direction.z(),
+                boundingBox.minX, boundingBox.minY, boundingBox.minZ,
+                boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ,
+                new Vector2f()
         );
+
+        if (!hits) return Float.POSITIVE_INFINITY;
+
+        float t1 = Intersectionf.intersectRayTriangle(origin, direction, a, b, c, EPSILON);
 
         if (t1 != -1.0f) {
             return t1;
 
         } else {
-            float t2 = Intersectionf.intersectRayTriangle(
-                    origin, direction,
-                    getPosition(xCoord + 1, yCoord), getPosition(xCoord, yCoord + 1),
-                    getPosition(xCoord + 1, yCoord + 1),
-                    EPSILON
-            );
+            float t2 = Intersectionf.intersectRayTriangle(origin, direction, b, c, d, EPSILON);
 
             if (t2 != -1.0f) {
                 return t2;
@@ -142,7 +148,8 @@ public class HeightMap extends GridMap {
         float smallerXHeight = Toolbox.interpolate(a, b, xFrac);
         float largerXHeight = Toolbox.interpolate(c, d, xFrac);
 
-        return Toolbox.interpolate(smallerXHeight, largerXHeight, yFrac);
+        float lerpHeightValue = Toolbox.interpolate(smallerXHeight, largerXHeight, yFrac);
+        return lerpHeightValue * edgeLength;
     }
 
     @Override
@@ -158,7 +165,7 @@ public class HeightMap extends GridMap {
         return new Vector3f(
                 x * edgeLength,
                 y * edgeLength,
-                getHeightAt(x, y) * edgeLength
+                heightmap[x][y] * edgeLength
         );
     }
 
@@ -190,7 +197,8 @@ public class HeightMap extends GridMap {
 
     @Override
     public Vector2ic getSize() {
-        return new Vector2i(xSize, ySize);
+        // number of voxels is one less than the number of coordinates
+        return new Vector2i(xSize - 1, ySize - 1);
     }
 
     public void cleanup() {

@@ -46,7 +46,7 @@ public interface GameMap extends Externalizable {
     void addChangeListener(ChangeListener listener);
 
     /**
-     * the number of coordinates in x and y direction. The real (floating-point) size can be completely different.
+     * the number of voxels in x and y direction. The real (floating-point) size can be completely different.
      */
     Vector2ic getSize();
 
