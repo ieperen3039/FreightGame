@@ -86,6 +86,8 @@ public class RailNode {
      */
     private TrackPiece removeNode(RailNode target) {
         boolean wasNetwork = this.isNetworkNode();
+        List<Direction> otherDirections = getNext(target);
+
         Direction removed;
 
         List<Direction> list = aDirection;
@@ -105,14 +107,12 @@ public class RailNode {
         }
 
         if (isEnd()) {
-            List<Direction> others = getNext(target);
-            for (Direction entry : others) {
+            for (Direction entry : otherDirections) {
                 entry.railNode.updateNetwork(this, null, 0);
             }
 
         } else if (wasNetwork && !isNetworkNode()) {
             assert isStraight() : this; // !isEnd() && !isSwitch() assuming (!isNetworkNode() => !isSwitch())
-            List<Direction> otherDirections = getNext(target);
 
             assert otherDirections.size() == 1 : otherDirections;
             Direction oneDirection = otherDirections.get(0);
@@ -285,11 +285,6 @@ public class RailNode {
         // these must occur after adding
         updateNetwork(oneNode, twoNode, oneWasNetwork);
         updateNetwork(twoNode, oneNode, twoWasNetwork);
-
-        Logger.WARN.print("From   ", oneNode, oneWasNetwork, oneNode.isNetworkNode(), oneBecomesStraight);
-        Logger.WARN.print("To     ", twoNode, twoWasNetwork, twoNode.isNetworkNode(), twoBecomesStraight);
-        Logger.WARN.print("Network:");
-        System.err.println(RailNode.getNetworkAsString(twoNode));
     }
 
     private static void addEntry(

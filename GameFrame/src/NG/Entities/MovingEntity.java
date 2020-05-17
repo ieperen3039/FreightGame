@@ -7,7 +7,7 @@ import org.joml.Vector3fc;
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
 public interface MovingEntity extends Entity {
-    Vector3fc getPosition(float time);
+    Vector3fc getPosition(double time);
 
     @Override
     default UpdateFrequency getUpdateFrequency() {

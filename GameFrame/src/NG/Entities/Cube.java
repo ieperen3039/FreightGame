@@ -3,6 +3,7 @@ package NG.Entities;
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
+import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
@@ -28,7 +29,7 @@ public class Cube extends AbstractGameObject implements MovingEntity {
     }
 
     @Override
-    public Vector3fc getPosition(float time) {
+    public Vector3fc getPosition(double time) {
         return position;
     }
 
@@ -55,7 +56,7 @@ public class Cube extends AbstractGameObject implements MovingEntity {
     }
 
     @Override
-    public void onClick(int button) {
+    public void reactMouse(AbstractMouseTool.MouseAction action) {
         dispose();
     }
 

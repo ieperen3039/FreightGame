@@ -3,6 +3,7 @@ package NG.Tracks;
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.InputHandling.ClickShader;
+import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
@@ -115,7 +116,7 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     }
 
     @Override
-    public void onClick(int button) {
+    public void reactMouse(AbstractMouseTool.MouseAction action) {
 
     }
 

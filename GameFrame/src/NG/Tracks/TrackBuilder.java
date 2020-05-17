@@ -82,7 +82,7 @@ public class TrackBuilder extends ToggleMouseTool {
                 } else if (firstPosition != null) {
                     Vector3f toNode = new Vector3f(position).sub(firstPosition);
                     RailNode ghostNode = new RailNode(firstPosition, ghostType, toNode);
-                    ghostTrack1 = new StraightTrack(game, type, ghostNode, position, true);
+                    ghostTrack1 = new StraightTrack(game, ghostType, ghostNode, position, true);
                 }
             default:
         }

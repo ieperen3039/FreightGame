@@ -35,9 +35,9 @@ public class ParticleCloud implements Mesh, Externalizable {
 
     private boolean isLoaded = false;
     private List<Particle> bulk = new ArrayList<>();
-    private float minStartTime = Float.POSITIVE_INFINITY;
-    private float minEndTime = Float.POSITIVE_INFINITY;
-    private float maxEndTime = Float.NEGATIVE_INFINITY;
+    private double minStartTime = Float.POSITIVE_INFINITY;
+    private double minEndTime = Float.POSITIVE_INFINITY;
+    private double maxEndTime = Float.NEGATIVE_INFINITY;
     private int nrOfParticles = 0;
 
     /**
@@ -138,10 +138,10 @@ public class ParticleCloud implements Mesh, Externalizable {
     }
 
     public Stream<ParticleCloud> granulate() {
-        float despawnPeriod = maxEndTime - minEndTime;
+        double despawnPeriod = maxEndTime - minEndTime;
 
         if ((despawnPeriod > PARTICLECLOUD_MIN_TIME) && (bulk.size() > PARTICLECLOUD_SPLIT_SIZE)) {
-            float mid = minEndTime + (despawnPeriod / 2);
+            double mid = minEndTime + (despawnPeriod / 2);
 
             ParticleCloud newCloud = splitOff(mid);
             return Stream.concat(this.granulate(), newCloud.granulate());
@@ -154,7 +154,7 @@ public class ParticleCloud implements Mesh, Externalizable {
      * @param maxEndTime the new maximum end time of these particles
      * @return a cloud of particles that end later than the given end time
      */
-    public ParticleCloud splitOff(float maxEndTime) {
+    public ParticleCloud splitOff(double maxEndTime) {
         ParticleCloud newCloud = new ParticleCloud();
         ArrayList<Particle> newBulk = new ArrayList<>();
 
@@ -176,18 +176,18 @@ public class ParticleCloud implements Mesh, Externalizable {
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeObject(bulk);
-        out.writeFloat(minStartTime);
-        out.writeFloat(minEndTime);
-        out.writeFloat(maxEndTime);
+        out.writeDouble(minStartTime);
+        out.writeDouble(minEndTime);
+        out.writeDouble(maxEndTime);
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         //noinspection unchecked
         bulk = (List<Particle>) in.readObject();
-        minStartTime = in.readFloat();
-        minEndTime = in.readFloat();
-        maxEndTime = in.readFloat();
+        minStartTime = in.readDouble();
+        minEndTime = in.readDouble();
+        maxEndTime = in.readDouble();
         isLoaded = false;
     }
 
@@ -215,14 +215,14 @@ public class ParticleCloud implements Mesh, Externalizable {
         glBindVertexArray(0);
     }
 
-    public boolean hasFaded(float currentTime) {
+    public boolean hasFaded(double currentTime) {
         return currentTime > maxEndTime;
     }
 
     /**
      * @return true iff this cloud should be disposed
      */
-    public boolean disposeIfFaded(float currentTime) {
+    public boolean disposeIfFaded(double currentTime) {
         if (vaoId == 0) return true;
 
         if (hasFaded(currentTime)) {

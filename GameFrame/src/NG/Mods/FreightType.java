@@ -16,5 +16,5 @@ public interface FreightType {
      * @param daysInTransit the number of time units this good is in transit
      * @return the amount of currency that the good is worth
      */
-    Valuta valueOverTime(float daysInTransit);
+    Valuta valueOverTime(double daysInTransit);
 }

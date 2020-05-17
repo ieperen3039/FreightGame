@@ -7,8 +7,12 @@ import NG.Tools.Toolbox;
  */
 public class FloatInterpolator extends LinearInterpolator<Float> {
 
-    public FloatInterpolator(int capacity, Float initialValue, float initialTime) {
+    public FloatInterpolator(int capacity, float initialValue, float initialTime) {
         super(capacity, initialValue, initialTime);
+    }
+
+    public FloatInterpolator(int capacity, float firstElement, float firstTime, float secondElement, float secondTime) {
+        super(capacity, firstElement, firstTime, secondElement, secondTime);
     }
 
     @Override

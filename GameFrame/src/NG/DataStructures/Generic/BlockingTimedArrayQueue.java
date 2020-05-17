@@ -18,7 +18,7 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
     protected transient final AutoLock changeLock = new AutoLock.Instance();
 
     /** timestamps in seconds. Private, as semaphore must be handled */
-    protected final Deque<Float> timeStamps;
+    protected final Deque<Double> timeStamps;
     protected final Deque<T> elements;
 
     /**
@@ -30,7 +30,7 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
     }
 
     @Override
-    public void add(T element, float timeStamp) {
+    public void add(T element, double timeStamp) {
         try (AutoLock.Section section = changeLock.open()) {
             // act as refinement
             while (!timeStamps.isEmpty() && timeStamps.peekLast() > timeStamp) {
@@ -44,16 +44,15 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
     }
 
     @Override
-    public T getActive(float timeStamp) {
+    public T getNext(double timeStamp) {
         try (AutoLock.Section section = changeLock.open()) {
             if (timeStamps.isEmpty()) return null;
 
-            Iterator<Float> times = timeStamps.iterator();
+            Iterator<Double> times = timeStamps.iterator();
             Iterator<T> things = elements.iterator();
 
-            // there is no action until the first timestamp
-            T element = null;
-            float nextElementStart = times.next();
+            T element = things.next();
+            double nextElementStart = times.next();
 
             while (nextElementStart < timeStamp) {
                 if (!times.hasNext()) return things.next();
@@ -67,12 +66,35 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
     }
 
     @Override
-    public float timeUntilNext(float timeStamp) {
+    public T getPrevious(double timeStamp) {
+        try (AutoLock.Section section = changeLock.open()) {
+            if (timeStamps.isEmpty()) return null;
+
+            Iterator<Double> times = timeStamps.iterator();
+            Iterator<T> things = elements.iterator();
+
+            // there is no action until the first timestamp
+            T element = null;
+            double nextElementStart = times.next();
+
+            while (nextElementStart < timeStamp) {
+                if (!times.hasNext()) return things.next();
+
+                element = things.next();
+                nextElementStart = times.next();
+            }
+
+            return element;
+        }
+    }
+
+    @Override
+    public double timeUntilNext(double timeStamp) {
         try (AutoLock.Section section = changeLock.open()) {
             if (timeStamps.isEmpty()) throw new IllegalStateException("empty");
 
-            Iterator<Float> times = timeStamps.iterator();
-            float nextActionStart = times.next();
+            Iterator<Double> times = timeStamps.iterator();
+            double nextActionStart = times.next();
 
             while (nextActionStart < timeStamp && times.hasNext()) {
                 nextActionStart = times.next();
@@ -83,7 +105,7 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
     }
 
     @Override
-    public void removeUntil(float timeStamp) {
+    public void removeUntil(double timeStamp) {
         try (AutoLock.Section section = changeLock.open()) {
             while ((timeStamps.size() > 1) && (timeStamp > nextTimeStamp())) {
                 progress();
@@ -100,7 +122,7 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
     }
 
     /** returns the next queued timestamp in seconds or null if there is none */
-    public Float nextTimeStamp() {
+    public Double nextTimeStamp() {
         return timeStamps.peek();
     }
 
@@ -111,7 +133,7 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
 
     @Override
     public String toString() {
-        Iterator<Float> times = timeStamps.iterator();
+        Iterator<Double> times = timeStamps.iterator();
         Iterator<T> elts = elements.iterator();
 
         StringBuilder s = new StringBuilder();

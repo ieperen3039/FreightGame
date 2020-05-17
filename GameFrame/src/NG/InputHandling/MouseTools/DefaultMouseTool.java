@@ -25,9 +25,12 @@ public class DefaultMouseTool extends AbstractMouseTool {
 
     @Override
     public void apply(Entity entity, int xSc, int ySc) {
-        if (getMouseAction() == MouseAction.PRESS_ACTIVATE) {
+        MouseAction mouseAction = getMouseAction();
+        if (mouseAction == MouseAction.PRESS_ACTIVATE) {
             Logger.DEBUG.print("Clicked on " + entity);
         }
+
+        entity.reactMouse(mouseAction);
     }
 
     @Override

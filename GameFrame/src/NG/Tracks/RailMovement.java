@@ -5,9 +5,9 @@ import NG.Core.Game;
 import NG.DataStructures.Generic.BlockingTimedArrayQueue;
 import NG.DataStructures.Generic.Pair;
 import NG.DataStructures.Interpolation.FloatInterpolator;
+import NG.DataStructures.Interpolation.LongInterpolator;
 import NG.Entities.Locomotive;
 import NG.Network.RailNode;
-import NG.Tools.Toolbox;
 import org.joml.Math;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -19,120 +19,132 @@ import java.util.List;
  * @author Geert van Ieperen created on 6-5-2020.
  */
 public class RailMovement extends AbstractGameObject {
-    private static final float MAX_DELTA_TIME = 0.05f;
+    private static final float DELTA_TIME = 1f / 128f;
+    private static final int METERS_TO_MILLIS = 1000;
     private final Locomotive controller;
 
     /**
-     * real train speed in direction of facing. Formally: If positiveDirection, change in trackDistance. If
-     * !trackDistance, inverse of change in trackDistance
+     * real train speed in direction of facing in meters.
      */
     private float speed = 0;
-
-    private TrackPiece currentTrack; // track the train is currently on
-    private BlockingTimedArrayQueue<Pair<TrackPiece, Boolean>> tracks; // includes currentTrack
-    private float lastUpdateTime;
-
-    private float currentDistance; // distance travelled on the current track, from startNode to endNode
-    private FloatInterpolator distances;
-
-    private boolean positiveDirection = true; // whether the train faces in positive track direction
     private float acceleration = 0;
 
+    private double nextUpdateTime;
+    private long currentTotalMillis; // (1000 * the real distance) : data type is adequate for almost a lightyear distance
+    private long trackEndDistanceMillis;
+    private TrackPiece currentTrack; // track the train is currently on
+
+    private boolean positiveDirection; // whether the train faces in positive track direction
+
+    private LongInterpolator totalMillimeters;
+    private FloatInterpolator totalToLocalDistance; // maps total distance to track distance
+    private BlockingTimedArrayQueue<Pair<TrackPiece, Boolean>> tracks; // maps total distance to track, includes currentTrack
+
     public RailMovement(
-            Game game, Locomotive controller, float spawnTime, TrackPiece startPiece, float fraction,
-            boolean positiveDirection
+            Game game, Locomotive controller, double spawnTime, TrackPiece startPiece, float fraction,
+            boolean positiveDirection, float initialSpeed
     ) {
         super(game);
         this.currentTrack = startPiece;
         this.controller = controller;
-        this.currentDistance = startPiece.getLength() * fraction;
 
-        this.distances = new FloatInterpolator(0, currentDistance, spawnTime);
+        this.currentTotalMillis = 0;
+        this.totalMillimeters = new LongInterpolator(0, 0L, spawnTime);
+        long trackStartDistanceMillis = (long) (-1 * startPiece.getLength() * fraction * METERS_TO_MILLIS);
+        this.trackEndDistanceMillis = (long) (trackStartDistanceMillis + startPiece.getLength() * METERS_TO_MILLIS);
+
+        this.totalToLocalDistance = new FloatInterpolator(0, 0f, trackStartDistanceMillis, startPiece.getLength(), trackEndDistanceMillis);
         this.tracks = new BlockingTimedArrayQueue<>(0);
-        tracks.add(new Pair<>(startPiece, positiveDirection), spawnTime);
+        tracks.add(new Pair<>(startPiece, positiveDirection), trackStartDistanceMillis);
 
-        this.lastUpdateTime = spawnTime;
+        this.nextUpdateTime = spawnTime;
+        this.positiveDirection = positiveDirection;
+        this.speed = initialSpeed;
     }
 
     public void update() {
-        update(game.timer().getGametime());
+        double gametime = game.timer().getGametime();
+        update(gametime);
     }
 
-    public void update(float gameTime) {
-        if (gameTime < lastUpdateTime) return;
+    public void update(double gameTime) {
+        while (nextUpdateTime < gameTime) {
 
-        float time = lastUpdateTime + MAX_DELTA_TIME;
-        while (time < gameTime) {
-            stepTo(time);
-            time += MAX_DELTA_TIME;
+            // s = vt + at^2 // movement in meters
+            float movement = speed * DELTA_TIME + acceleration * DELTA_TIME * DELTA_TIME;
+            if (movement < 0) { // when the train reverses
+                totalMillimeters.add(currentTotalMillis, nextUpdateTime);
+                speed = acceleration * DELTA_TIME; // only progresses when acceleration is positive
+                nextUpdateTime += DELTA_TIME;
+                continue;
+            }
+
+            currentTotalMillis += movement * METERS_TO_MILLIS;
+            totalMillimeters.add(currentTotalMillis, nextUpdateTime);
+            // speed update after movement update
+            speed += acceleration * DELTA_TIME;
+
+            while (currentTotalMillis > trackEndDistanceMillis) {
+                progressTrack();
+            }
+
+            nextUpdateTime += DELTA_TIME;
         }
-        stepTo(gameTime);
     }
 
-    private void stepTo(float gameTime) {
-        while (true) {
-            float deltaTime = gameTime - lastUpdateTime;
-            // s = vt + at^2
-            float movement = speed * deltaTime + acceleration * deltaTime * deltaTime;
-            float trackLength = currentTrack.getLength();
-            float newDistance = currentDistance + ((positiveDirection) ? movement : -movement);
+    public void reverse(float reversalLength) {
+        speed = 0; // prevents a couple of edge cases
+        positiveDirection = !positiveDirection;
+        Pair<TrackPiece, Boolean> track = tracks.getPrevious(currentTotalMillis);
 
-            RailNode node;
-            float endOfTrackTime;
+        long drivenMillis = (long) (track.left.getLength() * METERS_TO_MILLIS - (trackEndDistanceMillis - currentTotalMillis));
+        trackEndDistanceMillis = currentTotalMillis + drivenMillis;
 
-            if (newDistance < 0) {
-                node = currentTrack.getStartNode();
+        Float localDistance = totalToLocalDistance.getInterpolated(currentTotalMillis);
+        totalToLocalDistance.add(localDistance, currentTotalMillis); // overrides later elements
+        totalToLocalDistance.add(positiveDirection ? currentTrack.getLength() : 0f, trackEndDistanceMillis);
 
-                float fraction = Toolbox.getFraction(currentDistance, newDistance, 0);
-                endOfTrackTime = gameTime - deltaTime * (1 - fraction);
-                distances.add(0f, endOfTrackTime);
+        tracks.add(new Pair<>(track.left, positiveDirection), currentTotalMillis);
 
-            } else if (newDistance > trackLength) {
-                node = currentTrack.getEndNode();
+        currentTotalMillis += (positiveDirection ? -reversalLength : reversalLength);
+        while (currentTotalMillis > trackEndDistanceMillis) {
+            progressTrack();
+        }
+    }
 
-                float fraction = Toolbox.getFraction(currentDistance, newDistance, trackLength);
-                endOfTrackTime = gameTime - deltaTime * (1 - fraction);
-                distances.add(trackLength, endOfTrackTime);
+    private void progressTrack() {
+        RailNode node = positiveDirection ? currentTrack.getEndNode() : currentTrack.getStartNode();
 
-            } else {
-                currentDistance = newDistance;
-                distances.add(currentDistance, gameTime);
-                // speed update after movement update
-                speed += acceleration * deltaTime;
-                lastUpdateTime = gameTime;
-                return;
-            }
+        // find next track to enter
+        List<RailNode.Direction> options = node.getNext(currentTrack);
+        if (options.isEmpty()) {
+            speed = 0;
+            acceleration = 0;
+            currentTotalMillis = trackEndDistanceMillis;
+            return; // full stop
+        }
 
-            assert node != null;
-            // find next track to enter
-            List<RailNode.Direction> options = node.getNext(currentTrack);
-            if (options.isEmpty()) {
-                speed = 0;
-                acceleration = 0;
-                return; // full stop
-            }
+        long trackStartDistanceMillis = trackEndDistanceMillis;
 
-            RailNode.Direction next = controller.pickNextTrack(options);
+        RailNode.Direction next = controller.pickNextTrack(options);
 
-            // now set everything as if last update was at endOfTrackTime
-            // speed doesn't change by design
-            // when speed is negative, we consider a positive direction when starting from endNode
-            positiveDirection = node.equals(next.trackPiece.getStartNode()) == (speed > 0);
+        // now set everything as if last update was at endOfTrackTime
+        // speed doesn't change by design
+        // when speed is negative, we consider a positive direction when starting from endNode
+        positiveDirection = node.equals(next.trackPiece.getStartNode());
 
-            currentTrack = next.trackPiece;
-            trackLength = next.trackPiece.getLength();
-            tracks.add(new Pair<>(next.trackPiece, positiveDirection), endOfTrackTime);
+        currentTrack = next.trackPiece;
+        float trackLength = next.trackPiece.getLength();
+        trackEndDistanceMillis = (long) (trackStartDistanceMillis + trackLength * METERS_TO_MILLIS);
+        tracks.add(new Pair<>(next.trackPiece, positiveDirection), trackStartDistanceMillis);
 
-            if (positiveDirection) {
-                currentDistance = 0;
-                distances.add(0f, endOfTrackTime);
+        if (positiveDirection) {
+            totalToLocalDistance.add(0f, trackStartDistanceMillis);
+            totalToLocalDistance.add(trackLength, trackEndDistanceMillis);
 
-            } else {
-                currentDistance = trackLength;
-                distances.add(trackLength, endOfTrackTime);
-            }
-
-            lastUpdateTime = endOfTrackTime;
+        } else {
+            totalToLocalDistance.add(trackLength, trackStartDistanceMillis);
+            totalToLocalDistance.add(0f, trackEndDistanceMillis);
         }
     }
 
@@ -140,34 +152,55 @@ public class RailMovement extends AbstractGameObject {
         acceleration = a;
     }
 
+    /**
+     * @return reals speed in meters per second
+     */
     public float getSpeed() {
-        return speed;
+        return Math.abs(speed);
     }
 
     /**
      * @return the interpolated position on the given time
      */
-    public Vector3f getPosition(float time) {
+    public Vector3f getPosition(double time) {
+        return getPosition(time, 0);
+    }
+
+    /**
+     * Computes the position on the given time, and adds the given displacement to that position. The result is a
+     * position exactly {@code displacement} further.
+     * @return the interpolated position on the given time
+     */
+    public Vector3f getPosition(double time, float displacement) {
         update(time);
 
-        TrackPiece track = tracks.getActive(time).left;
-        float distance = distances.getInterpolated(time);
+        double totalMillis = totalMillimeters.getInterpolated(time) + displacement * METERS_TO_MILLIS;
+        TrackPiece track = tracks.getPrevious(totalMillis).left;
+        float localDistance = totalToLocalDistance.getInterpolated(totalMillis);
 
-        float fractionTravelled = distance / track.getLength();
+        float fractionTravelled = localDistance / track.getLength();
         return track.getPositionFromFraction(fractionTravelled);
     }
 
     /**
      * @return the interpolated direction of movement (derivative of position) on the given time
      */
-    public Vector3f getDirection(float time) {
+    public Vector3f getDirection(double time) {
+        return getDirection(time, 0);
+    }
+
+    /**
+     * @return the interpolated direction of movement (derivative of position) on the given time
+     */
+    public Vector3f getDirection(double time, float displacement) {
         update(time);
 
-        Pair<TrackPiece, Boolean> activeTrack = tracks.getActive(time);
+        float distanceMillis = totalMillimeters.getInterpolated(time) + displacement * METERS_TO_MILLIS;
+        float localDistance = totalToLocalDistance.getInterpolated(distanceMillis);
+        Pair<TrackPiece, Boolean> activeTrack = tracks.getPrevious(distanceMillis);
         TrackPiece track = activeTrack.left;
-        float distance = distances.getInterpolated(time);
 
-        float fractionTravelled = distance / track.getLength();
+        float fractionTravelled = localDistance / track.getLength();
         Vector3f directionOfTrack = track.getDirectionFromFraction(fractionTravelled);
 
         Boolean isPositive = activeTrack.right;
@@ -177,9 +210,13 @@ public class RailMovement extends AbstractGameObject {
         return directionOfTrack;
     }
 
-    public Quaternionf getRotation(float time) {
+    public Quaternionf getRotation(double time) {
+        return getRotation(time, 0);
+    }
+
+    public Quaternionf getRotation(double time, float displacement) {
 //        update(time); // included in getDirection(time)
-        Vector3f direction = getDirection(time).normalize();
+        Vector3f direction = getDirection(time, displacement).normalize();
 
         float yawAngle = Math.atan2(direction.y, direction.x);
         float hzMovement = Math.sqrt(direction.x * direction.x + direction.y * direction.y);
@@ -188,5 +225,12 @@ public class RailMovement extends AbstractGameObject {
         return new Quaternionf()
                 .rotateAxis(pitchAngle, -1, 0, 0)
                 .rotateAxis(yawAngle, 0, 0, 1);
+    }
+
+    public void discardUpTo(float time) {
+        float distance = totalMillimeters.getInterpolated(time);
+        totalMillimeters.removeUntil(time);
+        totalToLocalDistance.removeUntil(distance);
+        tracks.removeUntil(distance);
     }
 }

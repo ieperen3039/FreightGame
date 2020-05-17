@@ -40,7 +40,7 @@ public class GameParticles implements GameAspect {
     }
 
     public void draw(SGL gl) {
-        float now = game.timer().getRendertime();
+        double now = game.timer().getRendertime();
 
         particles.removeIf(cloud -> cloud.disposeIfFaded(now));
 

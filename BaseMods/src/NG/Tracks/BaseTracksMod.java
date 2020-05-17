@@ -40,7 +40,7 @@ public class BaseTracksMod implements Mod {
 
 
     private static class DebugTrack implements TrackType {
-        public static final float WIDTH = 0.4f;
+        public static final float WIDTH = 0.3f;
         public static final float HEIGHT = 0.1f;
         public static final int RESOLUTION = 5;
 

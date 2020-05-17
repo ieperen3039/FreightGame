@@ -5,6 +5,7 @@ import NG.DataStructures.Generic.Color4f;
 import NG.GUIMenu.Components.SFrame;
 import NG.GameState.Storage;
 import NG.InputHandling.ClickShader;
+import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Network.RailNode;
 import NG.Network.SpecialRailNode;
 import NG.Rendering.Material;
@@ -19,7 +20,6 @@ import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.lwjgl.glfw.GLFW;
 
 import static NG.Tools.Vectors.cos;
 import static NG.Tools.Vectors.sin;
@@ -180,8 +180,8 @@ public class StationImpl extends Storage implements Station {
     }
 
     @Override
-    public void onClick(int button) {
-        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+    public void reactMouse(MouseAction action) {
+        if (action == MouseAction.PRESS_ACTIVATE) {
             game.gui().addFrame(new StationUI());
         }
     }

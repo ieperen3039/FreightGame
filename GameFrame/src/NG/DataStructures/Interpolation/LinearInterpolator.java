@@ -14,10 +14,10 @@ public abstract class LinearInterpolator<T> extends BlockingTimedArrayQueue<T> {
      * @param initialElement this item will initially be placed in the queue twice.
      * @param initialTime    the time of starting
      */
-    public LinearInterpolator(int capacity, T initialElement, float initialTime) {
+    public LinearInterpolator(int capacity, T initialElement, double initialTime) {
         super(capacity);
-        add(initialElement, initialTime);
         add(initialElement, initialTime - 1);
+        add(initialElement, initialTime);
     }
 
     /**
@@ -28,7 +28,7 @@ public abstract class LinearInterpolator<T> extends BlockingTimedArrayQueue<T> {
      * @param secondElement the item that occurs second
      * @param secondTime    the time of occurence of the second, where first < second
      */
-    public LinearInterpolator(int capacity, T firstElement, float firstTime, T secondElement, float secondTime) {
+    public LinearInterpolator(int capacity, T firstElement, double firstTime, T secondElement, double secondTime) {
         super(capacity);
         add(firstElement, firstTime);
         add(secondElement, secondTime);
@@ -37,14 +37,16 @@ public abstract class LinearInterpolator<T> extends BlockingTimedArrayQueue<T> {
     /**
      * @return the interpolated object defined by implementation
      */
-    public T getInterpolated(float timeStamp) {
+    public T getInterpolated(double timeStamp) {
         try (AutoLock.Section section = changeLock.open()) {
-            Iterator<Float> times = timeStamps.iterator();
+            assert timeStamps.size() > 1 : timeStamps;
+
+            Iterator<Double> times = timeStamps.iterator();
             Iterator<T> things = elements.iterator();
 
             T firstElt;
-            float firstTime;
-            float secondTime = times.next();
+            double firstTime;
+            double secondTime = times.next();
 
             // consider the next time period, and check whether timeStamp falls in it
             do {
@@ -54,7 +56,7 @@ public abstract class LinearInterpolator<T> extends BlockingTimedArrayQueue<T> {
             } while (secondTime < timeStamp && times.hasNext());
 
 
-            float fraction = (timeStamp - firstTime) / (secondTime - firstTime);
+            float fraction = (float) ((timeStamp - firstTime) / (secondTime - firstTime));
             if (Float.isNaN(fraction)) return firstElt;
 
             T secondElt = things.next();
@@ -72,14 +74,16 @@ public abstract class LinearInterpolator<T> extends BlockingTimedArrayQueue<T> {
      * @param timeStamp
      * @return the derivative of the value returned by getInterpolated(time)
      */
-    public T getDerivative(float timeStamp) {
+    public T getDerivative(double timeStamp) {
         try (AutoLock.Section section = changeLock.open()) {
-            Iterator<Float> times = timeStamps.iterator();
+            assert timeStamps.size() > 1 : timeStamps;
+
+            Iterator<Double> times = timeStamps.iterator();
             Iterator<T> things = elements.iterator();
 
             T firstElt = things.next();
-            float firstTime = times.next();
-            float secondTime = times.next();
+            double firstTime = times.next();
+            double secondTime = times.next();
 
             // consider the next time period, and check whether timeStamp falls in it
             // we check from the 2nd time onwards to allow extrapolation
@@ -90,7 +94,7 @@ public abstract class LinearInterpolator<T> extends BlockingTimedArrayQueue<T> {
             }
 
             T secondElt = things.next();
-            return derivative(firstElt, secondElt, secondTime - firstTime);
+            return derivative(firstElt, secondElt, (float) (secondTime - firstTime));
         }
     }
 

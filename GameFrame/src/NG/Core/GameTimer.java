@@ -1,71 +1,78 @@
 package NG.Core;
 
-import NG.DataStructures.Tracked.TrackedFloat;
+import NG.DataStructures.Tracked.TrackedObject;
 
 /**
  * A combination of a gameloop timer and a render timer. The timers are updated on calls to {@link #updateGameTime()}
  * and {@link #updateRenderTime()}
+ * <p>
+ * In contrary of what you may think, a float is only accurate up to 2^24 = 16 777 216 integer values. This means that
+ * using a float will only have sub-millisecond precision for 4.6 hours. using a double for timestamp gives us 2^53
+ * seconds = 9.00719925 * 10^15 values, which gives sub-millisecond precision for 285 616 years.
  */
 @SuppressWarnings("WeakerAccess")
 public class GameTimer {
-
-    /** game-seconds since creating this gametimer */
-    protected float currentInGameTime;
-    /** last record of system time */
-    private long lastMark;
     /** multiplication factor to multiply system time units to game-seconds */
-    private static final float MUL_TO_SECONDS = 1E-9f;
+    private static final double SYSTEM_TO_SECONDS = 1e-9;
+    private static final int RESOLUTION = 10_000; // 1/10th millisecond accuracy
+    private static final double SYSTEM_TO_RESOLUTION = RESOLUTION * SYSTEM_TO_SECONDS;
+    private static final double RESOLUTION_TO_SECONDS = 1.0 / RESOLUTION;
 
-    protected final TrackedFloat gameTime;
-    protected final TrackedFloat renderTime;
+    /** timer ticks since creating this gametimer */
+    protected long currentInternalTime = 0;
+    /** last record of system time */
+    private long lastSystemNanos;
+
+    protected final TrackedObject<Long> gameTime;
+    protected final TrackedObject<Long> renderTime;
     protected boolean isPaused = false;
-    private final float renderDelay;
+    private final long renderDelay;
 
     public GameTimer(float renderDelay) {
         this(0f, renderDelay);
     }
 
-    public GameTimer(float startTime, float renderDelay) {
-        this.currentInGameTime = startTime;
-        this.gameTime = new TrackedFloat(startTime);
-        this.renderDelay = renderDelay;
-        this.renderTime = new TrackedFloat(startTime - renderDelay);
-        this.lastMark = System.nanoTime();
+    public GameTimer(double startTime, float renderDelay) {
+        this.currentInternalTime = (long) (RESOLUTION * startTime);
+        this.gameTime = new TrackedObject<>(((long) (startTime * RESOLUTION)));
+        this.renderDelay = (long) (RESOLUTION * renderDelay);
+        this.renderTime = new TrackedObject<>(((long) ((startTime - renderDelay) * RESOLUTION)));
+        this.lastSystemNanos = System.nanoTime();
     }
 
     public void updateGameTime() {
         updateTimer();
-        gameTime.update(currentInGameTime);
+        gameTime.update(currentInternalTime);
     }
 
     public void updateRenderTime() {
         updateTimer();
-        renderTime.update(currentInGameTime - renderDelay);
+        renderTime.update(currentInternalTime - renderDelay);
     }
 
-    public float getGametime() {
-        return gameTime.current();
+    public double getGametime() {
+        return gameTime.current() * RESOLUTION_TO_SECONDS;
     }
 
-    public float getGametimeDifference() {
-        return gameTime.difference();
+    public double getGametimeDifference() {
+        return (gameTime.current() - gameTime.previous()) * RESOLUTION_TO_SECONDS;
     }
 
-    public float getRendertime() {
-        return renderTime.current();
+    public double getRendertime() {
+        return renderTime.current() * RESOLUTION_TO_SECONDS;
     }
 
-    public float getRendertimeDifference() {
-        return renderTime.difference();
+    public double getRendertimeDifference() {
+        return (renderTime.current() - renderTime.previous()) * RESOLUTION_TO_SECONDS;
     }
 
     /** may be called anytime */
     protected void updateTimer() {
-        long currentTime = System.nanoTime();
-        float deltaTime = (currentTime - lastMark) * MUL_TO_SECONDS;
-        lastMark = currentTime;
+        long currentNanos = System.nanoTime();
+        long deltaTime = (long) ((currentNanos - lastSystemNanos) * SYSTEM_TO_RESOLUTION);
+        lastSystemNanos = currentNanos;
 
-        if (!isPaused) currentInGameTime += deltaTime;
+        if (!isPaused) currentInternalTime += deltaTime;
     }
 
     /** stops the in-game time */
@@ -83,14 +90,14 @@ public class GameTimer {
     /**
      * @param offset the ingame time is offset by the given time
      */
-    public void addOffset(float offset) {
-        currentInGameTime += offset;
+    public void addOffset(double offset) {
+        currentInternalTime += offset * RESOLUTION;
     }
 
     /** sets the ingame time to the given time */
-    public void set(float time) {
+    public void set(double time) {
         updateTimer();
-        currentInGameTime = time;
+        currentInternalTime = (long) (time * RESOLUTION);
 
         updateGameTime();
         updateRenderTime();
@@ -98,7 +105,7 @@ public class GameTimer {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + " @" + currentInGameTime + (isPaused ? "(paused)" : "");
+        return getClass().getSimpleName() + " @" + (double) currentInternalTime / RESOLUTION + (isPaused ? "(paused)" : "");
     }
 
     public boolean isPaused() {
