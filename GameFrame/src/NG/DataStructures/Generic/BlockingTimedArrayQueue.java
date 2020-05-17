@@ -54,7 +54,7 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
             T element = things.next();
             double nextElementStart = times.next();
 
-            while (nextElementStart < timeStamp) {
+            while (nextElementStart <= timeStamp) {
                 if (!times.hasNext()) return things.next();
 
                 element = things.next();
@@ -124,11 +124,6 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
     /** returns the next queued timestamp in seconds or null if there is none */
     public Double nextTimeStamp() {
         return timeStamps.peek();
-    }
-
-    /** returns the next queued element or null if there is none */
-    public T nextElement() {
-        return elements.peek();
     }
 
     @Override

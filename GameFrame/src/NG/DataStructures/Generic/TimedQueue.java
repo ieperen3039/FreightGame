@@ -17,13 +17,13 @@ public interface TimedQueue<T> {
 
     /**
      * @param timeStamp the timestamp to consider
-     * @return the earliest element with a timestamp after the given timestamp.
+     * @return the earliest element with a timestamp strictly after the given timestamp.
      */
     T getNext(double timeStamp);
 
     /**
      * @param timeStamp the timestamp to consider
-     * @return the latest element with a timestamp before the given timestamp.
+     * @return the latest element with a timestamp strictly before the given timestamp.
      */
     T getPrevious(double timeStamp);
 

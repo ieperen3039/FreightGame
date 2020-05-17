@@ -1,6 +1,5 @@
 package NG.Network;
 
-import NG.Tools.Logger;
 import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
 import NG.Tracks.TrackPiece;
@@ -211,7 +210,6 @@ public class RailNode {
 
         // we propagate backwards, hence distance increases
         float newDistance = distance + entry.trackPiece.getLength();
-        Logger.WARN.print(this, newNetworkNode, newDistance);
         list.set(i, new Direction(source, entry.trackPiece, newNetworkNode, newDistance));
 
         // when straight, propagate the change

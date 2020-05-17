@@ -39,6 +39,7 @@ public class RailMovement extends AbstractGameObject {
     private LongInterpolator totalMillimeters;
     private FloatInterpolator totalToLocalDistance; // maps total distance to track distance
     private BlockingTimedArrayQueue<Pair<TrackPiece, Boolean>> tracks; // maps total distance to track, includes currentTrack
+    private long trackStartDistanceMillis;
 
     public RailMovement(
             Game game, Locomotive controller, double spawnTime, TrackPiece startPiece, float fraction,
@@ -50,7 +51,7 @@ public class RailMovement extends AbstractGameObject {
 
         this.currentTotalMillis = 0;
         this.totalMillimeters = new LongInterpolator(0, 0L, spawnTime);
-        long trackStartDistanceMillis = (long) (-1 * startPiece.getLength() * fraction * METERS_TO_MILLIS);
+        this.trackStartDistanceMillis = (long) (-1 * startPiece.getLength() * METERS_TO_MILLIS * fraction);
         this.trackEndDistanceMillis = (long) (trackStartDistanceMillis + startPiece.getLength() * METERS_TO_MILLIS);
 
         this.totalToLocalDistance = new FloatInterpolator(0, 0f, trackStartDistanceMillis, startPiece.getLength(), trackEndDistanceMillis);
@@ -97,8 +98,8 @@ public class RailMovement extends AbstractGameObject {
         positiveDirection = !positiveDirection;
         Pair<TrackPiece, Boolean> track = tracks.getPrevious(currentTotalMillis);
 
-        long drivenMillis = (long) (track.left.getLength() * METERS_TO_MILLIS - (trackEndDistanceMillis - currentTotalMillis));
-        trackEndDistanceMillis = currentTotalMillis + drivenMillis;
+        trackStartDistanceMillis = (long) (track.left.getLength() * METERS_TO_MILLIS - (trackEndDistanceMillis - currentTotalMillis));
+        trackEndDistanceMillis = currentTotalMillis + trackStartDistanceMillis;
 
         Float localDistance = totalToLocalDistance.getInterpolated(currentTotalMillis);
         totalToLocalDistance.add(localDistance, currentTotalMillis); // overrides later elements
@@ -107,8 +108,9 @@ public class RailMovement extends AbstractGameObject {
         tracks.add(new Pair<>(track.left, positiveDirection), currentTotalMillis);
 
         currentTotalMillis += (positiveDirection ? -reversalLength : reversalLength);
+
         while (currentTotalMillis > trackEndDistanceMillis) {
-            progressTrack();
+            progressTrack(); // TODO determine node to go on by unrolling 'tracks'
         }
     }
 
@@ -124,19 +126,20 @@ public class RailMovement extends AbstractGameObject {
             return; // full stop
         }
 
-        long trackStartDistanceMillis = trackEndDistanceMillis;
-
         RailNode.Direction next = controller.pickNextTrack(options);
+        boolean positiveDirection = node.equals(next.trackPiece.getStartNode());
+        progressTrack(next.trackPiece, positiveDirection);
+    }
 
-        // now set everything as if last update was at endOfTrackTime
+    private void progressTrack(TrackPiece next, boolean positiveDirection) {
         // speed doesn't change by design
-        // when speed is negative, we consider a positive direction when starting from endNode
-        positiveDirection = node.equals(next.trackPiece.getStartNode());
+        this.positiveDirection = positiveDirection;
+        this.currentTrack = next;
 
-        currentTrack = next.trackPiece;
-        float trackLength = next.trackPiece.getLength();
+        float trackLength = next.getLength();
+        trackStartDistanceMillis = trackEndDistanceMillis;
         trackEndDistanceMillis = (long) (trackStartDistanceMillis + trackLength * METERS_TO_MILLIS);
-        tracks.add(new Pair<>(next.trackPiece, positiveDirection), trackStartDistanceMillis);
+        tracks.add(new Pair<>(next, positiveDirection), trackStartDistanceMillis);
 
         if (positiveDirection) {
             totalToLocalDistance.add(0f, trackStartDistanceMillis);

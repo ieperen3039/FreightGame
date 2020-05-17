@@ -49,15 +49,15 @@ public class Locomotive extends AbstractGameObject implements MovingEntity {
 
     @Override
     public void update() {
-        positionEngine.update();
-
         if (positionEngine.getSpeed() > 5f) {
             positionEngine.setAcceleration(0);
         }
 
         if (positionEngine.getSpeed() < 4f) {
-            positionEngine.setAcceleration(1f);
+            positionEngine.setAcceleration(2f);
         }
+
+        positionEngine.update();
     }
 
     @Override
