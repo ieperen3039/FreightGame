@@ -3,8 +3,8 @@ package NG.GameMap;
 import NG.Core.Game;
 import NG.InputHandling.MouseTools.MouseTool;
 import NG.Rendering.MatrixStack.SGL;
+import org.joml.Vector2f;
 import org.joml.Vector2i;
-import org.joml.Vector2ic;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -45,10 +45,7 @@ public interface GameMap extends Externalizable {
      */
     void addChangeListener(ChangeListener listener);
 
-    /**
-     * the number of voxels in x and y direction. The real (floating-point) size can be completely different.
-     */
-    Vector2ic getSize();
+    Vector2f getSize();
 
     /**
      * checks whether an input click can be handled by this object

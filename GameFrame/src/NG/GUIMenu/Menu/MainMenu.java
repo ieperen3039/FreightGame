@@ -12,6 +12,7 @@ import NG.GameMap.SimpleMapGenerator;
 import NG.Mods.Mod;
 import NG.Settings.Settings;
 import NG.Tracks.TrackType;
+import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 
@@ -73,7 +74,8 @@ public class MainMenu extends SFrame {
         game.map().generateNew(game, mapGenerator);
 
         // set camera to middle of map
-        Vector3f cameraFocus = new Vector3f(xSize / 2f, ySize / 2f, 0);
+        Vector2f size = game.map().getSize();
+        Vector3f cameraFocus = new Vector3f(size.x / 2, size.y / 2, 0);
         Camera cam = game.camera();
         Vector3f cameraEye = new Vector3f(cameraFocus).add(-20, -20, 20);
         cam.set(cameraFocus, cameraEye);

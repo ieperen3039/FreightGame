@@ -1,6 +1,6 @@
 package NG.Network;
 
-import NG.DataStructures.Generic.Pair;
+import NG.Tools.Logger;
 import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
 import NG.Tracks.TrackPiece;
@@ -8,8 +8,7 @@ import NG.Tracks.TrackType;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * A node that connects two track pieces together
@@ -65,24 +64,6 @@ public class RailNode {
     }
 
     /**
-     * @return pair (left, right) with left = the first node in (direction) that is a switch, and right = the direction
-     * entry of this switch pointing back to this. If no switch exists in this direction (= this is a dead end) returns
-     * null.
-     */
-    private Pair<RailNode, Direction> getFirstNetworkNodeRecursive(RailNode next) {
-        if (next.isNetworkNode()) {
-            Direction thisAsEntry = next.getEntryOf(this);
-            assert thisAsEntry != null : next;
-            return new Pair<>(next, thisAsEntry);
-        }
-        List<Direction> nextNext = next.getNext(this);
-        if (nextNext.isEmpty()) return null;
-
-        assert nextNext.size() == 1;
-        return next.getFirstNetworkNodeRecursive(nextNext.get(0).railNode);
-    }
-
-    /**
      * @return the Direction of the given node in the direction lists of this node, or null if the given node is not
      * connected to this node.
      */
@@ -104,34 +85,49 @@ public class RailNode {
      * removed. If there is no such connection, this returns null
      */
     private TrackPiece removeNode(RailNode target) {
-        int i = getIndexOf(aDirection, target);
+        boolean wasNetwork = this.isNetworkNode();
+        Direction removed;
+
+        List<Direction> list = aDirection;
+        int i = getIndexOf(list, target);
         if (i != -1) {
-            Direction removed = aDirection.remove(i);
-            return removed.trackPiece;
+            removed = list.remove(i);
+
+        } else {
+            list = bDirection;
+            int j = getIndexOf(list, target);
+            if (j != -1) {
+                removed = list.remove(j);
+
+            } else {
+                return null;
+            }
         }
 
-        int j = getIndexOf(bDirection, target);
-        if (j != -1) {
-            Direction removed = bDirection.remove(j);
-            return removed.trackPiece;
+        if (isEnd()) {
+            List<Direction> others = getNext(target);
+            for (Direction entry : others) {
+                entry.railNode.updateNetwork(this, null, 0);
+            }
+
+        } else if (wasNetwork && !isNetworkNode()) {
+            assert isStraight() : this; // !isEnd() && !isSwitch() assuming (!isNetworkNode() => !isSwitch())
+            List<Direction> otherDirections = getNext(target);
+
+            assert otherDirections.size() == 1 : otherDirections;
+            Direction oneDirection = otherDirections.get(0);
+            assert list.size() == 1 : list;
+            Direction twoDirection = list.get(0);
+
+            oneDirection.railNode.updateNetwork(this, twoDirection.networkNode, twoDirection.distanceToNetworkNode);
+            twoDirection.railNode.updateNetwork(this, oneDirection.networkNode, oneDirection.distanceToNetworkNode);
         }
 
-        return null;
+        return removed.trackPiece;
     }
 
     public Iterable<Direction> getAllEntries() {
         return Toolbox.combinedList(aDirection, bDirection);
-    }
-
-    /** returns the index of the element containing the given node, or -1 if no such element exists */
-    private static int getIndexOf(List<Direction> aDirection, RailNode target) {
-        for (int i = 0; i < aDirection.size(); i++) {
-            Direction d = aDirection.get(i);
-            if (d.railNode.equals(target)) {
-                return i;
-            }
-        }
-        return -1;
     }
 
     /**
@@ -168,12 +164,12 @@ public class RailNode {
         return position;
     }
 
-    /** @return true iff this node has no connections on one (or both) side */
+    /** @return true iff this node has no connections on one (or both) side. */
     private boolean isEnd() {
         return aDirection.isEmpty() || bDirection.isEmpty();
     }
 
-    /** @return true iff this node connects multiple tracks on at least one side */
+    /** @return true iff this node connects multiple tracks on at least one side. */
     private boolean isSwitch() {
         return aDirection.size() > 1 || bDirection.size() > 1;
     }
@@ -188,9 +184,58 @@ public class RailNode {
         return isSwitch();
     }
 
+    /**
+     * set the network node indicator in the direction of (this to source) to the newNetworkNode.
+     * @param source         the node in whose direction the new networknode is set.
+     * @param newNetworkNode the first network node in direction of source.
+     * @param distance       distance between source and newNetworkNode
+     */
+    public void updateNetwork(RailNode source, RailNode newNetworkNode, float distance) {
+        assert newNetworkNode == null || newNetworkNode.isNetworkNode() : newNetworkNode + " | " + source;
+
+        List<Direction> list = aDirection;
+        List<Direction> otherList = bDirection;
+        int i = getIndexOf(list, source);
+        if (i == -1) {
+            list = bDirection;
+            otherList = aDirection;
+            i = getIndexOf(list, source);
+        }
+
+        assert i != -1 : "source node " + source + " is not connected to this " + this;
+
+        Direction entry = list.get(i);
+
+        // if this is already set correctly, then the remainder is set correctly as well
+        if (Objects.equals(newNetworkNode, entry.networkNode)) return;
+
+        // we propagate backwards, hence distance increases
+        float newDistance = distance + entry.trackPiece.getLength();
+        Logger.WARN.print(this, newNetworkNode, newDistance);
+        list.set(i, new Direction(source, entry.trackPiece, newNetworkNode, newDistance));
+
+        // when straight, propagate the change
+        if (this.isStraight()) {
+            assert otherList.size() == 1;
+            RailNode next = otherList.get(0).railNode;
+            next.updateNetwork(this, newNetworkNode, newDistance);
+        }
+    }
+
     @Override
     public String toString() {
         return "Node{" + aDirection.size() + ":" + bDirection.size() + " @" + Vectors.toString(position) + "}";
+    }
+
+    /** returns the index of the element containing the given node, or -1 if no such element exists */
+    private static int getIndexOf(List<Direction> aDirection, RailNode target) {
+        for (int i = 0; i < aDirection.size(); i++) {
+            Direction d = aDirection.get(i);
+            if (d.railNode.equals(target)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**
@@ -201,11 +246,80 @@ public class RailNode {
     }
 
     /**
-     * connects oneNode with twoNode using the given track.
+     * connects oneNode with twoNode using the given track. Updates the network node entries on both nodes
      */
     public static void addConnection(TrackPiece track, RailNode oneNode, RailNode twoNode) {
-        oneNode.addEntry(new Direction(twoNode, track));
-        twoNode.addEntry(new Direction(oneNode, track));
+        boolean oneWasNetwork = oneNode.isNetworkNode();
+        boolean twoWasNetwork = twoNode.isNetworkNode();
+
+        List<Direction> oneToTwo;
+        List<Direction> oneToOther;
+        List<Direction> twoToOne;
+        List<Direction> twoToOther;
+
+        if (oneNode.isInDirectionOf(twoNode)) {
+            oneToTwo = oneNode.aDirection;
+            oneToOther = oneNode.bDirection;
+
+        } else {
+            oneToTwo = oneNode.bDirection;
+            oneToOther = oneNode.aDirection;
+        }
+
+        if (twoNode.isInDirectionOf(oneNode)) {
+            twoToOne = twoNode.aDirection;
+            twoToOther = twoNode.bDirection;
+
+        } else {
+            twoToOne = twoNode.bDirection;
+            twoToOther = twoNode.aDirection;
+        }
+
+        // these must be measured before adding
+        boolean oneBecomesStraight = oneToTwo.isEmpty() && oneToOther.size() == 1;
+        boolean twoBecomesStraight = twoToOne.isEmpty() && twoToOther.size() == 1;
+
+        addEntry(oneToTwo, twoToOther, twoNode, twoBecomesStraight, track);
+        addEntry(twoToOne, oneToOther, oneNode, oneBecomesStraight, track);
+
+        // these must occur after adding
+        updateNetwork(oneNode, twoNode, oneWasNetwork);
+        updateNetwork(twoNode, oneNode, twoWasNetwork);
+
+        Logger.WARN.print("From   ", oneNode, oneWasNetwork, oneNode.isNetworkNode(), oneBecomesStraight);
+        Logger.WARN.print("To     ", twoNode, twoWasNetwork, twoNode.isNetworkNode(), twoBecomesStraight);
+        Logger.WARN.print("Network:");
+        System.err.println(RailNode.getNetworkAsString(twoNode));
+    }
+
+    private static void addEntry(
+            List<Direction> list, List<Direction> otherList, RailNode twoNode, boolean twoBecomesStraight,
+            TrackPiece track
+    ) {
+        if (twoBecomesStraight) {
+            assert otherList.size() == 1;
+            // copy the network node of oneToOther into twoToOne.
+            Direction entryOfOther = otherList.get(0);
+            float distanceToNetwork = entryOfOther.distanceToNetworkNode + track.getLength();
+            list.add(new Direction(twoNode, track, entryOfOther.networkNode, distanceToNetwork));
+
+        } else {
+            list.add(new Direction(twoNode, track, null, 0));
+        }
+    }
+
+    /** checks whether oneNode became a network node and updates all connected nodes accordingly. */
+    private static void updateNetwork(RailNode oneNode, RailNode twoNode, boolean oneWasNetwork) {
+        if (oneNode.isNetworkNode()) {
+            if (oneWasNetwork) {
+                twoNode.updateNetwork(oneNode, oneNode, 0);
+
+            } else {
+                for (Direction entry : oneNode.getAllEntries()) {
+                    entry.railNode.updateNetwork(oneNode, oneNode, 0);
+                }
+            }
+        }
     }
 
     /**
@@ -242,48 +356,134 @@ public class RailNode {
             RailNode oneNode, RailNode twoNode, RailNode newNode, TrackPiece oneTrack, TrackPiece twoTrack
     ) {
         assert newNode.aDirection.isEmpty() && newNode.bDirection.isEmpty() : "newNode should be empty | " + newNode;
+
+        Direction entryToTwo = oneNode.getEntryOf(twoNode);
+        Direction entryToOne = twoNode.getEntryOf(oneNode);
+
         replaceNode(oneNode, twoNode, newNode, oneTrack);
         replaceNode(twoNode, oneNode, newNode, twoTrack);
     }
 
-    /** replaces twoNode with newNode in the direction list of oneNode, using the given newTrack */
-    private static void replaceNode(RailNode oneNode, RailNode twoNode, RailNode newNode, TrackPiece newTrack) {
+    private static void replaceNode(
+            RailNode oneNode, RailNode twoNode, RailNode newNode, TrackPiece track
+    ) {
         int twoIndex;
         List<Direction> oneList = oneNode.aDirection;
+        List<Direction> otherList = oneNode.bDirection;
 
         twoIndex = getIndexOf(oneList, twoNode);
         if (twoIndex == -1) {
             oneList = oneNode.bDirection;
+            otherList = oneNode.aDirection;
             twoIndex = getIndexOf(oneList, twoNode);
 
             assert twoIndex != -1 : "nodes are not connected";
         }
 
-        oneList.set(twoIndex, new Direction(newNode, newTrack));
+        Direction entryOneToTwo = oneList.get(twoIndex);
+        oneList.set(twoIndex, new Direction(newNode, track, entryOneToTwo.networkNode, entryOneToTwo.distanceToNetworkNode));
 
-        newNode.addEntry(new Direction(oneNode, newTrack));
+        RailNode networkNode;
+        float distanceToNetworkOfNewToOne;
+
+        if (oneNode.isNetworkNode()) {
+            networkNode = oneNode;
+            distanceToNetworkOfNewToOne = 0;
+        } else if (oneNode.isEnd()) {
+            networkNode = null;
+            distanceToNetworkOfNewToOne = 0;
+        } else {
+            Direction direction = otherList.get(0);
+            networkNode = direction.networkNode;
+            distanceToNetworkOfNewToOne = direction.distanceToNetworkNode + track.getLength();
+        }
+
+        Direction newEntry = new Direction(oneNode, track, networkNode, distanceToNetworkOfNewToOne);
+
+        if (newNode.isInDirectionOf(newEntry.railNode)) {
+            newNode.aDirection.add(newEntry);
+        } else {
+            newNode.bDirection.add(newEntry);
+        }
     }
 
-    private void addEntry(Direction entry) {
-        if (isInDirectionOf(entry.railNode)) {
-            aDirection.add(entry);
-        } else {
-            bDirection.add(entry);
+    /**
+     * translates the top-level pathing network to a string.
+     * @param startNode A starting node on the network, which will be id 0.
+     * @return a comma separated list of pairs "a-b" with numbers a and b representing arbitrary ID values of nodes.
+     * pairs may occur the other way around. dead ends are marked by 'x'
+     */
+    public static String getNetworkAsString(RailNode startNode) {
+        List<Edge> pairs = new ArrayList<>();
+        Map<RailNode, Integer> seen = new HashMap<>();
+        Deque<RailNode> open = new ArrayDeque<>();
+        open.add(startNode);
+        seen.put(startNode, 0);
+
+        while (!open.isEmpty()) {
+            RailNode current = open.remove();
+            Integer currentID = seen.get(current);
+
+            for (Direction entry : current.getAllEntries()) {
+                RailNode other = entry.networkNode;
+
+                if (other != null) {
+                    if (!seen.containsKey(other)) {
+                        int id = seen.size();
+                        seen.put(other, id);
+                        open.add(other);
+                    }
+
+                    Integer otherID = seen.get(other);
+                    pairs.add(new Edge(currentID, otherID, entry.distanceToNetworkNode));
+                }
+                // else this is an endpoint
+            }
+        }
+
+        if (pairs.isEmpty()) return "";
+
+        // +1 for 1-indexing
+        StringBuilder output = new StringBuilder("matrix(c(");
+        pairs.forEach(e -> output.append(e.a + 1).append(", ")
+                .append(e.b + 1).append(", ")
+                .append(e.dist).append(", ")
+        );
+
+        output.setLength(output.length() - 2);
+        output.append("), nc = 3, byrow = TRUE").append(")");
+        return output.toString();
+    }
+
+    private static class Edge {
+        int a;
+        int b;
+        float dist;
+
+        public Edge(Integer thisID, Integer otherID, float distanceToNetwork) {
+            this.a = thisID;
+            this.b = otherID;
+            this.dist = distanceToNetwork;
         }
     }
 
     public static class Direction {
         public final RailNode railNode;
         public final TrackPiece trackPiece;
+        public RailNode networkNode;
+        public float distanceToNetworkNode;
 
-        public Direction(RailNode railNode, TrackPiece trackPiece) {
+        private Direction(RailNode railNode, TrackPiece trackPiece, RailNode networkNode, float distanceToNetworkNode) {
             this.railNode = railNode;
             this.trackPiece = trackPiece;
+            this.networkNode = networkNode;
+            this.distanceToNetworkNode = distanceToNetworkNode;
         }
 
         @Override
         public String toString() {
-            return "{" + railNode + ", " + trackPiece + "}";
+            return "{" + railNode + ", " + trackPiece + "," + networkNode + "}";
         }
+
     }
 }

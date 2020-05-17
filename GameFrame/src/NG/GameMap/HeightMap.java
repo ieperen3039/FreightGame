@@ -196,7 +196,12 @@ public class HeightMap extends GridMap {
     }
 
     @Override
-    public Vector2ic getSize() {
+    public Vector2f getSize() {
+        return new Vector2f(xSize * edgeLength, ySize * edgeLength);
+    }
+
+    @Override
+    public Vector2ic getCoordinateSize() {
         // number of voxels is one less than the number of coordinates
         return new Vector2i(xSize - 1, ySize - 1);
     }

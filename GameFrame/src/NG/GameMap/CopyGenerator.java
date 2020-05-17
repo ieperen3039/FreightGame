@@ -11,12 +11,12 @@ import java.util.Map;
  * @author Geert van Ieperen created on 17-2-2019.
  */
 public class CopyGenerator implements MapGeneratorMod {
-    private final GameMap target;
+    private final GridMap target;
     private int xSize = -1;
     private int ySize = -1;
     protected int progress = 0;
 
-    public CopyGenerator(GameMap target) {
+    public CopyGenerator(GridMap target) {
         this.target = target;
     }
 
@@ -28,7 +28,7 @@ public class CopyGenerator implements MapGeneratorMod {
     @Override
     public float[][] generateHeightMap() {
         progress = 0;
-        Vector2ic size = target.getSize();
+        Vector2ic size = target.getCoordinateSize();
         if (xSize == -1) xSize = size.x();
         if (ySize == -1) ySize = size.y();
 

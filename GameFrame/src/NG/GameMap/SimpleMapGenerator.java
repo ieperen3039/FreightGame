@@ -31,8 +31,8 @@ public class SimpleMapGenerator implements MapGeneratorMod {
         majorGenerator = new OpenSimplexNoise(seed);
         minorGenerator = new OpenSimplexNoise(seed + 1);
         properties = new HashMap<>();
-        properties.put(MAJOR_AMPLITUDE, 100);
-        properties.put(MINOR_AMPLITUDE, 5);
+        properties.put(MAJOR_AMPLITUDE, 1);
+        properties.put(MINOR_AMPLITUDE, 0);
     }
 
     @Override

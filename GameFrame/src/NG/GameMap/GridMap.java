@@ -26,7 +26,7 @@ public abstract class GridMap implements GameMap {
 
     @Override
     public Float gridMapIntersection(Vector3fc origin, Vector3fc direction) {
-        Vector2ic size = getSize();
+        Vector2ic size = getCoordinateSize();
         // edge case, direction == (0, 0, dz)
         if (direction.x() == 0 && direction.y() == 0) {
             Vector3f realSize = getPosition(size.x(), size.y());
@@ -149,4 +149,9 @@ public abstract class GridMap implements GameMap {
      * null if the given coordinate is not on the map.
      */
     abstract Float getTileIntersect(Vector3fc origin, Vector3fc direction, int xCoord, int yCoord);
+
+    /**
+     * the number of voxels in x and y direction. The real (floating-point) size can be completely different.
+     */
+    public abstract Vector2ic getCoordinateSize();
 }
