@@ -123,7 +123,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     private void runCleaning() {
         entityWriteLock.lock();
         try {
-            entities.removeIf(Entity::isDisposed);
+            entities.removeIf(entity -> entity.isDespawnedAt(game.timer().getGameTime()));
         } finally {
             entityWriteLock.unlock();
         }

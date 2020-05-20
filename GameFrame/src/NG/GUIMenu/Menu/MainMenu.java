@@ -5,7 +5,7 @@ import NG.Core.Game;
 import NG.Core.ModLoader;
 import NG.Entities.Cube;
 import NG.Entities.Entity;
-import NG.Entities.Locomotive;
+import NG.Entities.Train;
 import NG.GUIMenu.Components.*;
 import NG.GameMap.MapGeneratorMod;
 import NG.GameMap.SimpleMapGenerator;
@@ -94,7 +94,7 @@ public class MainMenu extends SFrame {
         }
 
         toolBar.addButton("Add Train", () -> {
-            game.inputHandling().setMouseTool(new Locomotive.Placer(game));
+            game.inputHandling().setMouseTool(new Train.Placer(game));
         });
 
         toolBar.addButton("Exit", () -> {

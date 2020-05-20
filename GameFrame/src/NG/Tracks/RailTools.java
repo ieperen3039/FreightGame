@@ -81,7 +81,7 @@ public final class RailTools {
         return trackPieces.left.getNot(aNode);
     }
 
-    public static RailNode createSplit(Game game, TrackPiece trackPiece, float fraction) {
+    public static RailNode createSplit(Game game, TrackPiece trackPiece, float fraction, double gameTime) {
         RailNode aNode = trackPiece.getStartNode();
         RailNode bNode = trackPiece.getEndNode();
 
@@ -109,11 +109,11 @@ public final class RailTools {
         assert aConnection.isValid() : aConnection;
         assert bConnection.isValid() : bConnection;
 
-        trackPiece.dispose();
+        trackPiece.despawn(gameTime);
         return newNode;
     }
 
-    public static void removeTrackPiece(TrackPiece trackPiece) {
+    public static void removeTrackPiece(TrackPiece trackPiece, double gameTime) {
         assert trackPiece.isValid();
         RailNode aNode = trackPiece.getStartNode();
         RailNode bNode = trackPiece.getEndNode();
@@ -122,7 +122,7 @@ public final class RailTools {
         assert oldPiece == trackPiece :
                 "Nodes were connected with double tracks: " + oldPiece + " and " + trackPiece;
 
-        trackPiece.dispose();
+        trackPiece.despawn(gameTime);
     }
 
     /**

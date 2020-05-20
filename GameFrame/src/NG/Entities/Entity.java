@@ -18,15 +18,15 @@ public interface Entity extends GameObject {
 
     /**
      * Updates the state of the entity. The frequency this method is called depend on the return value of {@link
-     * #getUpdateFrequency()}. Use {@link GameTimer#getGametimeDifference()} for speed calculations and {@link
-     * GameTimer#getGametime()} for position calculations
+     * #getUpdateFrequency()}. Use {@link GameTimer#getGameTimeDifference()} for speed calculations and {@link
+     * GameTimer#getGameTime()} for position calculations
      */
     void update();
 
     /**
      * Draws this entity using the provided SGL object. This method may only be called from the rendering loop, and
      * should not change the internal representation of this object. Possible animations should be based on {@link
-     * GameTimer#getRendertime()}. Material must be set using {@link SGL#getShader()}.
+     * GameTimer#getRenderTime()}. Material must be set using {@link SGL#getShader()}.
      * @param gl the graphics object to be used for rendering. It is initialized at world's origin. (no translation or
      *           scaling has been applied)
      */
@@ -40,15 +40,28 @@ public interface Entity extends GameObject {
      */
     void reactMouse(AbstractMouseTool.MouseAction action);
 
-    /**
-     * Marks the track piece to be invalid, such that the {@link #isDisposed()} method returns true.
-     */
-    void dispose();
+    /** @deprecated use {@link #despawn(double)} */
+    default void dispose() {
+        despawn(0);
+    }
+
+    void despawn(double gameTime);
+
+    default double getSpawnTime() {
+        return Double.NEGATIVE_INFINITY;
+    }
+
+    default double getDespawnTime() {
+        return Double.POSITIVE_INFINITY;
+    }
 
     /**
-     * @return true iff this unit should be removed from the game world before the next gameloop.
+     * @param gameTime
+     * @return true iff this unit should be removed from the game world.
      */
-    boolean isDisposed();
+    default boolean isDespawnedAt(double gameTime) {
+        return gameTime >= getDespawnTime();
+    }
 
     /**
      * the {@link #update()} method of this entity will be called according to the given update frequency

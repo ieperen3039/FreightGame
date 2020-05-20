@@ -16,7 +16,9 @@ import org.joml.Vector3fc;
 public abstract class Storage extends AbstractGameObject implements Entity {
     private final FreightStorage contents;
     private final Vector3f position;
-    private boolean isDisposed = false;
+
+    protected double spawnTime;
+    protected double despawnTime = Double.POSITIVE_INFINITY;
 
     public Storage(Vector3fc position, Game game) {
         super(game);
@@ -36,13 +38,19 @@ public abstract class Storage extends AbstractGameObject implements Entity {
         return position;
     }
 
+
     @Override
-    public void dispose() {
-        isDisposed = true;
+    public void despawn(double gameTime) {
+        despawnTime = gameTime;
     }
 
     @Override
-    public boolean isDisposed() {
-        return isDisposed;
+    public double getSpawnTime() {
+        return spawnTime;
+    }
+
+    @Override
+    public double getDespawnTime() {
+        return despawnTime;
     }
 }

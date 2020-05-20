@@ -34,7 +34,7 @@ public class Freight {
     }
 
     public Valuta getCurrentPrice(GameTimer time) {
-        return type.valueOverTime(pickupTime - time.getGametime());
+        return type.valueOverTime(pickupTime - time.getGameTime());
     }
 
     public int quantity() {

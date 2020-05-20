@@ -18,14 +18,15 @@ public class Remover extends ToggleMouseTool {
 
     @Override
     public void apply(Entity entity, int xSc, int ySc) {
+        double gameTime = game.timer().getGameTime();
         switch (getMouseAction()) {
             case PRESS_ACTIVATE:
                 if (entity instanceof TrackPiece) {
-                    RailTools.removeTrackPiece((TrackPiece) entity);
+                    RailTools.removeTrackPiece((TrackPiece) entity, gameTime);
 
                 } else if (entity instanceof StationImpl) {
                     Station station = (Station) entity;
-                    station.dispose();
+                    station.despawn(gameTime);
                 }
         }
     }

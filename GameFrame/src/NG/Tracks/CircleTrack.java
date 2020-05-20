@@ -31,13 +31,14 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     private final float startTheta;
     private final float angle;
     private final float endTheta;
+    private final float heightDiff;
 
     private final Resource<Mesh> mesh;
     private final Resource<Mesh> clickBox;
     private final boolean isModifiable;
+    private double despawnTime = Float.POSITIVE_INFINITY;
+    private double spawnTime = Float.NEGATIVE_INFINITY;
 
-    private boolean isInvalid = false;
-    private final float heightDiff;
     private boolean renderClickBox = false;
     private boolean isOccupied = false;
 
@@ -206,13 +207,18 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     }
 
     @Override
-    public void dispose() {
-        isInvalid = true;
+    public void despawn(double gameTime) {
+        despawnTime = gameTime;
     }
 
     @Override
-    public boolean isDisposed() {
-        return isInvalid;
+    public double getSpawnTime() {
+        return spawnTime;
+    }
+
+    @Override
+    public double getDespawnTime() {
+        return despawnTime;
     }
 
     @Override

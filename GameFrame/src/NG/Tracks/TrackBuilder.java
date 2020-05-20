@@ -115,7 +115,8 @@ public class TrackBuilder extends ToggleMouseTool {
                             fraction = 0;
                         } else if (fraction > 1) fraction = 1;
 
-                        targetNode = RailTools.createSplit(game, trackPiece, fraction);
+                        double gameTime = game.timer().getGameTime();
+                        targetNode = RailTools.createSplit(game, trackPiece, fraction, gameTime);
                     }
 
                     if (firstNode == null) {
@@ -175,12 +176,13 @@ public class TrackBuilder extends ToggleMouseTool {
     }
 
     public void clearGhostTracks() {
+        double gameTime = game.timer().getGameTime();
         if (ghostTrack1 != null) {
-            ghostTrack1.dispose();
+            ghostTrack1.despawn(gameTime);
             ghostTrack1 = null;
         }
         if (ghostTrack2 != null) {
-            ghostTrack2.dispose();
+            ghostTrack2.despawn(gameTime);
             ghostTrack2 = null;
         }
     }

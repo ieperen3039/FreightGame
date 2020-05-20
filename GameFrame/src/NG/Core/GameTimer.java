@@ -50,19 +50,19 @@ public class GameTimer {
         renderTime.update(currentInternalTime - renderDelay);
     }
 
-    public double getGametime() {
+    public double getGameTime() {
         return gameTime.current() * RESOLUTION_TO_SECONDS;
     }
 
-    public double getGametimeDifference() {
+    public double getGameTimeDifference() {
         return (gameTime.current() - gameTime.previous()) * RESOLUTION_TO_SECONDS;
     }
 
-    public double getRendertime() {
+    public double getRenderTime() {
         return renderTime.current() * RESOLUTION_TO_SECONDS;
     }
 
-    public double getRendertimeDifference() {
+    public double getRenderTimeDifference() {
         return (renderTime.current() - renderTime.previous()) * RESOLUTION_TO_SECONDS;
     }
 

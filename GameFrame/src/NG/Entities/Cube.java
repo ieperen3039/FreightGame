@@ -18,9 +18,11 @@ import org.joml.Vector3fc;
 public class Cube extends AbstractGameObject implements MovingEntity {
     private static int nr = 0;
     private final int id;
+    private Vector3f position;
 
     private boolean isDisposed = false;
-    private Vector3f position;
+    private double despawnTime;
+    private double spawnTime;
 
     public Cube(Game game, Vector3f position) {
         super(game);
@@ -57,17 +59,23 @@ public class Cube extends AbstractGameObject implements MovingEntity {
 
     @Override
     public void reactMouse(AbstractMouseTool.MouseAction action) {
-        dispose();
+        despawn(game.timer().getGameTime());
+    }
+
+
+    @Override
+    public void despawn(double gameTime) {
+        despawnTime = gameTime;
     }
 
     @Override
-    public void dispose() {
-        isDisposed = true;
+    public double getSpawnTime() {
+        return spawnTime;
     }
 
     @Override
-    public boolean isDisposed() {
-        return isDisposed;
+    public double getDespawnTime() {
+        return despawnTime;
     }
 
     @Override

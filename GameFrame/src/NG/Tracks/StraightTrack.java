@@ -27,7 +27,9 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     private final float length;
     private final boolean isModifiable;
 
-    private boolean isInvalid;
+    protected double spawnTime = Double.NEGATIVE_INFINITY;
+    protected double despawnTime = Double.POSITIVE_INFINITY;
+
     private final Resource<Mesh> mesh;
     private final Resource<Mesh> clickBox;
     private boolean renderClickBox = false;
@@ -121,13 +123,18 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     }
 
     @Override
-    public void dispose() {
-        isInvalid = true;
+    public void despawn(double gameTime) {
+        despawnTime = gameTime;
     }
 
     @Override
-    public boolean isDisposed() {
-        return isInvalid;
+    public double getSpawnTime() {
+        return spawnTime;
+    }
+
+    @Override
+    public double getDespawnTime() {
+        return despawnTime;
     }
 
     @Override

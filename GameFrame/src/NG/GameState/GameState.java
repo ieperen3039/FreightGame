@@ -36,16 +36,6 @@ public interface GameState extends GameAspect {
     Collision getEntityCollision(Vector3fc from, Vector3fc to);
 
     /**
-     * removes the given entity from the gameState. This action does not have to be executed immediately.
-     * @param entity an entity to be removed
-     * @deprecated instead, put an entities {@link Entity#isDisposed()} to true
-     */
-    @Deprecated
-    default void removeEntity(Entity entity) {
-        entity.dispose();
-    }
-
-    /**
      * checks whether an input click can be handled by this object
      * @param tool the current mouse tool
      * @param xSc  the screen x position of the mouse

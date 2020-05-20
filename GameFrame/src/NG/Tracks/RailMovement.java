@@ -6,7 +6,7 @@ import NG.DataStructures.Generic.BlockingTimedArrayQueue;
 import NG.DataStructures.Generic.Pair;
 import NG.DataStructures.Interpolation.FloatInterpolator;
 import NG.DataStructures.Interpolation.LongInterpolator;
-import NG.Entities.Locomotive;
+import NG.Entities.Train;
 import NG.Network.RailNode;
 import org.joml.Math;
 import org.joml.Quaternionf;
@@ -21,7 +21,7 @@ import java.util.List;
 public class RailMovement extends AbstractGameObject {
     private static final float DELTA_TIME = 1f / 128f;
     private static final int METERS_TO_MILLIS = 1000;
-    private final Locomotive controller;
+    private final Train controller;
 
     /**
      * real train speed in direction of facing in meters.
@@ -42,7 +42,7 @@ public class RailMovement extends AbstractGameObject {
     private long trackStartDistanceMillis;
 
     public RailMovement(
-            Game game, Locomotive controller, double spawnTime, TrackPiece startPiece, float fraction,
+            Game game, Train controller, double spawnTime, TrackPiece startPiece, float fraction,
             boolean positiveDirection, float initialSpeed
     ) {
         super(game);
@@ -64,7 +64,7 @@ public class RailMovement extends AbstractGameObject {
     }
 
     public void update() {
-        double gametime = game.timer().getGametime();
+        double gametime = game.timer().getGameTime();
         update(gametime);
     }
 

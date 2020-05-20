@@ -65,7 +65,7 @@ public class ParticleShader implements ShaderProgram {
     public void initialize(Game game) {
         GameTimer timer = game.timer();
         Settings settings = game.settings();
-        glUniform1f(timeUniform, (float) timer.getRendertime());
+        glUniform1f(timeUniform, (float) timer.getRenderTime());
         glUniform1f(sizeUniform, settings.PARTICLE_SIZE);
     }
 
