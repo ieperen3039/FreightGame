@@ -4,8 +4,9 @@ import NG.Entities.Entity;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Resources.GeneratorResource;
 import NG.Resources.Resource;
-import NG.Tools.Directory;
+import NG.Tools.Vectors;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 
 /**
@@ -25,8 +26,8 @@ public interface Mesh {
     void dispose();
 
     /** creates a resource that cleans the meshfile it used whenever it reloads */
-    static Resource<Mesh> createResource(Directory dir, String... path) {
-        Resource<MeshFile> meshFile = MeshFile.createResource(dir, path);
+    static Resource<Mesh> createResource(Path path) {
+        Resource<MeshFile> meshFile = MeshFile.createResource(Vectors.Scaling.UNIFORM, path);
 
         return new GeneratorResource<>(() -> {
             Mesh target = meshFile.get().getMesh();

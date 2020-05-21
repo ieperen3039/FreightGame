@@ -107,7 +107,15 @@ public class MeshFile {
     }
 
     public static Resource<MeshFile> createResource(Vector3fc scaling, Directory meshes, String... path) {
-        return FileResource.get((p) -> loadFile(p, scaling), meshes, path);
+        return createResource(scaling, meshes.getPath(path));
+    }
+
+    public static Resource<MeshFile> createResource(Path path) {
+        return createResource(Vectors.Scaling.UNIFORM, path);
+    }
+
+    public static Resource<MeshFile> createResource(Vector3fc scaling, Path path) {
+        return FileResource.get((p) -> loadFile(p, scaling), path);
     }
 
     /**

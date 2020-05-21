@@ -24,6 +24,6 @@ public interface Texture {
     int getID();
 
     static Resource<Texture> createResource(String... path) {
-        return FileResource.get(FileTexture::new, Directory.images, path);
+        return FileResource.get(FileTexture::new, Directory.images.getPath(path));
     }
 }

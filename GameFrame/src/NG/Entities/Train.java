@@ -6,6 +6,9 @@ import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.MeshLoading.Mesh;
+import NG.Resources.Resource;
+import NG.Tools.Directory;
 import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
 import NG.Tracks.RailMovement;
@@ -59,7 +62,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
             Vector3f position = positionEngine.getPosition(now, displacement);
             Quaternionf rotation = positionEngine.getRotation(now, displacement);
             entity.draw(gl, position, rotation, this);
-            displacement -= entity.realLength();
+            displacement -= entity.getProperties().length;
         }
     }
 
@@ -102,9 +105,18 @@ public class Train extends AbstractGameObject implements MovingEntity {
     @Override
     public void reactMouse(MouseAction action) {
         if (action == MouseAction.PRESS_ACTIVATE) {
-            double sum = entities.stream().mapToDouble(TrainElement::realLength).sum();
-            positionEngine.reverse((float) sum);
+            positionEngine.reverse(getLength());
         }
+    }
+
+    private float getLength() {
+        float sum = 0.0f;
+
+        for (TrainElement entity : entities) {
+            sum += entity.getProperties().length;
+        }
+
+        return sum;
     }
 
     @Override
@@ -123,6 +135,11 @@ public class Train extends AbstractGameObject implements MovingEntity {
     }
 
     public static class Placer extends AbstractMouseTool {
+        private static final Resource<Mesh> locoMesh = Mesh.createResource(Directory.softMods.getPath("baseSet", "LittleRedDiesel.ply"));
+        private static final Locomotive.Properties LOCO_PROPERTIES = new Locomotive.Properties("DEBUG_LOCO", 2, 1, locoMesh);
+        private static final Resource<Mesh> wagonMesh = Mesh.createResource(Directory.softMods.getPath("baseSet", "WagonCup.ply"));
+        private static final Wagon.Properties WAGON_PROPERTIES = new Wagon.Properties("DEBUG_WAGON", 2, 1, wagonMesh);
+
         public Placer(Game game) {
             super(game);
         }
@@ -137,12 +154,13 @@ public class Train extends AbstractGameObject implements MovingEntity {
                     Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
 
                     float fraction = trackPiece.getFractionOfClosest(origin, direction);
-
                     double now = game.timer().getGameTime();
                     Train train = new Train(game, now, trackPiece, fraction);
-                    train.addElement(new Locomotive());
-                    train.addElement(new Locomotive());
-                    train.addElement(new Locomotive());
+
+                    train.addElement(new Locomotive(LOCO_PROPERTIES));
+                    train.addElement(new Wagon(WAGON_PROPERTIES));
+                    train.addElement(new Wagon(WAGON_PROPERTIES));
+
                     game.state().addEntity(train);
                     game.inputHandling().setMouseTool(null);
                 }

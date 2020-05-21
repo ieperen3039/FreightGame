@@ -6,5 +6,5 @@
 out/
 jar/
 tex/
-gen
 !/tex/Game Concept.pdf
+/blend/

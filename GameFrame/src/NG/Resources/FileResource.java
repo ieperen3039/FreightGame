@@ -34,8 +34,8 @@ public class FileResource<T> extends Resource<T> {
         }
     }
 
-    public static <T> FileResource<T> get(FileLoader<T> loader, Directory dir, String... path) {
-        Path relativePath = Directory.workDirectory().relativize(dir.getPath(path));
+    public static <T> FileResource<T> get(FileLoader<T> loader, Path path) {
+        Path relativePath = Directory.workDirectory().relativize(path);
         //noinspection unchecked
         return (FileResource<T>) allFileResources.computeIfAbsent(
                 relativePath, (p) -> new FileResource<>(loader, p)

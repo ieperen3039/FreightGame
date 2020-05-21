@@ -1,0 +1,17 @@
+{
+  "set_name": "Base Set",
+  "locomotives": {
+    "Little Red Diesel": {
+      "length": 2.0,
+      "mass": 1.0,
+      "mesh": "LittleRedDiesel.ply"
+    }
+  },
+  "wagons": {
+    "CupWagon": {
+      "length": 2.0,
+      "mass": 1.0,
+      "mesh": "WagonCup.ply"
+    }
+  }
+}

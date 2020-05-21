@@ -14,6 +14,7 @@ import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.MouseToolCallbacks;
 import NG.Mods.InitialisationMod;
 import NG.Mods.Mod;
+import NG.Mods.SoftMod;
 import NG.Mods.TypeCollection;
 import NG.Particles.GameParticles;
 import NG.Particles.ParticleShader;
@@ -28,6 +29,7 @@ import NG.Tools.Directory;
 import NG.Tools.Logger;
 import org.joml.Vector3f;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,7 +76,7 @@ public class FreightGame implements Game, ModLoader {
                 "\n\tJava VM:            " + System.getProperty("java.runtime.version") +
                 "\n\tFrame version:      " + getVersionNumber() +
                 "\n\tWorking directory:  " + Directory.workDirectory() +
-                "\n\tMods directory:     " + Directory.mods.getPath()
+                "\n\tMods directory:     " + Directory.hardMods.getPath()
         );
 
         // these are not GameAspects, and thus the init() rule does not apply.
@@ -96,7 +98,17 @@ public class FreightGame implements Game, ModLoader {
         mainThread = Thread.currentThread();
 
         // load mods
-        allMods = JarModReader.loadMods(Directory.mods);
+        allMods = JarModReader.loadMods(Directory.hardMods);
+        for (File file : Directory.softMods.getFiles()) {
+            try {
+                SoftMod mod = new SoftMod(file.toPath());
+                allMods.add(mod);
+
+            } catch (IOException ex) {
+                Logger.WARN.print("Error loading soft mod " + file);
+                Logger.ERROR.print(ex);
+            }
+        }
     }
 
     /**

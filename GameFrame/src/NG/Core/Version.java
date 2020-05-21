@@ -1,17 +1,27 @@
 package NG.Core;
 
 import java.io.Serializable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Geert van Ieperen. Created on 19-9-2018.
  */
 public class Version implements Comparable<Version>, Serializable {
+    private static final Pattern PATTERN = Pattern.compile("v \\d.\\d");
+
     private final int major;
     private final int minor;
 
     public Version(int major, int minor) {
         this.major = major;
         this.minor = minor;
+    }
+
+    public Version(String versionString) {
+        Matcher matcher = PATTERN.matcher(versionString);
+        major = Integer.parseInt(matcher.group(1));
+        minor = Integer.parseInt(matcher.group(2));
     }
 
     public int major() {

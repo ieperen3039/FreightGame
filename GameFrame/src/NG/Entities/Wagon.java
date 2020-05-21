@@ -4,12 +4,12 @@ import NG.Rendering.MeshLoading.Mesh;
 import NG.Resources.Resource;
 
 /**
- * @author Geert van Ieperen created on 5-5-2020.
+ * @author Geert van Ieperen created on 20-5-2020.
  */
-public class Locomotive implements TrainElement {
+public class Wagon implements TrainElement {
     public final Properties properties;
 
-    public Locomotive(Properties properties) {
+    public Wagon(Properties properties) {
         this.properties = properties;
     }
 

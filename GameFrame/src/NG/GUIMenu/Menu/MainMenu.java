@@ -89,7 +89,7 @@ public class MainMenu extends SFrame {
         );
 
         SToolBar toolBar = new SToolBar(game, true);
-        for (TrackType trackType : game.objectTypes().getTrackTypes()) {
+        for (TrackType trackType : game.objectTypes().trackTypes) {
             toolBar.addButton("Build " + trackType, () -> showBuildTool(trackType));
         }
 

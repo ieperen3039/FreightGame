@@ -21,7 +21,7 @@ public class BaseTracksMod implements Mod {
     @Override
     public void init(Game game) throws Version.MisMatchException {
         game.getVersionNumber().requireAtLeast(0, 0);
-        game.objectTypes().addTrackTypes(new DebugTrack());
+        game.objectTypes().trackTypes.add(new DebugTrack());
     }
 
     @Override
