@@ -5,16 +5,17 @@ import NG.Core.Game;
 import NG.Core.ModLoader;
 import NG.Entities.Cube;
 import NG.Entities.Entity;
-import NG.Entities.Train;
 import NG.GUIMenu.Components.*;
 import NG.GameMap.MapGeneratorMod;
 import NG.GameMap.SimpleMapGenerator;
+import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Mods.Mod;
 import NG.Settings.Settings;
-import NG.Tracks.TrackType;
+import NG.Tracks.TrackPiece;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 import java.util.List;
 
@@ -89,13 +90,35 @@ public class MainMenu extends SFrame {
         );
 
         SToolBar toolBar = new SToolBar(game, true);
-        for (TrackType trackType : game.objectTypes().trackTypes) {
-            toolBar.addButton("Build " + trackType, () -> showBuildTool(trackType));
-        }
+        toolBar.addButton(
+                "Build Track",
+                () -> game.gui().addFrame(new BuildMenu(game))
+        );
 
-        toolBar.addButton("Add Train", () -> {
-            game.inputHandling().setMouseTool(new Train.Placer(game));
-        });
+        toolBar.addButton( // TODO remove this debug option
+                "New Train",
+                () -> game.inputHandling().setMouseTool(new AbstractMouseTool(game) {
+                    @Override
+                    public void apply(Entity entity, int xSc, int ySc) {
+                        if (getMouseAction() == MouseAction.PRESS_ACTIVATE) {
+                            if (entity instanceof TrackPiece) {
+                                game.gui().addFrame(new TrainConstructionMenu(game, (TrackPiece) entity));
+                                game.inputHandling().setMouseTool(null);
+                            }
+
+                        } else if (getMouseAction() == MouseAction.PRESS_DEACTIVATE) {
+                            game.inputHandling().setMouseTool(null);
+                        }
+                    }
+
+                    @Override
+                    public void apply(Vector3fc position, int xSc, int ySc) {
+                        if (getMouseAction() == MouseAction.PRESS_DEACTIVATE) {
+                            game.inputHandling().setMouseTool(null);
+                        }
+                    }
+                })
+        );
 
         toolBar.addButton("Exit", () -> {
             game.gui().clear();
@@ -106,10 +129,6 @@ public class MainMenu extends SFrame {
         // start
         modLoader.startGame();
         newGameFrame.setVisible(false);
-    }
-
-    private void showBuildTool(TrackType track) {
-        game.gui().addFrame(new BuildMenu(game, track));
     }
 
     private void showNewGame() {

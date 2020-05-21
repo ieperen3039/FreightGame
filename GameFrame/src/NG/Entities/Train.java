@@ -2,22 +2,21 @@ package NG.Entities;
 
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
-import NG.Rendering.MeshLoading.Mesh;
-import NG.Resources.Resource;
-import NG.Tools.Directory;
 import NG.Tools.Toolbox;
-import NG.Tools.Vectors;
 import NG.Tracks.RailMovement;
 import NG.Tracks.TrackPiece;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Geert van Ieperen created on 19-5-2020.
@@ -28,17 +27,20 @@ public class Train extends AbstractGameObject implements MovingEntity {
     protected double despawnTime = Double.POSITIVE_INFINITY;
 
     private final RailMovement positionEngine;
-    private final List<TrainElement> entities;
+    private final List<TrainElement> entities = new CopyOnWriteArrayList<>();
 
     public Train(Game game, double spawnTime, TrackPiece startPiece, float fraction) {
         super(game);
-        this.positionEngine = new RailMovement(game, this, spawnTime, startPiece, fraction, true, 1);
+        this.positionEngine = new RailMovement(game, this, spawnTime, startPiece, fraction, true, 0);
         this.spawnTime = spawnTime;
-        entities = new ArrayList<>();
     }
 
-    private void addElement(TrainElement e) {
+    public void addElement(TrainElement e) {
         entities.add(e);
+    }
+
+    public void removeLastElement() {
+        entities.remove(entities.size() - 1);
     }
 
     @Override
@@ -47,22 +49,22 @@ public class Train extends AbstractGameObject implements MovingEntity {
             positionEngine.setAcceleration(0);
         }
 
-        if (positionEngine.getSpeed() < 4f) {
-            positionEngine.setAcceleration(2f);
-        }
-
         positionEngine.update();
     }
 
     @Override
     public void draw(SGL gl) {
-        float displacement = 0;
+        if (entities.isEmpty()) return;
+        // position 0 is on the very front of the first wagon, hence the middle of first wagon is displaced
+        float displacement = entities.get(0).getProperties().length / 2;
         double now = game.timer().getRenderTime();
+
         for (TrainElement entity : entities) {
-            Vector3f position = positionEngine.getPosition(now, displacement);
-            Quaternionf rotation = positionEngine.getRotation(now, displacement);
+            // -displacement because we place front to back
+            Vector3f position = positionEngine.getPosition(now, -displacement);
+            Quaternionf rotation = positionEngine.getRotation(now, -displacement);
             entity.draw(gl, position, rotation, this);
-            displacement -= entity.getProperties().length;
+            displacement += entity.getProperties().length;
         }
     }
 
@@ -105,11 +107,14 @@ public class Train extends AbstractGameObject implements MovingEntity {
     @Override
     public void reactMouse(MouseAction action) {
         if (action == MouseAction.PRESS_ACTIVATE) {
-            positionEngine.reverse(getLength());
+            if (positionEngine.getSpeed() > 0) {
+                positionEngine.reverse(getLength());
+            }
+            positionEngine.setAcceleration(2f);
         }
     }
 
-    private float getLength() {
+    public float getLength() {
         float sum = 0.0f;
 
         for (TrainElement entity : entities) {
@@ -132,49 +137,5 @@ public class Train extends AbstractGameObject implements MovingEntity {
     @Override
     public double getDespawnTime() {
         return despawnTime;
-    }
-
-    public static class Placer extends AbstractMouseTool {
-        private static final Resource<Mesh> locoMesh = Mesh.createResource(Directory.softMods.getPath("baseSet", "LittleRedDiesel.ply"));
-        private static final Locomotive.Properties LOCO_PROPERTIES = new Locomotive.Properties("DEBUG_LOCO", 2, 1, locoMesh);
-        private static final Resource<Mesh> wagonMesh = Mesh.createResource(Directory.softMods.getPath("baseSet", "WagonCup.ply"));
-        private static final Wagon.Properties WAGON_PROPERTIES = new Wagon.Properties("DEBUG_WAGON", 2, 1, wagonMesh);
-
-        public Placer(Game game) {
-            super(game);
-        }
-
-        @Override
-        public void apply(Entity entity, int xSc, int ySc) {
-            if (getMouseAction() == MouseAction.PRESS_ACTIVATE) {
-                if (entity instanceof TrackPiece) {
-                    TrackPiece trackPiece = (TrackPiece) entity;
-                    Vector3f origin = new Vector3f();
-                    Vector3f direction = new Vector3f();
-                    Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
-
-                    float fraction = trackPiece.getFractionOfClosest(origin, direction);
-                    double now = game.timer().getGameTime();
-                    Train train = new Train(game, now, trackPiece, fraction);
-
-                    train.addElement(new Locomotive(LOCO_PROPERTIES));
-                    train.addElement(new Wagon(WAGON_PROPERTIES));
-                    train.addElement(new Wagon(WAGON_PROPERTIES));
-
-                    game.state().addEntity(train);
-                    game.inputHandling().setMouseTool(null);
-                }
-
-            } else if (getMouseAction() == MouseAction.PRESS_DEACTIVATE) {
-                game.inputHandling().setMouseTool(null);
-            }
-        }
-
-        @Override
-        public void apply(Vector3fc position, int xSc, int ySc) {
-            if (getMouseAction() == MouseAction.PRESS_DEACTIVATE) {
-                game.inputHandling().setMouseTool(null);
-            }
-        }
     }
 }

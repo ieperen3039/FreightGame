@@ -98,6 +98,7 @@ public class RailMovement extends AbstractGameObject {
         positiveDirection = !positiveDirection;
         Pair<TrackPiece, Boolean> track = tracks.getPrevious(currentTotalMillis);
 
+        float oldTrackStartMillis = trackStartDistanceMillis;
         trackStartDistanceMillis = (long) (track.left.getLength() * METERS_TO_MILLIS - (trackEndDistanceMillis - currentTotalMillis));
         trackEndDistanceMillis = currentTotalMillis + trackStartDistanceMillis;
 
@@ -107,10 +108,12 @@ public class RailMovement extends AbstractGameObject {
 
         tracks.add(new Pair<>(track.left, positiveDirection), currentTotalMillis);
 
-        currentTotalMillis += (positiveDirection ? -reversalLength : reversalLength);
+        currentTotalMillis += reversalLength * METERS_TO_MILLIS;
 
         while (currentTotalMillis > trackEndDistanceMillis) {
-            progressTrack(); // TODO determine node to go on by unrolling 'tracks'
+            Pair<TrackPiece, Boolean> previous = tracks.getPrevious(oldTrackStartMillis);
+            oldTrackStartMillis -= tracks.timeSincePrevious(oldTrackStartMillis);
+            progressTrack(previous.left, !previous.right);
         }
     }
 

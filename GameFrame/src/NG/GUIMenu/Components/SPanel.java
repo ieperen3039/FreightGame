@@ -57,8 +57,8 @@ public class SPanel extends SContainer {
     /**
      * the basic panel for holding components. Use {@link Vector2i} for positioning elements. Note that indices are
      * 0-indexed.
-     * @param cols number of components
-     * @param rows number of rows
+     * @param cols number of columns in x direction
+     * @param rows number of rows in y direction
      */
     public SPanel(int cols, int rows) {
         super((cols * rows > 0 ? new GridLayoutManager(cols, rows) : new SingleElementLayout()));

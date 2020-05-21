@@ -105,6 +105,27 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
     }
 
     @Override
+    public double timeSincePrevious(float timeStamp) {
+        try (AutoLock.Section section = changeLock.open()) {
+            if (timeStamps.isEmpty()) throw new IllegalStateException("empty");
+
+            Iterator<Double> times = timeStamps.iterator();
+            double previousActionStart = times.next();
+
+            if (!times.hasNext()) {
+                return timeStamp - previousActionStart;
+            }
+
+            double next = times.next();
+            while (times.hasNext() && next < timeStamp) {
+                previousActionStart = next;
+                next = times.next();
+            }
+            return timeStamp - previousActionStart;
+        }
+    }
+
+    @Override
     public void removeUntil(double timeStamp) {
         try (AutoLock.Section section = changeLock.open()) {
             while ((timeStamps.size() > 1) && (timeStamp > nextTimeStamp())) {

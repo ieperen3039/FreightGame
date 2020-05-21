@@ -20,7 +20,7 @@ public class Wagon implements TrainElement {
 
     public static class Properties extends TrainElement.Properties {
         public Properties(String name, float length, float mass, Resource<Mesh> mesh) {
-            super(length, mass, mesh);
+            super(name, length, mass, mesh);
         }
     }
 }

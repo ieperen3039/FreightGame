@@ -33,14 +33,21 @@ public interface TrainElement {
     Properties getProperties();
 
     class Properties {
+        private final String name;
         public final float length;
         public final float mass;
         private final Resource<Mesh> mesh;
 
-        public Properties(float length, float mass, Resource<Mesh> mesh) {
+        public Properties(String name, float length, float mass, Resource<Mesh> mesh) {
+            this.name = name;
             this.length = length;
             this.mass = mass;
             this.mesh = mesh;
+        }
+
+        @Override
+        public String toString() {
+            return name;
         }
     }
 }
