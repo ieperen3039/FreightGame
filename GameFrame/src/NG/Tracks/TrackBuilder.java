@@ -17,6 +17,7 @@ import org.lwjgl.glfw.GLFW;
  * @author Geert van Ieperen created on 16-12-2018.
  */
 public class TrackBuilder extends ToggleMouseTool {
+    private static final float HEIGHT_ABOVE_GROUND = 0.2f;
     private final TrackType type;
     private RailNode firstNode;
     private Vector3fc firstPosition;
@@ -49,23 +50,24 @@ public class TrackBuilder extends ToggleMouseTool {
 
     @Override
     public void apply(Vector3fc position, int xSc, int ySc) {
+        Vector3f liftedPosition = new Vector3f(position).add(0, 0, HEIGHT_ABOVE_GROUND);
         switch (getMouseAction()) {
             case PRESS_ACTIVATE:
-                Logger.DEBUG.print("Clicked on position " + Vectors.toString(position));
+                Logger.DEBUG.print("Clicked on position " + Vectors.toString(liftedPosition));
 
                 if (firstNode != null) {
                     Logger.DEBUG.print("Placing track from " + Vectors.toString(firstNode.getPosition()) +
-                            " to " + Vectors.toString(position));
+                            " to " + Vectors.toString(liftedPosition));
 
-                    firstNode = RailTools.createNew(game, firstNode, position);
+                    firstNode = RailTools.createNew(game, firstNode, liftedPosition);
 
                 } else if (firstPosition != null) {
-                    TrackPiece trackConnection = RailTools.createNew(game, type, firstPosition, position);
+                    TrackPiece trackConnection = RailTools.createNew(game, type, firstPosition, liftedPosition);
                     firstPosition = null;
                     firstNode = trackConnection.getEndNode();
 
                 } else {
-                    firstPosition = new Vector3f(position);
+                    firstPosition = new Vector3f(liftedPosition);
                 }
 
                 return;
@@ -73,16 +75,16 @@ public class TrackBuilder extends ToggleMouseTool {
                 clearGhostTracks();
 
                 if (firstNode != null) {
-                    Vector3fc direction = firstNode.getDirectionTo(position);
+                    Vector3fc direction = firstNode.getDirectionTo(liftedPosition);
                     RailNode ghostNode = new RailNode(firstNode.getPosition(), ghostType, direction);
                     ghostTrack1 = RailTools.getTrackPiece(
-                            game, ghostType, ghostNode, direction, position
+                            game, ghostType, ghostNode, direction, liftedPosition
                     );
 
                 } else if (firstPosition != null) {
-                    Vector3f toNode = new Vector3f(position).sub(firstPosition);
+                    Vector3f toNode = new Vector3f(liftedPosition).sub(firstPosition);
                     RailNode ghostNode = new RailNode(firstPosition, ghostType, toNode);
-                    ghostTrack1 = new StraightTrack(game, ghostType, ghostNode, position, true);
+                    ghostTrack1 = new StraightTrack(game, ghostType, ghostNode, liftedPosition, true);
                 }
             default:
         }

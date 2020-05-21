@@ -89,15 +89,15 @@ public interface TrackType {
 
         Vector3fc startPos = function.apply(0f);
         Vector3f startDir = derivative.apply(0f);
-        Vector3f pointSide = new Vector3f(startDir).cross(Vectors.Z).normalize(width);
+        Vector3f pointSide = new Vector3f(startDir).cross(Vectors.Z).normalize(width / 2);
         Vector3f pointUp = new Vector3f(pointSide).cross(startDir).normalize(height);
 
         CustomShape frame = new CustomShape();
 
         Vector3f point1;
-        Vector3f pp1 = new Vector3f(startPos).add(pointSide).add(pointUp);
+        Vector3f pp1 = new Vector3f(startPos).add(pointSide);
         Vector3f pn1 = new Vector3f(startPos).add(pointSide).sub(pointUp);
-        Vector3f np1 = new Vector3f(startPos).sub(pointSide).add(pointUp);
+        Vector3f np1 = new Vector3f(startPos).sub(pointSide);
         Vector3f nn1 = new Vector3f(startPos).sub(pointSide).sub(pointUp);
         frame.addQuad(pp1, pn1, nn1, np1, new Vector3f(startDir).negate());
 
@@ -119,12 +119,12 @@ public interface TrackType {
             point1 = function.apply(t);
             dir1 = derivative.apply(t);
 
-            pointSide.set(dir1).cross(Vectors.Z).normalize(width);
+            pointSide.set(dir1).cross(Vectors.Z).normalize(width / 2);
             pointUp.set(pointSide).cross(dir1).normalize(height);
 
-            pp1.set(point1).add(pointSide).add(pointUp);
+            pp1.set(point1).add(pointSide);
             pn1.set(point1).add(pointSide).sub(pointUp);
-            np1.set(point1).sub(pointSide).add(pointUp);
+            np1.set(point1).sub(pointSide);
             nn1.set(point1).sub(pointSide).sub(pointUp);
 
             frame.addQuad(np1, pp1, pp2, np2, pointUp);
