@@ -14,7 +14,8 @@ public abstract class STextComponent extends SComponent {
     protected final NGFonts.TextType textType;
     protected final SFrameLookAndFeel.Alignment alignment;
 
-    protected String text;
+    private String text;
+
     /** minimum border to the left and right of the text */
     protected int minXBorder = TEXT_MIN_X_BORDER;
     protected int textWidth;
@@ -51,6 +52,8 @@ public abstract class STextComponent extends SComponent {
 
     @Override
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
+        String text = getText();
+
         if (textWidthIsInvalid) {
             invalidateLayout();
             textWidth = design.getTextWidth(text, textType);

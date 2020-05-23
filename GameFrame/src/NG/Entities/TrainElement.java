@@ -6,8 +6,11 @@ import NG.Rendering.MeshLoading.Mesh;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
 import NG.Resources.Resource;
+import NG.Tracks.TrackType;
 import org.joml.Quaternionfc;
 import org.joml.Vector3fc;
+
+import java.util.List;
 
 /**
  * @author Geert van Ieperen created on 19-5-2020.
@@ -37,17 +40,23 @@ public interface TrainElement {
         public final float length;
         public final float mass;
         private final Resource<Mesh> mesh;
+        private final List<String> trackTypes;
 
-        public Properties(String name, float length, float mass, Resource<Mesh> mesh) {
+        public Properties(String name, float length, float mass, Resource<Mesh> mesh, List<String> trackTypes) {
             this.name = name;
             this.length = length;
             this.mass = mass;
             this.mesh = mesh;
+            this.trackTypes = trackTypes;
         }
 
         @Override
         public String toString() {
             return name;
+        }
+
+        boolean isCompatibleWith(TrackType type) {
+            return trackTypes.contains(type.toString());
         }
     }
 }

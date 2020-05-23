@@ -51,7 +51,7 @@ public class TrackTypeGhost implements TrackType {
 
     @Override
     public void setMaterial(MaterialShader shader) {
-        shader.setMaterial(Color4f.WHITE, Color4f.BLACK, 0);
+        shader.setMaterial(new Color4f(1, 1, 1, 0.5f), Color4f.BLACK, 0);
     }
 
     @Override

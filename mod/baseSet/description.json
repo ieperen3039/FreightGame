@@ -4,6 +4,7 @@
     "Little Red Diesel": {
       "length": 1.0,
       "mass": 1.0,
+      "railtypes": ["Debug Tracks"],
       "mesh": "LittleRedDiesel.ply"
     }
   },
@@ -11,7 +12,9 @@
     "CupWagon": {
       "length": 1.0,
       "mass": 1.0,
-      "mesh": "WagonCup.ply"
+      "railtypes": ["Debug Tracks"],
+      "mesh": "WagonCup.ply",
+      "max_speed": 100
     }
   }
 }

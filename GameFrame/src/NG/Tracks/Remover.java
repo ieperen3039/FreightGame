@@ -3,7 +3,7 @@ package NG.Tracks;
 import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.Entities.Station;
-import NG.Entities.StationImpl;
+import NG.Entities.StationGhost;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.InputHandling.MouseTools.ToggleMouseTool;
 import org.joml.Vector3fc;
@@ -17,14 +17,14 @@ public class Remover extends ToggleMouseTool {
     }
 
     @Override
-    public void apply(Entity entity, int xSc, int ySc) {
+    public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
         double gameTime = game.timer().getGameTime();
         switch (getMouseAction()) {
             case PRESS_ACTIVATE:
                 if (entity instanceof TrackPiece) {
                     RailTools.removeTrackPiece((TrackPiece) entity, gameTime);
 
-                } else if (entity instanceof StationImpl) {
+                } else if (entity instanceof StationGhost) {
                     Station station = (Station) entity;
                     station.despawn(gameTime);
                 }
@@ -32,7 +32,7 @@ public class Remover extends ToggleMouseTool {
     }
 
     @Override
-    public void apply(Vector3fc position, int xSc, int ySc) {
+    public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
 
     }
 }

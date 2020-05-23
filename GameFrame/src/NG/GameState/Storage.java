@@ -20,17 +20,18 @@ public abstract class Storage extends AbstractGameObject implements Entity {
     protected double spawnTime;
     protected double despawnTime = Double.POSITIVE_INFINITY;
 
-    public Storage(Vector3fc position, Game game) {
+    public Storage(Vector3fc position, Game game, double spawnTime) {
         super(game);
+        this.spawnTime = spawnTime;
         this.position = new Vector3f(position);
         this.contents = new FreightStorage();
     }
 
-    protected FreightStorage contents() {
+    public FreightStorage contents() {
         return contents;
     }
 
-    public void setPosition(Vector3fc position) {
+    protected void setPosition(Vector3fc position) {
         this.position.set(position);
     }
 

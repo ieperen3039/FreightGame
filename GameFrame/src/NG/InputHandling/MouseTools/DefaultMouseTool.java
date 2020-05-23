@@ -24,7 +24,7 @@ public class DefaultMouseTool extends AbstractMouseTool {
     }
 
     @Override
-    public void apply(Entity entity, int xSc, int ySc) {
+    public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
         MouseAction mouseAction = getMouseAction();
         if (mouseAction == MouseAction.PRESS_ACTIVATE) {
             Logger.DEBUG.print("Clicked on " + entity);
@@ -34,7 +34,7 @@ public class DefaultMouseTool extends AbstractMouseTool {
     }
 
     @Override
-    public void apply(Vector3fc position, int xSc, int ySc) {
+    public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
         if (getMouseAction() == MouseAction.PRESS_ACTIVATE) {
             Logger.DEBUG.print("Clicked at " + Vectors.toString(position));
         }

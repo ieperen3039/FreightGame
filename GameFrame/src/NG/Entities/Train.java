@@ -2,9 +2,15 @@ package NG.Entities;
 
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
+import NG.GUIMenu.Components.SButton;
+import NG.GUIMenu.Components.SContainer;
+import NG.GUIMenu.Components.SFrame;
+import NG.GUIMenu.Components.SInteractiveTextArea;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Network.RailNode;
+import NG.Network.Schedule;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Tools.NetworkPathFinder;
 import NG.Tools.Toolbox;
 import NG.Tracks.RailMovement;
 import NG.Tracks.TrackPiece;
@@ -12,22 +18,22 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Geert van Ieperen created on 19-5-2020.
  */
 public class Train extends AbstractGameObject implements MovingEntity {
-    private Deque<RailNode> plan = new ArrayDeque<>();
     protected double spawnTime;
     protected double despawnTime = Double.POSITIVE_INFINITY;
 
     private final RailMovement positionEngine;
     private final List<TrainElement> entities = new CopyOnWriteArrayList<>();
+
+    /* short term plan towards the next schedule element */
+    private Schedule schedule = new Schedule();
+    private Schedule.Node currentTarget = null;
 
     public Train(Game game, double spawnTime, TrackPiece startPiece, float fraction) {
         super(game);
@@ -74,43 +80,10 @@ public class Train extends AbstractGameObject implements MovingEntity {
         return positionEngine.getPosition(time);
     }
 
-    /**
-     * queries the next action that this locomotive is going to take based on the given directions. If the plan is
-     * 'null', this method prefers dead ends.
-     * @param options the directions it may choose from
-     * @return the chosen direction
-     */
-    public RailNode.Direction pickNextTrack(List<RailNode.Direction> options) {
-        assert !options.isEmpty();
-        RailNode plannedNext = plan.peek();
-
-        RailNode.Direction result = null;
-        float shortest = Float.POSITIVE_INFINITY;
-
-        for (RailNode.Direction dir : options) {
-            if (Objects.equals(dir.networkNode, plannedNext)) {
-                if (dir.distanceToNetworkNode < shortest) {
-                    result = dir;
-                }
-                break;
-            }
-        }
-
-        if (result != null) return result;
-
-        int i = Toolbox.random.nextInt(options.size());
-        result = options.get(i);
-
-        return result;
-    }
-
     @Override
     public void reactMouse(MouseAction action) {
         if (action == MouseAction.PRESS_ACTIVATE) {
-            if (positionEngine.getSpeed() > 0) {
-                positionEngine.reverse(getLength());
-            }
-            positionEngine.setAcceleration(2f);
+            game.gui().addFrame(new TrainUI());
         }
     }
 
@@ -137,5 +110,58 @@ public class Train extends AbstractGameObject implements MovingEntity {
     @Override
     public double getDespawnTime() {
         return despawnTime;
+    }
+
+    public RailNode.Direction pickNextTrack(TrackPiece currentTrack, RailNode node) {
+        if (currentTarget == null) {
+            currentTarget = schedule.getFirstNode();
+        }
+
+        if (currentTarget != null) {
+            if (currentTarget.element.getNodes().contains(node)) {
+                currentTarget = schedule.getNextNode(currentTarget);
+            }
+
+        } else { // TODO react on an empty schedule by targeting the nearest depot
+            List<RailNode.Direction> options = node.getNext(currentTrack);
+            if (options.isEmpty()) return null;
+            return options.get(Toolbox.random.nextInt(options.size()));
+        }
+
+        List<RailNode.Direction> options = node.getNext(currentTrack);
+
+        int size = options.size();
+        if (size == 0) {
+            return null;
+
+        } else if (size == 1) {
+            return options.get(0);
+
+        } else if (currentTarget == null) {
+            return options.get(Toolbox.random.nextInt(size));
+
+        } else {
+            NetworkPathFinder pathFinder = new NetworkPathFinder(currentTrack, node, currentTarget.element);
+            List<RailNode> path = pathFinder.call();
+            return node.getEntryOfNetwork(path.get(0));
+        }
+    }
+
+    private class TrainUI extends SFrame {
+        public TrainUI() {
+            super(Train.this.toString());
+            setMainPanel(SContainer.column(
+                    new SInteractiveTextArea(() -> currentTarget == null ? "No schedule" : "Now heading for " + currentTarget.element, 50),
+                    new SButton("Reverse", this::reverse),
+                    new SButton("Schedule", () -> game.gui().addFrame(schedule.getUI(game)))
+            ));
+        }
+
+        private void reverse() {
+            if (positionEngine.getSpeed() > 0) {
+                positionEngine.reverse(getLength());
+            }
+            positionEngine.setAcceleration(2f);
+        }
     }
 }

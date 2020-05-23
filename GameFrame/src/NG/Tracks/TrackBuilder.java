@@ -49,7 +49,7 @@ public class TrackBuilder extends ToggleMouseTool {
     }
 
     @Override
-    public void apply(Vector3fc position, int xSc, int ySc) {
+    public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
         Vector3f liftedPosition = new Vector3f(position).add(0, 0, HEIGHT_ABOVE_GROUND);
         switch (getMouseAction()) {
             case PRESS_ACTIVATE:
@@ -75,10 +75,10 @@ public class TrackBuilder extends ToggleMouseTool {
                 clearGhostTracks();
 
                 if (firstNode != null) {
-                    Vector3fc direction = firstNode.getDirectionTo(liftedPosition);
-                    RailNode ghostNode = new RailNode(firstNode.getPosition(), ghostType, direction);
+                    Vector3fc dir = firstNode.getDirectionTo(liftedPosition);
+                    RailNode ghostNode = new RailNode(firstNode.getPosition(), ghostType, dir);
                     ghostTrack1 = RailTools.getTrackPiece(
-                            game, ghostType, ghostNode, direction, liftedPosition
+                            game, ghostType, ghostNode, dir, liftedPosition
                     );
 
                 } else if (firstPosition != null) {
@@ -91,17 +91,13 @@ public class TrackBuilder extends ToggleMouseTool {
     }
 
     @Override
-    public void apply(Entity entity, int xSc, int ySc) {
+    public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
         switch (getMouseAction()) {
             case PRESS_ACTIVATE:
                 Logger.DEBUG.print("Clicked on entity " + entity);
                 if (entity instanceof TrackPiece) {
                     TrackPiece trackPiece = (TrackPiece) entity;
                     assert trackPiece.isValid() : trackPiece;
-
-                    Vector3f origin = new Vector3f();
-                    Vector3f direction = new Vector3f();
-                    Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
 
                     float fraction = trackPiece.getFractionOfClosest(origin, direction);
 
@@ -135,9 +131,6 @@ public class TrackBuilder extends ToggleMouseTool {
 
                 if (entity instanceof TrackPiece) {
                     TrackPiece trackPiece = (TrackPiece) entity;
-                    Vector3f origin = new Vector3f();
-                    Vector3f direction = new Vector3f();
-                    Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);
 
                     float fraction = trackPiece.getFractionOfClosest(origin, direction);
                     if (fraction < 0 || fraction > 1) return;

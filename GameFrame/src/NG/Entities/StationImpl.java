@@ -4,7 +4,6 @@ import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.GUIMenu.Components.SFrame;
 import NG.GameState.Storage;
-import NG.InputHandling.ClickShader;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Network.RailNode;
 import NG.Network.SpecialRailNode;
@@ -13,13 +12,16 @@ import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.GenericShapes;
-import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import NG.Tracks.StraightTrack;
 import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import static NG.Tools.Vectors.cos;
 import static NG.Tools.Vectors.sin;
@@ -30,55 +32,35 @@ import static NG.Tools.Vectors.sin;
  */
 public class StationImpl extends Storage implements Station {
     private static final float PLATFORM_SIZE = 2;
-    private static final float WAGON_LENGTH = 3;
-    public static final float HEIGHT = 0.1f;
-    private final String className = this.getClass().getSimpleName() + " " + (nr++);
+    private static final float HEIGHT = 0.1f;
     private static int nr = 1;
-    protected String stationName = "X";
-    /** the position and orientation of the station */
-    protected float orientation = 0;
-    /** whether this station has been placed down. */
-    protected boolean isFixed = false;
 
-    private int numberOfPlatforms;
-    private int platformCapacity;
-    private float realLength;
-    private float realWidth;
+    protected String stationName = "Station " + (nr++);
 
-    private SpecialRailNode[] forwardConnections;
-    private SpecialRailNode[] backwardConnections;
-    private TrackType type;
+    private final float orientation;
+    private final int numberOfPlatforms;
+    private final float length;
+    private final float realWidth;
 
-    public StationImpl(Game game, int nrOfPlatforms, int length, TrackType type) {
-        super(new Vector3f(), game);
-        this.game = game;
-        assert nrOfPlatforms > 0 : "created station with " + nrOfPlatforms + " platforms";
-        this.type = type;
+    private final SpecialRailNode[] forwardConnections;
+    private final SpecialRailNode[] backwardConnections;
+    private final Set<RailNode> nodes;
 
-        setSize(nrOfPlatforms, length);
-    }
-
-    public void setSize(int nrOfPlatforms, int length) {
-        if (isFixed) {
-            Logger.ERROR.print("Tried changing size of a fixed station");
-            return;
-        }
-
-        this.numberOfPlatforms = nrOfPlatforms;
-        this.platformCapacity = length;
-        this.realLength = length * WAGON_LENGTH;
-        this.realWidth = nrOfPlatforms * PLATFORM_SIZE;
-    }
-
-    @Override
-    public void update() {
-    }
-
-    public void fixPosition() {
+    public StationImpl(
+            Game game, int numberOfPlatforms, int length, TrackType type, Vector3fc position, float orientation,
+            double spawnTime
+    ) {
+        super(position, game, spawnTime);
         assert numberOfPlatforms > 0 : "created station with " + numberOfPlatforms + " platforms";
-        isFixed = true;
+        this.game = game;
+        this.numberOfPlatforms = numberOfPlatforms;
+        this.length = length;
+        this.realWidth = numberOfPlatforms * PLATFORM_SIZE;
+        this.orientation = orientation;
 
-        Vector3fc forward = new Vector3f(cos(orientation), sin(orientation), 0).normalize(realLength / 2f);
+        float trackHeight = HEIGHT + 0.1f;
+
+        Vector3fc forward = new Vector3f(cos(orientation), sin(orientation), 0).normalize(length / 2f);
         Vector3f AToB = new Vector3f(forward).normalize();
         Vector3f BToA = new Vector3f(AToB).negate();
 
@@ -92,25 +74,25 @@ public class StationImpl extends Storage implements Station {
 
             Vector3f rightMiddle = new Vector3f(getPosition())
                     .sub(toRight)
-                    .add(rightSkip.x() / 2, rightSkip.y() / 2, getElevation());
+                    .add(rightSkip.x() / 2, rightSkip.y() / 2, trackHeight);
 
             Vector3f backPos = new Vector3f(rightMiddle).sub(forward);
             Vector3f frontPos = rightMiddle.add(forward);
 
             for (int i = 0; i < numberOfPlatforms; i++) {
-                forwardConnections[i] = new SpecialRailNode(backPos, type, AToB);
-                backwardConnections[i] = new SpecialRailNode(frontPos, type, BToA);
+                forwardConnections[i] = new SpecialRailNode(backPos, type, AToB, this);
+                backwardConnections[i] = new SpecialRailNode(frontPos, type, BToA, this);
 
                 frontPos.add(rightSkip);
                 backPos.add(rightSkip);
             }
 
         } else { // simplified version of above
-            Vector3f frontPos = new Vector3f(getPosition()).add(forward).add(0, 0, getElevation());
-            Vector3f backPos = new Vector3f(getPosition()).sub(forward).add(0, 0, getElevation());
+            Vector3f frontPos = new Vector3f(getPosition()).add(forward).add(0, 0, trackHeight);
+            Vector3f backPos = new Vector3f(getPosition()).sub(forward).add(0, 0, trackHeight);
 
-            forwardConnections[0] = new SpecialRailNode(backPos, type, AToB);
-            backwardConnections[0] = new SpecialRailNode(frontPos, type, BToA);
+            forwardConnections[0] = new SpecialRailNode(backPos, type, AToB, this);
+            backwardConnections[0] = new SpecialRailNode(frontPos, type, BToA, this);
         }
 
         // create tracks
@@ -122,11 +104,14 @@ public class StationImpl extends Storage implements Station {
             RailNode.addConnection(trackConnection, A, B);
             game.state().addEntity(trackConnection);
         }
+
+        nodes = new HashSet<>();
+        nodes.addAll(Arrays.asList(forwardConnections));
+        nodes.addAll(Arrays.asList(backwardConnections));
     }
 
     @Override
-    public float getElevation() {
-        return HEIGHT;
+    public void update() {
     }
 
     @Override
@@ -139,13 +124,15 @@ public class StationImpl extends Storage implements Station {
             ShaderProgram shader = gl.getShader();
             if (shader instanceof MaterialShader) {
                 MaterialShader matShader = (MaterialShader) shader;
-                matShader.setMaterial(Material.ROUGH, isFixed ? Color4f.GREY : Color4f.WHITE);
+                matShader.setMaterial(Material.ROUGH, Color4f.GREY);
             }
 
-            if (!(shader instanceof ClickShader)) { // draw cube
-                gl.scale(realLength / 2, realWidth / 2, HEIGHT); // half below ground
-                gl.render(GenericShapes.CUBE, this);
-            }
+
+            float sink = 0.1f; // size below ground
+            gl.translate(0, 0, -sink);
+            gl.scale(length / 2, realWidth / 2, HEIGHT + sink);
+
+            gl.render(GenericShapes.CUBE, this);
         }
         gl.popMatrix();
     }
@@ -155,28 +142,9 @@ public class StationImpl extends Storage implements Station {
         return UpdateFrequency.NEVER;
     }
 
-    public void setOrientation(float orientation) {
-        if (isFixed) {
-            Logger.ERROR.print("Tried changing state of a fixed station");
-            return;
-        }
-
-        this.orientation = orientation;
-    }
-
-    @Override
-    public void setPosition(Vector3fc position) {
-        if (isFixed) {
-            Logger.ERROR.print("Tried changing state of a fixed station");
-            return;
-        }
-
-        super.setPosition(position);
-    }
-
     @Override
     public String toString() {
-        return className + " : " + stationName;
+        return stationName;
     }
 
     @Override
@@ -186,12 +154,17 @@ public class StationImpl extends Storage implements Station {
         }
     }
 
-    public int getPlatformCapacity() {
-        return platformCapacity;
+    public float getLength() {
+        return length;
     }
 
     public int getNumberOfPlatforms() {
         return numberOfPlatforms;
+    }
+
+    @Override
+    public Set<RailNode> getNodes() {
+        return nodes;
     }
 
     protected class StationUI extends SFrame {

@@ -12,8 +12,6 @@ import org.joml.Math;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.util.List;
-
 /**
  * A
  * @author Geert van Ieperen created on 6-5-2020.
@@ -120,16 +118,15 @@ public class RailMovement extends AbstractGameObject {
     private void progressTrack() {
         RailNode node = positiveDirection ? currentTrack.getEndNode() : currentTrack.getStartNode();
 
-        // find next track to enter
-        List<RailNode.Direction> options = node.getNext(currentTrack);
-        if (options.isEmpty()) {
+        RailNode.Direction next = controller.pickNextTrack(currentTrack, node);
+
+        if (next == null) {
             speed = 0;
             acceleration = 0;
             currentTotalMillis = trackEndDistanceMillis;
             return; // full stop
         }
 
-        RailNode.Direction next = controller.pickNextTrack(options);
         boolean positiveDirection = node.equals(next.trackPiece.getStartNode());
         progressTrack(next.trackPiece, positiveDirection);
     }

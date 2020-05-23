@@ -6,6 +6,9 @@ import NG.Entities.Locomotive;
 import NG.Entities.Wagon;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Resources.Resource;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonFactoryBuilder;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -19,10 +22,15 @@ import java.util.Map;
 
 /**
  * A mod that encapsulates any softmod. In contrary to regular mods, this one has a constructor as it isn't loaded by
- * the modloader. In case a hard-mod wants to use a soft-mod, it must supply a no-arg constructor.
+ * the modloader. In case a hard-mod wants to incorporate a soft-mod, it must supply a no-arg constructor.
  * @author Geert van Ieperen created on 21-5-2020.
  */
 public class SoftMod implements Mod {
+    // god knows why we need a *factory builder*
+    private static final ObjectMapper JSON_PARSER_FACTORY = new ObjectMapper(
+            new JsonFactory(new JsonFactoryBuilder().configure(JsonReadFeature.ALLOW_JAVA_COMMENTS, true))
+    );
+
     public final String name;
     public final Version version;
 
@@ -31,9 +39,8 @@ public class SoftMod implements Mod {
 
     /** constructor that wraps a directory containing a {@code description.json} file into a soft mod */
     public SoftMod(Path path) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
         File file = path.resolve("description.json").toFile();
-        JsonNode root = objectMapper.readTree(file);
+        JsonNode root = JSON_PARSER_FACTORY.readTree(file);
 
         JsonNode nameNode = root.findValue("set_name");
         name = nameNode != null ? nameNode.textValue() : path.getFileName().toString();
@@ -51,11 +58,12 @@ public class SoftMod implements Mod {
 
                 String meshFileName = findOrThrow(locoNode, "mesh").textValue();
                 Resource<Mesh> mesh = Mesh.createResource(path.resolve(meshFileName));
-
                 float mass = findOrThrow(locoNode, "mass").floatValue();
                 float length = findOrThrow(locoNode, "length").floatValue();
 
-                locomotives.add(new Locomotive.Properties(name, length, mass, mesh));
+                List<String> railTypes = getRailTypes(locoNode, "railtypes");
+
+                locomotives.add(new Locomotive.Properties(name, length, mass, mesh, railTypes));
             }
         }
 
@@ -73,10 +81,25 @@ public class SoftMod implements Mod {
 
                 float mass = findOrThrow(wagonNode, "mass").floatValue();
                 float length = findOrThrow(wagonNode, "length").floatValue();
+                float maxSpeed = findOrThrow(wagonNode, "max_speed").floatValue();
 
-                wagons.add(new Wagon.Properties(name, length, mass, mesh));
+                List<String> railtypes = getRailTypes(wagonNode, "railtypes");
+
+                wagons.add(new Wagon.Properties(name, length, mass, maxSpeed, mesh, railtypes));
             }
         }
+    }
+
+    private List<String> getRailTypes(JsonNode node, String fieldName) {
+        JsonNode railTypeNode = node.findValue(fieldName);
+        List<String> railTypes = new ArrayList<>();
+        if (railTypeNode != null) {
+            Iterator<JsonNode> elements = railTypeNode.elements();
+            while (elements.hasNext()) {
+                railTypes.add(elements.next().textValue());
+            }
+        }
+        return railTypes;
     }
 
     private JsonNode findOrThrow(JsonNode locoNode, String element) throws IOException {

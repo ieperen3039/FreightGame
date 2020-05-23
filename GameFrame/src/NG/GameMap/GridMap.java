@@ -20,7 +20,7 @@ public abstract class GridMap implements GameMap {
         if (t == null) return false;
 
         Vector3f position = new Vector3f(direction).mul(t).add(origin);
-        tool.apply(position, xSc, ySc);
+        tool.apply(position, origin, direction);
         return true;
     }
 

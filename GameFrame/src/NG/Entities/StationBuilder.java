@@ -23,13 +23,15 @@ public class StationBuilder extends ToggleMouseTool {
         }
     }
 
-    private final StationImpl station;
+    private final StationGhost station;
+    private final TrackType trackType;
     private final SizeSelector selector;
     private boolean isPositioned = false;
 
     public StationBuilder(Game game, SToggleButton source, TrackType trackType) {
         super(game, () -> source.setActive(false));
-        this.station = new StationImpl(game, 1, 3, trackType);
+        this.station = new StationGhost(game, 1, 6);
+        this.trackType = trackType;
 
         selector = new SizeSelector();
         game.gui().addFrame(selector);
@@ -46,7 +48,7 @@ public class StationBuilder extends ToggleMouseTool {
     }
 
     @Override
-    public void apply(Entity entity, int xSc, int ySc) {
+    public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
         // do nothing
     }
 
@@ -56,7 +58,7 @@ public class StationBuilder extends ToggleMouseTool {
         super.dispose();
     }
 
-    public void apply(Vector3fc position, int xSc, int ySc) {
+    public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
         switch (getMouseAction()) {
             case PRESS_ACTIVATE:
                 station.setPosition(position);
@@ -69,18 +71,16 @@ public class StationBuilder extends ToggleMouseTool {
                 if (!isPositioned) return;
                 Vector3fc stationPos = station.getPosition();
 
-                Rayf ray = Vectors.windowCoordToRay(game, xSc, ySc);
-
                 // Planef plane = new Planef(station.getPosition(), Vectors.Z);
                 // float f = Intersectionf.intersectRayPlane(ray, plane, EPSILON);
                 float f = Intersectionf.intersectRayPlane(
-                        ray.oX, ray.oY, ray.oZ, ray.dX, ray.dY, ray.dZ,
+                        origin.x(), origin.y(), origin.z(), direction.x(), direction.y(), direction.z(),
                         0, 0, 1, -stationPos.z(), EPSILON
                 );
-                Vector3f point = Vectors.getFromRay(ray, f);
+                Vector3f point = new Vector3f(direction).mul(f).add(origin);
 
-                Vector2f direction = new Vector2f(point.x - stationPos.x(), point.y - stationPos.y());
-                station.setOrientation(Vectors.arcTan(direction));
+                Vector2f direction2D = new Vector2f(point.x - stationPos.x(), point.y - stationPos.y());
+                station.setOrientation(Vectors.arcTan(direction2D));
         }
     }
 
@@ -88,8 +88,13 @@ public class StationBuilder extends ToggleMouseTool {
     public void onRelease(int button, int xSc, int ySc) {
         super.onRelease(button, xSc, ySc);
         if (!isPositioned) return;
-        station.fixPosition();
-        dispose();
+        double gameTime = game.timer().getGameTime();
+
+        Station newStation = station.solidify(game, trackType, gameTime);
+        game.state().addEntity(newStation);
+
+        station.despawn(gameTime);
+        this.dispose();
     }
 
     private class SizeSelector extends SFrame {
@@ -98,7 +103,7 @@ public class StationBuilder extends ToggleMouseTool {
             super("Station Size");
             SPanel panel = new SPanel(2, 2);
 
-            SDropDown platformCapacityChooser = new SDropDown(game.gui(), station.getPlatformCapacity(), numbers);
+            SDropDown platformCapacityChooser = new SDropDown(game.gui(), (int) station.getLength(), numbers);
             SDropDown nrOfPlatormChooser = new SDropDown(game.gui(), station.getNumberOfPlatforms(), numbers);
 
             Consumer<Integer> changeListener = (i) -> station.setSize(

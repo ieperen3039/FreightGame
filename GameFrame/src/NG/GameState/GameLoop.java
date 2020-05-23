@@ -134,7 +134,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         Entity entity = clickShader.getEntity(game, xSc, ySc);
         if (entity == null) return false;
 
-        tool.apply(entity, xSc, ySc);
+        tool.apply(entity, origin, direction);
         return true;
     }
 

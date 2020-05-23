@@ -11,7 +11,7 @@ import java.util.concurrent.Callable;
  * to B. Must be overridden for a cost function.
  * @author Geert van Ieperen created on 19-2-2019.
  */
-public abstract class AStar implements Callable<Iterable<Vector2i>> {
+public abstract class AStarGrid implements Callable<Iterable<Vector2i>> {
     public final Vector2i target;
     private final int xMax;
     private final int yMax;
@@ -23,7 +23,7 @@ public abstract class AStar implements Callable<Iterable<Vector2i>> {
     private final int xMin;
     private final int yMin;
 
-    public AStar(Vector2ic source, Vector2ic target, int xMin, int yMin, int xMax, int yMax) {
+    public AStarGrid(Vector2ic source, Vector2ic target, int xMin, int yMin, int xMax, int yMax) {
         this.target = new Vector2i(target);
         this.xMax = xMax;
         this.yMax = yMax;

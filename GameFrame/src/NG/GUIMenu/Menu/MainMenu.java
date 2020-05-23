@@ -99,7 +99,7 @@ public class MainMenu extends SFrame {
                 "New Train",
                 () -> game.inputHandling().setMouseTool(new AbstractMouseTool(game) {
                     @Override
-                    public void apply(Entity entity, int xSc, int ySc) {
+                    public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
                         if (getMouseAction() == MouseAction.PRESS_ACTIVATE) {
                             if (entity instanceof TrackPiece) {
                                 game.gui().addFrame(new TrainConstructionMenu(game, (TrackPiece) entity));
@@ -112,7 +112,7 @@ public class MainMenu extends SFrame {
                     }
 
                     @Override
-                    public void apply(Vector3fc position, int xSc, int ySc) {
+                    public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
                         if (getMouseAction() == MouseAction.PRESS_DEACTIVATE) {
                             game.inputHandling().setMouseTool(null);
                         }

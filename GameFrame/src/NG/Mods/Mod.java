@@ -3,6 +3,10 @@ package NG.Mods;
 import NG.Core.Game;
 import NG.Core.GameAspect;
 import NG.Core.Version;
+import NG.DataStructures.Generic.Pair;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The default class that every mod of this game should implement. This class must have a no-arg constructor which is
@@ -25,4 +29,9 @@ public interface Mod extends GameAspect {
 
     /** The current version of this mod */
     Version getVersionNumber();
+
+    /** @return a list of all modnames and their version required for this mod */
+    default List<Pair<String, Version>> getDependencies() {
+        return Collections.emptyList();
+    }
 }
