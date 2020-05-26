@@ -151,6 +151,12 @@ public abstract class AbstractMouseTool implements MouseTool {
             } else {
                 return trackPiece.getEndNode();
             }
+        } else if (fraction < 1 / 64f) {
+            return trackPiece.getStartNode();
+
+        } else if (fraction > (1 - (1 / 64f))) {
+            return trackPiece.getEndNode();
+
         } else {
             double gameTime = game.timer().getGameTime();
             return RailTools.createSplit(game, trackPiece, fraction, gameTime);

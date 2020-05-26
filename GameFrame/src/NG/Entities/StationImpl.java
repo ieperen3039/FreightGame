@@ -4,6 +4,7 @@ import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.GUIMenu.Components.SFrame;
 import NG.GameState.Storage;
+import NG.InputHandling.ClickShader;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
@@ -30,8 +31,8 @@ import static NG.Tools.Vectors.sin;
  * @author Geert van Ieperen created on 27-1-2019.
  */
 public class StationImpl extends Storage implements Station {
-    private static final float PLATFORM_SIZE = 2;
-    private static final float HEIGHT = 0.1f;
+    public static final float PLATFORM_SIZE = 1.2f;
+    public static final float HEIGHT = 0.1f;
     private static int nr = 1;
 
     protected String stationName = "Station " + (nr++);
@@ -127,11 +128,18 @@ public class StationImpl extends Storage implements Station {
 
             MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREY));
 
-            float sink = 0.1f; // size below ground
-            gl.translate(0, 0, -sink);
-            gl.scale(length / 2, realWidth / 2, HEIGHT + sink);
-
+            gl.scale(length / 2, realWidth / 2, HEIGHT / 2);
             gl.render(GenericShapes.CUBE, this);
+
+            boolean isClickShader = gl.getShader() instanceof ClickShader;
+            if (!isClickShader) {
+                float sink = 2f; // size below ground
+                gl.translate(0, 0, -1f);
+                gl.scale(1, 1, sink / HEIGHT);
+                gl.translate(0, 0, -1f);
+                MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.BLACK));
+                gl.render(GenericShapes.CUBE, this);
+            }
         }
         gl.popMatrix();
     }

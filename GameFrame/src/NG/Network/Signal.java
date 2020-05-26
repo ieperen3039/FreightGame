@@ -73,7 +73,7 @@ public class Signal extends AbstractGameObject implements Entity {
 
             Vector3fc targetDirection = targetNode.getDirection();
             Vector3f cross = Vectors.newZVector().cross(targetDirection);
-            gl.rotate(cross, (float) (Math.PI / 2));
+            gl.rotate(cross, Vectors.Z.angle(targetDirection));
 
             MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.BLACK));
             gl.render(RING_MESH.get(), this);

@@ -19,12 +19,13 @@ import org.joml.Vector3fc;
 import java.util.Collections;
 import java.util.Set;
 
+import static NG.Entities.StationImpl.PLATFORM_SIZE;
+
 /**
  * A basic implementation of a station. There is likely no need for another station
  * @author Geert van Ieperen created on 27-1-2019.
  */
 public class StationGhost extends Storage implements Station {
-    private static final float PLATFORM_SIZE = 2;
     public static final float HEIGHT = 0.1f;
     private float orientation = 0;
 
