@@ -228,12 +228,15 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         Vector3f vecToPoint = rayPoint.sub(center);
         float currentAngle = Vectors.arcTan(new Vector2f(vecToPoint.x, vecToPoint.y));
 
-        if (currentAngle < Math.min(startTheta, endTheta)) {
-            currentAngle += (Math.PI * 2);
-        }
-        while (currentAngle > Math.max(startTheta, endTheta)) {
+        if (currentAngle > Math.max(startTheta, endTheta) + Math.PI / 2) {
             currentAngle -= (Math.PI * 2);
         }
+        if (currentAngle < Math.min(startTheta, endTheta) - Math.PI / 2) {
+            currentAngle += (Math.PI * 2);
+        }
+
+        assert !(currentAngle > Math.max(startTheta, endTheta) + Math.PI / 2);
+        assert !(currentAngle < Math.min(startTheta, endTheta) - Math.PI / 2);
 
         // float currentAngle = (fraction * angle) + startTheta;
         return (currentAngle - startTheta) / angle;
