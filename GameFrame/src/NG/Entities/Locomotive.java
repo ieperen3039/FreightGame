@@ -21,8 +21,14 @@ public class Locomotive implements TrainElement {
     }
 
     public static class Properties extends TrainElement.Properties {
-        public Properties(String name, float length, float mass, Resource<Mesh> mesh, List<String> types) {
-            super(name, length, mass, mesh, types);
+        public final float tractiveEffort;
+
+        public Properties(
+                String name, float length, float mass, float linearResistance, float quadraticResistance,
+                Resource<Mesh> mesh, List<String> trackTypes, float tractiveEffort
+        ) {
+            super(name, length, mass, linearResistance, quadraticResistance, mesh, trackTypes);
+            this.tractiveEffort = tractiveEffort;
         }
     }
 }

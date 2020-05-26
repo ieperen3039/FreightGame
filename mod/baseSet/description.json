@@ -3,18 +3,30 @@
   "locomotives": {
     "Little Red Diesel": {
       "length": 1.0,
+      // in units (~10 meters)
       "mass": 1.0,
+      // in kg
       "railtypes": ["Debug Tracks"],
-      "mesh": "LittleRedDiesel.ply"
+      "mesh": "LittleRedDiesel.ply",
+      "r1": 0.1,
+      // in N/(m/s)
+      "r2": 0.02,
+      // in N/(m/s)^2
+      "tractiveEffort": 1.0
+      // in N
     }
   },
   "wagons": {
     "CupWagon": {
       "length": 1.0,
-      "mass": 1.0,
+      // in units (~10 meters)
+      "mass": 0.1,
+      // in kg
       "railtypes": ["Debug Tracks"],
       "mesh": "WagonCup.ply",
-      "max_speed": 100
+      "max_speed": 100,
+      // in m/s
+      "r1": 0.02
     }
   }
 }

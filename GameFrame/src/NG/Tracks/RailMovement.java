@@ -25,8 +25,8 @@ public class RailMovement extends AbstractGameObject {
     /**
      * real train speed in direction of facing in meters.
      */
-    private float speed = 0;
-    private float acceleration = 0;
+    private float speed;
+    private float accelerationFraction;
 
     private double nextUpdateTime;
     private long currentTotalMillis; // (1000 * the real distance) : data type is adequate for almost a lightyear distance
@@ -40,9 +40,14 @@ public class RailMovement extends AbstractGameObject {
     private BlockingTimedArrayQueue<Pair<TrackPiece, Boolean>> tracks; // maps total distance to track, includes currentTrack
     private long trackStartDistanceMillis;
 
+    private float r1 = 1;
+    private float r2 = 0;
+    private float basePower = 10;
+    private float invMass = 1;
+
     public RailMovement(
             Game game, Train controller, double spawnTime, TrackPiece startPiece, float fraction,
-            boolean positiveDirection, float initialSpeed
+            boolean positiveDirection
     ) {
         super(game);
         this.currentTrack = startPiece;
@@ -59,7 +64,22 @@ public class RailMovement extends AbstractGameObject {
 
         this.nextUpdateTime = spawnTime;
         this.positiveDirection = positiveDirection;
-        this.speed = initialSpeed;
+        this.speed = 0;
+        this.accelerationFraction = 0;
+    }
+
+    /**
+     * sets the parameters describing the speed change of this train
+     * @param TE   tractive effort: force applied by the train
+     * @param mass mass of the object
+     * @param R1   linear resistance factor
+     * @param R2   quadratic resistance factor
+     */
+    public void setForceFunction(float TE, float mass, float R1, float R2) {
+        this.basePower = TE;
+        this.invMass = 1f / mass;
+        this.r1 = R1;
+        this.r2 = R2;
     }
 
     public void update() {
@@ -70,11 +90,16 @@ public class RailMovement extends AbstractGameObject {
     public void update(double gameTime) {
         while (nextUpdateTime < gameTime) {
 
+            float resistance = (speed * r1) + (speed * speed * r2);
+            if (accelerationFraction < 0) resistance = -resistance;
+
             // s = vt + at^2 // movement in meters
-            float movement = speed * DELTA_TIME + acceleration * DELTA_TIME * DELTA_TIME;
+            speed += (basePower - resistance) * invMass * DELTA_TIME * accelerationFraction;
+            float movement = speed * DELTA_TIME;
+
             if (movement < 0) { // when the train reverses
                 totalMillimeters.add(currentTotalMillis, nextUpdateTime);
-                speed = acceleration * DELTA_TIME; // only progresses when acceleration is positive
+                speed = basePower * accelerationFraction * DELTA_TIME * invMass; // only progresses when acceleration is positive
                 nextUpdateTime += DELTA_TIME;
                 continue;
             }
@@ -82,7 +107,6 @@ public class RailMovement extends AbstractGameObject {
             currentTotalMillis += movement * METERS_TO_MILLIS;
             totalMillimeters.add(currentTotalMillis, nextUpdateTime);
             // speed update after movement update
-            speed += acceleration * DELTA_TIME;
 
             while (currentTotalMillis > trackEndDistanceMillis) {
                 progressTrack();
@@ -123,7 +147,7 @@ public class RailMovement extends AbstractGameObject {
 
         if (next == null) {
             speed = 0;
-            acceleration = 0;
+            accelerationFraction = 0;
             currentTotalMillis = trackEndDistanceMillis;
             return; // full stop
         }
@@ -153,7 +177,8 @@ public class RailMovement extends AbstractGameObject {
     }
 
     public void setAcceleration(float a) {
-        acceleration = a;
+        assert a >= -1 && a <= 1 : "Acceleration must be given as a fraction [-1, 1]";
+        accelerationFraction = a;
     }
 
     /**

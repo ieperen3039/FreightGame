@@ -208,7 +208,7 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
                     body,
                     SContainer.row(
                             new SButton("Add Station", this::setAdder),
-                            new SButton("Remove Selected", () -> removeNode(selectedNode))
+                            new SButton("Remove", () -> removeNode(selectedNode == null ? firstNode.prev : selectedNode))
                     )
             ));
             updateBody();

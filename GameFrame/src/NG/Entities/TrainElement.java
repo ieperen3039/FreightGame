@@ -39,13 +39,21 @@ public interface TrainElement {
         private final String name;
         public final float length;
         public final float mass;
+        public final float linearResistance;
+        public final float quadraticResistance;
+
         private final Resource<Mesh> mesh;
         private final List<String> trackTypes;
 
-        public Properties(String name, float length, float mass, Resource<Mesh> mesh, List<String> trackTypes) {
+        public Properties(
+                String name, float length, float mass, float linearResistance, float quadraticResistance,
+                Resource<Mesh> mesh, List<String> trackTypes
+        ) {
             this.name = name;
             this.length = length;
             this.mass = mass;
+            this.linearResistance = linearResistance;
+            this.quadraticResistance = quadraticResistance;
             this.mesh = mesh;
             this.trackTypes = trackTypes;
         }

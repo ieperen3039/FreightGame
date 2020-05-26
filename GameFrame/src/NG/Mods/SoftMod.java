@@ -60,10 +60,13 @@ public class SoftMod implements Mod {
                 Resource<Mesh> mesh = Mesh.createResource(path.resolve(meshFileName));
                 float mass = findOrThrow(locoNode, "mass").floatValue();
                 float length = findOrThrow(locoNode, "length").floatValue();
+                float linearResistance = findOrThrow(locoNode, "r1").floatValue();
+                float quadraticResistance = findOrThrow(locoNode, "r2").floatValue();
+                float tractiveEffort = findOrThrow(locoNode, "tractiveEffort").floatValue();
 
                 List<String> railTypes = getRailTypes(locoNode, "railtypes");
 
-                locomotives.add(new Locomotive.Properties(name, length, mass, mesh, railTypes));
+                locomotives.add(new Locomotive.Properties(name, length, mass, linearResistance, quadraticResistance, mesh, railTypes, tractiveEffort));
             }
         }
 
@@ -82,10 +85,11 @@ public class SoftMod implements Mod {
                 float mass = findOrThrow(wagonNode, "mass").floatValue();
                 float length = findOrThrow(wagonNode, "length").floatValue();
                 float maxSpeed = findOrThrow(wagonNode, "max_speed").floatValue();
+                float linearResistance = findOrThrow(wagonNode, "r1").floatValue();
 
                 List<String> railtypes = getRailTypes(wagonNode, "railtypes");
 
-                wagons.add(new Wagon.Properties(name, length, mass, maxSpeed, mesh, railtypes));
+                wagons.add(new Wagon.Properties(name, length, mass, linearResistance, mesh, railtypes, maxSpeed));
             }
         }
     }

@@ -103,10 +103,10 @@ public class NetworkNode {
     }
 
     public <T> List<Direction> getNext(T networkNode, Function<Direction, T> mapping) {
-        if (getIndexOf(aDirection, networkNode, mapping) != -1) {
+        if (getIndexOf(aDirection, networkNode, mapping) >= 0) {
             return bDirection;
 
-        } else if (getIndexOf(bDirection, networkNode, mapping) != -1) {
+        } else if (getIndexOf(bDirection, networkNode, mapping) >= 0) {
             return aDirection;
         }
 
@@ -250,8 +250,8 @@ public class NetworkNode {
         NetworkNode oneNode = oneRailNode.getNetworkNode();
         NetworkNode twoNode = twoRailNode.getNetworkNode();
 
-        boolean oneWasNetwork = oneNode.isNetworkCritical();
-        boolean twoWasNetwork = twoNode.isNetworkCritical();
+        boolean oneWasCritical = oneNode.isNetworkCritical();
+        boolean twoWasCritical = twoNode.isNetworkCritical();
 
         List<Direction> oneToTwo;
         List<Direction> twoToOne;
@@ -264,7 +264,7 @@ public class NetworkNode {
         }
 
         Vector3f trackEndDirection = track.getDirectionFromFraction(1);
-        if (trackEndDirection.dot(twoRailNode.getDirection()) > 0) {
+        if (trackEndDirection.dot(twoRailNode.getDirection()) < 0) { // other direction
             twoToOne = twoNode.aDirection;
         } else {
             twoToOne = twoNode.bDirection;
@@ -274,8 +274,8 @@ public class NetworkNode {
         twoToOne.add(new Direction(oneNode, track, null, 0));
 
         // these must occur after adding
-        updateNetwork(oneNode, twoNode, oneWasNetwork, track);
-        updateNetwork(twoNode, oneNode, twoWasNetwork, track);
+        updateNetwork(oneNode, twoNode, oneWasCritical, track);
+        updateNetwork(twoNode, oneNode, twoWasCritical, track);
 
         assert oneNode.isNetworkCritical() || !oneNode.isSwitch();
         assert twoNode.isNetworkCritical() || !twoNode.isSwitch();

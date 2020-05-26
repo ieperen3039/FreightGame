@@ -37,24 +37,43 @@ public class Train extends AbstractGameObject implements MovingEntity {
 
     public Train(Game game, double spawnTime, TrackPiece startPiece, float fraction) {
         super(game);
-        this.positionEngine = new RailMovement(game, this, spawnTime, startPiece, fraction, true, 0);
+        this.positionEngine = new RailMovement(game, this, spawnTime, startPiece, fraction, true);
         this.spawnTime = spawnTime;
     }
 
     public void addElement(TrainElement e) {
         entities.add(e);
+        updateForceFunction();
     }
 
     public void removeLastElement() {
         entities.remove(entities.size() - 1);
+        updateForceFunction();
+    }
+
+    private void updateForceFunction() {
+        float totalMass = 0;
+        float totalTractiveEffort = 0;
+        float totalR1 = 0;
+        float totalR2 = 0;
+
+        for (TrainElement entity : entities) {
+            TrainElement.Properties props = entity.getProperties();
+            totalMass += props.mass;
+            totalR1 += props.linearResistance;
+            totalR2 += props.quadraticResistance;
+
+            if (props instanceof Locomotive.Properties) {
+                Locomotive.Properties lProps = (Locomotive.Properties) props;
+                totalTractiveEffort += lProps.tractiveEffort;
+            }
+        }
+
+        positionEngine.setForceFunction(totalTractiveEffort, totalMass, totalR1, totalR2);
     }
 
     @Override
     public void update() {
-        if (positionEngine.getSpeed() > 5f) {
-            positionEngine.setAcceleration(0);
-        }
-
         positionEngine.update();
     }
 
@@ -113,24 +132,22 @@ public class Train extends AbstractGameObject implements MovingEntity {
     }
 
     public NetworkNode.Direction pickNextTrack(TrackPiece currentTrack, RailNode node) {
+        NetworkNode networkNode = node.getNetworkNode();
+
         if (currentTarget == null) {
             currentTarget = schedule.getFirstNode();
         }
-        NetworkNode networkNode = node.getNetworkNode();
 
         if (currentTarget != null) {
             if (currentTarget.element.getNodes().contains(networkNode)) {
                 currentTarget = schedule.getNextNode(currentTarget);
             }
 
-        } else { // TODO react on an empty schedule by targeting the nearest depot
-            List<NetworkNode.Direction> options = networkNode.getNext(currentTrack);
-            if (options.isEmpty()) return null;
-            return options.get(Toolbox.random.nextInt(options.size()));
         }
 
         List<NetworkNode.Direction> options = networkNode.getNext(currentTrack);
 
+        assert options != null : String.format("Node %s not connected to %s", node, currentTrack);
         int size = options.size();
         if (size == 0) {
             return null;
@@ -153,16 +170,15 @@ public class Train extends AbstractGameObject implements MovingEntity {
             super(Train.this.toString());
             setMainPanel(SContainer.column(
                     new SInteractiveTextArea(() -> currentTarget == null ? "No schedule" : "Now heading for " + currentTarget.element, 50),
+                    new SInteractiveTextArea(() -> String.format("Speed: %6.02f", positionEngine.getSpeed()), 50),
                     new SButton("Reverse", this::reverse),
                     new SButton("Schedule", () -> game.gui().addFrame(schedule.getUI(game)))
             ));
         }
 
         private void reverse() {
-            if (positionEngine.getSpeed() > 0) {
-                positionEngine.reverse(getLength());
-            }
-            positionEngine.setAcceleration(2f);
+            positionEngine.reverse(getLength());
+            positionEngine.setAcceleration(1f);
         }
     }
 }

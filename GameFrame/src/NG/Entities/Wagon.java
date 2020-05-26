@@ -24,9 +24,10 @@ public class Wagon implements TrainElement {
         private final float maxSpeed;
 
         public Properties(
-                String name, float length, float mass, float maxSpeed, Resource<Mesh> mesh, List<String> railtypes
+                String name, float length, float mass, float linearResistance,
+                Resource<Mesh> mesh, List<String> trackTypes, float maxSpeed
         ) {
-            super(name, length, mass, mesh, railtypes);
+            super(name, length, mass, linearResistance, 0, mesh, trackTypes);
             this.maxSpeed = maxSpeed;
         }
     }
