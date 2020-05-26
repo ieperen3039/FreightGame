@@ -7,6 +7,7 @@ import NG.DataStructures.Generic.Pair;
 import NG.DataStructures.Interpolation.FloatInterpolator;
 import NG.DataStructures.Interpolation.LongInterpolator;
 import NG.Entities.Train;
+import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import org.joml.Math;
 import org.joml.Quaternionf;
@@ -118,7 +119,7 @@ public class RailMovement extends AbstractGameObject {
     private void progressTrack() {
         RailNode node = positiveDirection ? currentTrack.getEndNode() : currentTrack.getStartNode();
 
-        RailNode.Direction next = controller.pickNextTrack(currentTrack, node);
+        NetworkNode.Direction next = controller.pickNextTrack(currentTrack, node);
 
         if (next == null) {
             speed = 0;

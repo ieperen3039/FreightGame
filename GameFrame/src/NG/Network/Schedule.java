@@ -4,7 +4,6 @@ import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.*;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
-import NG.Tools.Logger;
 import org.joml.Vector2i;
 import org.joml.Vector3fc;
 import org.lwjgl.glfw.GLFW;
@@ -103,7 +102,6 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
     }
 
     public Node getNextNode(Node node) {
-        Logger.WARN.print(node.prev, node, node.next);
         return node.next;
     }
 

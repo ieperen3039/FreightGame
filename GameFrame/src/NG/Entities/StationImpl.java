@@ -5,12 +5,12 @@ import NG.DataStructures.Generic.Color4f;
 import NG.GUIMenu.Components.SFrame;
 import NG.GameState.Storage;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
+import NG.Network.NetworkNode;
 import NG.Network.RailNode;
-import NG.Network.SpecialRailNode;
+import NG.Network.SpecialNetworkNode;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
-import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.GenericShapes;
 import NG.Tools.Vectors;
 import NG.Tracks.StraightTrack;
@@ -19,7 +19,6 @@ import NG.Tracks.TrackType;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -42,9 +41,9 @@ public class StationImpl extends Storage implements Station {
     private final float length;
     private final float realWidth;
 
-    private final SpecialRailNode[] forwardConnections;
-    private final SpecialRailNode[] backwardConnections;
-    private final Set<RailNode> nodes;
+    private final RailNode[] forwardConnections;
+    private final RailNode[] backwardConnections;
+    private final Set<NetworkNode> nodes;
 
     public StationImpl(
             Game game, int numberOfPlatforms, int length, TrackType type, Vector3fc position, float orientation,
@@ -57,6 +56,7 @@ public class StationImpl extends Storage implements Station {
         this.length = length;
         this.realWidth = numberOfPlatforms * PLATFORM_SIZE;
         this.orientation = orientation;
+        this.nodes = new HashSet<>();
 
         float trackHeight = HEIGHT + 0.1f;
 
@@ -64,8 +64,8 @@ public class StationImpl extends Storage implements Station {
         Vector3f AToB = new Vector3f(forward).normalize();
         Vector3f BToA = new Vector3f(AToB).negate();
 
-        forwardConnections = new SpecialRailNode[numberOfPlatforms];
-        backwardConnections = new SpecialRailNode[numberOfPlatforms];
+        forwardConnections = new RailNode[numberOfPlatforms];
+        backwardConnections = new RailNode[numberOfPlatforms];
 
         // create nodes
         if (numberOfPlatforms > 1) {
@@ -80,8 +80,7 @@ public class StationImpl extends Storage implements Station {
             Vector3f frontPos = rightMiddle.add(forward);
 
             for (int i = 0; i < numberOfPlatforms; i++) {
-                forwardConnections[i] = new SpecialRailNode(backPos, type, AToB, this);
-                backwardConnections[i] = new SpecialRailNode(frontPos, type, BToA, this);
+                createNodes(type, AToB, BToA, backPos, frontPos, i);
 
                 frontPos.add(rightSkip);
                 backPos.add(rightSkip);
@@ -91,23 +90,28 @@ public class StationImpl extends Storage implements Station {
             Vector3f frontPos = new Vector3f(getPosition()).add(forward).add(0, 0, trackHeight);
             Vector3f backPos = new Vector3f(getPosition()).sub(forward).add(0, 0, trackHeight);
 
-            forwardConnections[0] = new SpecialRailNode(backPos, type, AToB, this);
-            backwardConnections[0] = new SpecialRailNode(frontPos, type, BToA, this);
+            createNodes(type, AToB, BToA, frontPos, backPos, 0);
         }
 
         // create tracks
         for (int i = 0; i < numberOfPlatforms; i++) {
-            SpecialRailNode A = forwardConnections[i];
-            SpecialRailNode B = backwardConnections[i];
+            RailNode A = forwardConnections[i];
+            RailNode B = backwardConnections[i];
 
             TrackPiece trackConnection = new StraightTrack(game, type, A, B, false);
-            RailNode.addConnection(trackConnection, A, B);
+            NetworkNode.addConnection(trackConnection);
             game.state().addEntity(trackConnection);
         }
+    }
 
-        nodes = new HashSet<>();
-        nodes.addAll(Arrays.asList(forwardConnections));
-        nodes.addAll(Arrays.asList(backwardConnections));
+    private void createNodes(TrackType type, Vector3f AToB, Vector3f BToA, Vector3f aPos, Vector3f bPos, int index) {
+        SpecialNetworkNode ANode = new SpecialNetworkNode(this);
+        forwardConnections[index] = new RailNode(aPos, type, AToB, ANode);
+        nodes.add(ANode);
+
+        SpecialNetworkNode BNode = new SpecialNetworkNode(this);
+        backwardConnections[index] = new RailNode(bPos, type, BToA, BNode);
+        nodes.add(BNode);
     }
 
     @Override
@@ -121,12 +125,7 @@ public class StationImpl extends Storage implements Station {
             gl.translate(getPosition());
             gl.rotate(Vectors.Z, orientation);
 
-            ShaderProgram shader = gl.getShader();
-            if (shader instanceof MaterialShader) {
-                MaterialShader matShader = (MaterialShader) shader;
-                matShader.setMaterial(Material.ROUGH, Color4f.GREY);
-            }
-
+            MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREY));
 
             float sink = 0.1f; // size below ground
             gl.translate(0, 0, -sink);
@@ -163,7 +162,7 @@ public class StationImpl extends Storage implements Station {
     }
 
     @Override
-    public Set<RailNode> getNodes() {
+    public Set<NetworkNode> getNodes() {
         return nodes;
     }
 

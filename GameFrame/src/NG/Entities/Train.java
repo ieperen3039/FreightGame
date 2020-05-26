@@ -7,6 +7,7 @@ import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Components.SInteractiveTextArea;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
+import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.Network.Schedule;
 import NG.Rendering.MatrixStack.SGL;
@@ -31,7 +32,6 @@ public class Train extends AbstractGameObject implements MovingEntity {
     private final RailMovement positionEngine;
     private final List<TrainElement> entities = new CopyOnWriteArrayList<>();
 
-    /* short term plan towards the next schedule element */
     private Schedule schedule = new Schedule();
     private Schedule.Node currentTarget = null;
 
@@ -112,23 +112,24 @@ public class Train extends AbstractGameObject implements MovingEntity {
         return despawnTime;
     }
 
-    public RailNode.Direction pickNextTrack(TrackPiece currentTrack, RailNode node) {
+    public NetworkNode.Direction pickNextTrack(TrackPiece currentTrack, RailNode node) {
         if (currentTarget == null) {
             currentTarget = schedule.getFirstNode();
         }
+        NetworkNode networkNode = node.getNetworkNode();
 
         if (currentTarget != null) {
-            if (currentTarget.element.getNodes().contains(node)) {
+            if (currentTarget.element.getNodes().contains(networkNode)) {
                 currentTarget = schedule.getNextNode(currentTarget);
             }
 
         } else { // TODO react on an empty schedule by targeting the nearest depot
-            List<RailNode.Direction> options = node.getNext(currentTrack);
+            List<NetworkNode.Direction> options = networkNode.getNext(currentTrack);
             if (options.isEmpty()) return null;
             return options.get(Toolbox.random.nextInt(options.size()));
         }
 
-        List<RailNode.Direction> options = node.getNext(currentTrack);
+        List<NetworkNode.Direction> options = networkNode.getNext(currentTrack);
 
         int size = options.size();
         if (size == 0) {
@@ -141,9 +142,9 @@ public class Train extends AbstractGameObject implements MovingEntity {
             return options.get(Toolbox.random.nextInt(size));
 
         } else {
-            NetworkPathFinder pathFinder = new NetworkPathFinder(currentTrack, node, currentTarget.element);
-            List<RailNode> path = pathFinder.call();
-            return node.getEntryOfNetwork(path.get(0));
+            NetworkPathFinder pathFinder = new NetworkPathFinder(currentTrack, networkNode, currentTarget.element);
+            List<NetworkNode> path = pathFinder.call();
+            return networkNode.getEntryOfNetwork(path.get(0));
         }
     }
 

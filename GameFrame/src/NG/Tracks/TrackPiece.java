@@ -1,6 +1,7 @@
 package NG.Tracks;
 
 import NG.Entities.Entity;
+import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -47,8 +48,13 @@ public interface TrackPiece extends Entity {
     boolean isStatic();
 
     default boolean isValid() {
-        return getStartNode().getEntryOf(getEndNode()) != null &&
-                getEndNode().getEntryOf(getStartNode()) != null;
+        NetworkNode startNNode = getStartNode().getNetworkNode();
+        NetworkNode endNNode = getEndNode().getNetworkNode();
+        if (startNNode.getEntryOf(endNNode) == null || endNNode.getEntryOf(startNNode) == null) {
+            throw new IllegalStateException(String.format("track %s has unconnected nodes %s and %s", this, startNNode, endNNode));
+        }
+        ;
+        return true;
     }
 
     void setOccupied(boolean occupied);

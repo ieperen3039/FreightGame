@@ -2,6 +2,7 @@ package NG.Tracks;
 
 import NG.Core.Game;
 import NG.DataStructures.Generic.Pair;
+import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.Tools.Logger;
 import org.joml.Math;
@@ -28,7 +29,7 @@ public final class RailTools {
         RailNode A = new RailNode(aPosition, type, AToB);
 
         TrackPiece trackConnection = new StraightTrack(game, type, A, bPosition, true);
-        RailNode.addConnection(trackConnection);
+        NetworkNode.addConnection(trackConnection);
         game.state().addEntity(trackConnection);
 
         assert trackConnection.isValid() : trackConnection;
@@ -47,7 +48,7 @@ public final class RailTools {
         TrackPiece trackConnection = getTrackPiece(
                 game, node.getType(), node, node.getDirectionTo(newPosition), newPosition
         );
-        RailNode.addConnection(trackConnection);
+        NetworkNode.addConnection(trackConnection);
         game.state().addEntity(trackConnection);
 
         assert trackConnection.isValid() : trackConnection;
@@ -68,12 +69,12 @@ public final class RailTools {
                 game, aNode.getType(), aNode, bNode
         );
 
-        RailNode.addConnection(trackPieces.left);
+        NetworkNode.addConnection(trackPieces.left);
         game.state().addEntity(trackPieces.left);
         assert trackPieces.left.isValid() : trackPieces.left;
 
         if (trackPieces.right != null) {
-            RailNode.addConnection(trackPieces.right);
+            NetworkNode.addConnection(trackPieces.right);
             game.state().addEntity(trackPieces.right);
             assert trackPieces.right.isValid() : trackPieces.right;
         }
@@ -86,7 +87,7 @@ public final class RailTools {
         RailNode bNode = trackPiece.getEndNode();
 
         TrackType type = trackPiece.getType();
-        Vector3fc aStartDir = aNode.getDirectionTo(bNode);
+        Vector3fc aStartDir = trackPiece.getDirectionFromFraction(0);
 
         Vector3f point = trackPiece.getPositionFromFraction(fraction);
         Vector3f direction = trackPiece.getDirectionFromFraction(fraction);
@@ -104,7 +105,10 @@ public final class RailTools {
         game.state().addEntity(bConnection);
 
         // this replaces the addConnection
-        RailNode.insertNode(aNode, bNode, newNode, aConnection, bConnection);
+        NetworkNode.insertNode(
+                aNode.getNetworkNode(), bNode.getNetworkNode(), newNode.getNetworkNode(),
+                aConnection, bConnection
+        );
 
         assert aConnection.isValid() : aConnection;
         assert bConnection.isValid() : bConnection;
@@ -118,7 +122,7 @@ public final class RailTools {
         RailNode aNode = trackPiece.getStartNode();
         RailNode bNode = trackPiece.getEndNode();
 
-        TrackPiece oldPiece = RailNode.removeConnection(aNode, bNode);
+        TrackPiece oldPiece = NetworkNode.removeConnection(aNode.getNetworkNode(), bNode.getNetworkNode());
         assert oldPiece == trackPiece :
                 "Nodes were connected with double tracks: " + oldPiece + " and " + trackPiece;
 

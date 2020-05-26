@@ -3,11 +3,20 @@ package NG.Entities;
 import NG.Core.Game;
 import NG.GUIMenu.Components.*;
 import NG.InputHandling.MouseTools.ToggleMouseTool;
+import NG.Rendering.Material;
+import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.MeshLoading.Mesh;
+import NG.Rendering.Shaders.MaterialShader;
+import NG.Rendering.Shapes.GenericShapes;
+import NG.Resources.GeneratorResource;
+import NG.Resources.Resource;
 import NG.Tools.Vectors;
 import NG.Tracks.TrackType;
 import org.joml.*;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -15,6 +24,11 @@ import java.util.function.Consumer;
  */
 public class StationBuilder extends ToggleMouseTool {
     private static final float EPSILON = 1 / 128f;
+    private static final int RING_RADIAL_PARTS = 64;
+    private static final float RING_THICKNESS = 0.1f;
+
+    private static final Map<Float, Resource<Mesh>> meshes = new HashMap<>();
+
     private static final String[] numbers = new String[12];
 
     static {
@@ -27,6 +41,8 @@ public class StationBuilder extends ToggleMouseTool {
     private final TrackType trackType;
     private final SizeSelector selector;
     private boolean isPositioned = false;
+    private final Vector3f cursorPosition = new Vector3f();
+    private boolean cursorIsOnMap = false;
 
     public StationBuilder(Game game, SToggleButton source, TrackType trackType) {
         super(game, () -> source.setActive(false));
@@ -49,6 +65,7 @@ public class StationBuilder extends ToggleMouseTool {
 
     @Override
     public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
+        cursorIsOnMap = false;
         // do nothing
     }
 
@@ -62,8 +79,7 @@ public class StationBuilder extends ToggleMouseTool {
         switch (getMouseAction()) {
             case PRESS_ACTIVATE:
                 station.setPosition(position);
-                game.state().addEntity(station);
-
+                cursorPosition.set(position);
                 isPositioned = true;
                 break;
 
@@ -81,6 +97,34 @@ public class StationBuilder extends ToggleMouseTool {
 
                 Vector2f direction2D = new Vector2f(point.x - stationPos.x(), point.y - stationPos.y());
                 station.setOrientation(Vectors.arcTan(direction2D));
+                break;
+
+            case HOVER:
+                if (!isPositioned) {
+                    cursorPosition.set(position);
+                }
+                cursorIsOnMap = true;
+        }
+    }
+
+    @Override
+    public void draw(SGL gl) {
+        if (isPositioned) {
+            station.draw(gl);
+        }
+
+        if (cursorIsOnMap) {
+            Resource<Mesh> meshResource = meshes.computeIfAbsent(station.getLength(), (size) -> new GeneratorResource<>(
+                    () -> GenericShapes.createRing((size + RING_THICKNESS) / 2f, RING_RADIAL_PARTS, RING_THICKNESS), Mesh::dispose
+            ));
+
+            MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH));
+            gl.pushMatrix();
+            {
+                gl.translate(cursorPosition);
+                gl.render(meshResource.get(), station);
+            }
+            gl.popMatrix();
         }
     }
 
@@ -106,9 +150,7 @@ public class StationBuilder extends ToggleMouseTool {
             SDropDown platformCapacityChooser = new SDropDown(game.gui(), (int) station.getLength(), numbers);
             SDropDown nrOfPlatormChooser = new SDropDown(game.gui(), station.getNumberOfPlatforms(), numbers);
 
-            Consumer<Integer> changeListener = (i) -> station.setSize(
-                    nrOfPlatormChooser.getSelectedIndex(), platformCapacityChooser.getSelectedIndex()
-            );
+            Consumer<Integer> changeListener = (i) -> setSize(platformCapacityChooser, nrOfPlatormChooser);
 
             platformCapacityChooser.addStateChangeListener(changeListener);
             nrOfPlatormChooser.addStateChangeListener(changeListener);
@@ -122,6 +164,12 @@ public class StationBuilder extends ToggleMouseTool {
             pack();
         }
 
+        private void setSize(SDropDown platformCapacityChooser, SDropDown nrOfPlatormChooser) {
+            station.setSize(
+                    nrOfPlatormChooser.getSelectedIndex(), platformCapacityChooser.getSelectedIndex()
+            );
+        }
+
         @Override
         public void dispose() {
             if (!isDisposed()) {
@@ -130,4 +178,5 @@ public class StationBuilder extends ToggleMouseTool {
             }
         }
     }
+
 }

@@ -5,7 +5,7 @@ import NG.DataStructures.Generic.Color4f;
 import NG.GameState.Storage;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
-import NG.Network.RailNode;
+import NG.Network.NetworkNode;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
@@ -99,7 +99,7 @@ public class StationGhost extends Storage implements Station {
     }
 
     @Override
-    public Set<RailNode> getNodes() {
+    public Set<NetworkNode> getNodes() {
         return Collections.emptySet();
     }
 

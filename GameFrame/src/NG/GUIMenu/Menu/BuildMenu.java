@@ -6,6 +6,7 @@ import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SDropDown;
 import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Components.SToggleButton;
+import NG.Network.SignalBuilder;
 import NG.Tracks.Remover;
 import NG.Tracks.TrackBuilder;
 import NG.Tracks.TrackType;
@@ -34,13 +35,19 @@ public class BuildMenu extends SFrame {
                         .setMouseTool(active ? new StationBuilder(game, buildStation, trackTypes.get(typeChooser.getSelectedIndex())) : null)
         );
 
+        SToggleButton buildSignal = new SToggleButton("Build signal", 250, 50);
+        buildSignal.addStateChangeListener(
+                (active) -> game.inputHandling()
+                        .setMouseTool(active ? new SignalBuilder(game, buildSignal) : null)
+        );
+
         SToggleButton removeElement = new SToggleButton("Remove", 250, 50);
         removeElement.addStateChangeListener(
                 (active) -> game.inputHandling().setMouseTool(active ? new Remover(game, removeElement) : null)
         );
 
         setMainPanel(SContainer.column(
-                typeChooser, buildTrack, buildStation, removeElement
+                typeChooser, buildTrack, buildStation, buildSignal, removeElement
         ));
         setSize(200, 0);
     }

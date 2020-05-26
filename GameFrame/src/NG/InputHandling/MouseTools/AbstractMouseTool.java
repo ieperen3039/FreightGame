@@ -5,11 +5,15 @@ import NG.GUIMenu.Components.SComponent;
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
 import NG.InputHandling.MouseReleaseListener;
 import NG.InputHandling.MouseScrollListener;
+import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Settings.Settings;
 import NG.Tools.Vectors;
+import NG.Tracks.RailTools;
+import NG.Tracks.TrackPiece;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.lwjgl.glfw.GLFW;
 
 import static NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction.*;
@@ -128,5 +132,28 @@ public abstract class AbstractMouseTool implements MouseTool {
     @Override
     public void draw(SGL gl) {
         // TODO fancy cursor?
+    }
+
+    protected static float getFraction(TrackPiece trackPiece, Vector3fc origin, Vector3fc direction) {
+        float fraction = trackPiece.getFractionOfClosest(origin, direction);
+        if (fraction < 0) {
+            fraction = 0;
+        } else if (fraction > 1) {
+            fraction = 1;
+        }
+        return fraction;
+    }
+
+    protected static RailNode getOrCreateNode(TrackPiece trackPiece, float fraction, Game game) {
+        if (game.keyControl().isControlPressed() || trackPiece.isStatic()) {
+            if (fraction < 0.5f) {
+                return trackPiece.getStartNode();
+            } else {
+                return trackPiece.getEndNode();
+            }
+        } else {
+            double gameTime = game.timer().getGameTime();
+            return RailTools.createSplit(game, trackPiece, fraction, gameTime);
+        }
     }
 }

@@ -2,6 +2,9 @@ package NG.Rendering.Shaders;
 
 import NG.DataStructures.Generic.Color4f;
 import NG.Rendering.Material;
+import NG.Rendering.MatrixStack.SGL;
+
+import java.util.function.Consumer;
 
 /**
  * @author Geert van Ieperen created on 1-2-2019.
@@ -29,4 +32,11 @@ public interface MaterialShader {
      * @see #setMaterial(Material, Color4f)
      */
     void setMaterial(Color4f diffuse, Color4f specular, float reflectance);
+
+    static void ifPresent(SGL gl, Consumer<MaterialShader> action) {
+        ShaderProgram shader = gl.getShader();
+        if (shader instanceof MaterialShader) {
+            action.accept((MaterialShader) shader);
+        }
+    }
 }

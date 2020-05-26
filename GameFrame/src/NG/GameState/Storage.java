@@ -39,7 +39,6 @@ public abstract class Storage extends AbstractGameObject implements Entity {
         return position;
     }
 
-
     @Override
     public void despawn(double gameTime) {
         despawnTime = gameTime;

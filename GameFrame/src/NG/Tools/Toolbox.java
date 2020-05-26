@@ -8,8 +8,6 @@ import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.GenericShapes;
 import org.joml.AABBf;
 import org.joml.Quaternionf;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
 import org.lwjgl.BufferUtils;
 
 import javax.swing.*;
@@ -197,14 +195,6 @@ public final class Toolbox {
             }
             items[empty] = subject;
         }
-    }
-
-    /** @return a rotation that maps the x-vector to the given direction, with up in direction of z */
-    public static Quaternionf xTo(Vector3fc direction) {
-        if (direction.y() == 0 && direction.z() == 0 && direction.x() < 0) {
-            return new Quaternionf().rotateZ((float) Math.PI);
-        }
-        return new Quaternionf().rotateTo(Vectors.X, new Vector3f(direction).normalize());
     }
 
     /** returns a uniformly distributed random value between val1 and val2 */

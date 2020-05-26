@@ -1,7 +1,7 @@
 package NG.Tools;
 
+import NG.Network.NetworkNode;
 import NG.Network.NetworkPosition;
-import NG.Network.RailNode;
 import NG.Tracks.TrackPiece;
 
 import java.util.*;
@@ -11,13 +11,13 @@ import java.util.concurrent.Callable;
  * Implements Dijkstra to find the shortest path to any node adhering to the given target.
  * @author Geert van Ieperen created on 22-5-2020.
  */
-public class NetworkPathFinder implements Callable<List<RailNode>> {
-    private final Set<RailNode> targets;
-    private final RailNode startPredecessor;
-    private final RailNode startNode;
+public class NetworkPathFinder implements Callable<List<NetworkNode>> {
+    private final Set<NetworkNode> targets;
+    private final NetworkNode startPredecessor;
+    private final NetworkNode startNode;
 
-    public NetworkPathFinder(TrackPiece currentTrack, RailNode nextNode, NetworkPosition target) {
-        assert nextNode.isNetworkNode();
+    public NetworkPathFinder(TrackPiece currentTrack, NetworkNode nextNode, NetworkPosition target) {
+        assert nextNode.isNetworkCritical();
 
         this.targets = target.getNodes();
         this.startNode = nextNode;
@@ -25,16 +25,16 @@ public class NetworkPathFinder implements Callable<List<RailNode>> {
     }
 
     @Override
-    public List<RailNode> call() {
-        Map<RailNode, RailNode> predecessors = new HashMap<>();
-        Map<RailNode, Float> distanceMap = new HashMap<>();
-        PriorityQueue<RailNode> open = new PriorityQueue<>(Comparator.comparing(distanceMap::get));
+    public List<NetworkNode> call() {
+        Map<NetworkNode, NetworkNode> predecessors = new HashMap<>();
+        Map<NetworkNode, Float> distanceMap = new HashMap<>();
+        PriorityQueue<NetworkNode> open = new PriorityQueue<>(Comparator.comparing(distanceMap::get));
 
         predecessors.put(startNode, startPredecessor);
         distanceMap.put(startNode, 0f);
         open.add(startNode);
 
-        RailNode endNode = dijkstra(predecessors, distanceMap, open);
+        NetworkNode endNode = dijkstra(predecessors, distanceMap, open);
 
         if (endNode == null) {
             return null;
@@ -53,23 +53,24 @@ public class NetworkPathFinder implements Callable<List<RailNode>> {
      *                     returning, its contents is undefined.
      * @return the nearest node in {@code targets} found.
      */
-    private RailNode dijkstra(
-            Map<RailNode, RailNode> predecessors, Map<RailNode, Float> distanceMap, PriorityQueue<RailNode> open
+    private NetworkNode dijkstra(
+            Map<NetworkNode, NetworkNode> predecessors, Map<NetworkNode, Float> distanceMap,
+            PriorityQueue<NetworkNode> open
     ) {
         while (!open.isEmpty()) {
-            RailNode node = open.remove();
+            NetworkNode node = open.remove();
             if (targets.contains(node)) return node;
 
-            RailNode predecessor = predecessors.get(node);
+            NetworkNode predecessor = predecessors.get(node);
             assert predecessor != null : node + " has not been added to predecessors";
 
-            List<RailNode.Direction> next = node.getNextFromNetwork(predecessor);
+            List<NetworkNode.Direction> next = node.getNextFromNetwork(predecessor);
             assert next != null : "one-directional connection from " + predecessor + " to " + node;
 
             float nodeDistance = distanceMap.get(node);
 
-            for (RailNode.Direction entry : next) {
-                RailNode nextNode = entry.networkNode;
+            for (NetworkNode.Direction entry : next) {
+                NetworkNode nextNode = entry.networkNode;
                 if (nextNode == null) continue; // empty dead end
                 if (nextNode == node) continue; // self-loop
 
@@ -86,11 +87,11 @@ public class NetworkPathFinder implements Callable<List<RailNode>> {
         return null;
     }
 
-    private static class Path extends ArrayList<RailNode> {
-        public Path(RailNode startNode, Map<RailNode, RailNode> predecessors, RailNode endNode) {
+    private static class Path extends ArrayList<NetworkNode> {
+        public Path(NetworkNode startNode, Map<NetworkNode, NetworkNode> predecessors, NetworkNode endNode) {
             super();
 
-            RailNode currentNode = endNode;
+            NetworkNode currentNode = endNode;
 
             while (currentNode != startNode) {
                 add(currentNode);

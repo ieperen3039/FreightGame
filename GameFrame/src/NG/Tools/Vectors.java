@@ -355,6 +355,14 @@ public final class Vectors {
         return new Vector3f(ray.oX + ray.dX * t, ray.oY + ray.dY * t, ray.oZ + ray.dZ * t);
     }
 
+    /** @return a rotation that maps the x-vector to the given direction, with up in direction of z */
+    public static Quaternionf xTo(Vector3fc direction) {
+        if (direction.y() == 0 && direction.z() == 0 && direction.x() < 0) {
+            return new Quaternionf().rotateZ((float) java.lang.Math.PI);
+        }
+        return new Quaternionf().rotateTo(X, new Vector3f(direction).normalize());
+    }
+
     public static final class Scaling {
         public static final Vector3fc UNIFORM = new Vector3f(1, 1, 1);
         /** scaling that mirrors in the X direction */
