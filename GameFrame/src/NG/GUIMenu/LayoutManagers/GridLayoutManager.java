@@ -223,7 +223,7 @@ public class GridLayoutManager implements SLayoutManager {
 
     @Override
     public boolean wantHorizontalGrow() {
-        for (boolean doWantGrow : rowWantGrow) {
+        for (boolean doWantGrow : colWantGrow) {
             if (doWantGrow) return true;
         }
         return false;
@@ -231,7 +231,7 @@ public class GridLayoutManager implements SLayoutManager {
 
     @Override
     public boolean wantVerticalGrow() {
-        for (boolean doWantGrow : colWantGrow) {
+        for (boolean doWantGrow : rowWantGrow) {
             if (doWantGrow) return true;
         }
         return false;
