@@ -1,6 +1,8 @@
 package NG.GUIMenu.Components;
 
+import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 import NG.InputHandling.MouseDragListener;
 import NG.InputHandling.MouseReleaseListener;
 import NG.Tools.Toolbox;
@@ -20,6 +22,9 @@ class SScrollBar extends SComponent {
     private static final int SCROLL_BAR_WIDTH = 50;
     private static final int SCROLL_BUTTON_SIZE = 50;
     private static final int DRAG_BAR_MIN_SIZE = 15;
+    private static final SComponentProperties SCROLL_BUTTON_PROPS = new SComponentProperties(
+            SCROLL_BAR_WIDTH, SCROLL_BUTTON_SIZE, true, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
+    );
 
     private final List<SScrollBarListener> listeners = new ArrayList<>();
     private final SComponent[] elements;
@@ -48,8 +53,8 @@ class SScrollBar extends SComponent {
         this.currentInd = current;
         this.maximumInd = maximum;
         this.minimumInd = minimum;
-        this.scrollUp = new SButton("/\\", this::up, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-        this.scrollDown = new SButton("\\/", this::down, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+        this.scrollUp = new SButton("/\\", this::up, SCROLL_BUTTON_PROPS);
+        this.scrollDown = new SButton("\\/", this::down, SCROLL_BUTTON_PROPS);
         this.dragBar = new SDragBar();
 
         elements = new SComponent[3];

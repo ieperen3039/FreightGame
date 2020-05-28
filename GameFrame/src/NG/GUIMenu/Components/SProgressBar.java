@@ -1,6 +1,7 @@
 package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
@@ -16,6 +17,13 @@ public class SProgressBar extends SComponent {
     private int minWidth;
     private int minHeight;
     private final Supplier<Float> progress;
+
+    public SProgressBar(Supplier<Float> progress, SComponentProperties properties) {
+        this.progress = progress;
+        this.minWidth = properties.minWidth;
+        this.minHeight = properties.minHeight;
+        setGrowthPolicy(properties.wantHzGrow, properties.wantVtGrow);
+    }
 
     public SProgressBar(int minWidth, int minHeight, Supplier<Float> progressSource) {
         this.minWidth = minWidth;

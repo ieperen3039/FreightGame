@@ -2,12 +2,17 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 
 /**
  * a simple panel with text.
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
 public class STextArea extends STextComponent {
+    public STextArea(String text, SComponentProperties props) {
+        super(text, props);
+    }
+
     public STextArea(
             String text, int minHeight, int minWidth, boolean doGrowInWidth, NGFonts.TextType textType,
             SFrameLookAndFeel.Alignment alignment

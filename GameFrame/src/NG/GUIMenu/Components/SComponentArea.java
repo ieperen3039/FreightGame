@@ -2,6 +2,7 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.LayoutManagers.SingleElementLayout;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 import NG.Tools.Logger;
 import org.joml.Vector2ic;
 
@@ -14,6 +15,14 @@ public class SComponentArea extends SContainer {
     private static final SFiller FILLER = new SFiller();
     private int width;
     private int height;
+
+    public SComponentArea(SComponentProperties props) {
+        super(new SingleElementLayout());
+        this.width = props.minWidth;
+        this.height = props.minHeight;
+        setVisible(false);
+        setGrowthPolicy(props.wantHzGrow, props.wantVtGrow);
+    }
 
     public SComponentArea(int width, int height) {
         super(new SingleElementLayout());

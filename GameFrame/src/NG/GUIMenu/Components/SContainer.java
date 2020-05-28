@@ -175,6 +175,7 @@ public abstract class SContainer extends SComponent {
     private static class SGhostContainer extends SContainer {
         public SGhostContainer(SLayoutManager layout) {
             super(layout, new ComponentBorder());
+            setGrowthPolicy(true, true);
         }
 
         @Override

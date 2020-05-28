@@ -2,6 +2,7 @@ package NG.Entities;
 
 import NG.Core.Game;
 import NG.GUIMenu.Components.*;
+import NG.GUIMenu.Menu.MainMenu;
 import NG.InputHandling.MouseTools.ToggleMouseTool;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
@@ -155,9 +156,9 @@ public class StationBuilder extends ToggleMouseTool {
             platformCapacityChooser.addStateChangeListener(changeListener);
             nrOfPlatormChooser.addStateChangeListener(changeListener);
 
-            panel.add(new STextArea("Wagons per platform", platformCapacityChooser.minHeight()), new Vector2i(0, 0));
+            panel.add(new STextArea("Wagons per platform", MainMenu.TEXT_PROPERTIES), new Vector2i(0, 0));
             panel.add(platformCapacityChooser, new Vector2i(1, 0));
-            panel.add(new STextArea("Number of platforms", nrOfPlatormChooser.minHeight()), new Vector2i(0, 1));
+            panel.add(new STextArea("Number of platforms", MainMenu.TEXT_PROPERTIES), new Vector2i(0, 1));
             panel.add(nrOfPlatormChooser, new Vector2i(1, 1));
 
             setMainPanel(panel);

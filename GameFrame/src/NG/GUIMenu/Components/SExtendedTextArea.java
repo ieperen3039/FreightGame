@@ -2,6 +2,7 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseDragListener;
 import NG.InputHandling.MouseReleaseListener;
@@ -15,6 +16,10 @@ public class SExtendedTextArea extends STextArea
     private MouseClickListener clickListener;
     private MouseReleaseListener releaseListener;
 
+    public SExtendedTextArea(String text, SComponentProperties props) {
+        super(text, props);
+    }
+
     public SExtendedTextArea(
             String frameTitle, int minWidth, int minHeight, boolean doGrowInWidth, NGFonts.TextType textType,
             SFrameLookAndFeel.Alignment alignment
@@ -24,11 +29,6 @@ public class SExtendedTextArea extends STextArea
 
     public SExtendedTextArea(STextArea source) {
         this(source.getText(), source.minWidth, source.minHeight, source.wantHorizontalGrow(), source.textType, source.alignment);
-    }
-
-    public SExtendedTextArea(String text, int minHeight, boolean doGrowInWidth) {
-        super(text, minHeight);
-        setGrowthPolicy(doGrowInWidth, false);
     }
 
     @Override

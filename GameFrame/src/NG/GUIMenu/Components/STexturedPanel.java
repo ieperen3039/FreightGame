@@ -1,6 +1,7 @@
 package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 import NG.Rendering.Textures.Texture;
 import org.joml.Vector2ic;
 
@@ -21,14 +22,12 @@ public class STexturedPanel extends SComponent {
     /**
      * create a textured panel with the given minimum size. The texture is stretched to match the given dimensions.
      * @param texture the texture to show
-     * @param width   minimum width in pixels
-     * @param height  minimum height in pixels
      */
-    public STexturedPanel(Texture texture, int width, int height) {
+    public STexturedPanel(Texture texture, SComponentProperties properties) {
         this.texture = texture;
-        this.minWidth = width;
-        this.minHeight = height;
-        setGrowthPolicy(false, false);
+        this.minWidth = properties.minWidth;
+        this.minHeight = properties.minHeight;
+        setGrowthPolicy(properties.wantHzGrow, properties.wantVtGrow);
     }
 
     @Override

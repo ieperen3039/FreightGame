@@ -62,6 +62,12 @@ public class FrameManagerImpl implements FrameGUIManager {
             if (f.isVisible()) {
                 f.validateLayout();
                 f.draw(lookAndFeel, f.getPosition());
+
+                // if anything caused invalidation of the layout (e.g. text size information) then redraw this frame
+                while (!f.layoutIsValid()) {
+                    f.validateLayout();
+                    f.draw(lookAndFeel, f.getPosition());
+                }
             }
         }
 
@@ -91,25 +97,6 @@ public class FrameManagerImpl implements FrameGUIManager {
             }
         }
         return false;
-    }
-
-    @Override
-    public void addFrame(SFrame frame) {
-        frame.validateLayout();
-
-        // TODO remove assumption that toolbar is on top
-        int toolbarHeight = toolBar == null ? 0 : toolBar.getHeight();
-        int x = 50;
-        int y = 50 + toolbarHeight;
-
-        SComponent component = getComponentAt(x, y);
-        while (component != null) {
-            x += component.getWidth();
-
-            component = getComponentAt(x, y);
-        }
-
-        addFrame(frame, x, y);
     }
 
     @Override
@@ -221,18 +208,32 @@ public class FrameManagerImpl implements FrameGUIManager {
             return true;
 
         } else {
-            SComponent component = getComponentAt(xSc, ySc);
-
-            if (component != null) {
+            // check toolbar
+            if (toolBar != null && toolBar.contains(xSc, ySc)) {
+                SComponent component = toolBar.getComponentAt(xSc, ySc);
                 processClick(button, component, xSc, ySc);
                 return true;
             }
-        }
 
-        return false;
+            // check all frames, starting from the front-most frame
+            SFrame frame = getFrame(xSc, ySc);
+            if (frame != null) {
+                int xr = xSc - frame.getX();
+                int yr = ySc - frame.getY();
+                SComponent component = frame.getComponentAt(xr, yr);
+
+                focus(frame);
+                processClick(button, component, xSc, ySc);
+                return true;
+            }
+
+            return false;
+
+        }
     }
 
     private void processClick(int button, SComponent component, int xSc, int ySc) {
+        Logger.WARN.print(component);
         if (component instanceof MouseClickListener) {
             MouseClickListener cl = (MouseClickListener) component;
             // by def. of MouseRelativeClickListener, give relative coordinates
@@ -251,7 +252,6 @@ public class FrameManagerImpl implements FrameGUIManager {
 
     @Override
     public SComponent getComponentAt(int xSc, int ySc) {
-
         // check toolbar
         if (toolBar != null) {
             if (toolBar.contains(xSc, ySc)) {
@@ -260,15 +260,21 @@ public class FrameManagerImpl implements FrameGUIManager {
         }
 
         // check all frames, starting from the front-most frame
+        SFrame frame = getFrame(xSc, ySc);
+        if (frame == null) return null;
+
+        int xr = xSc - frame.getX();
+        int yr = ySc - frame.getY();
+        return frame.getComponentAt(xr, yr);
+
+    }
+
+    private SFrame getFrame(int xSc, int ySc) {
         for (SFrame frame : frames) {
             if (frame.isVisible() && frame.contains(xSc, ySc)) {
-                focus(frame);
-                int xr = xSc - frame.getX();
-                int yr = ySc - frame.getY();
-                return frame.getComponentAt(xr, yr);
+                return frame;
             }
         }
-
         return null;
     }
 

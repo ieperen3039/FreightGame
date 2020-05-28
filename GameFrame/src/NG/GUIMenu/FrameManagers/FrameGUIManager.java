@@ -10,6 +10,7 @@ import NG.InputHandling.KeyTypeListener;
 import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseMoveListener;
 import NG.InputHandling.MouseReleaseListener;
+import NG.Rendering.GLFWWindow;
 
 /**
  * A class that manages frames of a game. New {@link SFrame} objects can be added using {@link #addFrame(SFrame)}
@@ -24,12 +25,31 @@ public interface FrameGUIManager
      */
     void draw(NVGOverlay.Painter painter);
 
-    /**
-     * adds the given frame at a position that the frame manager assumes to be optimal
-     * @param frame
-     * @see #addFrame(SFrame, int, int)
-     */
-    void addFrame(SFrame frame);
+    default void addFrame(SFrame frame) {
+        frame.validateLayout();
+
+        // TODO remove assumption that toolbar is on top
+        SToolBar toolBar = getToolBar();
+        int toolbarHeight = toolBar == null ? 0 : toolBar.getHeight();
+        int x = 50;
+        int y = 50 + toolbarHeight;
+
+        SComponent component = getComponentAt(x, y);
+        while (component != null) {
+            x += component.getWidth();
+
+            component = getComponentAt(x, y);
+        }
+
+        addFrame(frame, x, y);
+    }
+
+    default void addFrameCenter(SFrame frame, GLFWWindow window) {
+        frame.validateLayout();
+        int x = window.getWidth() / 2 - frame.getWidth() / 2;
+        int y = window.getHeight() / 2 - frame.getHeight() / 2;
+        addFrame(frame, x, y);
+    }
 
     /**
      * adds a fame on the given position, and focusses it.

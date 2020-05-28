@@ -3,6 +3,7 @@ package NG.GUIMenu.Components;
 import NG.Core.Game;
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseReleaseListener;
 import org.joml.Vector2i;
@@ -18,6 +19,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 public class SToolBar extends SContainer implements MouseReleaseListener, MouseClickListener {
     public static final int MAX_BAR_ICONS = 20; // TODO look for opportunity of calculating this
     private static final int BUTTON_SIZE = TOOL_BAR_HEIGHT - (4 + 4); // where did the 4 come from? / where did it go? / where did you come from, cotton-eyed joe
+    private final SComponentProperties buttonProps = new SComponentProperties(200, BUTTON_SIZE, false, false);
 
     private final Game game;
     private int nextButtonIndex = 0;
@@ -49,19 +51,8 @@ public class SToolBar extends SContainer implements MouseReleaseListener, MouseC
      * @param action the action to occur when this button is pressed.
      *///TODO create an icon button constructor
     public void addButton(String text, Runnable action) {
-        addButton(text, action, BUTTON_SIZE);
-    }
-
-    /**
-     * adds a button to the end of the toolbar. The button is square and should display only a few characters
-     * @param text   characters displayed on the button.
-     * @param action the action to occur when this button is pressed.
-     * @param width  the width of the button
-     *///TODO create an icon button constructor
-    public void addButton(String text, Runnable action, int width) {
-        SButton newButton = new SButton(text, action, width, BUTTON_SIZE);
+        SButton newButton = new SButton(text, action, buttonProps);
         newButton.setSize(0, 0);
-        newButton.setGrowthPolicy(false, false);
         newButton.setXBorder(BUTTON_SIZE / 2);
         add(newButton, null);
     }

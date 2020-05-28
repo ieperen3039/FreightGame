@@ -6,6 +6,9 @@ import NG.Core.ModLoader;
 import NG.Entities.Cube;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.*;
+import NG.GUIMenu.Rendering.NGFonts;
+import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 import NG.GameMap.MapGeneratorMod;
 import NG.GameMap.SimpleMapGenerator;
 import NG.Mods.Mod;
@@ -28,12 +31,16 @@ public class MainMenu extends SFrame {
     // these are upper bounds
     private static final int NUM_TOP_BUTTONS = 10;
     private static final int NUM_BOT_BUTTONS = 10;
-    public static final int BUTTON_MIN_WIDTH = 300;
-    public static final int BUTTON_MIN_HEIGHT = 50;
+    public static final int NUM_BUTTONS = NUM_TOP_BUTTONS + NUM_BOT_BUTTONS + 1;
+    public static final SComponentProperties BUTTON_PROPERTIES = new SComponentProperties(
+            300, 100, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
+    );
+    public static final SComponentProperties TEXT_PROPERTIES = new SComponentProperties(
+            0, 100, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT
+    );
 
     private final Vector2i topButtonPos;
     private final Vector2i bottomButtonPos;
-    public static final int NUM_BUTTONS = NUM_TOP_BUTTONS + NUM_BOT_BUTTONS + 1;
     private final Game game;
     private final ModLoader modLoader;
     private final SFrame newGameFrame;
@@ -47,15 +54,16 @@ public class MainMenu extends SFrame {
 
         newGameFrame = new NewGameFrame(game, modLoader);
 
-        STextComponent newGame = new SButton("Start new game", this::showNewGame, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
-        STextComponent justStart = new SButton("Start Testworld", this::testWorld, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
-        STextComponent exitGame = new SButton("Exit game", terminateProgram, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
+        STextComponent newGame = new SButton("Start new game", this::showNewGame, BUTTON_PROPERTIES);
+        STextComponent justStart = new SButton("Start Testworld", this::testWorld, BUTTON_PROPERTIES);
+        STextComponent exitGame = new SButton("Exit game", terminateProgram, BUTTON_PROPERTIES);
 
         setMainPanel(SContainer.row(
                 new SFiller(),
                 SContainer.column(
                         newGame,
                         justStart,
+                        new SFiller().setGrowthPolicy(false, true),
                         exitGame
                 ),
                 new SFiller()

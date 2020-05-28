@@ -147,7 +147,7 @@ public class FreightGame implements Game, ModLoader {
         renderer.addHudItem(frameManager::draw);
 
         mainMenu = new MainMenu(this, this, renderer::stopLoop);
-        frameManager.addFrame(mainMenu);
+        frameManager.addFrameCenter(mainMenu, window);
         gameState.start();
 
         Logger.INFO.print("Finished initialisation\n");
@@ -203,7 +203,7 @@ public class FreightGame implements Game, ModLoader {
         cleanMods();
 
         mainMenu = new MainMenu(this, this, renderer::stopLoop);
-        frameManager.addFrame(mainMenu);
+        frameManager.addFrameCenter(mainMenu, window);
     }
 
     @Override

@@ -3,6 +3,7 @@ package NG.Network;
 import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.*;
+import NG.GUIMenu.Menu.MainMenu;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
 import org.joml.Vector2i;
 import org.joml.Vector3fc;
@@ -218,7 +219,7 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
             SPanel panel = new SPanel(1, size);
             int i = 0;
             for (Node node : nodes()) {
-                SExtendedTextArea text = new SExtendedTextArea(node.element.toString(), 50, false);
+                SExtendedTextArea text = new SExtendedTextArea(node.element.toString(), MainMenu.TEXT_PROPERTIES);
                 text.setClickListener((button, xRel, yRel) -> {
                     if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
                         selectedNode = node;

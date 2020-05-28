@@ -2,6 +2,7 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseReleaseListener;
 import NG.Tools.Logger;
@@ -19,9 +20,9 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
  * @author Geert van Ieperen. Created on 22-9-2018.
  */
 public class SButton extends STextComponent implements MouseReleaseListener, MouseClickListener {
-    public static final int BUTTON_MIN_WIDTH = 250;
-    public static final int BUTTON_MIN_HEIGHT = 30;
-    public static final NGFonts.TextType BUTTON_TEXT_TYPE = NGFonts.TextType.REGULAR;
+    public static final int DEFAULT_MIN_WIDTH = 250;
+    public static final int DEFAULT_MIN_HEIGHT = 30;
+    public static final NGFonts.TextType DEFAULT_TEXT_TYPE = NGFonts.TextType.REGULAR;
 
     private Collection<Runnable> leftClickListeners = new ArrayList<>();
     private Collection<Runnable> rightClickListeners = new ArrayList<>();
@@ -34,7 +35,7 @@ public class SButton extends STextComponent implements MouseReleaseListener, Mou
      * @see #addLeftClickListener(Runnable)
      */
     public SButton(String text) {
-        this(text, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
+        super(text, DEFAULT_TEXT_TYPE, SFrameLookAndFeel.Alignment.CENTER, DEFAULT_MIN_WIDTH, DEFAULT_MIN_HEIGHT);
     }
 
     /**
@@ -43,19 +44,18 @@ public class SButton extends STextComponent implements MouseReleaseListener, Mou
      * @param action the action that is executed upon (releasing a) left click
      */
     public SButton(String text, Runnable action) {
-        this(text, action, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
+        this(text);
+        addLeftClickListener(action);
     }
 
     /**
      * a button with no associated action (a dead button)
-     * @param text   the text of the button
-     * @param width  the minimal width of this button
-     * @param height the minimal height of this button
+     * @param text  the text of the button
+     * @param props component properties
      * @see #addLeftClickListener(Runnable)
      */
-    public SButton(String text, int width, int height) {
-        super(text, BUTTON_TEXT_TYPE, SFrameLookAndFeel.Alignment.CENTER, width, height);
-        setSize(width, height);
+    public SButton(String text, SComponentProperties props) {
+        super(text, props);
     }
 
     /**
@@ -65,8 +65,8 @@ public class SButton extends STextComponent implements MouseReleaseListener, Mou
      * @param width  the minimal width of this button
      * @param height the minimal height of this button
      */
-    public SButton(String text, Runnable action, int width, int height) {
-        this(text, width, height);
+    public SButton(String text, Runnable action, SComponentProperties props) {
+        this(text, props);
         leftClickListeners.add(action);
     }
 
@@ -78,18 +78,9 @@ public class SButton extends STextComponent implements MouseReleaseListener, Mou
      * @param width        the minimal width of this button
      * @param height       the minimal height of this button
      */
-    public SButton(String text, Runnable onLeftClick, Runnable onRightClick, int width, int height) {
-        this(text, onLeftClick, width, height);
+    public SButton(String text, Runnable onLeftClick, Runnable onRightClick, SComponentProperties props) {
+        this(text, onLeftClick, props);
         rightClickListeners.add(onRightClick);
-    }
-
-    public SButton(String text, Runnable action, BProps properties) {
-        this(text, action, properties.width, properties.height);
-        setGrowthPolicy(properties.doGrowInWidth, properties.doGrowInHeight);
-    }
-
-    public void setXBorder(int minXBorder) {
-        this.minXBorder = minXBorder;
     }
 
     public STextComponent addLeftClickListener(Runnable action) {
@@ -130,19 +121,5 @@ public class SButton extends STextComponent implements MouseReleaseListener, Mou
     @Override
     public String toString() {
         return this.getClass().getSimpleName() + " (" + getText() + ")";
-    }
-
-    public static class BProps {
-        public int width;
-        public int height;
-        public boolean doGrowInWidth;
-        public boolean doGrowInHeight;
-
-        public BProps(int width, int height, boolean doGrowInWidth, boolean doGrowInHeight) {
-            this.width = width;
-            this.height = height;
-            this.doGrowInWidth = doGrowInWidth;
-            this.doGrowInHeight = doGrowInHeight;
-        }
     }
 }

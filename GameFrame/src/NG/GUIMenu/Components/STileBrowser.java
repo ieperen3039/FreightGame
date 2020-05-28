@@ -2,6 +2,7 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.LayoutManagers.LimitedVisibilityLayout;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
@@ -10,6 +11,7 @@ import org.joml.Vector2ic;
  */
 public class STileBrowser extends SContainer {
     private static final int SCROLL_BUTTON_WIDTH = 50;
+    private static final SComponentProperties BUTTON_PROPERTIES = new SComponentProperties(SCROLL_BUTTON_WIDTH, 0, false, true);
     private final STextComponent buttonFurther;
     private final STextComponent buttonBack;
     private LimitedVisibilityLayout layoutManager;
@@ -26,8 +28,8 @@ public class STileBrowser extends SContainer {
         super(layoutManager);
         this.layoutManager = layoutManager;
 
-        buttonBack = new SButton("<", () -> inc(-1), SCROLL_BUTTON_WIDTH, 0);
-        buttonFurther = new SButton(">", () -> inc(1), SCROLL_BUTTON_WIDTH, 0);
+        buttonBack = new SButton("<", () -> inc(-1), BUTTON_PROPERTIES);
+        buttonFurther = new SButton(">", () -> inc(1), BUTTON_PROPERTIES);
 
         for (SComponent elt : elements) {
             layoutManager.add(elt, null);

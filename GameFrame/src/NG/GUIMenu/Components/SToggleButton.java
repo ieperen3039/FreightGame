@@ -2,6 +2,7 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseReleaseListener;
 import org.joml.Vector2ic;
@@ -27,7 +28,7 @@ public class SToggleButton extends STextComponent implements MouseClickListener,
      * @param text the displayed text
      */
     public SToggleButton(String text) {
-        this(text, SButton.BUTTON_MIN_WIDTH, SButton.BUTTON_MIN_HEIGHT);
+        this(text, SButton.DEFAULT_MIN_WIDTH, SButton.DEFAULT_MIN_HEIGHT, false);
     }
 
     /**
@@ -46,13 +47,12 @@ public class SToggleButton extends STextComponent implements MouseClickListener,
 
     /**
      * Create a button with the given properties, starting disabled
-     * @param text      the displayed text
-     * @param minWidth  the minimal width of this buttion, which {@link NG.GUIMenu.LayoutManagers.SLayoutManager}s
-     *                  should respect
-     * @param minHeight the minimal height of this button.
+     * @param text the displayed text
      */
-    public SToggleButton(String text, int minWidth, int minHeight) {
-        this(text, minWidth, minHeight, false);
+    public SToggleButton(String text, SComponentProperties properties) {
+        super(text, properties);
+        this.state = false;
+        this.isPressed = false;
     }
 
     @Override

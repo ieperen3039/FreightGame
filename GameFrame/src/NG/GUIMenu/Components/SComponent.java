@@ -197,7 +197,7 @@ public abstract class SComponent {
         return dimensions.y;
     }
 
-    protected Vector2ic getSize() {
+    public Vector2ic getSize() {
         return dimensions;
     }
 

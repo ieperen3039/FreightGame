@@ -43,16 +43,16 @@ public class NewGameFrame extends SFrame implements Runnable {
         mainPanel.add(new SFiller(100, 100), new Vector2i(COLS - 1, ROWS - 1));
 
         // message
-        notice = new STextArea("Select which mods to load", 50);
+        notice = new STextArea("Select which mods to load", MainMenu.TEXT_PROPERTIES);
         mainPanel.add(notice, mpos.add(0, 1));
 
         // size selection
         SPanel sizeSelection = new SPanel(4, 1, false, false);
-        sizeSelection.add(new STextArea("Size", 0), new Vector2i(0, 0));
+        sizeSelection.add(new STextArea("Size", MainMenu.TEXT_PROPERTIES), new Vector2i(0, 0));
         this.game = game;
         xSizeSelector = new SDropDown(game.gui(), 0, "100", "200", "500", "1000");
         sizeSelection.add(xSizeSelector, new Vector2i(1, 0));
-        sizeSelection.add(new STextArea("X", 0), new Vector2i(2, 0));
+        sizeSelection.add(new STextArea("X", MainMenu.TEXT_PROPERTIES), new Vector2i(2, 0));
         ySizeSelector = new SDropDown(game.gui(), 1, "100", "200", "500", "1000");
         sizeSelection.add(ySizeSelector, new Vector2i(3, 0));
         mainPanel.add(sizeSelection, mpos.add(0, 1));
@@ -63,7 +63,7 @@ public class NewGameFrame extends SFrame implements Runnable {
         for (Mod mod : modList) {
             if (mod instanceof MapGeneratorMod) continue;
 
-            SToggleButton button = new SToggleButton(mod.getModName(), MainMenu.BUTTON_MIN_WIDTH, MainMenu.BUTTON_MIN_HEIGHT);
+            SToggleButton button = new SToggleButton(mod.getModName(), MainMenu.BUTTON_PROPERTIES);
             button.setGrowthPolicy(true, false);
             toggleList.add(button, mod);
             modPanel.add(button, pos.add(0, 1));
@@ -83,7 +83,7 @@ public class NewGameFrame extends SFrame implements Runnable {
 
         // generate button
         mainPanel.add(new SFiller(0, 50), mpos.add(0, 1));
-        SButton generate = new SButton("Generate", MainMenu.BUTTON_MIN_WIDTH, MainMenu.BUTTON_MIN_HEIGHT);
+        SButton generate = new SButton("Generate", MainMenu.BUTTON_PROPERTIES);
         mainPanel.add(generate, mpos.add(0, 1));
 
         setMainPanel(mainPanel);

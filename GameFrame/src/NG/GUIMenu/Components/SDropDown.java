@@ -1,8 +1,10 @@
 package NG.GUIMenu.Components;
 
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
+import NG.GUIMenu.Menu.MainMenu;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 import NG.InputHandling.MouseClickListener;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
@@ -40,26 +42,31 @@ public class SDropDown extends SComponent implements MouseClickListener {
      * @param values  a list of possible values for this dropdown menu
      */
     public SDropDown(FrameGUIManager gui, int initial, String... values) {
-        this(gui, 150, 50, initial, values);
-    }
-
-    /**
-     * create a dropdown menu with the given possible values
-     * @param gui       a reference to the gui in which this is displayed
-     * @param minWidth  the minimum width of the selection bar
-     * @param minHeight the minimum height of the selection bar
-     * @param initial   the initial selected item, such that {@code values[initial]} is shown
-     * @param values    a list of possible values for this dropdown menu
-     */
-    public SDropDown(FrameGUIManager gui, int minWidth, int minHeight, int initial, String... values) {
         this.values = values;
         this.current = initial;
-        this.minHeight = minHeight;
-        this.minWidth = minWidth;
+        this.minHeight = MainMenu.BUTTON_PROPERTIES.minHeight;
+        this.minWidth = MainMenu.BUTTON_PROPERTIES.minWidth;
         this.optionPane = new DropDownOptions(values);
         this.gui = gui;
 
         setGrowthPolicy(true, false);
+    }
+
+    /**
+     * create a dropdown menu with the given possible values
+     * @param gui     a reference to the gui in which this is displayed
+     * @param initial the initial selected item, such that {@code values[initial]} is shown
+     * @param values  a list of possible values for this dropdown menu
+     */
+    public SDropDown(FrameGUIManager gui, SComponentProperties properties, int initial, String... values) {
+        this.values = values;
+        this.current = initial;
+        this.optionPane = new DropDownOptions(values);
+        this.gui = gui;
+
+        this.minWidth = properties.minWidth;
+        this.minHeight = properties.minHeight;
+        setGrowthPolicy(properties.wantHzGrow, properties.wantVtGrow);
     }
 
     /**
@@ -69,18 +76,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
      * @param values a list of possible values for this dropdown menu
      */
     public SDropDown(FrameGUIManager gui, List<String> values) {
-        this(gui, 150, 50, values);
-    }
-
-    /**
-     * create a dropdown menu with the given possible values
-     * @param gui       a reference to the gui in which this is displayed
-     * @param minWidth  the minimum width of the selection bar
-     * @param minHeight the minimum height of the selection bar
-     * @param values    a list of possible values for this dropdown menu
-     */
-    public SDropDown(FrameGUIManager gui, int minWidth, int minHeight, List<String> values) {
-        this(gui, minWidth, minHeight, 0, values.toArray(new String[0]));
+        this(gui, 0, values.toArray(new String[0]));
     }
 
     /**

@@ -2,6 +2,7 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 import org.joml.Vector2ic;
 
 /**
@@ -24,11 +25,16 @@ public abstract class STextComponent extends SComponent {
     public STextComponent(
             String text, NGFonts.TextType textType, SFrameLookAndFeel.Alignment alignment, int width, int height
     ) {
-        this.minHeight = height;
+        this.text = text;
         this.minWidth = width;
+        this.minHeight = height;
         this.textType = textType;
-        setText(text);
         this.alignment = alignment;
+    }
+
+    public STextComponent(String text, SComponentProperties props) {
+        this(text, props.textType, props.alignment, props.minWidth, props.minHeight);
+        setGrowthPolicy(props.wantHzGrow, props.wantVtGrow);
     }
 
     @Override
@@ -41,6 +47,10 @@ public abstract class STextComponent extends SComponent {
         return minHeight;
     }
 
+    public void setXBorder(int minXBorder) {
+        this.minXBorder = minXBorder;
+    }
+
     public String getText() {
         return text;
     }
@@ -51,16 +61,21 @@ public abstract class STextComponent extends SComponent {
     }
 
     @Override
+    protected void doValidateLayout() {
+        super.doValidateLayout();
+    }
+
+    @Override
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
         String text = getText();
 
         if (textWidthIsInvalid) {
             invalidateLayout();
             textWidth = design.getTextWidth(text, textType);
-            validateLayout();
             textWidthIsInvalid = false;
-        }
 
-        design.drawText(screenPosition, getSize(), text, textType, alignment);
+        } else {
+            design.drawText(screenPosition, getSize(), text, textType, alignment);
+        }
     }
 }
