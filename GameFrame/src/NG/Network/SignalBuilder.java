@@ -5,6 +5,7 @@ import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.InputHandling.MouseTools.ToggleMouseTool;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Tracks.RailTools;
 import NG.Tracks.TrackPiece;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -29,7 +30,13 @@ public class SignalBuilder extends ToggleMouseTool {
                     assert trackPiece.isValid();
 
                     float fraction = getFraction(trackPiece, origin, direction);
-                    RailNode targetNode = getOrCreateNode(trackPiece, fraction, game);
+                    RailNode targetNode = getIfExisting(game, trackPiece, fraction);
+
+                    if (targetNode == null) {
+                        double gameTime = game.timer().getGameTime();
+                        targetNode = RailTools.createSplit(game, trackPiece, fraction, gameTime);
+                    }
+
                     targetNode.addSignal(game);
                 }
                 break;

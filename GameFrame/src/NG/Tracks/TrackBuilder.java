@@ -100,7 +100,12 @@ public class TrackBuilder extends ToggleMouseTool {
                     assert trackPiece.isValid() : trackPiece;
 
                     float fraction = getFraction(trackPiece, origin, direction);
-                    RailNode targetNode = getOrCreateNode(trackPiece, fraction, game);
+                    RailNode targetNode = getIfExisting(game, trackPiece, fraction);
+
+                    if (targetNode == null) {
+                        double gameTime = game.timer().getGameTime();
+                        targetNode = RailTools.createSplit(game, trackPiece, fraction, gameTime);
+                    }
 
                     if (firstNode == null) {
                         firstNode = targetNode;
@@ -127,15 +132,9 @@ public class TrackBuilder extends ToggleMouseTool {
                         Vector3fc fDirection = firstNode.getDirectionTo(closestPoint);
                         RailNode ghostNodeFirst = new RailNode(firstNode.getPosition(), ghostType, fDirection);
 
-                        RailNode ghostNodeTarget;
-                        if (game.keyControl().isControlPressed() || trackPiece.isStatic()) {
-                            if (fraction < 0.5f) {
-                                ghostNodeTarget = trackPiece.getStartNode();
-                            } else {
-                                ghostNodeTarget = trackPiece.getEndNode();
-                            }
+                        RailNode ghostNodeTarget = getIfExisting(game, trackPiece, fraction);
 
-                        } else {
+                        if (ghostNodeTarget == null) {
                             Vector3f dir = trackPiece.getDirectionFromFraction(fraction);
                             ghostNodeTarget = new RailNode(closestPoint, ghostType, dir);
                         }

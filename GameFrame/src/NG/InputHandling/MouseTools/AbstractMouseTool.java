@@ -9,7 +9,6 @@ import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Settings.Settings;
 import NG.Tools.Vectors;
-import NG.Tracks.RailTools;
 import NG.Tracks.TrackPiece;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
@@ -22,6 +21,7 @@ import static NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction.*;
  * @author Geert van Ieperen created on 24-4-2020.
  */
 public abstract class AbstractMouseTool implements MouseTool {
+    private static final float ENDNODE_SELECTION_MARGIN = 0.5f;
     protected Game game;
 
     private MouseReleaseListener releaseListener;
@@ -144,22 +144,23 @@ public abstract class AbstractMouseTool implements MouseTool {
         return fraction;
     }
 
-    protected static RailNode getOrCreateNode(TrackPiece trackPiece, float fraction, Game game) {
+    protected static RailNode getIfExisting(
+            Game game, TrackPiece trackPiece, float fraction
+    ) {
         if (game.keyControl().isControlPressed() || trackPiece.isStatic()) {
             if (fraction < 0.5f) {
                 return trackPiece.getStartNode();
             } else {
                 return trackPiece.getEndNode();
             }
-        } else if (fraction < 1 / 64f) {
+        } else if (fraction * trackPiece.getLength() < ENDNODE_SELECTION_MARGIN) {
             return trackPiece.getStartNode();
 
-        } else if (fraction > (1 - (1 / 64f))) {
+        } else if ((1 - fraction) * trackPiece.getLength() < ENDNODE_SELECTION_MARGIN) {
             return trackPiece.getEndNode();
 
         } else {
-            double gameTime = game.timer().getGameTime();
-            return RailTools.createSplit(game, trackPiece, fraction, gameTime);
+            return null;
         }
     }
 }
