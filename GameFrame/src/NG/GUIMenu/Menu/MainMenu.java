@@ -8,16 +8,18 @@ import NG.Entities.Entity;
 import NG.GUIMenu.Components.*;
 import NG.GameMap.MapGeneratorMod;
 import NG.GameMap.SimpleMapGenerator;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Mods.Mod;
+import NG.Network.NetworkNode;
+import NG.Network.RailNode;
 import NG.Settings.Settings;
+import NG.Tools.Logger;
 import NG.Tracks.TrackPiece;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author Geert van Ieperen. Created on 28-9-2018.
@@ -42,23 +44,22 @@ public class MainMenu extends SFrame {
         this.modLoader = modManager;
         topButtonPos = new Vector2i(1, -1);
         bottomButtonPos = new Vector2i(1, NUM_BUTTONS);
-        SContainer buttons = new SPanel(3, NUM_BUTTONS);
 
         newGameFrame = new NewGameFrame(game, modLoader);
 
         STextComponent newGame = new SButton("Start new game", this::showNewGame, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
-        buttons.add(newGame, onTop());
         STextComponent justStart = new SButton("Start Testworld", this::testWorld, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
-        buttons.add(justStart, onTop());
         STextComponent exitGame = new SButton("Exit game", terminateProgram, BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT);
-        buttons.add(exitGame, onBot());
 
-        Vector2i mid = onTop();
-        buttons.add(new SFiller(), new Vector2i(0, mid.y));
-        buttons.add(new SFiller(), new Vector2i(1, mid.y));
-        buttons.add(new SFiller(), new Vector2i(2, mid.y));
-
-        setMainPanel(buttons);
+        setMainPanel(SContainer.row(
+                new SFiller(),
+                SContainer.column(
+                        newGame,
+                        justStart,
+                        exitGame
+                ),
+                new SFiller()
+        ));
     }
 
     private void testWorld() {
@@ -97,27 +98,36 @@ public class MainMenu extends SFrame {
 
         toolBar.addButton( // TODO remove this debug option
                 "New Train",
-                () -> game.inputHandling().setMouseTool(new AbstractMouseTool(game) {
-                    @Override
-                    public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
-                        if (getMouseAction() == MouseAction.PRESS_ACTIVATE) {
-                            if (entity instanceof TrackPiece) {
-                                game.gui().addFrame(new TrainConstructionMenu(game, (TrackPiece) entity));
-                                game.inputHandling().setMouseTool(null);
-                            }
+                () -> game.inputHandling().setMouseTool(new EntityActionTool(
+                        game, e -> e instanceof TrackPiece,
+                        entity -> game.gui().addFrame(new TrainConstructionMenu(game, (TrackPiece) entity))
+                ))
+        );
 
-                        } else if (getMouseAction() == MouseAction.PRESS_DEACTIVATE) {
-                            game.inputHandling().setMouseTool(null);
-                        }
-                    }
+        toolBar.addButton("Dump Network", // find any networknode, and print getNetworkAsString
+                () -> game.state().entities().stream()
+                        .filter(e -> e instanceof TrackPiece)
+                        .map(e -> (TrackPiece) e)
+                        .filter(e -> !e.isDespawnedAt(game.timer().getGameTime()))
+                        .map(TrackPiece::getStartNode)
+                        .map(RailNode::getNetworkNode)
+                        .filter(NetworkNode::isNetworkCritical)
+                        .findAny()
+                        .ifPresentOrElse(
+                                n -> Logger.WARN.print(NetworkNode.getNetworkAsString(n)),
+                                () -> Logger.WARN.print("No network present")
+                        )
+        );
 
-                    @Override
-                    public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
-                        if (getMouseAction() == MouseAction.PRESS_DEACTIVATE) {
-                            game.inputHandling().setMouseTool(null);
-                        }
-                    }
-                })
+        toolBar.addButton("Check All", // checks the NetworkNodes of all track pieces
+                () -> game.state().entities().stream()
+                        .filter(e -> e instanceof TrackPiece)
+                        .map(e -> (TrackPiece) e)
+                        .filter(e -> !e.isDespawnedAt(game.timer().getGameTime()))
+                        .flatMap(t -> Stream.of(t.getStartNode(), t.getEndNode()))
+                        .distinct()
+                        .map(RailNode::getNetworkNode)
+                        .forEach(NetworkNode::check)
         );
 
         toolBar.addButton("Exit", () -> {
@@ -143,4 +153,5 @@ public class MainMenu extends SFrame {
     private Vector2i onBot() {
         return bottomButtonPos.sub(0, 1);
     }
+
 }

@@ -9,6 +9,8 @@ import NG.Rendering.Shapes.Primitives.Collision;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
+import java.util.Collection;
+
 /**
  * A collection of all entities in the world, all lights present in the world. Allows querying for specific objects and
  * collisions.
@@ -43,4 +45,6 @@ public interface GameState extends GameAspect {
      * @return true iff the click has been handled by this object
      */
     boolean checkMouseClick(MouseTool tool, int xSc, int ySc, Vector3f origin, Vector3f direction);
+
+    Collection<Entity> entities();
 }

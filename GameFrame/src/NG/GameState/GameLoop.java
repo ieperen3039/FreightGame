@@ -14,9 +14,7 @@ import NG.Rendering.Shapes.Primitives.Collision;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -123,7 +121,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     private void runCleaning() {
         entityWriteLock.lock();
         try {
-            entities.removeIf(entity -> entity.isDespawnedAt(game.timer().getGameTime()));
+            entities.removeIf(entity -> entity.isDespawnedAt(game.timer().getRenderTime()));
         } finally {
             entityWriteLock.unlock();
         }
@@ -136,6 +134,11 @@ public class GameLoop extends AbstractGameLoop implements GameState {
 
         tool.apply(entity, origin, direction);
         return true;
+    }
+
+    @Override
+    public Collection<Entity> entities() {
+        return Collections.unmodifiableList(entities);
     }
 
     @Override
