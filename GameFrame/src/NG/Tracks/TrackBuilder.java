@@ -5,6 +5,7 @@ import NG.DataStructures.Generic.Pair;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.InputHandling.MouseTools.ToggleMouseTool;
+import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Tools.Logger;
@@ -12,6 +13,9 @@ import NG.Tools.Vectors;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Geert van Ieperen created on 16-12-2018.
@@ -23,8 +27,7 @@ public class TrackBuilder extends ToggleMouseTool {
     private Vector3fc firstPosition;
 
     private final TrackTypeGhost ghostType;
-    private TrackPiece ghostTrack1;
-    private TrackPiece ghostTrack2;
+    private List<TrackPiece> ghostTracks = new CopyOnWriteArrayList<>();
 
     /**
      * this mousetool lets the player place a track by clicking on the map
@@ -59,12 +62,24 @@ public class TrackBuilder extends ToggleMouseTool {
                     Logger.DEBUG.print("Placing track from " + Vectors.toString(firstNode.getPosition()) +
                             " to " + Vectors.toString(liftedPosition));
 
-                    firstNode = RailTools.createNew(game, firstNode, liftedPosition);
+                    List<TrackPiece> tracks = RailTools.createNew(game, firstNode, liftedPosition);
+                    for (TrackPiece track : tracks) {
+                        NetworkNode.addConnection(track);
+                        game.state().addEntity(track);
+                    }
+
+                    firstNode = tracks.get(tracks.size() - 1).getEndNode();
 
                 } else if (firstPosition != null) {
-                    TrackPiece trackConnection = RailTools.createNew(game, type, firstPosition, liftedPosition);
+                    List<TrackPiece> tracks = RailTools.createNew(game, type, firstPosition, liftedPosition);
+                    for (TrackPiece track : tracks) {
+                        NetworkNode.addConnection(track);
+                        game.state().addEntity(track);
+                    }
+                    tracks.forEach(t -> {assert t.isValid() : t;});
+
                     firstPosition = null;
-                    firstNode = trackConnection.getEndNode();
+                    firstNode = tracks.get(tracks.size() - 1).getEndNode();
 
                 } else {
                     firstPosition = new Vector3f(liftedPosition);
@@ -75,16 +90,13 @@ public class TrackBuilder extends ToggleMouseTool {
                 clearGhostTracks();
 
                 if (firstNode != null) {
-                    Vector3fc dir = firstNode.getDirectionTo(liftedPosition);
-                    RailNode ghostNode = new RailNode(firstNode.getPosition(), ghostType, dir, null);
-                    ghostTrack1 = RailTools.getTrackPiece(
-                            game, ghostType, ghostNode, dir, liftedPosition
-                    );
+                    RailNode ghostNode = new RailNode(firstNode, ghostType);
+                    ghostTracks.addAll(RailTools.createNew(game, ghostNode, liftedPosition));
 
                 } else if (firstPosition != null) {
                     Vector3f toNode = new Vector3f(liftedPosition).sub(firstPosition);
                     RailNode ghostNode = new RailNode(firstPosition, ghostType, toNode, null);
-                    ghostTrack1 = new StraightTrack(game, ghostType, ghostNode, liftedPosition, true);
+                    ghostTracks.add(new StraightTrack(game, ghostType, ghostNode, liftedPosition, true));
                 }
             default:
         }
@@ -143,8 +155,10 @@ public class TrackBuilder extends ToggleMouseTool {
                                 game, ghostType, ghostNodeFirst, ghostNodeTarget
                         );
 
-                        ghostTrack1 = trackPieces.left;
-                        ghostTrack2 = trackPieces.right;
+                        ghostTracks.add(trackPieces.left);
+                        if (trackPieces.right != null) {
+                            ghostTracks.add(trackPieces.right);
+                        }
                     }
                 }
             default:
@@ -154,25 +168,18 @@ public class TrackBuilder extends ToggleMouseTool {
 
     public void clearGhostTracks() {
         double gameTime = game.timer().getGameTime();
-        if (ghostTrack1 != null) {
-            ghostTrack1.despawn(gameTime);
-            ghostTrack1 = null;
+        for (TrackPiece ghostTrack : ghostTracks) {
+            ghostTrack.despawn(gameTime);
         }
-        if (ghostTrack2 != null) {
-            ghostTrack2.despawn(gameTime);
-            ghostTrack2 = null;
-        }
+        ghostTracks.clear();
     }
 
     @Override
     public void draw(SGL gl) {
         super.draw(gl);
 
-        if (ghostTrack1 != null) {
-            ghostTrack1.draw(gl);
-        }
-        if (ghostTrack2 != null) {
-            ghostTrack2.draw(gl);
+        for (TrackPiece ghostTrack : ghostTracks) {
+            ghostTrack.draw(gl);
         }
     }
 

@@ -35,12 +35,12 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
 
     private final Resource<Mesh> mesh;
     private final Resource<Mesh> clickBox;
-    private final boolean isModifiable;
     private double despawnTime = Float.POSITIVE_INFINITY;
     private double spawnTime = Float.NEGATIVE_INFINITY;
 
     private boolean renderClickBox = false;
     private boolean isOccupied = false;
+    private final boolean isStatic;
 
     /**
      * @param game           the current game instance
@@ -76,7 +76,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         super(game);
         this.type = type;
         this.startNode = startNode;
-        this.isModifiable = modifiable;
+        this.isStatic = !modifiable;
 
         Vector3fc startPosition = startNode.getPosition();
         Vector2fc startPosFlat = new Vector2f(startPosition.x(), startPosition.y());
@@ -94,7 +94,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         radius = startToEnd.lengthSquared() / (2 * dot);
         startToCenter.normalize(radius);
 
-        center = new Vector3f(startPosFlat, startPosition.z()).add(startToCenter.x, startToCenter.y, 0);
+        center = new Vector3f(startPosition).add(startToCenter.x, startToCenter.y, 0);
 
         // dotOfCross = sd.cross(ste).dot(Z)
         float dotOfCross = startDirection.x() * startToEnd.y - startDirection.y() * startToEnd.x;
@@ -116,6 +116,40 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         clickBox = new GeneratorResource<>(() -> TrackType.clickBoxCircle(radius, angle, heightDiff), Mesh::dispose);
 
         this.endNode = (optionalEndNode != null) ? optionalEndNode : new RailNode(endPosition, type, angleToDirection(endTheta));
+    }
+
+    public CircleTrack(
+            Game game, Description desc, TrackType type, RailNode startNode, float heightDiff, boolean isStatic,
+            boolean isClockwise
+    ) {
+        super(game);
+        this.type = type;
+        this.startNode = startNode;
+        this.isStatic = isStatic;
+        this.heightDiff = heightDiff;
+
+        Vector3fc startPosition = startNode.getPosition();
+
+        this.center = new Vector3f(desc.center, startPosition.z());
+        this.angle = isClockwise ? -desc.angle : desc.angle;
+        this.radius = desc.radius;
+
+
+        Vector2fc vecToStart = new Vector2f(center.x(), center.y()).sub(startPosition.x(), startPosition.y());
+        float arcTan = Vectors.arcTan(vecToStart);
+        if (arcTan < 0) arcTan += 2 * Math.PI;
+
+        startTheta = arcTan;
+        endTheta = startTheta + angle;
+
+        mesh = new GeneratorResource<>(() -> type.generateCircle(radius, angle, heightDiff), Mesh::dispose);
+        clickBox = new GeneratorResource<>(() -> TrackType.clickBoxCircle(radius, angle, heightDiff), Mesh::dispose);
+
+        float dx = Math.cos(endTheta) * radius;
+        float dy = Math.sin(endTheta) * radius;
+        Vector3f endPosition = new Vector3f(center).add(dx, dy, heightDiff);
+
+        this.endNode = new RailNode(endPosition, type, angleToDirection(endTheta));
     }
 
     @Override
@@ -155,12 +189,14 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
 
     @Override
     public float getLength() {
-        return Math.abs(radius * angle);
+        float dx = Math.abs(radius * angle);
+        float dy = heightDiff;
+        return Math.sqrt(dx * dx + dy * dy);
     }
 
     @Override
     public boolean isStatic() {
-        return !isModifiable;
+        return isStatic;
     }
 
     @Override
@@ -200,7 +236,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         float dz = heightDiff / (radius * angle);
 
         if (!isClockwise()) {
-            return new Vector3f(-dx, -dy, -dz);
+            return new Vector3f(-dx, -dy, dz);
         } else {
             return new Vector3f(dx, dy, dz);
         }
@@ -262,6 +298,50 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     @Override
     public String toString() {
         return "CircleTrack{center=" + Vectors.toString(center) + ", radius=" + radius + ", angle=" + angle + "}";
+    }
+
+    public static Description getCircleDescription(Vector3fc startDir, Vector3fc startPos, Vector3fc endPos) {
+        return getCircleDescription(
+                new Vector2f(startDir.x(), startDir.y()),
+                new Vector2f(startPos.x(), startPos.y()),
+                new Vector2f(endPos.x(), endPos.y())
+        );
+    }
+
+    public static Description getCircleDescription(Vector2fc startDir, Vector2fc startPos, Vector2fc endPos) {
+        Vector2f startToCenter = new Vector2f(startDir.y(), -startDir.x()).normalize();
+        Vector2fc startToEnd = new Vector2f(endPos).sub(startPos);
+        float dot = startToEnd.dot(startToCenter);
+        if (dot < 0) { // center is on the wrong side of the direction
+            startToCenter.negate();
+            dot = -dot;
+        }
+
+        // derivation: see bottom
+        float radius = startToEnd.lengthSquared() / (2 * dot);
+        startToCenter.normalize(radius);
+
+        Vector2fc center = new Vector2f(startPos).add(startToCenter);
+        Vector2fc vecToStart = startToCenter.negate();
+        Vector2fc vecToEnd = new Vector2f(endPos).sub(center);
+
+        float absAngle = Vectors.angle(vecToStart, vecToEnd);
+        if (startToEnd.dot(startDir) < 0) {
+            absAngle = (float) (2 * Math.PI - absAngle);
+        }
+        return new Description(center, absAngle, radius);
+    }
+
+    public static class Description {
+        public final Vector2fc center;
+        public final float angle;
+        public final float radius;
+
+        public Description(Vector2fc center, float angle, float radius) {
+            this.center = center;
+            this.angle = angle;
+            this.radius = radius;
+        }
     }
 }
 

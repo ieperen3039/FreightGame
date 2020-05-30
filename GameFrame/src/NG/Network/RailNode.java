@@ -3,6 +3,7 @@ package NG.Network;
 import NG.Core.Game;
 import NG.Tools.Vectors;
 import NG.Tracks.TrackType;
+import NG.Tracks.TrackTypeGhost;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -42,19 +43,21 @@ public class RailNode {
             Vector3fc nodePoint, TrackType type, Vector3fc direction, NetworkNode networkNode
     ) {
         this.position = new Vector3f(nodePoint);
-        this.direction = new Vector3f(direction);
+        this.direction = new Vector3f(direction).normalize();
         this.type = type;
         this.networkNode = networkNode;
     }
 
-    public TrackType getType() {
-        return type;
+    public RailNode(RailNode source, TrackTypeGhost newType) {
+        this.position = source.position;
+        this.direction = source.direction;
+        this.type = newType;
+        this.networkNode = source.networkNode;
+        this.signal = null;
     }
 
-    public Vector3fc getDirectionTo(Vector3fc point) {
-        Vector3f thisToOther = new Vector3f(point).sub(position);
-        boolean isSameDirection = thisToOther.dot(direction) > 0;
-        return isSameDirection ? direction : new Vector3f(direction).negate();
+    public TrackType getType() {
+        return type;
     }
 
     public Vector3fc getPosition() {
@@ -63,6 +66,21 @@ public class RailNode {
 
     public Vector3fc getDirection() {
         return direction;
+    }
+
+    public Vector3fc getDirectionTo(Vector3fc point) {
+        Vector3f thisToOther = new Vector3f(point).sub(position);
+        boolean isSameDirection = thisToOther.dot(direction) > 0;
+        return isSameDirection ? direction : new Vector3f(direction).negate();
+    }
+
+    /**
+     * @return if {@link #getNetworkNode()}{@link NetworkNode#isEnd() .isEnd()}, returns the direction vector in the
+     * empty direction. Otherwise return null
+     */
+    public Vector3fc getOpenDirection() {
+        if (!networkNode.isEnd()) return null;
+        return networkNode.aDirection.isEmpty() ? direction : new Vector3f(direction).negate();
     }
 
     @Override
