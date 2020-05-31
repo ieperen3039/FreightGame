@@ -20,7 +20,7 @@
     "CupWagon": {
       "length": 1.0,
       // in units (~10 meters)
-      "mass": 0.1,
+      "mass": 0.5,
       // in kg
       "railtypes": ["Debug Tracks"],
       "mesh": "WagonCup.ply",

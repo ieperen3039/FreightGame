@@ -69,7 +69,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
             }
         }
 
-        positionEngine.setForceFunction(totalTractiveEffort, totalMass, totalR1, totalR2);
+        positionEngine.setForceFunction(totalTractiveEffort, totalMass, totalR1, totalR2, 1);
     }
 
     @Override
@@ -171,14 +171,11 @@ public class Train extends AbstractGameObject implements MovingEntity {
             setMainPanel(SContainer.column(
                     new SInteractiveTextArea(() -> currentTarget == null ? "No schedule" : "Now heading for " + currentTarget.element, 50),
                     new SInteractiveTextArea(() -> String.format("Speed: %6.02f", positionEngine.getSpeed()), 50),
-                    new SButton("Reverse", this::reverse),
+                    new SButton("Start", () -> positionEngine.setAcceleration(1f)),
+                    new SButton("Reverse", () -> positionEngine.reverse(getLength())),
                     new SButton("Schedule", () -> game.gui().addFrame(schedule.getUI(game)))
             ));
         }
 
-        private void reverse() {
-            positionEngine.reverse(getLength());
-            positionEngine.setAcceleration(1f);
-        }
     }
 }
