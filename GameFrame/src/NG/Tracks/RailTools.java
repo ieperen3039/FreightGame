@@ -9,6 +9,7 @@ import org.joml.Math;
 import org.joml.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,97 +25,156 @@ public final class RailTools {
 
     /**
      * creates two nodes that are only connected together with a straight piece of track.
-     * @param game      the current game instance
-     * @param type      the type of track
-     * @param aPosition one position of the map
-     * @param bPosition another position on the map
+     * @param game           the current game instance
+     * @param type           the type of track
+     * @param aPosition      one position of the map
+     * @param bPosition      another position on the map
+     * @param signalDistance
      * @return a {@link StraightTrack} piece that connects the
      */
-    public static List<TrackPiece> createNew(Game game, TrackType type, Vector3fc aPosition, Vector3fc bPosition) {
+    public static List<TrackPiece> createNew(
+            Game game, TrackType type, Vector3fc aPosition, Vector3fc bPosition, float signalDistance
+    ) {
         Vector3f sub = new Vector3f(bPosition).sub(aPosition);
-        return getStraightPieces(game, new RailNode(aPosition, type, sub), bPosition);
+        return getStraightPieces(game, new RailNode(aPosition, type, sub), bPosition, null, signalDistance, 0);
     }
 
     /**
      * connect a NetworkNode to a new node created at the given position
-     * @param game        the game instance
-     * @param node        the node to connect
-     * @param newPosition the position of the new node
+     * @param game           the game instance
+     * @param node           the node to connect
+     * @param newPosition    the position of the new node
+     * @param signalDistance
      * @return the new node
      */
-    public static List<TrackPiece> createNew(Game game, RailNode node, Vector3fc newPosition) {
+    public static List<TrackPiece> createNew(Game game, RailNode node, Vector3fc newPosition, float signalDistance) {
         Vector3fc nodePosition = node.getPosition();
         Vector3f toNew = new Vector3f(newPosition).sub(nodePosition).normalize();
 
-        NetworkNode firstNetwork = node.getNetworkNode();
-        Vector3fc nodeDirection = firstNetwork.isEnd() ? node.getOpenDirection() : node.getDirectionTo(newPosition);
+        NetworkNode networkNode = node.getNetworkNode();
+        Vector3fc nodeDirection = networkNode.isEnd() ? node.getOpenDirection() : node.getDirectionTo(newPosition);
         Vector3fc nodeDirNorm = new Vector3f(nodeDirection).normalize();
         float dot = toNew.x * nodeDirNorm.x() + toNew.y * nodeDirNorm.y();
 
+        Vector3f antiDirection = new Vector3f(nodeDirection).negate();
+        List<NetworkNode.Direction> predecessors = node.getEntriesFromDirection(antiDirection);
+        float distanceToSignal = getShortestDistanceToSignal(node, predecessors);
+
+        float offset = Math.max(signalDistance - distanceToSignal, 0);
+        // shortest > 0 hence 0 <= offset <= MAX_TRACK_LENGTH
+
         if (Math.abs(dot) > STRAIGHT_DOT_LIMIT) {
-            return getStraightPieces(game, node, newPosition);
+            return getStraightPieces(game, node, newPosition, null, signalDistance, offset);
         } else {
-            return getCirclePieces(game, node, nodeDirection, newPosition);
+            return getCirclePieces(game, node, nodeDirection, newPosition, null, signalDistance, offset);
         }
     }
 
-    private static List<TrackPiece> getStraightPieces(Game game, RailNode node, Vector3fc bPosition) {
-        Vector3f AToB = new Vector3f(bPosition).sub(node.getPosition());
-        float totalLength = AToB.length();
-        assert totalLength > 0;
-        List<TrackPiece> tracks = new ArrayList<>();
-        Vector3f localStartPos = new Vector3f(node.getPosition());
-        AToB.normalize(MAX_TRACK_LENGTH);
+    private static float getShortestDistanceToSignal(RailNode node, List<NetworkNode.Direction> list) {
+        float shortest = Float.POSITIVE_INFINITY;
+        for (NetworkNode.Direction entry : list) {
+            TrackPiece trackPiece = entry.trackPiece;
 
-        int maxItr = (int) (totalLength / MAX_TRACK_LENGTH);
-        for (int i = 0; i <= maxItr; i++) {
-            if (i == maxItr) {
-                AToB.normalize(totalLength - i * MAX_TRACK_LENGTH);
+            RailNode other = trackPiece.getNot(node);
+            float length = trackPiece.getLength();
+
+            if (!other.hasSignal()) {
+                List<NetworkNode.Direction> next = other.getNetworkNode().getNext(trackPiece);
+                length += getShortestDistanceToSignal(other, next);
             }
 
-            TrackPiece trackConnection = new StraightTrack(game, node.getType(), node, localStartPos.add(AToB), true);
-            node = trackConnection.getEndNode();
-            tracks.add(trackConnection);
+            if (length < shortest) {
+                shortest = length;
+            }
         }
+
+        return shortest;
+    }
+
+    private static List<TrackPiece> getStraightPieces(
+            Game game, RailNode node, Vector3fc endPosition, RailNode endNode, float spacing, float offset
+    ) {
+        assert offset >= 0;
+        assert offset < spacing;
+        if (offset == 0) offset = spacing; // prevent zero-length tracks
+        List<TrackPiece> tracks = new ArrayList<>();
+
+        Vector3f AToB = new Vector3f(endPosition).sub(node.getPosition());
+        float totalLength = AToB.length();
+        assert totalLength > 0;
+        Vector3f localStartPos = new Vector3f(node.getPosition());
+
+        if (totalLength < offset) { // => maxItr < 1
+            if (endNode == null) {
+                tracks.add(new StraightTrack(game, node.getType(), node, endPosition, true));
+            } else {
+                tracks.add(new StraightTrack(game, node.getType(), node, endNode, true));
+            }
+            return tracks;
+        }
+
+        AToB.normalize(offset);
+        int maxItr = (int) ((totalLength - offset) / spacing) + 1;
+        for (int i = 0; i <= maxItr; i++) {
+            if (i == maxItr) {
+                if (endNode == null) {
+                    tracks.add(new StraightTrack(game, node.getType(), node, endPosition, true));
+                } else {
+                    tracks.add(new StraightTrack(game, node.getType(), node, endNode, true));
+                }
+
+            } else if (i == 1) {
+                AToB.normalize(spacing);
+                TrackPiece trackConnection = new StraightTrack(game, node.getType(), node, localStartPos.add(AToB), true);
+                node = trackConnection.getEndNode();
+                tracks.add(trackConnection);
+            }
+        }
+
         return tracks;
     }
 
     private static List<TrackPiece> getCirclePieces(
-            Game game, RailNode node, Vector3fc nodeDirection, Vector3fc position
+            Game game, RailNode node, Vector3fc nodeDirection, Vector3fc endPosition, RailNode endNode,
+            float spacing, float offset
     ) {
-        Vector3fc nodePosition = node.getPosition();
-        Vector3f direction = new Vector3f(nodeDirection);
-        float baseHeight = nodePosition.z();
-        float heightDiff = baseHeight - position.z();
+        assert offset >= 0;
+        assert offset < spacing;
+        if (offset == 0) offset = spacing; // prevent zero-length tracks
+        List<TrackPiece> tracks = new ArrayList<>();
 
-        CircleTrack.Description circle = CircleTrack.getCircleDescription(direction, nodePosition, position);
-        float sectionAngle = Math.min(MAX_TRACK_LENGTH / circle.radius, MAX_CIRCLE_ANGLE_RAD);
+        Vector3fc nodePosition = node.getPosition();
+        float baseHeight = nodePosition.z();
+        float heightDiff = baseHeight - endPosition.z();
+
+        Vector2f startToEnd = new Vector2f(endPosition.x() - nodePosition.x(), endPosition.y() - nodePosition.y());
+        float dotOfCross = nodeDirection.x() * startToEnd.y - nodeDirection.y() * startToEnd.x;
+        boolean isClockwise = dotOfCross < 0;
+
+        CircleTrack.Description circle = CircleTrack.getCircleDescription(nodePosition, nodeDirection, endPosition);
+        float offsetAngle = offset / circle.radius;
+
+        if (offsetAngle > circle.angle) {
+            if (endNode == null) {
+                tracks.add(new CircleTrack(game, node.getType(), node, nodeDirection, endPosition));
+            } else {
+                tracks.add(new CircleTrack(game, node.getType(), node, nodeDirection, endNode));
+            }
+            return tracks;
+        }
+
+        float sectionAngle = Math.min(spacing / circle.radius, MAX_CIRCLE_ANGLE_RAD);
         Vector2fc vecToStart = new Vector2f(nodePosition.x(), nodePosition.y()).sub(circle.center);
         float arcTan = Vectors.arcTan(vecToStart);
         if (arcTan < 0) arcTan += 2 * Math.PI;
         float startTheta = arcTan;
 
-        Vector2f startToEnd = new Vector2f(position.x() - nodePosition.x(), position.y() - nodePosition.y());
-        float dotOfCross = direction.x() * startToEnd.y - direction.y() * startToEnd.x;
-        boolean isClockwise = dotOfCross < 0;
-
-        List<TrackPiece> tracks = new ArrayList<>();
-
-        int maxItr = (int) (circle.angle / sectionAngle) + 1;
-
+        int maxItr = (int) ((circle.angle - offsetAngle) / sectionAngle) + 1;
         float nextAngle = startTheta;
+        Vector3f direction = new Vector3f(nodeDirection);
 
-        for (int i = 1; i <= maxItr; i++) {
+        for (int i = 0; i <= maxItr; i++) {
             float currentAngle = nextAngle;
-            float nextAngleDelta = (i == maxItr) ? circle.angle : i * sectionAngle;
-            nextAngle = isClockwise ? startTheta - nextAngleDelta : startTheta + nextAngleDelta;
-
-            float vx = Math.cos(nextAngle) * circle.radius;
-            float vy = Math.sin(nextAngle) * circle.radius;
-            float vz = (nextAngleDelta / circle.angle) * heightDiff;
-
-            Vector3f localEndPos = new Vector3f(circle.center, baseHeight).add(vx, vy, vz);
-
             float dx = -Math.sin(currentAngle);
             float dy = Math.cos(currentAngle);
             float dz = heightDiff / (circle.radius * circle.angle);
@@ -124,38 +184,32 @@ public final class RailTools {
                 direction.set(dx, dy, dz);
             }
 
-            TrackPiece trackConnection = new CircleTrack(game, node.getType(), node, direction, localEndPos);
-            node = trackConnection.getEndNode();
+            float nextAngleOffset = offsetAngle + i * sectionAngle;
+
+            TrackPiece trackConnection;
+
+            if (nextAngleOffset > circle.angle) {
+                if (endNode != null) {
+                    trackConnection = new CircleTrack(game, node.getType(), node, direction, endNode);
+                } else {
+                    trackConnection = new CircleTrack(game, node.getType(), node, direction, endPosition);
+                }
+
+            } else {
+                nextAngle = isClockwise ? startTheta - nextAngleOffset : startTheta + nextAngleOffset;
+
+                float vx = Math.cos(nextAngle) * circle.radius;
+                float vy = Math.sin(nextAngle) * circle.radius;
+                float vz = (nextAngleOffset / circle.angle) * heightDiff;
+
+                Vector3f localEndPos = new Vector3f(circle.center, baseHeight).add(vx, vy, vz);
+                trackConnection = new CircleTrack(game, node.getType(), node, direction, localEndPos);
+                node = trackConnection.getEndNode();
+            }
 
             tracks.add(trackConnection);
         }
         return tracks;
-    }
-
-    /**
-     * connects the given two nodes together by means of a single straight track and a single circle track. The tracks
-     * are added to the game state, and the new node inbetween is returned.
-     * @param game  the game instance
-     * @param aNode one node to connect
-     * @param bNode another node to connect
-     * @return the node that had to be created to connect the two nodes.
-     */
-    public static RailNode createConnection(Game game, RailNode aNode, RailNode bNode) {
-        Pair<TrackPiece, TrackPiece> trackPieces = getTrackPiece(
-                game, aNode.getType(), aNode, bNode
-        );
-
-        NetworkNode.addConnection(trackPieces.left);
-        game.state().addEntity(trackPieces.left);
-        assert trackPieces.left.isValid() : trackPieces.left;
-
-        if (trackPieces.right != null) {
-            NetworkNode.addConnection(trackPieces.right);
-            game.state().addEntity(trackPieces.right);
-            assert trackPieces.right.isValid() : trackPieces.right;
-        }
-
-        return trackPieces.left.getNot(aNode);
     }
 
     public static RailNode createSplit(Game game, TrackPiece trackPiece, float fraction, double gameTime) {
@@ -210,22 +264,32 @@ public final class RailTools {
                 "Nodes were connected with double tracks: " + oldPiece + " and " + trackPiece;
 
         trackPiece.despawn(gameTime);
+
+        if (!aNode.isConnected() && aNode.hasSignal()) {
+            aNode.getSignal().despawn(gameTime);
+        }
+
+        if (!bNode.isConnected() && bNode.hasSignal()) {
+            bNode.getSignal().despawn(gameTime);
+        }
     }
 
     /**
      * factory method for creating two track pieces connecting two directional nodes
-     * @param game  the game instance
-     * @param type  the track type
-     * @param aNode an existing node A
-     * @param bNode an existing node B
+     * @param game           the game instance
+     * @param aNode          an existing node A
+     * @param bNode          an existing node B
+     * @param signalDistance
      * @return two track pieces: Left starts in A, right starts in B. If one piece can connect A and B, then left is
      * that track and B is null.
      * @see StraightTrack
      * @see CircleTrack
      */
-    public static Pair<TrackPiece, TrackPiece> getTrackPiece(
-            Game game, TrackType type, RailNode aNode, RailNode bNode
+    public static Pair<List<TrackPiece>, List<TrackPiece>> createConnection(
+            Game game, RailNode aNode, RailNode bNode, float signalDistance
     ) {
+        assert aNode.getType() == bNode.getType();
+
         Vector3fc bPos = bNode.getPosition();
         Vector3fc aPos = aNode.getPosition();
         Vector3fc aDirection = aNode.getDirectionTo(bPos);
@@ -251,23 +315,41 @@ public final class RailTools {
         float bDistance = intersect.distance(bPos.x(), bPos.y());
         float aDistance = intersect.distance(aPos.x(), aPos.y());
 
+        // get initial offset
+        Vector3f antiDirection = new Vector3f(aDirection).negate();
+        List<NetworkNode.Direction> predecessors = aNode.getEntriesFromDirection(antiDirection);
+        float distanceToSignal = getShortestDistanceToSignal(aNode, predecessors);
+        float offset = Math.max(signalDistance - distanceToSignal, 0);
+
         if (!doesIntersect || aDistance == bDistance) {
-            return new Pair<>(
-                    new CircleTrack(game, type, aNode, aNode.getDirectionTo(bPos), bNode),
-                    null
-            );
+            List<TrackPiece> pieces = getCirclePieces(game, aNode, aDirection, bPos, bNode, signalDistance, offset);
+            return new Pair<>(pieces, Collections.emptyList());
+
         } else if (aDistance > bDistance) {
             // situation: connect straight to A and circle to B
             Vector3f middle = getMiddlePosition(aDirection, bDirection, aPos, bPos, aDistance, bDistance);
-            StraightTrack straightTrack = new StraightTrack(game, type, aNode, middle, true);
-            CircleTrack circleTrack = new CircleTrack(game, type, bNode, bDirection, straightTrack.getNot(aNode));
-            return new Pair<>(straightTrack, circleTrack);
+            List<TrackPiece> straightPieces = getStraightPieces(game, aNode, middle, null, signalDistance, offset);
+            TrackPiece lastPiece = straightPieces.get(straightPieces.size() - 1);
+
+            RailNode middleNode = lastPiece.getEndNode();
+            List<TrackPiece> circlePieces = getCirclePieces(
+                    game, middleNode, aDirection, bPos, bNode, signalDistance, lastPiece.getLength()
+            );
+
+            return new Pair<>(straightPieces, circlePieces);
 
         } else {
             Vector3f middle = getMiddlePosition(bDirection, aDirection, bPos, aPos, bDistance, aDistance);
-            StraightTrack straightTrack = new StraightTrack(game, type, bNode, middle, true);
-            CircleTrack circleTrack = new CircleTrack(game, type, aNode, aDirection, straightTrack.getNot(bNode));
-            return new Pair<>(circleTrack, straightTrack);
+            List<TrackPiece> circlePieces = getCirclePieces(game, aNode, aDirection, middle, null, signalDistance, offset);
+            TrackPiece lastPiece = circlePieces.get(circlePieces.size() - 1);
+
+            RailNode middleNode = lastPiece.getEndNode();
+            List<TrackPiece> straightPieces = getStraightPieces(
+                    game, middleNode, bPos, bNode, signalDistance, lastPiece.getLength()
+            );
+
+            circlePieces.addAll(straightPieces);
+            return new Pair<>(circlePieces, straightPieces);
         }
     }
 
@@ -281,8 +363,7 @@ public final class RailTools {
 
         // remainder is purely to calculate circle length to compute the height of the middle
         CircleTrack.Description circle = CircleTrack.getCircleDescription(
-                new Vector2f(circleDir.x(), circleDir.y()),
-                new Vector2f(circlePos.x(), circlePos.y()),
+                new Vector2f(circlePos.x(), circlePos.y()), new Vector2f(circleDir.x(), circleDir.y()),
                 middlePoint
         );
 
@@ -295,5 +376,4 @@ public final class RailTools {
 
         return new Vector3f(middlePoint, middleA);
     }
-
 }

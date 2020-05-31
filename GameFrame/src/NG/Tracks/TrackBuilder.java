@@ -28,6 +28,7 @@ public class TrackBuilder extends ToggleMouseTool {
 
     private final TrackTypeGhost ghostType;
     private List<TrackPiece> ghostTracks = new CopyOnWriteArrayList<>();
+    private float signalDistance = 10f;
 
     /**
      * this mousetool lets the player place a track by clicking on the map
@@ -62,24 +63,17 @@ public class TrackBuilder extends ToggleMouseTool {
                     Logger.DEBUG.print("Placing track from " + Vectors.toString(firstNode.getPosition()) +
                             " to " + Vectors.toString(liftedPosition));
 
-                    List<TrackPiece> tracks = RailTools.createNew(game, firstNode, liftedPosition);
-                    for (TrackPiece track : tracks) {
-                        NetworkNode.addConnection(track);
-                        game.state().addEntity(track);
-                    }
-
-                    firstNode = tracks.get(tracks.size() - 1).getEndNode();
+                    List<TrackPiece> tracks = RailTools.createNew(game, firstNode, liftedPosition, signalDistance);
+                    TrackPiece lastTrack = processTracksReturnLast(game, tracks, signalDistance);
+                    firstNode = lastTrack.getEndNode();
 
                 } else if (firstPosition != null) {
-                    List<TrackPiece> tracks = RailTools.createNew(game, type, firstPosition, liftedPosition);
-                    for (TrackPiece track : tracks) {
-                        NetworkNode.addConnection(track);
-                        game.state().addEntity(track);
-                    }
-                    tracks.forEach(t -> {assert t.isValid() : t;});
+
+                    List<TrackPiece> tracks = RailTools.createNew(game, type, firstPosition, liftedPosition, signalDistance);
+                    TrackPiece lastTrack = processTracksReturnLast(game, tracks, signalDistance);
+                    firstNode = lastTrack.getEndNode();
 
                     firstPosition = null;
-                    firstNode = tracks.get(tracks.size() - 1).getEndNode();
 
                 } else {
                     firstPosition = new Vector3f(liftedPosition);
@@ -91,7 +85,8 @@ public class TrackBuilder extends ToggleMouseTool {
 
                 if (firstNode != null) {
                     RailNode ghostNode = new RailNode(firstNode, ghostType);
-                    ghostTracks.addAll(RailTools.createNew(game, ghostNode, liftedPosition));
+                    List<TrackPiece> tracks = RailTools.createNew(game, ghostNode, liftedPosition, signalDistance);
+                    ghostTracks.addAll(tracks);
 
                 } else if (firstPosition != null) {
                     Vector3f toNode = new Vector3f(liftedPosition).sub(firstPosition);
@@ -100,6 +95,31 @@ public class TrackBuilder extends ToggleMouseTool {
                 }
             default:
         }
+    }
+
+    /**
+     * adds connections between all track nodes, and adds all tracks to the game state. Adds a signal to all nodes
+     * strictly between the tracks, and returns the last node.
+     */
+    private static TrackPiece processTracksReturnLast(Game game, List<TrackPiece> tracks, float signalDistance) {
+        int lastIndex = tracks.size() - 1;
+
+        TrackPiece firstTrack = tracks.get(0);
+        if (firstTrack.getLength() >= signalDistance + 1 / 128f) {
+            firstTrack.getStartNode().addSignal(game);
+        }
+
+        for (int i = 0; i < lastIndex; i++) {
+            TrackPiece track = tracks.get(i);
+            NetworkNode.addConnection(track);
+            game.state().addEntity(track);
+            track.getEndNode().addSignal(game);
+        }
+
+        TrackPiece lastTrack = tracks.get(lastIndex);
+        NetworkNode.addConnection(lastTrack);
+        game.state().addEntity(lastTrack);
+        return lastTrack;
     }
 
     @Override
@@ -123,7 +143,11 @@ public class TrackBuilder extends ToggleMouseTool {
                         firstNode = targetNode;
 
                     } else {
-                        RailTools.createConnection(game, firstNode, targetNode);
+                        Pair<List<TrackPiece>, List<TrackPiece>> connection =
+                                RailTools.createConnection(game, firstNode, targetNode, signalDistance);
+                        processTracksReturnLast(game, connection.left, signalDistance);
+                        processTracksReturnLast(game, connection.right, signalDistance);
+
                         firstNode = null;
                     }
                 }
@@ -141,24 +165,24 @@ public class TrackBuilder extends ToggleMouseTool {
                         // mark
 
                     } else {
-                        Vector3fc fDirection = firstNode.getDirectionTo(closestPoint);
-                        RailNode ghostNodeFirst = new RailNode(firstNode.getPosition(), ghostType, fDirection);
+                        RailNode ghostNodeFirst = new RailNode(firstNode, ghostType);
 
                         RailNode ghostNodeTarget = getIfExisting(game, trackPiece, fraction);
 
                         if (ghostNodeTarget == null) {
                             Vector3f dir = trackPiece.getDirectionFromFraction(fraction);
                             ghostNodeTarget = new RailNode(closestPoint, ghostType, dir);
+
+                        } else {
+                            // make it a ghost type
+                            ghostNodeTarget = new RailNode(ghostNodeTarget, ghostType);
                         }
 
-                        Pair<TrackPiece, TrackPiece> trackPieces = RailTools.getTrackPiece(
-                                game, ghostType, ghostNodeFirst, ghostNodeTarget
-                        );
+                        Pair<List<TrackPiece>, List<TrackPiece>> connection =
+                                RailTools.createConnection(game, ghostNodeFirst, ghostNodeTarget, signalDistance);
 
-                        ghostTracks.add(trackPieces.left);
-                        if (trackPieces.right != null) {
-                            ghostTracks.add(trackPieces.right);
-                        }
+                        ghostTracks.addAll(connection.left);
+                        ghostTracks.addAll(connection.right);
                     }
                 }
             default:

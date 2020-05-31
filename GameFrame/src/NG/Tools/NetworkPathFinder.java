@@ -21,7 +21,7 @@ public class NetworkPathFinder implements Callable<List<NetworkNode>> {
 
         this.targets = target.getNodes();
         this.startNode = nextNode;
-        this.startPredecessor = nextNode.getEntryOf(currentTrack).networkNode;
+        this.startPredecessor = nextNode.getEntryOf(currentTrack).network;
     }
 
     @Override
@@ -70,7 +70,7 @@ public class NetworkPathFinder implements Callable<List<NetworkNode>> {
             float nodeDistance = distanceMap.get(node);
 
             for (NetworkNode.Direction entry : next) {
-                NetworkNode nextNode = entry.networkNode;
+                NetworkNode nextNode = entry.network;
                 if (nextNode == null) continue; // empty dead end
                 if (nextNode == node) continue; // self-loop
 

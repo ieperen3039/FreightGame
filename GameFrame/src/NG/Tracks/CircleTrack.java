@@ -119,13 +119,12 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     }
 
     public CircleTrack(
-            Game game, Description desc, TrackType type, RailNode startNode, float heightDiff, boolean isStatic,
-            boolean isClockwise
+            Game game, Description desc, TrackType type, RailNode startNode, float heightDiff, boolean isClockwise
     ) {
         super(game);
         this.type = type;
         this.startNode = startNode;
-        this.isStatic = isStatic;
+        this.isStatic = false;
         this.heightDiff = heightDiff;
 
         Vector3fc startPosition = startNode.getPosition();
@@ -300,15 +299,25 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         return "CircleTrack{center=" + Vectors.toString(center) + ", radius=" + radius + ", angle=" + angle + "}";
     }
 
-    public static Description getCircleDescription(Vector3fc startDir, Vector3fc startPos, Vector3fc endPos) {
+    /** @see #getCircleDescription(Vector2fc, Vector2fc, Vector2fc) */
+    public static Description getCircleDescription(Vector3fc startPos, Vector3fc startDir, Vector3fc endPos) {
         return getCircleDescription(
-                new Vector2f(startDir.x(), startDir.y()),
                 new Vector2f(startPos.x(), startPos.y()),
+                new Vector2f(startDir.x(), startDir.y()),
                 new Vector2f(endPos.x(), endPos.y())
         );
     }
 
-    public static Description getCircleDescription(Vector2fc startDir, Vector2fc startPos, Vector2fc endPos) {
+    /**
+     * computes circle parameters in the same way as {@link #CircleTrack(Game, TrackType, RailNode, Vector3fc,
+     * Vector3fc)}.
+     * @param startPos point A
+     * @param startDir the direction in point A
+     * @param endPos   point B
+     * @return a center, and radius that cuts A with direction startDir, and B. The absolute angle of the circle piece
+     * is also given.
+     */
+    public static Description getCircleDescription(Vector2fc startPos, Vector2fc startDir, Vector2fc endPos) {
         Vector2f startToCenter = new Vector2f(startDir.y(), -startDir.x()).normalize();
         Vector2fc startToEnd = new Vector2f(endPos).sub(startPos);
         float dot = startToEnd.dot(startToCenter);

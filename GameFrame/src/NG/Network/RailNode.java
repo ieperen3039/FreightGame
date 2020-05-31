@@ -7,6 +7,8 @@ import NG.Tracks.TrackTypeGhost;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
+import java.util.List;
+
 /**
  * A node that connects two track pieces together
  * @author Geert van Ieperen created on 16-12-2018.
@@ -103,5 +105,14 @@ public class RailNode {
 
     public boolean hasSignal() {
         return signal != null;
+    }
+
+    public List<NetworkNode.Direction> getEntriesFromDirection(Vector3fc nodeDirection) {
+        boolean isInDirection = getDirection().dot(nodeDirection) > 0;
+        return isInDirection ? networkNode.aDirection : networkNode.bDirection;
+    }
+
+    public boolean isConnected() {
+        return !(networkNode.aDirection.isEmpty() && networkNode.bDirection.isEmpty());
     }
 }

@@ -20,12 +20,12 @@ public class NetworkNode {
      */
     public Direction getEntryOf(NetworkNode railNode) {
         for (Direction dir : aDirection) {
-            if (dir.railNode.equals(railNode)) {
+            if (dir.adjacent.equals(railNode)) {
                 return dir;
             }
         }
         for (Direction dir : bDirection) {
-            if (dir.railNode.equals(railNode)) {
+            if (dir.adjacent.equals(railNode)) {
                 return dir;
             }
         }
@@ -58,12 +58,12 @@ public class NetworkNode {
         assert networkNode.isNetworkCritical();
 
         for (Direction dir : aDirection) {
-            if (dir.networkNode.equals(networkNode)) {
+            if (dir.network.equals(networkNode)) {
                 return dir;
             }
         }
         for (Direction dir : bDirection) {
-            if (dir.networkNode.equals(networkNode)) {
+            if (dir.network.equals(networkNode)) {
                 return dir;
             }
         }
@@ -83,7 +83,7 @@ public class NetworkNode {
      * @return the logical next nodes on the track
      */
     public List<Direction> getNext(NetworkNode previous) {
-        return getNext(previous, d -> d.railNode);
+        return getNext(previous, d -> d.adjacent);
     }
 
     /**
@@ -102,7 +102,7 @@ public class NetworkNode {
      * @return the list of directions, or null if networkNode is not a connected network node
      */
     public List<Direction> getNextFromNetwork(NetworkNode networkNode) {
-        return getNext(networkNode, d -> d.networkNode);
+        return getNext(networkNode, d -> d.network);
     }
 
     public <T> List<Direction> getNext(T networkNode, Function<Direction, T> mapping) {
@@ -162,25 +162,25 @@ public class NetworkNode {
 
         // if this is already set correctly, then everything down the line is set correctly as well
         if (newNetworkNode == null) {
-            if (entry.networkNode == null) return;
+            if (entry.network == null) return;
 
         } else {
-            if (newNetworkNode.equals(entry.networkNode) && newDistance == entry.distanceToNetworkNode) return;
+            if (newNetworkNode.equals(entry.network) && newDistance == entry.distanceToNetworkNode) return;
         }
 
-        entry.networkNode = newNetworkNode;
+        entry.network = newNetworkNode;
         entry.distanceToNetworkNode = newDistance;
 
         // unless this is a network node itself, propagate the change
         if (!this.isNetworkCritical() && !this.isEnd()) {
             assert otherList.size() == 1;
-            NetworkNode next = otherList.get(0).railNode;
+            NetworkNode next = otherList.get(0).adjacent;
             next.updateNetworkTo(this, newNetworkNode, newDistance);
         }
     }
 
     private static int getIndexOf(List<Direction> list, NetworkNode target) {
-        return getIndexOf(list, target, d -> d.railNode);
+        return getIndexOf(list, target, d -> d.adjacent);
     }
 
     /**
@@ -215,7 +215,7 @@ public class NetworkNode {
 
         if (isEnd() && !this.isNetworkCritical()) {
             for (Direction entry : thisToOther) {
-                entry.railNode.updateNetworkTo(this, null, 0);
+                entry.adjacent.updateNetworkTo(this, null, 0);
             }
 
         } else if (wasCritical && !this.isNetworkCritical()) {
@@ -226,8 +226,8 @@ public class NetworkNode {
             Direction otherDirection = thisToOther.get(0);
             Direction targetDirection = thisToTarget.get(0);
 
-            otherDirection.railNode.updateNetworkTo(this, targetDirection.networkNode, targetDirection.distanceToNetworkNode);
-            targetDirection.railNode.updateNetworkTo(this, otherDirection.networkNode, otherDirection.distanceToNetworkNode);
+            otherDirection.adjacent.updateNetworkTo(this, targetDirection.network, targetDirection.distanceToNetworkNode);
+            targetDirection.adjacent.updateNetworkTo(this, otherDirection.network, otherDirection.distanceToNetworkNode);
         }
 
         return removed.trackPiece;
@@ -299,10 +299,10 @@ public class NetworkNode {
         if (thisNode.isNetworkCritical()) {
             // one of these is targetNode
             for (Direction entry : thisNode.aDirection) {
-                entry.railNode.updateNetworkTo(thisNode, thisNode, 0);
+                entry.adjacent.updateNetworkTo(thisNode, thisNode, 0);
             }
             for (Direction entry : thisNode.bDirection) {
-                entry.railNode.updateNetworkTo(thisNode, thisNode, 0);
+                entry.adjacent.updateNetworkTo(thisNode, thisNode, 0);
             }
 
         } else if (thisNode.isStraight()) {
@@ -310,7 +310,7 @@ public class NetworkNode {
             assert otherDirections.size() == 1;
             Direction entryOfOther = otherDirections.get(0);
 
-            targetNode.updateNetworkTo(thisNode, entryOfOther.networkNode, entryOfOther.distanceToNetworkNode);
+            targetNode.updateNetworkTo(thisNode, entryOfOther.network, entryOfOther.distanceToNetworkNode);
         }
     }
 
@@ -341,15 +341,15 @@ public class NetworkNode {
         Collection<Direction> entries = aNode.getAllEntries();
         // all network nodes are network critical
         assert entries.stream()
-                .map(e -> e.networkNode)
+                .map(e -> e.network)
                 .filter(Objects::nonNull)
                 .allMatch(NetworkNode::isNetworkCritical)
                 : entries;
         // if this is a network node, all distances are reflective
         assert !aNode.isNetworkCritical() || entries.stream()
-                .filter(e -> e.networkNode != null)
-                .allMatch(a -> a.networkNode.getAllEntries().stream()
-                        .filter(b -> b.networkNode == aNode)
+                .filter(e -> e.network != null)
+                .allMatch(a -> a.network.getAllEntries().stream()
+                        .filter(b -> b.network == aNode)
                         .anyMatch(b -> Math.abs(a.distanceToNetworkNode - b.distanceToNetworkNode) < 0.001)
                 ) : entries;
     }
@@ -397,7 +397,7 @@ public class NetworkNode {
         }
 
         Direction entryOneToTwo = oneList.get(twoIndex);
-        oneList.set(twoIndex, new Direction(newNode, track, entryOneToTwo.networkNode, entryOneToTwo.distanceToNetworkNode));
+        oneList.set(twoIndex, new Direction(newNode, track, entryOneToTwo.network, entryOneToTwo.distanceToNetworkNode));
 
         NetworkNode networkNode;
         float distanceToNetworkOfNewToOne;
@@ -413,7 +413,7 @@ public class NetworkNode {
         } else {
             assert oneNode.isStraight() : oneNode;  // !isEnd() && !isSwitch() assuming (!isNetworkCritical() => !isSwitch())
             Direction direction = otherList.get(0);
-            networkNode = direction.networkNode;
+            networkNode = direction.network;
             distanceToNetworkOfNewToOne = direction.distanceToNetworkNode + track.getLength();
         }
 
@@ -454,7 +454,7 @@ public class NetworkNode {
             NetworkNode current = open.remove();
 
             for (Direction entry : current.getAllEntries()) {
-                NetworkNode other = entry.railNode;
+                NetworkNode other = entry.adjacent;
 
                 if (other != null && !seen.contains(other)) {
                     open.add(other);
@@ -501,7 +501,7 @@ public class NetworkNode {
             Integer currentID = seen.get(current);
 
             for (Direction entry : current.getAllEntries()) {
-                NetworkNode other = entry.networkNode;
+                NetworkNode other = entry.network;
 
                 if (other != null) {
                     if (!seen.containsKey(other)) {
@@ -536,27 +536,27 @@ public class NetworkNode {
     }
 
     public static class Direction {
-        public final NetworkNode railNode;
+        public final NetworkNode adjacent;
         public final TrackPiece trackPiece;
-        public NetworkNode networkNode;
+        public NetworkNode network;
 
         /** distance between networkNode and the owner of this Direction */
         public float distanceToNetworkNode;
 
         private Direction(
-                NetworkNode railNode, TrackPiece trackPiece, NetworkNode networkNode, float distanceToNetworkNode
+                NetworkNode adjacent, TrackPiece trackPiece, NetworkNode network, float distanceToNetworkNode
         ) {
-            this.railNode = railNode;
+            this.adjacent = adjacent;
             this.trackPiece = trackPiece;
-            this.networkNode = networkNode;
+            this.network = network;
             this.distanceToNetworkNode = distanceToNetworkNode;
         }
 
         @Override
         public String toString() {
-            return networkNode == null ?
-                    "{" + trackPiece.getClass().getSimpleName() + ", " + railNode + ", - }" :
-                    "{" + trackPiece.getClass().getSimpleName() + ", " + railNode + ", " + distanceToNetworkNode + "}";
+            return network == null ?
+                    "{" + trackPiece.getClass().getSimpleName() + ", " + adjacent + ", - }" :
+                    "{" + trackPiece.getClass().getSimpleName() + ", " + adjacent + ", " + distanceToNetworkNode + "}";
         }
     }
 }

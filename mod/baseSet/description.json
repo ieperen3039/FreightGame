@@ -10,9 +10,9 @@
       "mesh": "LittleRedDiesel.ply",
       "r1": 0.1,
       // in N/(m/s)
-      "r2": 0.02,
+      "r2": 0.1,
       // in N/(m/s)^2
-      "tractiveEffort": 1.0
+      "tractiveEffort": 5.0
       // in N
     }
   },
