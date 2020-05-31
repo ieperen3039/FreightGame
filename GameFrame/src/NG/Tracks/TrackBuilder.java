@@ -97,31 +97,6 @@ public class TrackBuilder extends ToggleMouseTool {
         }
     }
 
-    /**
-     * adds connections between all track nodes, and adds all tracks to the game state. Adds a signal to all nodes
-     * strictly between the tracks, and returns the last node.
-     */
-    private static TrackPiece processTracksReturnLast(Game game, List<TrackPiece> tracks, float signalDistance) {
-        int lastIndex = tracks.size() - 1;
-
-        TrackPiece firstTrack = tracks.get(0);
-        if (firstTrack.getLength() >= signalDistance + 1 / 128f) {
-            firstTrack.getStartNode().addSignal(game);
-        }
-
-        for (int i = 0; i < lastIndex; i++) {
-            TrackPiece track = tracks.get(i);
-            NetworkNode.addConnection(track);
-            game.state().addEntity(track);
-            track.getEndNode().addSignal(game);
-        }
-
-        TrackPiece lastTrack = tracks.get(lastIndex);
-        NetworkNode.addConnection(lastTrack);
-        game.state().addEntity(lastTrack);
-        return lastTrack;
-    }
-
     @Override
     public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
         switch (getMouseAction()) {
@@ -187,7 +162,31 @@ public class TrackBuilder extends ToggleMouseTool {
                 }
             default:
         }
+    }
 
+    /**
+     * adds connections between all track nodes, and adds all tracks to the game state. Adds a signal to all nodes
+     * strictly between the tracks, and returns the last node.
+     */
+    private static TrackPiece processTracksReturnLast(Game game, List<TrackPiece> tracks, float signalDistance) {
+        int lastIndex = tracks.size() - 1;
+
+        TrackPiece firstTrack = tracks.get(0);
+        if (firstTrack.getLength() >= signalDistance + 1 / 128f) {
+            firstTrack.getStartNode().addSignal(game);
+        }
+
+        for (int i = 0; i < lastIndex; i++) {
+            TrackPiece track = tracks.get(i);
+            NetworkNode.addConnection(track);
+            game.state().addEntity(track);
+            track.getEndNode().addSignal(game);
+        }
+
+        TrackPiece lastTrack = tracks.get(lastIndex);
+        NetworkNode.addConnection(lastTrack);
+        game.state().addEntity(lastTrack);
+        return lastTrack;
     }
 
     public void clearGhostTracks() {

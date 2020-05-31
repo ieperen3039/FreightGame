@@ -13,14 +13,13 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * a number of utility methods to create or modify rail pieces
+ * a number of utility methods to create or modify rail pieces.
  * @author Geert van Ieperen created on 1-5-2020.
  */
 public final class RailTools {
     private static final float STRAIGHT_MAX_ANGLE_DEG = 1f;
     private static final float STRAIGHT_DOT_LIMIT = Math.cos(Math.toRadians(STRAIGHT_MAX_ANGLE_DEG));
 
-    private static final float MAX_TRACK_LENGTH = 10f;
     private static final float MAX_CIRCLE_ANGLE_RAD = Math.toRadians(90);
 
     /**
@@ -61,7 +60,7 @@ public final class RailTools {
         float distanceToSignal = getShortestDistanceToSignal(node, predecessors);
 
         float offset = Math.max(signalDistance - distanceToSignal, 0);
-        // shortest > 0 hence 0 <= offset <= MAX_TRACK_LENGTH
+        // shortest > 0 hence 0 <= offset <= signalDistance
 
         if (Math.abs(dot) > STRAIGHT_DOT_LIMIT) {
             return getStraightPieces(game, node, newPosition, null, signalDistance, offset);
@@ -70,6 +69,11 @@ public final class RailTools {
         }
     }
 
+    /**
+     * @param list one of the lists of the networknode of {@code node}
+     * @return the shortest distance from {@code node} to any signal in {@code list}. If no signal is found, return
+     * {@link Float#POSITIVE_INFINITY}
+     */
     private static float getShortestDistanceToSignal(RailNode node, List<NetworkNode.Direction> list) {
         float shortest = Float.POSITIVE_INFINITY;
         for (NetworkNode.Direction entry : list) {
@@ -91,6 +95,16 @@ public final class RailTools {
         return shortest;
     }
 
+    /**
+     * @param node        node A
+     * @param endNode     node B, may be null
+     * @param endPosition position of node B
+     * @param spacing     maximum length of the generated track pieces
+     * @param offset      minimum length of the first track
+     * @return an ordered list of tracks from A to B, where each track is at most {@code spacing} {@link
+     * TrackPiece#getLength() length}. If {@code endNode} is not null, the last track has it as {@link
+     * TrackPiece#getEndNode() endNode}.
+     */
     private static List<TrackPiece> getStraightPieces(
             Game game, RailNode node, Vector3fc endPosition, RailNode endNode, float spacing, float offset
     ) {
@@ -134,6 +148,17 @@ public final class RailTools {
         return tracks;
     }
 
+    /**
+     * @param node          node A
+     * @param nodeDirection the direction of tracks in node A
+     * @param endNode       node B, may be null
+     * @param endPosition   position of node B
+     * @param spacing       maximum length of the generated track pieces
+     * @param offset        minimum length of the first track
+     * @return an ordered list of tracks from A to B, where each track has the same radius and is at most {@code
+     * spacing} {@link TrackPiece#getLength() length}. If {@code endNode} is not null, the last track has it as {@link
+     * TrackPiece#getEndNode() endNode}.
+     */
     private static List<TrackPiece> getCirclePieces(
             Game game, RailNode node, Vector3fc nodeDirection, Vector3fc endPosition, RailNode endNode,
             float spacing, float offset
@@ -212,6 +237,16 @@ public final class RailTools {
         return tracks;
     }
 
+    /**
+     * splits the given track into two tracks on the given fraction. this trackpiece is despawned as if calling {@link
+     * TrackPiece#despawn(double) trackPiece.despawn(gameTime)}
+     * @param trackPiece the trackpiece to split
+     * @param fraction   the fraction of track where the split happens, such that the new node is created at {@link
+     *                   TrackPiece#getPositionFromFraction(float) trackPiece.getPositionFromFraction(fraction)}
+     * @param gameTime   the game time where the old track is removed and the new tracks are added to the game.
+     * @return the newly created node, connecting both new tracks together. For this node trivially holds {@link
+     * NetworkNode#isStraight()}
+     */
     public static RailNode createSplit(Game game, TrackPiece trackPiece, float fraction, double gameTime) {
         RailNode aNode = trackPiece.getStartNode();
         RailNode bNode = trackPiece.getEndNode();
@@ -254,6 +289,12 @@ public final class RailTools {
         return newNode;
     }
 
+    /**
+     * removes the given track piece from the game. The trackpiece is despawned at gameTime, and any remaining
+     * connectionless nodes are cleaned up.
+     * @param trackPiece the track to remove
+     * @param gameTime   the moment where the trackpiece should be removed
+     */
     public static void removeTrackPiece(TrackPiece trackPiece, double gameTime) {
         assert trackPiece.isValid();
         RailNode aNode = trackPiece.getStartNode();
@@ -279,9 +320,8 @@ public final class RailTools {
      * @param game           the game instance
      * @param aNode          an existing node A
      * @param bNode          an existing node B
-     * @param signalDistance
-     * @return two track pieces: Left starts in A, right starts in B. If one piece can connect A and B, then left is
-     * that track and B is null.
+     * @param signalDistance The distance from A to the nearest signal in the direction away from B.
+     * @return two lists: Left starts in A, right ends in B.
      * @see StraightTrack
      * @see CircleTrack
      */

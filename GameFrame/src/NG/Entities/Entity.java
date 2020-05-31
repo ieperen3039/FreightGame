@@ -42,9 +42,10 @@ public interface Entity extends GameObject {
 
     /** @deprecated use {@link #despawn(double)} */
     default void dispose() {
-        despawn(0);
+        despawn(Double.NEGATIVE_INFINITY);
     }
 
+    /** marks this entity to be removed from the game at the given gameTime. */
     void despawn(double gameTime);
 
     default double getSpawnTime() {
