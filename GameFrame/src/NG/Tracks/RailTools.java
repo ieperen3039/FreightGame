@@ -128,21 +128,22 @@ public final class RailTools {
         }
 
         AToB.normalize(offset);
-        int maxItr = (int) ((totalLength - offset) / spacing) + 1;
+        // iterations except the last
+        int maxItr = (int) ((totalLength - offset) / spacing);
         for (int i = 0; i <= maxItr; i++) {
-            if (i == maxItr) {
-                if (endNode == null) {
-                    tracks.add(new StraightTrack(game, node.getType(), node, endPosition, true));
-                } else {
-                    tracks.add(new StraightTrack(game, node.getType(), node, endNode, true));
-                }
-
-            } else if (i == 1) {
+            if (i == 1) {
                 AToB.normalize(spacing);
-                TrackPiece trackConnection = new StraightTrack(game, node.getType(), node, localStartPos.add(AToB), true);
-                node = trackConnection.getEndNode();
-                tracks.add(trackConnection);
             }
+
+            TrackPiece trackConnection = new StraightTrack(game, node.getType(), node, localStartPos.add(AToB), true);
+            node = trackConnection.getEndNode();
+            tracks.add(trackConnection);
+        }
+
+        if (endNode == null) {
+            tracks.add(new StraightTrack(game, node.getType(), node, endPosition, true));
+        } else {
+            tracks.add(new StraightTrack(game, node.getType(), node, endNode, true));
         }
 
         return tracks;
@@ -194,7 +195,9 @@ public final class RailTools {
         if (arcTan < 0) arcTan += 2 * Math.PI;
         float startTheta = arcTan;
 
-        int maxItr = (int) ((circle.angle - offsetAngle) / sectionAngle) + 1;
+        float dz = heightDiff / (circle.radius * circle.angle);
+
+        int maxItr = (int) ((circle.angle - offsetAngle) / sectionAngle);
         float nextAngle = startTheta;
         Vector3f direction = new Vector3f(nodeDirection);
 
@@ -202,7 +205,6 @@ public final class RailTools {
             float currentAngle = nextAngle;
             float dx = -Math.sin(currentAngle);
             float dy = Math.cos(currentAngle);
-            float dz = heightDiff / (circle.radius * circle.angle);
             if (isClockwise) {
                 direction.set(-dx, -dy, dz);
             } else {
@@ -213,27 +215,33 @@ public final class RailTools {
 
             TrackPiece trackConnection;
 
-            if (nextAngleOffset > circle.angle) {
-                if (endNode != null) {
-                    trackConnection = new CircleTrack(game, node.getType(), node, direction, endNode);
-                } else {
-                    trackConnection = new CircleTrack(game, node.getType(), node, direction, endPosition);
-                }
+            nextAngle = isClockwise ? startTheta - nextAngleOffset : startTheta + nextAngleOffset;
 
-            } else {
-                nextAngle = isClockwise ? startTheta - nextAngleOffset : startTheta + nextAngleOffset;
+            float vx = Math.cos(nextAngle) * circle.radius;
+            float vy = Math.sin(nextAngle) * circle.radius;
+            float vz = (nextAngleOffset / circle.angle) * heightDiff;
 
-                float vx = Math.cos(nextAngle) * circle.radius;
-                float vy = Math.sin(nextAngle) * circle.radius;
-                float vz = (nextAngleOffset / circle.angle) * heightDiff;
-
-                Vector3f localEndPos = new Vector3f(circle.center, baseHeight).add(vx, vy, vz);
-                trackConnection = new CircleTrack(game, node.getType(), node, direction, localEndPos);
-                node = trackConnection.getEndNode();
-            }
+            Vector3f localEndPos = new Vector3f(circle.center, baseHeight).add(vx, vy, vz);
+            trackConnection = new CircleTrack(game, node.getType(), node, direction, localEndPos);
+            node = trackConnection.getEndNode();
 
             tracks.add(trackConnection);
         }
+
+        float dx = -Math.sin(nextAngle);
+        float dy = Math.cos(nextAngle);
+        if (isClockwise) {
+            direction.set(-dx, -dy, dz);
+        } else {
+            direction.set(dx, dy, dz);
+        }
+
+        if (endNode != null) {
+            tracks.add(new CircleTrack(game, node.getType(), node, direction, endNode));
+        } else {
+            tracks.add(new CircleTrack(game, node.getType(), node, direction, endPosition));
+        }
+
         return tracks;
     }
 
