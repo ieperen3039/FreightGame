@@ -62,8 +62,6 @@ public class SButton extends STextComponent implements MouseReleaseListener, Mou
      * a button with a basic associated action
      * @param text   the text of the button
      * @param action the action that is executed upon (releasing a) left click
-     * @param width  the minimal width of this button
-     * @param height the minimal height of this button
      */
     public SButton(String text, Runnable action, SComponentProperties props) {
         this(text, props);
@@ -75,8 +73,6 @@ public class SButton extends STextComponent implements MouseReleaseListener, Mou
      * @param text         the text of the button
      * @param onLeftClick  the action that is executed upon (releasing a) left click
      * @param onRightClick the action that is executed upon (releasing a) right click
-     * @param width        the minimal width of this button
-     * @param height       the minimal height of this button
      */
     public SButton(String text, Runnable onLeftClick, Runnable onRightClick, SComponentProperties props) {
         this(text, onLeftClick, props);

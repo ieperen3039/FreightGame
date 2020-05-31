@@ -177,8 +177,7 @@ class SScrollBar extends SComponent {
      * @author Geert van Ieperen created on 13-5-2019.
      */
     public class SDragBar extends SComponent implements MouseReleaseListener, MouseDragListener {
-
-        SDragBar() {
+        private SDragBar() {
             setGrowthPolicy(true, false);
             setSize(0, 0);
         }
