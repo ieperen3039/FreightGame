@@ -2,6 +2,7 @@ package NG.Tools;
 
 import NG.Network.NetworkNode;
 import NG.Network.NetworkPosition;
+import NG.Network.RailNode;
 import NG.Tracks.TrackPiece;
 
 import java.util.*;
@@ -11,7 +12,7 @@ import java.util.concurrent.Callable;
  * Implements Dijkstra to find the shortest path to any node adhering to the given target.
  * @author Geert van Ieperen created on 22-5-2020.
  */
-public class NetworkPathFinder implements Callable<List<NetworkNode>> {
+public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
     private final Set<NetworkNode> targets;
     private final NetworkNode startPredecessor;
     private final NetworkNode startNode;
@@ -24,8 +25,19 @@ public class NetworkPathFinder implements Callable<List<NetworkNode>> {
         this.startPredecessor = nextNode.getEntryOf(currentTrack).network;
     }
 
+    public NetworkPathFinder(RailNode nextNode, boolean inSameDirection, NetworkPosition target) {
+        NetworkNode nextNetwork = nextNode.getNetworkNode();
+        assert nextNetwork.isNetworkCritical();
+        List<NetworkNode.Direction> otherDirections = inSameDirection ? nextNetwork.getEntriesB() : nextNetwork.getEntriesA();
+        assert !otherDirections.isEmpty();
+
+        this.targets = target.getNodes();
+        this.startNode = nextNetwork;
+        this.startPredecessor = otherDirections.get(0).network;
+    }
+
     @Override
-    public List<NetworkNode> call() {
+    public Path call() {
         Map<NetworkNode, NetworkNode> predecessors = new HashMap<>();
         Map<NetworkNode, Float> distanceMap = new HashMap<>();
         PriorityQueue<NetworkNode> open = new PriorityQueue<>(Comparator.comparing(distanceMap::get));
@@ -40,7 +52,8 @@ public class NetworkPathFinder implements Callable<List<NetworkNode>> {
             return null;
         }
 
-        return new Path(startNode, predecessors, endNode);
+        float pathLength = distanceMap.get(endNode);
+        return new Path(startNode, predecessors, endNode, pathLength);
     }
 
     /**
@@ -87,9 +100,14 @@ public class NetworkPathFinder implements Callable<List<NetworkNode>> {
         return null;
     }
 
-    private static class Path extends ArrayList<NetworkNode> {
-        public Path(NetworkNode startNode, Map<NetworkNode, NetworkNode> predecessors, NetworkNode endNode) {
+    public static class Path extends ArrayList<NetworkNode> {
+        private float pathLength;
+
+        public Path(
+                NetworkNode startNode, Map<NetworkNode, NetworkNode> predecessors, NetworkNode endNode, float pathLength
+        ) {
             super();
+            this.pathLength = pathLength;
 
             NetworkNode currentNode = endNode;
 
@@ -103,6 +121,10 @@ public class NetworkPathFinder implements Callable<List<NetworkNode>> {
             for (int i = 0, mid = size >> 1, j = size - 1; i < mid; i++, j--) {
                 Collections.swap(this, i, j);
             }
+        }
+
+        public float getPathLength() {
+            return pathLength;
         }
     }
 }

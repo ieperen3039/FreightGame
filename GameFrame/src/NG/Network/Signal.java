@@ -12,9 +12,14 @@ import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shapes.GenericShapes;
 import NG.Resources.GeneratorResource;
 import NG.Resources.Resource;
+import NG.Tools.NetworkPathFinder;
+import NG.Tools.Toolbox;
 import NG.Tools.Vectors;
+import NG.Tracks.TrackPiece;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+
+import java.util.*;
 
 import static NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction.PRESS_ACTIVATE;
 
@@ -35,7 +40,7 @@ public class Signal extends AbstractGameObject implements Entity {
             GenericShapes.createRing(INNER_RADIUS + MARGIN, RING_RESOLUTION, COLOR_OFFSET / 2f), Mesh::dispose
     );
 
-    private final RailNode targetNode;
+    private final RailNode hostNode;
     private final Vector3fc ringMiddle;
 
     /** whether to allow traffic in the direction of targetNode */
@@ -44,6 +49,10 @@ public class Signal extends AbstractGameObject implements Entity {
     private boolean inOppositeDirection;
 
     private double despawnTime = Double.POSITIVE_INFINITY;
+
+    private Map<Signal, TrackPath> aSignals = new HashMap<>();
+    private Map<Signal, TrackPath> bSignals = new HashMap<>();
+    private boolean connectionsAreValid = false;
 
     /**
      * @param game                game instance
@@ -55,7 +64,7 @@ public class Signal extends AbstractGameObject implements Entity {
         super(game);
         this.inOppositeDirection = inOppositeDirection;
         assert inSameDirection || inOppositeDirection : "Signal is a block";
-        this.targetNode = targetNode;
+        this.hostNode = targetNode;
         this.inSameDirection = inSameDirection;
         this.ringMiddle = new Vector3f(targetNode.getPosition()).add(0, 0, INNER_RADIUS - MARGIN);
     }
@@ -71,11 +80,11 @@ public class Signal extends AbstractGameObject implements Entity {
         {
             gl.translate(ringMiddle);
 
-            Vector3fc targetDirection = targetNode.getDirection();
+            Vector3fc targetDirection = hostNode.getDirection();
             Vector3f cross = Vectors.newZVector().cross(targetDirection);
             gl.rotate(cross, Vectors.Z.angle(targetDirection));
 
-            MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.BLACK));
+            MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, getColor()));
             gl.render(RING_MESH.get(), this);
 
             if (inSameDirection) {
@@ -92,6 +101,14 @@ public class Signal extends AbstractGameObject implements Entity {
             }
         }
         gl.popMatrix();
+    }
+
+    private Color4f getColor() {
+        if (connectionsAreValid) {
+            return Color4f.WHITE;
+        } else {
+            return Color4f.BLACK;
+        }
     }
 
     @Override
@@ -130,6 +147,176 @@ public class Signal extends AbstractGameObject implements Entity {
     }
 
     public RailNode getNode() {
-        return targetNode;
+        return hostNode;
+    }
+
+    public void invalidateConnections() {
+        connectionsAreValid = false;
+    }
+
+    public void validateConnections() {
+        if (connectionsAreValid) return;
+
+        NetworkNode networkNode = hostNode.getNetworkNode();
+        TrackPath path = new TrackPath();
+
+        for (NetworkNode.Direction entry : networkNode.getEntriesA()) {
+            RailNode target = entry.trackPiece.getNot(hostNode);
+            registerSignals(target, entry.trackPiece, aSignals, path);
+        }
+
+        for (NetworkNode.Direction entry : networkNode.getEntriesB()) {
+            RailNode target = entry.trackPiece.getNot(hostNode);
+            registerSignals(target, entry.trackPiece, bSignals, path);
+        }
+
+        connectionsAreValid = true;
+    }
+
+    private void registerSignals(
+            RailNode node, TrackPiece sourceTrack, Map<Signal, TrackPath> signals, TrackPath pathToPrevious
+    ) {
+        pathToPrevious.path.addLast(sourceTrack);
+        pathToPrevious.length += sourceTrack.getLength();
+
+        if (node.hasSignal()) {
+            signals.put(node.getSignal(), new TrackPath(pathToPrevious));
+
+        } else {
+            List<NetworkNode.Direction> directions = node.getNetworkNode().getNext(sourceTrack);
+            for (NetworkNode.Direction entry : directions) {
+                RailNode target = entry.trackPiece.getNot(node);
+                registerSignals(target, entry.trackPiece, signals, pathToPrevious);
+            }
+        }
+
+        pathToPrevious.path.removeLast();
+        pathToPrevious.length -= sourceTrack.getLength();
+    }
+
+    private Deque<TrackPiece> reserve(TrackPath pathToBest) {
+        for (TrackPiece piece : pathToBest.path) {
+            piece.setOccupied(true);
+        }
+
+        return pathToBest.path;
+    }
+
+    public Deque<TrackPiece> reservePath(NetworkPosition target, TrackPiece previousTrack) {
+        validateConnections();
+
+        Map<Signal, TrackPath> signals;
+
+        boolean trackIsInDirection = !hostNode.isInDirectionOf(previousTrack);
+        if (trackIsInDirection) {
+            if (!inOppositeDirection) {
+                return getEmptyPath();
+            }
+            signals = aSignals;
+
+        } else {
+            if (!inSameDirection) {
+                return getEmptyPath();
+            }
+            signals = bSignals;
+        }
+
+        if (signals.isEmpty()) return getEmptyPath();
+
+        if (target == null) { // reserve random path
+            TrackPath[] paths = signals.values().toArray(new TrackPath[0]);
+            TrackPath chosenPath = paths[Toolbox.random.nextInt(paths.length)];
+            return reserve(chosenPath);
+        }
+
+        TrackPath pathToBest = null;
+        float leastDistance = Float.POSITIVE_INFINITY;
+
+        for (Signal other : signals.keySet()) {
+            boolean inDirection = other.bSignals.containsKey(this);
+            NetworkPathFinder pathFinder = new NetworkPathFinder(other.hostNode, inDirection, target);
+
+            NetworkPathFinder.Path pathSignalToTarget = pathFinder.call();
+            TrackPath pathToSignal = signals.get(other);
+
+            if (pathSignalToTarget == null) continue; // no path exists
+            float totalDist = pathToSignal.length + pathSignalToTarget.getPathLength();
+
+            if (totalDist < leastDistance) {
+                pathToBest = pathToSignal;
+            }
+        }
+
+        if (pathToBest == null) return getEmptyPath();
+
+        return reserve(pathToBest);
+    }
+
+    private List<TrackPiece> convertPath(TrackPiece previousTrack, NetworkPathFinder.Path pathToBest) {
+        List<TrackPiece> pathToSignal = new ArrayList<>();
+        int nodeIndex = 0;
+
+        RailNode node = hostNode;
+        NetworkNode networkNode = hostNode.getNetworkNode();
+
+        do {
+            List<NetworkNode.Direction> options = networkNode.getNext(previousTrack);
+
+            NetworkNode.Direction direction;
+            if (options.size() == 1) {
+                direction = options.get(0);
+            } else {
+                direction = networkNode.getEntryOfNetwork(networkNode);
+            }
+
+            TrackPiece trackPiece = direction.trackPiece;
+            pathToSignal.add(trackPiece);
+
+            node = trackPiece.getNot(node);
+            if (node.getNetworkNode().equals(networkNode)) {
+                networkNode = pathToBest.get(nodeIndex++);
+            }
+        } while (!node.hasSignal());
+        return pathToSignal;
+    }
+
+    private static ArrayDeque<TrackPiece> getEmptyPath() {
+        return new ArrayDeque<>();
+    }
+
+    private static class TrackPath implements java.io.Serializable {
+        public final Deque<TrackPiece> path;
+        public float length;
+
+        public TrackPath(Deque<TrackPiece> path, float length) {
+            this.path = path;
+            this.length = length;
+        }
+
+        public TrackPath() {
+            this.path = new ArrayDeque<>();
+            this.length = 0;
+        }
+
+        public TrackPath(TrackPath other) {
+            this.path = new ArrayDeque<>(other.path);
+            this.length = other.length;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if ((o == null) || (getClass() != o.getClass())) return false;
+
+            TrackPath other = (TrackPath) o;
+            return Objects.equals(path, other.path) && length == other.length;
+        }
+
+        @Override
+        public int hashCode() {
+            int leftCode = (path != null) ? path.hashCode() : 0;
+            int rightCode = Float.floatToIntBits(length);
+            return (31 * leftCode) + rightCode;
+        }
     }
 }

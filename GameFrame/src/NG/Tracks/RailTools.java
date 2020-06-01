@@ -8,9 +8,7 @@ import NG.Tools.Vectors;
 import org.joml.Math;
 import org.joml.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * a number of utility methods to create or modify rail pieces.
@@ -290,6 +288,9 @@ public final class RailTools {
                 aConnection, bConnection
         );
 
+        invalidateSignals(aConnection, aNode, new HashSet<>());
+        invalidateSignals(bConnection, bNode, new HashSet<>());
+
         assert aConnection.isValid() : aConnection;
         assert bConnection.isValid() : bConnection;
 
@@ -307,6 +308,7 @@ public final class RailTools {
         assert trackPiece.isValid();
         RailNode aNode = trackPiece.getStartNode();
         RailNode bNode = trackPiece.getEndNode();
+        invalidateSignals(trackPiece); // first invalidate all connected signals
 
         TrackPiece oldPiece = NetworkNode.removeConnection(aNode.getNetworkNode(), bNode.getNetworkNode());
         assert oldPiece == trackPiece :
@@ -314,11 +316,11 @@ public final class RailTools {
 
         trackPiece.despawn(gameTime);
 
-        if (!aNode.isConnected() && aNode.hasSignal()) {
+        if (aNode.isUnconnected() && aNode.hasSignal()) {
             aNode.getSignal().despawn(gameTime);
         }
 
-        if (!bNode.isConnected() && bNode.hasSignal()) {
+        if (bNode.isUnconnected() && bNode.hasSignal()) {
             bNode.getSignal().despawn(gameTime);
         }
     }
@@ -423,5 +425,35 @@ public final class RailTools {
         float middleA = straightPos.z() + (hDiff / totalLength) * straightLength;
 
         return new Vector3f(middlePoint, middleA);
+    }
+
+    /** invalidates the signal connections of all signals remotely connected to track */
+    public static void invalidateSignals(TrackPiece track) {
+        Collection<RailNode> seen = new ArrayList<>(0);
+        invalidateSignals(track, track.getStartNode(), seen);
+        invalidateSignals(track, track.getEndNode(), seen);
+    }
+
+    /** invalidates the signal connections of all signals in direction of node */
+    private static void invalidateSignals(TrackPiece track, RailNode node, Collection<RailNode> seen) {
+        // handle loops without signals
+        if (node.getNetworkNode().isNetworkCritical()) {
+            if (seen.contains(node)) return;
+            seen.add(node);
+        }
+
+        if (node.hasSignal()) {
+            node.getSignal().invalidateConnections();
+            return;
+        }
+
+        // recursively search for signals
+        List<NetworkNode.Direction> next = node.getNetworkNode().getNext(track);
+        for (NetworkNode.Direction entry : next) {
+            TrackPiece nextTrack = entry.trackPiece;
+            RailNode nextNode = nextTrack.getNot(node);
+
+            invalidateSignals(nextTrack, nextNode, new HashSet<>());
+        }
     }
 }

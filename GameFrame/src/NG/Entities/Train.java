@@ -8,11 +8,9 @@ import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Components.SInteractiveTextArea;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Network.NetworkNode;
-import NG.Network.RailNode;
+import NG.Network.NetworkPosition;
 import NG.Network.Schedule;
 import NG.Rendering.MatrixStack.SGL;
-import NG.Tools.NetworkPathFinder;
-import NG.Tools.Toolbox;
 import NG.Tracks.RailMovement;
 import NG.Tracks.TrackPiece;
 import org.joml.Quaternionf;
@@ -20,6 +18,7 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -131,38 +130,21 @@ public class Train extends AbstractGameObject implements MovingEntity {
         return despawnTime;
     }
 
-    public NetworkNode.Direction pickNextTrack(TrackPiece currentTrack, RailNode node) {
-        NetworkNode networkNode = node.getNetworkNode();
-
+    public NetworkPosition getTarget(NetworkNode currentNode) {
         if (currentTarget == null) {
             currentTarget = schedule.getFirstNode();
         }
 
         if (currentTarget != null) {
-            if (currentTarget.element.getNodes().contains(networkNode)) {
+            Set<NetworkNode> targetNodes = currentTarget.element.getNodes();
+            if (targetNodes.contains(currentNode)) {
                 currentTarget = schedule.getNextNode(currentTarget);
             }
 
+            return currentTarget.element;
         }
 
-        List<NetworkNode.Direction> options = networkNode.getNext(currentTrack);
-
-        assert options != null : String.format("Node %s not connected to %s", node, currentTrack);
-        int size = options.size();
-        if (size == 0) {
-            return null;
-
-        } else if (size == 1) {
-            return options.get(0);
-
-        } else if (currentTarget == null) {
-            return options.get(Toolbox.random.nextInt(size));
-
-        } else {
-            NetworkPathFinder pathFinder = new NetworkPathFinder(currentTrack, networkNode, currentTarget.element);
-            List<NetworkNode> path = pathFinder.call();
-            return networkNode.getEntryOfNetwork(path.get(0));
-        }
+        return null;
     }
 
     private class TrainUI extends SFrame {

@@ -8,8 +8,8 @@ import java.util.*;
 import java.util.function.Function;
 
 public class NetworkNode {
-    public final List<Direction> aDirection = new ArrayList<>(1);
-    public final List<Direction> bDirection = new ArrayList<>(1);
+    private final List<Direction> aDirection = new ArrayList<>(1);
+    private final List<Direction> bDirection = new ArrayList<>(1);
 
     public NetworkNode() {
     }
@@ -177,6 +177,14 @@ public class NetworkNode {
             NetworkNode next = otherList.get(0).adjacent;
             next.updateNetworkTo(this, newNetworkNode, newDistance);
         }
+    }
+
+    public List<Direction> getEntriesA() {
+        return Collections.unmodifiableList(aDirection);
+    }
+
+    public List<Direction> getEntriesB() {
+        return Collections.unmodifiableList(bDirection);
     }
 
     private static int getIndexOf(List<Direction> list, NetworkNode target) {

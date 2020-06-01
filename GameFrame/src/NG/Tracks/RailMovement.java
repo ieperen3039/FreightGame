@@ -8,12 +8,16 @@ import NG.DataStructures.Generic.Pair;
 import NG.DataStructures.Interpolation.FloatInterpolator;
 import NG.DataStructures.Interpolation.LongInterpolator;
 import NG.Entities.Train;
-import NG.Network.NetworkNode;
+import NG.Network.NetworkPosition;
 import NG.Network.RailNode;
+import NG.Network.Signal;
 import NG.Tools.Logger;
 import org.joml.Math;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * A
@@ -22,7 +26,9 @@ import org.joml.Vector3f;
 public class RailMovement extends AbstractGameObject {
     private static final float DELTA_TIME = 1f / 128f;
     private static final int METERS_TO_MILLIS = 1000;
+
     private final Train controller;
+    Deque<TrackPiece> reservedPath = new ArrayDeque<>();
 
     /**
      * real train speed in direction of facing in meters.
@@ -187,16 +193,22 @@ public class RailMovement extends AbstractGameObject {
     private void progressTrack() {
         RailNode node = positiveDirection ? currentTrack.getEndNode() : currentTrack.getStartNode();
 
-        NetworkNode.Direction next = controller.pickNextTrack(currentTrack, node);
+        if (node.hasSignal()) {
+            Signal signal = node.getSignal();
+            NetworkPosition target = controller.getTarget(node.getNetworkNode());
+            reservedPath.addAll(signal.reservePath(target, currentTrack));
+        }
 
-        if (next == null) {
+        if (reservedPath.isEmpty()) {
             trackScanTotalMillis = trackEndDistanceMillis;
             doStop = true;
             return;
         }
 
-        boolean positiveDirection = node.equals(next.trackPiece.getStartNode());
-        progressTrack(next.trackPiece, positiveDirection);
+        currentTrack.setOccupied(false);
+        TrackPiece trackPiece = reservedPath.remove();
+        boolean positiveDirection = node.equals(trackPiece.getStartNode());
+        progressTrack(trackPiece, positiveDirection);
     }
 
     private void progressTrack(TrackPiece next, boolean positiveDirection) {

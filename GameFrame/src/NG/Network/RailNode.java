@@ -2,6 +2,7 @@ package NG.Network;
 
 import NG.Core.Game;
 import NG.Tools.Vectors;
+import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
 import NG.Tracks.TrackTypeGhost;
 import org.joml.Vector3f;
@@ -82,7 +83,7 @@ public class RailNode {
      */
     public Vector3fc getOpenDirection() {
         if (!networkNode.isEnd()) return null;
-        return networkNode.aDirection.isEmpty() ? direction : new Vector3f(direction).negate();
+        return networkNode.getEntriesA().isEmpty() ? direction : new Vector3f(direction).negate();
     }
 
     @Override
@@ -109,10 +110,23 @@ public class RailNode {
 
     public List<NetworkNode.Direction> getEntriesFromDirection(Vector3fc nodeDirection) {
         boolean isInDirection = getDirection().dot(nodeDirection) > 0;
-        return isInDirection ? networkNode.aDirection : networkNode.bDirection;
+        return isInDirection ? networkNode.getEntriesA() : networkNode.getEntriesB();
     }
 
-    public boolean isConnected() {
-        return !(networkNode.aDirection.isEmpty() && networkNode.bDirection.isEmpty());
+    public boolean isUnconnected() {
+        return networkNode.getEntriesA().isEmpty() && networkNode.getEntriesB().isEmpty();
+    }
+
+    boolean isInDirectionOf(TrackPiece track) {
+        assert track.getStartNode().equals(this) || track.getEndNode().equals(this);
+
+        for (NetworkNode.Direction entry : networkNode.getEntriesA()) {
+            if (entry.trackPiece.equals(track)) {
+                return true;
+            }
+        }
+
+        // assuming track is part of bDirection
+        return false;
     }
 }

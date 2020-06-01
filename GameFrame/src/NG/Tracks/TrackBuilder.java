@@ -186,6 +186,8 @@ public class TrackBuilder extends ToggleMouseTool {
         TrackPiece lastTrack = tracks.get(lastIndex);
         NetworkNode.addConnection(lastTrack);
         game.state().addEntity(lastTrack);
+
+        RailTools.invalidateSignals(lastTrack);
         return lastTrack;
     }
 
