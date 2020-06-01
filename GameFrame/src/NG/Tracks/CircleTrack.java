@@ -20,6 +20,7 @@ import org.joml.*;
  */
 public class CircleTrack extends AbstractGameObject implements TrackPiece {
     private static final float EPSILON = 1 / 256f;
+    public static final float MAX_RENDER_SIZE = 100f;
     private final TrackType type;
     private final RailNode startNode;
     private final RailNode endNode;
@@ -112,43 +113,17 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         endTheta = startTheta + angle;
 
         heightDiff = endPosition.z() - startPosition.z();
-        mesh = new GeneratorResource<>(() -> type.generateCircle(radius, angle, heightDiff), Mesh::dispose);
-        clickBox = new GeneratorResource<>(() -> TrackType.clickBoxCircle(radius, angle, heightDiff), Mesh::dispose);
+        if (radius * angle > MAX_RENDER_SIZE) {
+            Vector3f newDisplacement = new Vector3f(startToEnd.x, startToEnd.y, heightDiff).normalize(10);
+            mesh = new GeneratorResource<>(() -> type.generateStraight(newDisplacement), Mesh::dispose);
+            clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(newDisplacement), Mesh::dispose);
+
+        } else {
+            mesh = new GeneratorResource<>(() -> type.generateCircle(radius, angle, heightDiff), Mesh::dispose);
+            clickBox = new GeneratorResource<>(() -> TrackType.clickBoxCircle(radius, angle, heightDiff), Mesh::dispose);
+        }
 
         this.endNode = (optionalEndNode != null) ? optionalEndNode : new RailNode(endPosition, type, angleToDirection(endTheta));
-    }
-
-    public CircleTrack(
-            Game game, Description desc, TrackType type, RailNode startNode, float heightDiff, boolean isClockwise
-    ) {
-        super(game);
-        this.type = type;
-        this.startNode = startNode;
-        this.isStatic = false;
-        this.heightDiff = heightDiff;
-
-        Vector3fc startPosition = startNode.getPosition();
-
-        this.center = new Vector3f(desc.center, startPosition.z());
-        this.angle = isClockwise ? -desc.angle : desc.angle;
-        this.radius = desc.radius;
-
-
-        Vector2fc vecToStart = new Vector2f(center.x(), center.y()).sub(startPosition.x(), startPosition.y());
-        float arcTan = Vectors.arcTan(vecToStart);
-        if (arcTan < 0) arcTan += 2 * Math.PI;
-
-        startTheta = arcTan;
-        endTheta = startTheta + angle;
-
-        mesh = new GeneratorResource<>(() -> type.generateCircle(radius, angle, heightDiff), Mesh::dispose);
-        clickBox = new GeneratorResource<>(() -> TrackType.clickBoxCircle(radius, angle, heightDiff), Mesh::dispose);
-
-        float dx = Math.cos(endTheta) * radius;
-        float dy = Math.sin(endTheta) * radius;
-        Vector3f endPosition = new Vector3f(center).add(dx, dy, heightDiff);
-
-        this.endNode = new RailNode(endPosition, type, angleToDirection(endTheta));
     }
 
     @Override

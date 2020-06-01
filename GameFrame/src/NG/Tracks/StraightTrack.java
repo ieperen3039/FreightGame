@@ -46,17 +46,7 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     public StraightTrack(
             Game game, TrackType type, RailNode startNode, Vector3fc endNodePosition, boolean modifiable
     ) {
-        super(game);
-        this.type = type;
-        this.startNode = startNode;
-        Vector3fc displacement = new Vector3f(endNodePosition).sub(startNode.getPosition());
-        this.length = displacement.length();
-        this.direction = new Vector3f(displacement).div(length);
-        this.endNode = new RailNode(endNodePosition, type, direction);
-
-        this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
-        this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
-        isModifiable = modifiable;
+        this(game, type, startNode, null, endNodePosition, modifiable);
     }
 
     /**
@@ -69,23 +59,58 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     public StraightTrack(
             Game game, TrackType type, RailNode startNode, RailNode endNode, boolean modifiable
     ) {
+        this(game, type, startNode, endNode, endNode.getPosition(), modifiable);
+    }
+
+    /**
+     * create a new straight piece of track between the two given nodes. The connection is automatically registered.
+     * @param type            type of the track
+     * @param startNode       one node to connect
+     * @param endNode         another no to connect
+     * @param endNodePosition
+     * @param modifiable      sets the canBeModified flag
+     */
+    public StraightTrack(
+            Game game, TrackType type, RailNode startNode, RailNode endNode, Vector3fc endNodePosition,
+            boolean modifiable
+    ) {
         super(game);
+
         this.type = type;
         this.startNode = startNode;
-        Vector3fc displacement = new Vector3f(endNode.getPosition()).sub(startNode.getPosition());
+        Vector3fc displacement = new Vector3f(endNodePosition).sub(startNode.getPosition());
         this.length = displacement.length();
         this.direction = new Vector3f(displacement).div(length);
-        this.endNode = endNode;
+        this.endNode = endNode != null ? endNode : new RailNode(endNodePosition, type, direction);
 
-        this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
-        this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
+        if (length > CircleTrack.MAX_RENDER_SIZE) {
+            Vector3f newDisplacement = new Vector3f(direction).mul(10);
+            this.mesh = new GeneratorResource<>(() -> type.generateStraight(newDisplacement), Mesh::dispose);
+            this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(newDisplacement), Mesh::dispose);
+
+        } else {
+            this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
+            this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
+        }
         isModifiable = modifiable;
 
-        assert new Vector3f(startNode.getDirectionTo(endNode.getPosition())).normalize()
-                .dot(direction) > 0.95f;
+        assert check(startNode, this.endNode, direction);
+    }
 
-        assert new Vector3f(endNode.getDirectionTo(startNode.getPosition())).normalize()
-                .dot(direction) < -0.95f;
+    private static boolean check(RailNode startNode, RailNode endNode, Vector3fc direction) {
+        Vector3fc ste = startNode.getDirectionTo(endNode.getPosition());
+        float angleSTE = new Vector3f(ste.x(), ste.y(), 0).normalize()
+                .angle(new Vector3f(direction.x(), direction.y(), 0));
+        if (angleSTE > Math.toRadians(1)) throw new IllegalArgumentException(String.valueOf(Math.toDegrees(angleSTE)));
+
+        Vector3fc ets = endNode.getDirectionTo(startNode.getPosition());
+        float angleETS = new Vector3f(ets.x(), ets.y(), 0).normalize()
+                .angle(new Vector3f(direction.x(), direction.y(), 0));
+        if (angleETS < Math.toRadians(179)) {
+            throw new IllegalArgumentException(String.valueOf(Math.toDegrees(angleETS)));
+        }
+
+        return true;
     }
 
     @Override
