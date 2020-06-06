@@ -19,6 +19,11 @@ public class GeneratorResource<T> extends Resource<T> {
         this.cleanup = cleanup;
     }
 
+    public GeneratorResource(ResourceGenerator<? extends T> generator) {
+        this.generator = generator;
+        this.cleanup = null;
+    }
+
     @Override
     protected T reload() throws ResourceException {
         return generator.get();

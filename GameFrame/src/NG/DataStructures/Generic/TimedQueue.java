@@ -43,7 +43,7 @@ public interface TimedQueue<T> {
      * do}. If timeStamp is earlier than any action, it returns a negative number representing the difference between
      * the first element in this queue and this timestamp.
      */
-    double timeSincePrevious(float timeStamp);
+    double timeSincePrevious(double timeStamp);
 
     /**
      * upon returning, nextTimeStamp > timeStamp or there exist no item with such timestamp.

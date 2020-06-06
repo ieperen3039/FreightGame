@@ -47,18 +47,15 @@ public class SignalBuilder extends ToggleMouseTool {
 
                     float fraction = getFraction(trackPiece, origin, direction);
                     Vector3f closestPoint = trackPiece.getPositionFromFraction(fraction);
+                    RailNode ghostNodeTarget = getIfExisting(game, trackPiece, fraction);
 
-                    RailNode ghostNodeTarget;
-                    if (game.keyControl().isControlPressed() || trackPiece.isStatic()) {
-                        if (fraction < 0.5f) {
-                            ghostNodeTarget = trackPiece.getStartNode();
-                        } else {
-                            ghostNodeTarget = trackPiece.getEndNode();
-                        }
+                    if (ghostNodeTarget == null) {
+                        Vector3f dir = trackPiece.getDirectionFromFraction(fraction);
+                        ghostNodeTarget = new RailNode(closestPoint, trackPiece.getType(), dir);
 
                     } else {
-                        Vector3f dir = trackPiece.getDirectionFromFraction(fraction);
-                        ghostNodeTarget = new RailNode(closestPoint, null, dir, null);
+                        // make it a ghost type
+                        ghostNodeTarget = new RailNode(ghostNodeTarget, trackPiece.getType());
                     }
 
                     if (ghostSignal == null || ghostSignal.getNode() != ghostNodeTarget) {

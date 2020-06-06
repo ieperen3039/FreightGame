@@ -105,7 +105,7 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
     }
 
     @Override
-    public double timeSincePrevious(float timeStamp) {
+    public double timeSincePrevious(double timeStamp) {
         try (AutoLock.Section section = changeLock.open()) {
             if (timeStamps.isEmpty()) throw new IllegalStateException("empty");
 

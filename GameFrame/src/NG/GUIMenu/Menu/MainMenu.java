@@ -36,7 +36,7 @@ public class MainMenu extends SFrame {
             300, 100, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
     );
     public static final SComponentProperties TEXT_PROPERTIES = new SComponentProperties(
-            0, 100, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT
+            0, 50, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT
     );
 
     private final Vector2i topButtonPos;

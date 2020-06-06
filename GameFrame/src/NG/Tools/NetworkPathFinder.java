@@ -17,22 +17,19 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
     private final NetworkNode startPredecessor;
     private final NetworkNode startNode;
 
-    public NetworkPathFinder(TrackPiece currentTrack, NetworkNode nextNode, NetworkPosition target) {
-        assert nextNode.isNetworkCritical();
-
+    public NetworkPathFinder(TrackPiece currentTrack, NetworkNode position, NetworkPosition target) {
         this.targets = target.getNodes();
-        this.startNode = nextNode;
-        this.startPredecessor = nextNode.getEntryOf(currentTrack).network;
+        this.startNode = position;
+        this.startPredecessor = position.getEntryOf(currentTrack).network;
     }
 
-    public NetworkPathFinder(RailNode nextNode, boolean inSameDirection, NetworkPosition target) {
-        NetworkNode nextNetwork = nextNode.getNetworkNode();
-        assert nextNetwork.isNetworkCritical();
-        List<NetworkNode.Direction> otherDirections = inSameDirection ? nextNetwork.getEntriesB() : nextNetwork.getEntriesA();
+    public NetworkPathFinder(RailNode position, boolean inSameDirection, NetworkPosition target) {
+        NetworkNode networkNode = position.getNetworkNode();
+        List<NetworkNode.Direction> otherDirections = inSameDirection ? networkNode.getEntriesB() : networkNode.getEntriesA();
         assert !otherDirections.isEmpty();
 
         this.targets = target.getNodes();
-        this.startNode = nextNetwork;
+        this.startNode = networkNode;
         this.startPredecessor = otherDirections.get(0).network;
     }
 
@@ -48,9 +45,7 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
 
         NetworkNode endNode = dijkstra(predecessors, distanceMap, open);
 
-        if (endNode == null) {
-            return null;
-        }
+        if (endNode == null) return null;
 
         float pathLength = distanceMap.get(endNode);
         return new Path(startNode, predecessors, endNode, pathLength);
@@ -100,7 +95,7 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
         return null;
     }
 
-    public static class Path extends ArrayList<NetworkNode> {
+    public static class Path extends ArrayDeque<NetworkNode> {
         private float pathLength;
 
         public Path(
@@ -112,14 +107,9 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
             NetworkNode currentNode = endNode;
 
             while (currentNode != startNode) {
-                add(currentNode);
+                addFirst(currentNode);
                 currentNode = predecessors.get(currentNode);
                 assert currentNode != null : predecessors;
-            }
-
-            int size = this.size();
-            for (int i = 0, mid = size >> 1, j = size - 1; i < mid; i++, j--) {
-                Collections.swap(this, i, j);
             }
         }
 

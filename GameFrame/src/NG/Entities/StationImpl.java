@@ -126,8 +126,16 @@ public class StationImpl extends Storage implements Station {
             gl.translate(getPosition());
             gl.rotate(Vectors.Z, orientation);
 
-            MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREY));
+            MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.YELLOW));
+            gl.pushMatrix();
+            {
+                gl.translate(0, 0, 2);
+                gl.scale(0.2f, 0.2f, 0.2f);
+                gl.render(GenericShapes.CUBE, this);
+            }
+            gl.popMatrix();
 
+            MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREY));
             gl.scale(length / 2, realWidth / 2, HEIGHT / 2);
             gl.render(GenericShapes.CUBE, this);
 

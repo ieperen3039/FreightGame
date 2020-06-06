@@ -31,7 +31,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
     private final RailMovement positionEngine;
     private final List<TrainElement> entities = new CopyOnWriteArrayList<>();
 
-    private Schedule schedule = new Schedule();
+    private final Schedule schedule = new Schedule();
     private Schedule.Node currentTarget = null;
 
     public Train(Game game, double spawnTime, TrackPiece startPiece, float fraction) {
@@ -55,12 +55,14 @@ public class Train extends AbstractGameObject implements MovingEntity {
         float totalTractiveEffort = 0;
         float totalR1 = 0;
         float totalR2 = 0;
+        float totalLength = 0;
 
         for (TrainElement entity : entities) {
             TrainElement.Properties props = entity.getProperties();
             totalMass += props.mass;
             totalR1 += props.linearResistance;
             totalR2 += props.quadraticResistance;
+            totalLength += props.length;
 
             if (props instanceof Locomotive.Properties) {
                 Locomotive.Properties lProps = (Locomotive.Properties) props;
@@ -68,7 +70,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
             }
         }
 
-        positionEngine.setForceFunction(totalTractiveEffort, totalMass, totalR1, totalR2, 1);
+        positionEngine.setProperties(totalTractiveEffort, totalMass, totalR1, totalR2, 1, totalLength);
     }
 
     @Override
@@ -151,12 +153,34 @@ public class Train extends AbstractGameObject implements MovingEntity {
         public TrainUI() {
             super(Train.this.toString());
             setMainPanel(SContainer.column(
-                    new SInteractiveTextArea(() -> currentTarget == null ? "No schedule" : "Now heading for " + currentTarget.element, 50),
+                    new SInteractiveTextArea(this::getStatus, 50),
                     new SInteractiveTextArea(() -> String.format("Speed: %6.02f", positionEngine.getSpeed()), 50),
                     new SButton("Start", () -> positionEngine.setAcceleration(1f)),
                     new SButton("Reverse", () -> positionEngine.reverse(getLength())),
                     new SButton("Schedule", () -> game.gui().addFrame(schedule.getUI(game)))
             ));
+        }
+
+        private String getStatus() {
+            if (currentTarget == null) {
+                currentTarget = schedule.getFirstNode();
+            }
+            if (currentTarget != null) {
+                if (!positionEngine.hasPath()) {
+                    return "Waiting for free path...";
+                }
+
+                return "Now heading for " + currentTarget.element;
+            }
+
+            if (positionEngine.isStopping()) {
+                if (positionEngine.getSpeed() == 0) {
+                    return "Stopped";
+                }
+                return "Stopping...";
+            }
+
+            return "No schedule";
         }
 
     }

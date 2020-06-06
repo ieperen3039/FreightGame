@@ -40,6 +40,7 @@ public class Signal extends AbstractGameObject implements Entity {
             GenericShapes.createRing(INNER_RADIUS + MARGIN, RING_RESOLUTION, COLOR_OFFSET / 2f), Mesh::dispose
     );
 
+    /** the node where this signals is placed on */
     private final RailNode hostNode;
     private final Vector3fc ringMiddle;
 
@@ -87,15 +88,15 @@ public class Signal extends AbstractGameObject implements Entity {
             MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, getColor()));
             gl.render(RING_MESH.get(), this);
 
-            if (inSameDirection) {
+            if (!inSameDirection) {
                 gl.translate(0, 0, COLOR_OFFSET);
-                MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREEN));
+                MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.RED));
                 gl.render(RING_MESH.get(), this);
                 gl.translate(0, 0, -COLOR_OFFSET);
-            }
-            if (inOppositeDirection) {
+
+            } else if (!inOppositeDirection) {
                 gl.translate(0, 0, -COLOR_OFFSET);
-                MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREEN));
+                MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.RED));
                 gl.render(RING_MESH.get(), this);
                 gl.translate(0, 0, COLOR_OFFSET);
             }
@@ -104,6 +105,10 @@ public class Signal extends AbstractGameObject implements Entity {
     }
 
     private Color4f getColor() {
+        if (hostNode.isUnconnected()) {
+            return Color4f.CYAN;
+        }
+
         if (connectionsAreValid) {
             return Color4f.WHITE;
         } else {
@@ -202,12 +207,26 @@ public class Signal extends AbstractGameObject implements Entity {
         return pathToBest.path;
     }
 
+    /** @see #reservePath(NetworkPosition, boolean) */
     public Deque<TrackPiece> reservePath(NetworkPosition target, TrackPiece previousTrack) {
+        return reservePath(target, !hostNode.isInDirectionOf(previousTrack));
+    }
+
+    /**
+     * computes a path p to another signal such that p.getFirst() is the first track on the path and p.getLast() is the
+     * last track on the path. This path is a section of the shortest available path towards target. Each element is
+     * reserved, and should be freed whenever it is passed, as {@link TrackPiece#setOccupied(boolean)
+     * track.setOccupied(false)}.
+     * <p>
+     * If the path is not empty, then it starts and ends with a signal, with no signal inbetween.
+     * @param target             the target to path toward
+     * @param trackIsInDirection whether the starting direction is the same as the direction of {@link #getNode()}
+     * @return a path from here to the next signal on the shortest available path toward target.
+     */
+    public Deque<TrackPiece> reservePath(NetworkPosition target, boolean trackIsInDirection) {
         validateConnections();
 
         Map<Signal, TrackPath> signals;
-
-        boolean trackIsInDirection = !hostNode.isInDirectionOf(previousTrack);
         if (trackIsInDirection) {
             if (!inOppositeDirection) {
                 return getEmptyPath();
@@ -233,6 +252,7 @@ public class Signal extends AbstractGameObject implements Entity {
         float leastDistance = Float.POSITIVE_INFINITY;
 
         for (Signal other : signals.keySet()) {
+            other.validateConnections();
             boolean inDirection = other.bSignals.containsKey(this);
             NetworkPathFinder pathFinder = new NetworkPathFinder(other.hostNode, inDirection, target);
 
@@ -254,8 +274,6 @@ public class Signal extends AbstractGameObject implements Entity {
 
     private List<TrackPiece> convertPath(TrackPiece previousTrack, NetworkPathFinder.Path pathToBest) {
         List<TrackPiece> pathToSignal = new ArrayList<>();
-        int nodeIndex = 0;
-
         RailNode node = hostNode;
         NetworkNode networkNode = hostNode.getNetworkNode();
 
@@ -274,7 +292,7 @@ public class Signal extends AbstractGameObject implements Entity {
 
             node = trackPiece.getNot(node);
             if (node.getNetworkNode().equals(networkNode)) {
-                networkNode = pathToBest.get(nodeIndex++);
+                networkNode = pathToBest.removeFirst();
             }
         } while (!node.hasSignal());
         return pathToSignal;
@@ -317,6 +335,11 @@ public class Signal extends AbstractGameObject implements Entity {
             int leftCode = (path != null) ? path.hashCode() : 0;
             int rightCode = Float.floatToIntBits(length);
             return (31 * leftCode) + rightCode;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("Path (%5.01f in %2d pieces)", length, path.size());
         }
     }
 }

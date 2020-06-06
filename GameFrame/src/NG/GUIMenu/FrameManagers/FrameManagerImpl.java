@@ -233,7 +233,7 @@ public class FrameManagerImpl implements FrameGUIManager {
     }
 
     private void processClick(int button, SComponent component, int xSc, int ySc) {
-        Logger.WARN.print(component);
+        Logger.DEBUG.print(component);
         if (component instanceof MouseClickListener) {
             MouseClickListener cl = (MouseClickListener) component;
             // by def. of MouseRelativeClickListener, give relative coordinates

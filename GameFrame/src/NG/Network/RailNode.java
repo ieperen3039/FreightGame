@@ -4,7 +4,6 @@ import NG.Core.Game;
 import NG.Tools.Vectors;
 import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
-import NG.Tracks.TrackTypeGhost;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -51,7 +50,7 @@ public class RailNode {
         this.networkNode = networkNode;
     }
 
-    public RailNode(RailNode source, TrackTypeGhost newType) {
+    public RailNode(RailNode source, TrackType newType) {
         this.position = source.position;
         this.direction = source.direction;
         this.type = newType;
@@ -117,7 +116,7 @@ public class RailNode {
         return networkNode.getEntriesA().isEmpty() && networkNode.getEntriesB().isEmpty();
     }
 
-    boolean isInDirectionOf(TrackPiece track) {
+    public boolean isInDirectionOf(TrackPiece track) {
         assert track.getStartNode().equals(this) || track.getEndNode().equals(this);
 
         for (NetworkNode.Direction entry : networkNode.getEntriesA()) {

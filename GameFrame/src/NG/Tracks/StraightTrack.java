@@ -100,12 +100,12 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     private static boolean check(RailNode startNode, RailNode endNode, Vector3fc direction) {
         Vector3fc ste = startNode.getDirectionTo(endNode.getPosition());
         float angleSTE = new Vector3f(ste.x(), ste.y(), 0).normalize()
-                .angle(new Vector3f(direction.x(), direction.y(), 0));
+                .angle(new Vector3f(direction.x(), direction.y(), 0).normalize());
         if (angleSTE > Math.toRadians(1)) throw new IllegalArgumentException(String.valueOf(Math.toDegrees(angleSTE)));
 
         Vector3fc ets = endNode.getDirectionTo(startNode.getPosition());
         float angleETS = new Vector3f(ets.x(), ets.y(), 0).normalize()
-                .angle(new Vector3f(direction.x(), direction.y(), 0));
+                .angle(new Vector3f(direction.x(), direction.y(), 0).normalize());
         if (angleETS < Math.toRadians(179)) {
             throw new IllegalArgumentException(String.valueOf(Math.toDegrees(angleETS)));
         }

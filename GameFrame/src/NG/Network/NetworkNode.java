@@ -1,5 +1,6 @@
 package NG.Network;
 
+import NG.Tools.Logger;
 import NG.Tools.Toolbox;
 import NG.Tracks.TrackPiece;
 import org.joml.Vector3f;
@@ -133,7 +134,7 @@ public class NetworkNode {
 
     /** @return true iff this node forms a connection in the network */
     public boolean isNetworkCritical() {
-        return isSwitch();
+        return isSwitch() || isEnd();
     }
 
     /**
@@ -159,6 +160,7 @@ public class NetworkNode {
         Direction entry = list.get(i);
         // we propagate backwards, hence distance increases
         float newDistance = distanceToSource + entry.trackPiece.getLength();
+        assert !Float.isNaN(newDistance);
 
         // if this is already set correctly, then everything down the line is set correctly as well
         if (newNetworkNode == null) {
@@ -236,6 +238,14 @@ public class NetworkNode {
 
             otherDirection.adjacent.updateNetworkTo(this, targetDirection.network, targetDirection.distanceToNetworkNode);
             targetDirection.adjacent.updateNetworkTo(this, otherDirection.network, otherDirection.distanceToNetworkNode);
+
+        } else if (this.isNetworkCritical()) {
+            for (Direction entry : aDirection) {
+                entry.adjacent.updateNetworkTo(this, this, 0);
+            }
+            for (Direction entry : bDirection) {
+                entry.adjacent.updateNetworkTo(this, this, 0);
+            }
         }
 
         return removed.trackPiece;
@@ -296,9 +306,6 @@ public class NetworkNode {
         updateNetwork(oneNode, twoNode);
         updateNetwork(twoNode, oneNode);
 
-        assert oneNode.isNetworkCritical() || !oneNode.isSwitch();
-        assert twoNode.isNetworkCritical() || !twoNode.isSwitch();
-
         check(oneNode);
         check(twoNode);
     }
@@ -318,7 +325,16 @@ public class NetworkNode {
             assert otherDirections.size() == 1;
             Direction entryOfOther = otherDirections.get(0);
 
-            targetNode.updateNetworkTo(thisNode, entryOfOther.network, entryOfOther.distanceToNetworkNode);
+            NetworkNode network = entryOfOther.network;
+            if (network == null || !network.isNetworkCritical()) {
+                // edge case of a loop
+                Logger.DEBUG.print("Loop detected");
+                targetNode.updateNetworkTo(thisNode, null, 0);
+                entryOfOther.adjacent.updateNetworkTo(thisNode, null, 0);
+            } else {
+
+                targetNode.updateNetworkTo(thisNode, network, entryOfOther.distanceToNetworkNode);
+            }
         }
     }
 
@@ -346,6 +362,8 @@ public class NetworkNode {
     }
 
     public static void check(NetworkNode aNode) {
+        assert aNode.isNetworkCritical() || !aNode.isSwitch() : aNode;
+
         Collection<Direction> entries = aNode.getAllEntries();
         // all network nodes are network critical
         assert entries.stream()
@@ -410,13 +428,13 @@ public class NetworkNode {
         NetworkNode networkNode;
         float distanceToNetworkOfNewToOne;
 
-        if (oneNode.isEnd()) {
-            networkNode = null;
-            distanceToNetworkOfNewToOne = 0;
-
-        } else if (oneNode.isNetworkCritical()) {
+        if (oneNode.isNetworkCritical()) {
             networkNode = oneNode;
             distanceToNetworkOfNewToOne = track.getLength();
+
+        } else if (oneNode.isEnd()) {
+            networkNode = null;
+            distanceToNetworkOfNewToOne = 0;
 
         } else {
             assert oneNode.isStraight() : oneNode;  // !isEnd() && !isSwitch() assuming (!isNetworkCritical() => !isSwitch())
@@ -554,6 +572,7 @@ public class NetworkNode {
         private Direction(
                 NetworkNode adjacent, TrackPiece trackPiece, NetworkNode network, float distanceToNetworkNode
         ) {
+            assert !Float.isNaN(distanceToNetworkNode);
             this.adjacent = adjacent;
             this.trackPiece = trackPiece;
             this.network = network;
