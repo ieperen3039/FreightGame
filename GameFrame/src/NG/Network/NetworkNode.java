@@ -155,7 +155,7 @@ public class NetworkNode {
             i = getIndexOf(list, source);
         }
 
-        assert i != -1 : "source node " + source + " is not connected to this " + null;
+        assert i != -1 : "source node " + source + " is not connected to this " + this;
 
         Direction entry = list.get(i);
         // we propagate backwards, hence distance increases
@@ -200,20 +200,15 @@ public class NetworkNode {
      * removed. If there is no such connection, this returns null
      */
     public TrackPiece removeNode(NetworkNode target) {
-        boolean wasCritical = this.isNetworkCritical();
-
         Direction removed;
 
-        List<Direction> thisToOther;
         List<Direction> thisToTarget = aDirection;
         int i = getIndexOf(thisToTarget, target);
         if (i != -1) {
             removed = thisToTarget.remove(i);
-            thisToOther = bDirection;
 
         } else {
             thisToTarget = bDirection;
-            thisToOther = aDirection;
             i = getIndexOf(thisToTarget, target);
             if (i != -1) {
                 removed = thisToTarget.remove(i);
@@ -223,6 +218,10 @@ public class NetworkNode {
             }
         }
 
+        return removed.trackPiece;
+    }
+
+    private void postRemoveCheck(boolean wasCritical, List<Direction> thisToOther) {
         if (isEnd() && !this.isNetworkCritical()) {
             for (Direction entry : thisToOther) {
                 entry.adjacent.updateNetworkTo(this, null, 0);
@@ -230,14 +229,15 @@ public class NetworkNode {
 
         } else if (wasCritical && !this.isNetworkCritical()) {
             assert isStraight() : this; // !isEnd() && !isSwitch() assuming (!isNetworkCritical() => !isSwitch())
-            assert thisToOther.size() == 1 : thisToOther;
-            assert thisToTarget.size() == 1 : thisToTarget;
+            // doesnt matter which is which
+            assert aDirection.size() == 1 : aDirection;
+            assert bDirection.size() == 1 : bDirection;
 
-            Direction otherDirection = thisToOther.get(0);
-            Direction targetDirection = thisToTarget.get(0);
+            Direction oneDirection = aDirection.get(0);
+            Direction twoDirection = bDirection.get(0);
 
-            otherDirection.adjacent.updateNetworkTo(this, targetDirection.network, targetDirection.distanceToNetworkNode);
-            targetDirection.adjacent.updateNetworkTo(this, otherDirection.network, otherDirection.distanceToNetworkNode);
+            oneDirection.adjacent.updateNetworkTo(this, twoDirection.network, twoDirection.distanceToNetworkNode);
+            twoDirection.adjacent.updateNetworkTo(this, oneDirection.network, oneDirection.distanceToNetworkNode);
 
         } else if (this.isNetworkCritical()) {
             for (Direction entry : aDirection) {
@@ -247,8 +247,6 @@ public class NetworkNode {
                 entry.adjacent.updateNetworkTo(this, this, 0);
             }
         }
-
-        return removed.trackPiece;
     }
 
     @Override
@@ -348,8 +346,16 @@ public class NetworkNode {
     public static TrackPiece removeConnection(NetworkNode aNode, NetworkNode bNode) {
         assert aNode.getEntryOf(bNode) != null && bNode.getEntryOf(aNode) != null;
 
+        boolean aWasCritical = aNode.isNetworkCritical();
+        boolean bWasCritical = bNode.isNetworkCritical();
+        List<Direction> aToOther = aNode.getNext(bNode);
+        List<Direction> bToOther = bNode.getNext(aNode);
+
         TrackPiece oldPiece = aNode.removeNode(bNode);
         TrackPiece sameOldPiece = bNode.removeNode(aNode);
+
+        aNode.postRemoveCheck(aWasCritical, aToOther);
+        bNode.postRemoveCheck(bWasCritical, bToOther);
 
         check(aNode);
         check(bNode);
