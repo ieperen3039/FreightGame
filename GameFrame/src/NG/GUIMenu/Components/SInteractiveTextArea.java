@@ -2,6 +2,7 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 
 import java.util.function.Supplier;
 
@@ -10,6 +11,11 @@ import java.util.function.Supplier;
  */
 public class SInteractiveTextArea extends STextComponent {
     private final Supplier<String> supplier;
+
+    public SInteractiveTextArea(Supplier<String> supplier, SComponentProperties props) {
+        super("", props);
+        this.supplier = supplier;
+    }
 
     public SInteractiveTextArea(Supplier<String> supplier, int minHeight) {
         this(supplier, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT, 0, minHeight);

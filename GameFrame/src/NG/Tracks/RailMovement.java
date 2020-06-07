@@ -44,7 +44,7 @@ public class RailMovement extends AbstractGameObject {
     private long trackEndDistanceMillis;
 
     private boolean doStop = false;
-    private boolean doPlanReverse = false;
+    private boolean doReverse = false;
     private long stopTotalMillis = Long.MAX_VALUE;
 
     private RailNode scanEndNode; // track that is scanned latest
@@ -120,10 +120,39 @@ public class RailMovement extends AbstractGameObject {
         update(gametime);
     }
 
+    public void reverse() {
+        doReverse = true;
+    }
+
+    public void stop() {
+        doStop = true;
+    }
+
+    public void start() {
+        doStop = false;
+        doReverse = false;
+        accelerationFraction = 1f;
+    }
+
     public void update(double gameTime) {
         float speed = this.speed;
 
         while (nextUpdateTime < gameTime) {
+            // case: train is told to stop
+            if (doStop || doReverse) {
+                accelerationFraction = -1;
+
+            } else {
+                long stoppingDistance = stopTotalMillis - currentTotalMillis;
+                int stopDistanceNextCycle = getStopDistanceMillis(speed) + (int) (speed * DELTA_TIME * METERS_TO_MILLIS);
+
+                // only break when necessary
+                if (stopDistanceNextCycle > stoppingDistance) {
+                    accelerationFraction = -1;
+                }
+            }
+
+            // update speed, calculate movement
             float resistance = (speed * r1) + (speed * speed * r2);
             if (accelerationFraction < 0) {
                 // s = vt + at^2 // movement in meters
@@ -136,17 +165,18 @@ public class RailMovement extends AbstractGameObject {
 
             float movement = speed * DELTA_TIME;
 
-            // case: the train stops
+            // case: the train is stopped
             if (movement < 0) {
-                if (doPlanReverse) {
-                    reverse(trainLength);
-                    doPlanReverse = false;
+                speed = 0;
+                movement = 0;
 
-                } else { // do not reverse
-                    speed = 0;
-                    totalMillimeters.add(currentTotalMillis, nextUpdateTime);
-                    nextUpdateTime += DELTA_TIME;
-                    continue;
+                if (doReverse) {
+                    reverse(trainLength);
+                    doReverse = false;
+                    accelerationFraction = 1;
+
+                } else {
+                    accelerationFraction = 0;
                 }
             }
 
@@ -165,7 +195,6 @@ public class RailMovement extends AbstractGameObject {
                 Deque<TrackPiece> path = signal.reservePath(target, scanIsInPathDirection);
 
                 if (path.isEmpty()) {
-                    doStop = true;
                     stopTotalMillis = scanTrackEndMillis;
                     break;
                 }
@@ -197,19 +226,6 @@ public class RailMovement extends AbstractGameObject {
                 commitTrack(trackPiece, positiveDirection);
             }
 
-            // case: train is told to stop
-            if (doStop || doPlanReverse) {
-                accelerationFraction = 0;
-
-                // only break when necessary
-                int stoppingDistance = (int) (stopTotalMillis - currentTotalMillis);
-                int stopDistanceNextCycle = getStopDistanceMillis(speed) + movementMillis;
-
-                if (stopDistanceNextCycle > stoppingDistance) {
-                    accelerationFraction = -1;
-                }
-            }
-
             // loop end update
             nextUpdateTime += DELTA_TIME;
             accelerationAverage.add(accelerationFraction);
@@ -218,8 +234,7 @@ public class RailMovement extends AbstractGameObject {
         this.speed = Math.abs(speed);
     }
 
-    public void reverse(float reversalLength) {
-        speed = 0; // prevents a couple of edge cases
+    private void reverse(float reversalLength) {
         isPositiveDirection = !isPositiveDirection;
 
         long passedDistance = (long) (currentTrack.getLength() * METERS_TO_MILLIS - (trackEndDistanceMillis - currentTotalMillis));
@@ -334,12 +349,6 @@ public class RailMovement extends AbstractGameObject {
         return (int) (stopDistance * METERS_TO_MILLIS);
     }
 
-    public void setAcceleration(float a) {
-        assert a >= -1 && a <= 1 : "Acceleration must be given as a fraction [-1, 1]";
-        doStop = false;
-        accelerationFraction = a;
-    }
-
     /**
      * @return reals speed in meters per second
      */
@@ -348,7 +357,7 @@ public class RailMovement extends AbstractGameObject {
     }
 
     public boolean isStopping() {
-        return doStop;
+        return doStop || doReverse;
     }
 
     public AveragingQueue getAccelerationAverage() {

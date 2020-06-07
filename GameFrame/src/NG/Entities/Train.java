@@ -6,6 +6,7 @@ import NG.GUIMenu.Components.SButton;
 import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Components.SInteractiveTextArea;
+import NG.GUIMenu.Menu.MainMenu;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Network.NetworkNode;
 import NG.Network.NetworkPosition;
@@ -155,10 +156,12 @@ public class Train extends AbstractGameObject implements MovingEntity {
             setMainPanel(SContainer.column(
                     new SInteractiveTextArea(this::getStatus, 50),
                     new SInteractiveTextArea(() -> String.format("Speed: %6.02f", positionEngine.getSpeed()), 50),
-                    new SButton("Start", () -> positionEngine.setAcceleration(1f)),
-                    new SButton("Reverse", () -> positionEngine.reverse(getLength())),
-                    new SButton("Schedule", () -> game.gui().addFrame(schedule.getUI(game)))
+                    new SButton("Start", positionEngine::start, MainMenu.BUTTON_PROPERTIES),
+                    new SButton("Stop", positionEngine::stop, MainMenu.BUTTON_PROPERTIES),
+                    new SButton("Reverse", positionEngine::reverse, MainMenu.BUTTON_PROPERTIES),
+                    new SButton("Schedule", () -> game.gui().addFrame(schedule.getUI(game)), MainMenu.BUTTON_PROPERTIES)
             ));
+            pack();
         }
 
         private String getStatus() {

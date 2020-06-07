@@ -1,7 +1,6 @@
 package NG.GUIMenu.Components;
 
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
-import NG.GUIMenu.Menu.MainMenu;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
@@ -44,8 +43,8 @@ public class SDropDown extends SComponent implements MouseClickListener {
     public SDropDown(FrameGUIManager gui, int initial, String... values) {
         this.values = values;
         this.current = initial;
-        this.minHeight = MainMenu.BUTTON_PROPERTIES.minHeight;
-        this.minWidth = MainMenu.BUTTON_PROPERTIES.minWidth;
+        this.minHeight = 80;
+        this.minWidth = 250;
         this.optionPane = new DropDownOptions(values);
         this.gui = gui;
 
