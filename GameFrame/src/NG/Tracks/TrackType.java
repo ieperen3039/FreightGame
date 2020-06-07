@@ -15,6 +15,9 @@ import java.util.function.Function;
  * A specific type of track where trains can move along. track.
  */
 public interface TrackType {
+    float RADIUS_SPEED_RATIO = 1.5f;
+    float MINIMUM_RADIUS = 1f;
+
     /** @return the name for this track type */
     String toString();
 
@@ -40,8 +43,12 @@ public interface TrackType {
      * sets the material properties of this track in the shader. for example: {@code shader.setMaterial(Material.ROUGH,
      * Color4f.WHITE);}
      * @param shader the current shader
+     * @param track
      */
-    void setMaterial(MaterialShader shader);
+    void setMaterial(MaterialShader shader, TrackPiece track);
+
+    /** @return the maximum speed of a straight track */
+    float getMaximumSpeed();
 
     /**
      * Given a circle radius, gives the maximum speed of this track.
@@ -49,14 +56,10 @@ public interface TrackType {
      * @return the maximum speed, or 0 if the radius is too small
      */
     default float getMaximumSpeed(float radius) {
-        if (radius < minimumRadius()) return 0;
-        return 100 - (100 / radius);
-    }
+        if (radius < MINIMUM_RADIUS) return 0;
 
-    /**
-     * @return the smallest allowed rail circle radius
-     */
-    float minimumRadius();
+        return Math.min(getMaximumSpeed(), radius * RADIUS_SPEED_RATIO);
+    }
 
     static Mesh clickBoxStraight(Vector3fc displacement) {
         float length = displacement.length();

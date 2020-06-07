@@ -27,23 +27,17 @@ public interface TimedQueue<T> {
      */
     T getPrevious(double timeStamp);
 
-    /**
-     * @param timeStamp the timestamp in seconds to measure from
-     * @return the number of seconds until {@link #getNext(double)} returns a different value. If timeStamp is exactly
-     * an element of this queue, it measures to that element, and returns 0 (as {@code getNext(double)} would do}. If
-     * timeStamp is later than any action, it returns a negative number representing the difference between this
-     * timestamp and the last element in this queue.
-     */
-    double timeUntilNext(double timeStamp);
+    default double timeUntilNext(double timeStamp) {
+        return timeOfNext(timeStamp) - timeStamp;
+    }
 
-    /**
-     * @param timeStamp the timestamp in seconds to measure from
-     * @return the number of seconds since {@link #getPrevious(double)} returned a different value. If timeStamp is
-     * exactly an element of this queue, it measures to the element before that (as {@code getPrevious(double)} would
-     * do}. If timeStamp is earlier than any action, it returns a negative number representing the difference between
-     * the first element in this queue and this timestamp.
-     */
-    double timeSincePrevious(double timeStamp);
+    double timeOfNext(double timeStamp);
+
+    double timeOfPrevious(double timeStamp);
+
+    default double timeSincePrevious(double timeStamp) {
+        return timeStamp - timeOfPrevious(timeStamp);
+    }
 
     /**
      * upon returning, nextTimeStamp > timeStamp or there exist no item with such timestamp.

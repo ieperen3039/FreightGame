@@ -61,15 +61,17 @@ public class TrackBuilder extends ToggleMouseTool {
                             " to " + Vectors.toString(liftedPosition));
 
                     List<TrackPiece> tracks = RailTools.createNew(game, firstNode, liftedPosition, signalDistance);
-                    assert !tracks.isEmpty();
-                    TrackPiece lastTrack = processTracksReturnLast(game, tracks);
-                    assert lastTrack != null;
-                    firstNode = lastTrack.getEndNode();
+                    if (isValidTracks(tracks)) {
+                        assert !tracks.isEmpty();
+                        TrackPiece lastTrack = processTracksReturnLast(game, tracks);
+                        assert lastTrack != null;
+                        firstNode = lastTrack.getEndNode();
+                    }
 
                 } else if (firstPosition != null) {
-
                     List<TrackPiece> tracks = RailTools.createNew(game, type, firstPosition, liftedPosition, signalDistance);
                     assert !tracks.isEmpty();
+                    // no validation, as this is a straight track piece
                     TrackPiece lastTrack = processTracksReturnLast(game, tracks);
                     assert lastTrack != null;
                     firstNode = lastTrack.getEndNode();
@@ -121,9 +123,11 @@ public class TrackBuilder extends ToggleMouseTool {
                     } else {
                         List<TrackPiece> connection =
                                 RailTools.createConnection(game, firstNode, targetNode, signalDistance);
-                        processTracksReturnLast(game, connection);
 
-                        firstNode = null;
+                        if (isValidTracks(connection)) {
+                            processTracksReturnLast(game, connection);
+                            firstNode = null;
+                        }
                     }
                 }
                 return;
@@ -160,6 +164,18 @@ public class TrackBuilder extends ToggleMouseTool {
                 }
             default:
         }
+    }
+
+    private static boolean isValidTracks(List<TrackPiece> tracks) {
+        for (TrackPiece track : tracks) {
+            if (track instanceof CircleTrack) {
+                float radius = ((CircleTrack) track).getRadius();
+                if (radius < TrackType.MINIMUM_RADIUS) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**

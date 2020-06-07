@@ -89,7 +89,7 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
     }
 
     @Override
-    public double timeUntilNext(double timeStamp) {
+    public double timeOfNext(double timeStamp) {
         try (AutoLock.Section section = changeLock.open()) {
             if (timeStamps.isEmpty()) throw new IllegalStateException("empty");
 
@@ -100,12 +100,12 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
                 nextActionStart = times.next();
             }
 
-            return nextActionStart - timeStamp;
+            return nextActionStart;
         }
     }
 
     @Override
-    public double timeSincePrevious(double timeStamp) {
+    public double timeOfPrevious(double timeStamp) {
         try (AutoLock.Section section = changeLock.open()) {
             if (timeStamps.isEmpty()) throw new IllegalStateException("empty");
 
@@ -121,7 +121,7 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
                 previousActionStart = next;
                 next = times.next();
             }
-            return timeStamp - previousActionStart;
+            return previousActionStart;
         }
     }
 

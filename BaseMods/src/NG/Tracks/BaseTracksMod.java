@@ -77,13 +77,13 @@ public class BaseTracksMod implements Mod {
         }
 
         @Override
-        public void setMaterial(MaterialShader shader) {
-            shader.setMaterial(Material.ROUGH, Color4f.WHITE);
+        public void setMaterial(MaterialShader shader, TrackPiece track) {
+            shader.setMaterial(Material.ROUGH, track.isOccupied() ? Color4f.GREY : Color4f.WHITE);
         }
 
         @Override
-        public float minimumRadius() {
-            return 1;
+        public float getMaximumSpeed() {
+            return 10;
         }
     }
 }

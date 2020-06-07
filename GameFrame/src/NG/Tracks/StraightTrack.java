@@ -131,7 +131,7 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
         }
 
         if (shader instanceof MaterialShader) {
-            type.setMaterial((MaterialShader) shader);
+            type.setMaterial((MaterialShader) shader, this);
         }
 
         gl.pushMatrix();
@@ -208,6 +208,11 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     @Override
     public boolean isOccupied() {
         return isOccupied;
+    }
+
+    @Override
+    public float getMaximumSpeed() {
+        return type.getMaximumSpeed();
     }
 
     @Override

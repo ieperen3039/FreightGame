@@ -6,7 +6,9 @@ import NG.GUIMenu.Components.SButton;
 import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Components.SInteractiveTextArea;
-import NG.GUIMenu.Menu.MainMenu;
+import NG.GUIMenu.Rendering.NGFonts;
+import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.GUIMenu.SComponentProperties;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Network.NetworkNode;
 import NG.Network.NetworkPosition;
@@ -34,6 +36,10 @@ public class Train extends AbstractGameObject implements MovingEntity {
 
     private final Schedule schedule = new Schedule();
     private Schedule.Node currentTarget = null;
+
+    private static final SComponentProperties BUTTON_PROPERTIES = new SComponentProperties(
+            300, 50, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
+    );
 
     public Train(Game game, double spawnTime, TrackPiece startPiece, float fraction) {
         super(game);
@@ -71,7 +77,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
             }
         }
 
-        positionEngine.setProperties(totalTractiveEffort, totalMass, totalR1, totalR2, 1, totalLength);
+        positionEngine.setProperties(totalTractiveEffort, totalMass, totalR1, totalR2, 5, totalLength);
     }
 
     @Override
@@ -151,15 +157,16 @@ public class Train extends AbstractGameObject implements MovingEntity {
     }
 
     private class TrainUI extends SFrame {
+
         public TrainUI() {
             super(Train.this.toString());
             setMainPanel(SContainer.column(
                     new SInteractiveTextArea(this::getStatus, 50),
                     new SInteractiveTextArea(() -> String.format("Speed: %6.02f", positionEngine.getSpeed()), 50),
-                    new SButton("Start", positionEngine::start, MainMenu.BUTTON_PROPERTIES),
-                    new SButton("Stop", positionEngine::stop, MainMenu.BUTTON_PROPERTIES),
-                    new SButton("Reverse", positionEngine::reverse, MainMenu.BUTTON_PROPERTIES),
-                    new SButton("Schedule", () -> game.gui().addFrame(schedule.getUI(game)), MainMenu.BUTTON_PROPERTIES)
+                    new SButton("Start", positionEngine::start, BUTTON_PROPERTIES),
+                    new SButton("Stop", positionEngine::stop, BUTTON_PROPERTIES),
+                    new SButton("Reverse", positionEngine::reverse, BUTTON_PROPERTIES),
+                    new SButton("Schedule", () -> game.gui().addFrame(schedule.getUI(game)), BUTTON_PROPERTIES)
             ));
             pack();
         }

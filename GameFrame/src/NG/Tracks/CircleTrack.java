@@ -144,7 +144,7 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         }
 
         if (shader instanceof MaterialShader) {
-            type.setMaterial((MaterialShader) shader);
+            type.setMaterial((MaterialShader) shader, this);
         }
 
         gl.pushMatrix();
@@ -181,6 +181,11 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     @Override
     public boolean isOccupied() {
         return isOccupied;
+    }
+
+    @Override
+    public float getMaximumSpeed() {
+        return type.getMaximumSpeed(radius);
     }
 
     @Override
@@ -274,6 +279,10 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         return "CircleTrack{center=" + Vectors.toString(center) + ", radius=" + radius + ", angle=" + angle + "}";
     }
 
+    public float getRadius() {
+        return radius;
+    }
+
     /** @see #getCircleDescription(Vector2fc, Vector2fc, Vector2fc) */
     public static Description getCircleDescription(Vector3fc startPos, Vector3fc startDir, Vector3fc endPos) {
         return getCircleDescription(
@@ -314,6 +323,17 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
             absAngle = (float) (2 * Math.PI - absAngle);
         }
         return new Description(center, absAngle, radius);
+    }
+
+    public static float getCircleRadius(Vector2fc startPos, Vector2fc startDir, Vector2fc endPos) {
+        Vector2f startToCenter = new Vector2f(startDir.y(), -startDir.x()).normalize();
+        Vector2fc startToEnd = new Vector2f(endPos).sub(startPos);
+
+        // derivation: see bottom
+        float dot = Math.abs(startToEnd.dot(startToCenter));
+        if (dot < 1 / 128f) return Float.POSITIVE_INFINITY;
+
+        return startToEnd.lengthSquared() / (2 * dot);
     }
 
     public static class Description {

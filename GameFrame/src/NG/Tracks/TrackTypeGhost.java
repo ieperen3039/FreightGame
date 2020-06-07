@@ -50,12 +50,21 @@ public class TrackTypeGhost implements TrackType {
     }
 
     @Override
-    public void setMaterial(MaterialShader shader) {
-        shader.setMaterial(new Color4f(1, 1, 1, 0.5f), Color4f.BLACK, 0);
+    public void setMaterial(MaterialShader shader, TrackPiece track) {
+        Color4f color = Color4f.BLACK;
+
+        if (track instanceof CircleTrack) {
+            float radius = ((CircleTrack) track).getRadius();
+            if (radius < MINIMUM_RADIUS) {
+                color = Color4f.RED;
+            }
+        }
+
+        shader.setMaterial(new Color4f(1, 1, 1, 0.5f), color, 0);
     }
 
     @Override
-    public float minimumRadius() {
-        return source.minimumRadius();
+    public float getMaximumSpeed() {
+        return source.getMaximumSpeed();
     }
 }

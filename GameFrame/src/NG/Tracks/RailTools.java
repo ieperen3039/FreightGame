@@ -146,6 +146,7 @@ public final class RailTools {
         List<TrackPiece> tracks = new ArrayList<>();
 
         Vector3fc nodePosition = node.getPosition();
+        CircleTrack.Description circle = CircleTrack.getCircleDescription(nodePosition, nodeDirection, endPosition);
 
         float baseHeight = nodePosition.z();
         float heightDiff = baseHeight - endPosition.z();
@@ -154,7 +155,6 @@ public final class RailTools {
         float dotOfCross = nodeDirection.x() * startToEnd.y - nodeDirection.y() * startToEnd.x;
         boolean isClockwise = dotOfCross < 0;
 
-        CircleTrack.Description circle = CircleTrack.getCircleDescription(nodePosition, nodeDirection, endPosition);
         Vector3f direction = new Vector3f(nodeDirection);
 
         // sectionAngle is limited by MAX_CIRCLE_ANGLE_RAD, so we find a common divisor

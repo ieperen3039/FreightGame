@@ -53,11 +53,12 @@ public interface TrackPiece extends Entity {
         if (startNNode.getEntryOf(endNNode) == null || endNNode.getEntryOf(startNNode) == null) {
             throw new IllegalStateException(String.format("track %s has unconnected nodes %s and %s", this, startNNode, endNNode));
         }
-        ;
         return true;
     }
 
     void setOccupied(boolean occupied);
 
     boolean isOccupied();
+
+    float getMaximumSpeed();
 }
