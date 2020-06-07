@@ -155,7 +155,8 @@ public class SDropDown extends SComponent implements MouseClickListener {
         }
 
         design.draw(isOpened ? DROP_DOWN_HEAD_OPEN : DROP_DOWN_HEAD_CLOSED, screenPosition, getSize());
-        design.drawText(screenPosition, getSize(), text, TEXT_TYPE, SFrameLookAndFeel.Alignment.LEFT);
+        Vector2i textPosition = new Vector2i(screenPosition).add(4, 0); // 4 is the virtual component border
+        design.drawText(textPosition, getSize(), text, TEXT_TYPE, SFrameLookAndFeel.Alignment.LEFT);
         // modal dialogs are drawn separately
     }
 
