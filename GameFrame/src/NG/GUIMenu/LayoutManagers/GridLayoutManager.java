@@ -210,11 +210,16 @@ public class GridLayoutManager implements SLayoutManager {
         if (nOfGrows > 0 && spareSize > 0) {
             growValue = spareSize / nOfGrows;
         }
+        if (nOfGrows == 0 && spareSize > 0) {
+            growValue = spareSize / nOfElements;
+        }
 
         int[] widths = new int[nOfElements];
         for (int i = 0; i < nOfElements; i++) {
             int eltWidth = minSizes[i];
-            if (wantGrows[i]) eltWidth += growValue;
+            if (wantGrows[i] || nOfGrows == 0) {
+                eltWidth += growValue;
+            }
             widths[i] = eltWidth;
         }
 
