@@ -3,13 +3,14 @@ package NG.GameMap;
 import NG.Core.Version;
 import NG.Tools.OpenSimplexNoise;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Geert van Ieperen. Created on 27-9-2018.
  */
-public class SimpleMapGenerator implements MapGeneratorMod {
+public class DefaultMapGenerator implements MapGeneratorMod {
+    public static final Version VERSION = new Version(0, 1);
+
     private static final double AMPLITUDE_SCALE_FACTOR = 0.1;
     private static final double MAJOR_DENSITY = 0.02;
     private static final double MINOR_DENSITY = 0.2;
@@ -24,19 +25,20 @@ public class SimpleMapGenerator implements MapGeneratorMod {
     private final OpenSimplexNoise majorGenerator;
     private final OpenSimplexNoise minorGenerator;
 
-    private HashMap<String, Integer> properties;
+    private Map<String, Property> properties;
 
-    public SimpleMapGenerator(int seed) {
+    public DefaultMapGenerator(int seed) {
         this.seed = seed;
-        majorGenerator = new OpenSimplexNoise(seed);
-        minorGenerator = new OpenSimplexNoise(seed + 1);
-        properties = new HashMap<>();
-        properties.put(MAJOR_AMPLITUDE, 1);
-        properties.put(MINOR_AMPLITUDE, 0);
+        this.majorGenerator = new OpenSimplexNoise(seed);
+        this.minorGenerator = new OpenSimplexNoise(seed + 1);
+        this.properties = Map.of(
+                MAJOR_AMPLITUDE, new Property(MAJOR_AMPLITUDE, 0, 100, 1),
+                MINOR_AMPLITUDE, new Property(MINOR_AMPLITUDE, 0, 100, 0)
+        );
     }
 
     @Override
-    public Map<String, Integer> getProperties() {
+    public Map<String, Property> getProperties() {
         return properties;
     }
 
@@ -44,11 +46,11 @@ public class SimpleMapGenerator implements MapGeneratorMod {
     public float[][] generateHeightMap() {
         float[][] map = new float[width][height];
 
-        double majorAmplitude = properties.get(MAJOR_AMPLITUDE) * AMPLITUDE_SCALE_FACTOR;
+        double majorAmplitude = properties.get(MAJOR_AMPLITUDE).current * AMPLITUDE_SCALE_FACTOR;
         addNoiseLayer(map, majorGenerator, MAJOR_DENSITY, majorAmplitude);
         progress = 0.5f;
 
-        double minorAmplitude = properties.get(MINOR_AMPLITUDE) * AMPLITUDE_SCALE_FACTOR;
+        double minorAmplitude = properties.get(MINOR_AMPLITUDE).current * AMPLITUDE_SCALE_FACTOR;
         addNoiseLayer(map, minorGenerator, MINOR_DENSITY, minorAmplitude);
         progress = 1;
 
@@ -81,7 +83,7 @@ public class SimpleMapGenerator implements MapGeneratorMod {
 
     @Override
     public Version getVersionNumber() {
-        return new Version(0, 0);
+        return VERSION;
     }
 
     @Override
@@ -92,5 +94,10 @@ public class SimpleMapGenerator implements MapGeneratorMod {
     @Override
     public void setYSize(int ySize) {
         this.height = ySize;
+    }
+
+    @Override
+    public String getModName() {
+        return "Default Map Generator";
     }
 }

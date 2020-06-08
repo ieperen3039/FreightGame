@@ -16,7 +16,7 @@ public class FixedMapGenerator implements MapGeneratorMod {
     }
 
     @Override
-    public Map<String, Integer> getProperties() {
+    public Map<String, Property> getProperties() {
         return Collections.emptyMap();
     }
 

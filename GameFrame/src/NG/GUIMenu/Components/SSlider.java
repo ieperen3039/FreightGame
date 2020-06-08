@@ -10,8 +10,7 @@ import org.joml.Vector2ic;
 import java.util.ArrayList;
 import java.util.List;
 
-import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.SCROLL_BAR_BACKGROUND;
-import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.SCROLL_BAR_DRAG_ELEMENT;
+import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.*;
 
 /**
  * @author Geert van Ieperen created on 31-5-2020.
@@ -34,7 +33,7 @@ public class SSlider extends SComponent implements MouseDragListener, MouseClick
         this(0, 1, 0, props);
     }
 
-    public SSlider(int minimum, int maximum, int current, SComponentProperties props) {
+    public SSlider(float minimum, float maximum, float current, SComponentProperties props) {
         this.minimum = minimum;
         this.maximum = maximum;
         this.current = current;
@@ -43,6 +42,11 @@ public class SSlider extends SComponent implements MouseDragListener, MouseClick
         this.minHeight = props.minHeight;
         setGrowthPolicy(props.wantHzGrow, props.wantVtGrow);
         dragBarWidth = (minWidth == 0) ? BASE_DRAG_BAR_WIDTH : minWidth / 10;
+    }
+
+    public SSlider(int minimum, int maximum, int current, SComponentProperties props, SSliderListener listener) {
+        this(minimum, maximum, current, props);
+        addChangeListener(listener);
     }
 
     public void addChangeListener(SSliderListener listener) {
@@ -65,6 +69,7 @@ public class SSlider extends SComponent implements MouseDragListener, MouseClick
 
     @Override
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
+        design.draw(PANEL, screenPosition, getSize());
         design.draw(SCROLL_BAR_BACKGROUND, screenPosition, getSize());
 
         int space = getWidth() - dragBarWidth;
@@ -124,7 +129,7 @@ public class SSlider extends SComponent implements MouseDragListener, MouseClick
         }
     }
 
-    private interface SSliderListener {
+    public interface SSliderListener {
         void onChange(float newValue);
     }
 }

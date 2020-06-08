@@ -79,7 +79,7 @@ public class HeightMap extends GridMap {
 
     @Override
     public void generateNew(Game game, MapGeneratorMod mapGenerator) {
-        SFrame frame = new SFrame("Generating map...", 500, 200);
+        SFrame frame = new SFrame("Generating map...", 500, 200, false);
         SPanel panel = new SPanel();
         panel.add(new SFiller(), SPanel.NORTHEAST);
         panel.add(new SProgressBar(400, 50, () -> (mapGenerator.heightmapProgress() + meshProgress) / 2), SPanel.MIDDLE);

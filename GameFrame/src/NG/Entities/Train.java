@@ -2,10 +2,10 @@ package NG.Entities;
 
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
+import NG.GUIMenu.Components.SActiveTextArea;
 import NG.GUIMenu.Components.SButton;
 import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SFrame;
-import NG.GUIMenu.Components.SInteractiveTextArea;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
@@ -161,8 +161,8 @@ public class Train extends AbstractGameObject implements MovingEntity {
         public TrainUI() {
             super(Train.this.toString());
             setMainPanel(SContainer.column(
-                    new SInteractiveTextArea(this::getStatus, 50),
-                    new SInteractiveTextArea(() -> String.format("Speed: %6.02f", positionEngine.getSpeed()), 50),
+                    new SActiveTextArea(this::getStatus, 50),
+                    new SActiveTextArea(() -> String.format("Speed: %6.02f", positionEngine.getSpeed()), 50),
                     new SButton("Start", positionEngine::start, BUTTON_PROPERTIES),
                     new SButton("Stop", positionEngine::stop, BUTTON_PROPERTIES),
                     new SButton("Reverse", positionEngine::reverse, BUTTON_PROPERTIES),

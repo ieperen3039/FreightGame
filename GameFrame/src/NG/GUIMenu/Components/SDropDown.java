@@ -11,6 +11,7 @@ import org.joml.Vector2ic;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.DROP_DOWN_HEAD_CLOSED;
 import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.DROP_DOWN_HEAD_OPEN;
@@ -41,6 +42,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
      * @param values  a list of possible values for this dropdown menu
      */
     public SDropDown(FrameGUIManager gui, int initial, String... values) {
+        assert values.length > 0;
         this.values = values;
         this.current = initial;
         this.minHeight = 80;
@@ -58,6 +60,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
      * @param values  a list of possible values for this dropdown menu
      */
     public SDropDown(FrameGUIManager gui, SComponentProperties properties, int initial, String... values) {
+        assert values.length > 0;
         this.values = values;
         this.current = initial;
         this.optionPane = new DropDownOptions(values);
@@ -69,33 +72,37 @@ public class SDropDown extends SComponent implements MouseClickListener {
     }
 
     /**
-     * create a dropdown menu with the given possible values, with a minimum width of 150 and height of 50. Initially
-     * the first option is selected.
-     * @param gui    a reference to the gui in which this is displayed
-     * @param values a list of possible values for this dropdown menu
+     * create a dropdown menu with the string representation of the given object array as values. To obtain the selected
+     * values, one must retrieve the selected index with {@link #getSelectedIndex()} and access the original array.
+     * @param gui     a reference to the gui in which this is displayed
+     * @param initial the initial selected item, such that {@code values[initial]} is shown
+     * @param values  a list of possible values for this dropdown menu
      */
-    public SDropDown(FrameGUIManager gui, List<String> values) {
-        this(gui, 0, values.toArray(new String[0]));
+    public <T> SDropDown(FrameGUIManager gui, SComponentProperties properties, int initial, List<? extends T> values) {
+        this(gui, properties, initial, values, String::valueOf);
     }
 
     /**
      * create a dropdown menu with the string representation of the given object array as values. To obtain the selected
      * values, one must retrieve the selected index with {@link #getSelectedIndex()} and access the original array.
      * @param gui       a reference to the gui in which this is displayed
-     * @param minWidth  the minimum width of the selection bar
-     * @param minHeight the minimum height of the selection bar
      * @param initial   the initial selected item, such that {@code values[initial]} is shown
      * @param values    a list of possible values for this dropdown menu
+     * @param stringExtractor
      */
-    public <T> SDropDown(FrameGUIManager gui, int minWidth, int minHeight, T initial, List<? extends T> values) {
-        this.minHeight = minHeight;
-        this.minWidth = minWidth;
+    public <T> SDropDown(
+            FrameGUIManager gui, SComponentProperties properties, int initial, List<? extends T> values,
+            Function<T, String> stringExtractor
+    ) {
+        assert !values.isEmpty();
+        this.minHeight = properties.minHeight;
+        this.minWidth = properties.minWidth;
 
         int candidate = 0;
         String[] arr = new String[values.size()];
         for (int i = 0; i < values.size(); i++) {
             T elt = values.get(i);
-            arr[i] = elt.toString();
+            arr[i] = stringExtractor.apply(elt);
 
             if (elt.equals(initial)) {
                 candidate = i;
@@ -106,7 +113,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
         this.values = arr;
         this.optionPane = new DropDownOptions(arr);
         this.gui = gui;
-        setGrowthPolicy(true, false);
+        setGrowthPolicy(properties.wantHzGrow, properties.wantVtGrow);
     }
 
     /** @return the index of the currently selected item in the original array */

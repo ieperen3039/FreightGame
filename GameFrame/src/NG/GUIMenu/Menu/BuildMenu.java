@@ -24,7 +24,7 @@ public class BuildMenu extends SFrame {
         super("Track Build Menu");
 
         List<TrackType> trackTypes = game.objectTypes().trackTypes;
-        SDropDown typeChooser = new SDropDown(game.gui(), 250, 50, trackTypes.get(0), trackTypes);
+        SDropDown typeChooser = new SDropDown(game.gui(), BUTTON_PROPERTIES, 0, trackTypes);
 
         SToggleButton buildTrack = new SToggleButton("Build Tracks", BUTTON_PROPERTIES);
         buildTrack.addStateChangeListener(

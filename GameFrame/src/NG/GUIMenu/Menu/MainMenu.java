@@ -9,8 +9,8 @@ import NG.GUIMenu.Components.*;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
+import NG.GameMap.DefaultMapGenerator;
 import NG.GameMap.MapGeneratorMod;
-import NG.GameMap.SimpleMapGenerator;
 import NG.Mods.Mod;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
@@ -32,7 +32,13 @@ public class MainMenu extends SFrame {
     private static final int NUM_TOP_BUTTONS = 10;
     private static final int NUM_BOT_BUTTONS = 10;
     public static final int NUM_BUTTONS = NUM_TOP_BUTTONS + NUM_BOT_BUTTONS + 1;
-    public static final SComponentProperties BUTTON_PROPERTIES = new SComponentProperties(
+    public static final SComponentProperties BUTTON_PROPERTIES_STATIC = new SComponentProperties(
+            200, 60, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
+    );
+    public static final SComponentProperties BUTTON_PROPERTIES_STRETCH = new SComponentProperties(
+            200, 60, true, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
+    );
+    public static final SComponentProperties MAIN_BUTTON_PROPERTIES = new SComponentProperties(
             300, 100, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
     );
     public static final SComponentProperties TEXT_PROPERTIES = new SComponentProperties(
@@ -54,9 +60,9 @@ public class MainMenu extends SFrame {
 
         newGameFrame = new NewGameFrame(game, modLoader);
 
-        STextComponent newGame = new SButton("Start new game", this::showNewGame, BUTTON_PROPERTIES);
-        STextComponent justStart = new SButton("Start Testworld", this::testWorld, BUTTON_PROPERTIES);
-        STextComponent exitGame = new SButton("Exit game", terminateProgram, BUTTON_PROPERTIES);
+        STextComponent newGame = new SButton("Start new game", this::showNewGame, MAIN_BUTTON_PROPERTIES);
+        STextComponent justStart = new SButton("Start Testworld", this::testWorld, MAIN_BUTTON_PROPERTIES);
+        STextComponent exitGame = new SButton("Exit game", terminateProgram, MAIN_BUTTON_PROPERTIES);
 
         setMainPanel(SContainer.row(
                 new SFiller(),
@@ -77,7 +83,7 @@ public class MainMenu extends SFrame {
 
         // random map
         List<Mod> mods = modLoader.allMods();
-        MapGeneratorMod mapGenerator = new SimpleMapGenerator(0);
+        MapGeneratorMod mapGenerator = new DefaultMapGenerator(0);
         mapGenerator.setSize(xSize, ySize);
 
         modLoader.initMods(mods);

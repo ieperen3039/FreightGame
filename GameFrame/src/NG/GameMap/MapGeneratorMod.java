@@ -17,10 +17,10 @@ public interface MapGeneratorMod extends Mod {
     /**
      * get a list of properties of this generator which can be changed. Units and range should be given in the name. The
      * properties do NOT include the seed of the generator.
-     * @return a list of properties and their current value. Changes in this list are reflected to the generator.
+     * @return a list of properties and their current value.
      * @see #getMapSeed()
      */
-    Map<String, Integer> getProperties();
+    Map<String, Property> getProperties();
 
     /**
      * generate a heightmap which will be used to render the world.
@@ -47,5 +47,19 @@ public interface MapGeneratorMod extends Mod {
     default void setSize(int x, int y) {
         setXSize(x);
         setYSize(y);
+    }
+
+    class Property {
+        public final String name;
+        public final float minimum;
+        public final float maximum;
+        public float current;
+
+        public Property(String name, float minimum, float maximum, float current) {
+            this.name = name;
+            this.minimum = minimum;
+            this.maximum = maximum;
+            this.current = current;
+        }
     }
 }
