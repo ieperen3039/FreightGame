@@ -94,7 +94,7 @@ public class NewGameFrame extends SFrame {
                 SSlider slider = new SSlider(property.minimum, property.maximum, property.current, MainMenu.BUTTON_PROPERTIES_STRETCH);
                 slider.addChangeListener(newValue -> property.current = newValue);
 
-                int precision = (int) (Math.log10(property.maximum - property.minimum)) - 1;
+                int precision = 3 - (int) (Math.log10(property.maximum - property.minimum));
                 SActiveTextArea value = new SActiveTextArea(
                         () -> String.format("%6.0" + precision + "f", property.current),
                         MainMenu.TEXT_PROPERTIES
