@@ -136,6 +136,8 @@ public class Signal extends AbstractGameObject implements Entity {
                 assert false : "Impassible signal " + this;
                 inSameDirection = true;
             }
+
+            invalidateConnections();
         }
     }
 

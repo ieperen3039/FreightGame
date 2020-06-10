@@ -63,6 +63,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
         float totalR1 = 0;
         float totalR2 = 0;
         float totalLength = 0;
+        float maxSpeed = Float.POSITIVE_INFINITY;
 
         for (TrainElement entity : entities) {
             TrainElement.Properties props = entity.getProperties();
@@ -70,6 +71,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
             totalR1 += props.linearResistance;
             totalR2 += props.quadraticResistance;
             totalLength += props.length;
+            maxSpeed = Math.min(maxSpeed, props.maxSpeed);
 
             if (props instanceof Locomotive.Properties) {
                 Locomotive.Properties lProps = (Locomotive.Properties) props;
@@ -77,7 +79,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
             }
         }
 
-        positionEngine.setProperties(totalTractiveEffort, totalMass, totalR1, totalR2, 5, totalLength);
+        positionEngine.setProperties(totalTractiveEffort, totalMass, totalR1, totalR2, 5, totalLength, maxSpeed);
     }
 
     @Override

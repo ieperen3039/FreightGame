@@ -27,7 +27,7 @@ public class Locomotive implements TrainElement {
                 String name, float length, float mass, float linearResistance, float quadraticResistance,
                 Resource<Mesh> mesh, List<String> trackTypes, float tractiveEffort
         ) {
-            super(name, length, mass, linearResistance, quadraticResistance, mesh, trackTypes);
+            super(name, length, mass, linearResistance, quadraticResistance, 10, mesh, trackTypes);
             this.tractiveEffort = tractiveEffort;
         }
     }

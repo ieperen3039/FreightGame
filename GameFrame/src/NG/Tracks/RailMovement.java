@@ -28,6 +28,7 @@ import java.util.*;
 public class RailMovement extends AbstractGameObject {
     private static final float DELTA_TIME = 1f / 128f;
     private static final int METERS_TO_MILLIS = 1000;
+    public static final int SCAN_BUFFER_MILLIS = 10;
 
     private final Train controller;
 
@@ -49,6 +50,7 @@ public class RailMovement extends AbstractGameObject {
     private RailNode scanEndNode; // track that is scanned latest
     private long scanTrackEndMillis; // total distance to the end of scanTrack
     private boolean scanIsInPathDirection;
+    private SpeedTarget overridingSpeedTarget;
 
     private LongInterpolator totalMillimeters;
     private FloatInterpolator totalToLocalDistance; // maps total distance to track distance
@@ -60,8 +62,10 @@ public class RailMovement extends AbstractGameObject {
     private float invMass = 1;
     private float breakForce = 1;
 
-    private AveragingQueue accelerationAverage = new AveragingQueue((int) (0.1f / DELTA_TIME));
     private float trainLengthMillis = 0;
+    private float trainMaxSpeed = 0;
+
+    private AveragingQueue accelerationAverage = new AveragingQueue((int) (0.1f / DELTA_TIME));
     private float maxSpeed = 0;
 
     public RailMovement(
@@ -97,20 +101,24 @@ public class RailMovement extends AbstractGameObject {
 
     /**
      * sets the parameters describing the speed change of this train
-     * @param TE          tractive effort: force applied by the train
-     * @param mass        mass of the object
-     * @param R1          linear resistance factor
-     * @param R2          quadratic resistance factor
-     * @param breakForce  force added to the TE when breaking
-     * @param trainLength length of the train in units
+     * @param TE            tractive effort: force applied by the train
+     * @param mass          mass of the object
+     * @param R1            linear resistance factor
+     * @param R2            quadratic resistance factor
+     * @param breakForce    force added to the TE when breaking
+     * @param trainLength   length of the train in units
+     * @param trainMaxSpeed
      */
-    public void setProperties(float TE, float mass, float R1, float R2, float breakForce, float trainLength) {
+    public void setProperties(
+            float TE, float mass, float R1, float R2, float breakForce, float trainLength, float trainMaxSpeed
+    ) {
         this.maxForce = TE;
         this.invMass = 1f / mass;
         this.r1 = R1;
         this.r2 = R2;
         this.breakForce = breakForce;
         this.trainLengthMillis = trainLength * METERS_TO_MILLIS;
+        this.trainMaxSpeed = trainMaxSpeed;
     }
 
     public void update() {
@@ -165,9 +173,9 @@ public class RailMovement extends AbstractGameObject {
                     if (nextSpeedTarget.startMillis < currentTotalMillis) { // has passed
                         futureTargetIterator.remove();
 
-                        // only move if involuntary and applicable
+                        // only move if applicable
                         float trainEndMillis = currentTotalMillis - trainLengthMillis;
-                        if (!nextSpeedTarget.isVoluntary && nextSpeedTarget.endMillis > trainEndMillis) {
+                        if (nextSpeedTarget.speed > 0 && nextSpeedTarget.endMillis > trainEndMillis) {
                             activeSpeedTargets.add(nextSpeedTarget);
                         }
 
@@ -177,7 +185,7 @@ public class RailMovement extends AbstractGameObject {
                 }
 
                 // calculate maximum speed
-                float maxSpeed = Float.POSITIVE_INFINITY;
+                float maxSpeed = trainMaxSpeed;
                 for (SpeedTarget active : activeSpeedTargets) {
                     if (active.speed < maxSpeed) {
                         maxSpeed = active.speed;
@@ -196,7 +204,7 @@ public class RailMovement extends AbstractGameObject {
                     int speedTargetDistance = getBreakDistanceMillis(speed, nextSpeedTarget.speed);
 
                     // only break when necessary
-                    if (speedTargetSpaceNext < speedTargetDistance) {
+                    if (speedTargetSpaceNext <= speedTargetDistance) {
                         accelerationFraction = -1;
                     }
                 }
@@ -233,7 +241,7 @@ public class RailMovement extends AbstractGameObject {
             }
 
             // look ahead the projected best-effort stop distance
-            long scanTargetMillis = currentTotalMillis + getBreakDistanceMillis(speed, 0) + movementMillis;
+            long scanTargetMillis = currentTotalMillis + getBreakDistanceMillis(speed, 0) + movementMillis + SCAN_BUFFER_MILLIS;
             while (scanTargetMillis > scanTrackEndMillis) {
                 // reserve the next part of the plan
                 assert scanEndNode.hasSignal();
@@ -242,8 +250,16 @@ public class RailMovement extends AbstractGameObject {
                 Deque<TrackPiece> path = signal.reservePath(controller, scanIsInPathDirection);
 
                 if (path.isEmpty()) {
-                    futureSpeedTargets.add(new SpeedTarget(scanTrackEndMillis, scanTrackEndMillis, 0f, true));
+                    if (overridingSpeedTarget == null) {
+                        overridingSpeedTarget = new SpeedTarget(scanTrackEndMillis, scanTrackEndMillis, 0f);
+                        futureSpeedTargets.add(overridingSpeedTarget);
+                    }
+
                     break;
+                } else if (overridingSpeedTarget != null) {
+
+                    futureSpeedTargets.remove(overridingSpeedTarget);
+                    overridingSpeedTarget = null;
                 }
 
                 for (TrackPiece track : path) {
@@ -257,7 +273,7 @@ public class RailMovement extends AbstractGameObject {
             if (reservedPath.isEmpty() && currentTotalMillis > trackEndDistanceMillis) {
                 Logger.ASSERT.print("Hit end of track");
                 currentTotalMillis = trackEndDistanceMillis;
-                doStop = true;
+//                doStop = true;
                 speed = 0; // full stop
             }
 
@@ -301,7 +317,7 @@ public class RailMovement extends AbstractGameObject {
             commitTrack(track, !previous.right);
 
             long trackStart = trackEndDistanceMillis - (long) (track.getLength() * METERS_TO_MILLIS);
-            futureSpeedTargets.add(new SpeedTarget(trackStart, trackEndDistanceMillis, track.getMaximumSpeed(), false));
+            futureSpeedTargets.add(new SpeedTarget(trackStart, trackEndDistanceMillis, track.getMaximumSpeed()));
         }
 
         initPath();
@@ -360,7 +376,7 @@ public class RailMovement extends AbstractGameObject {
         reservedPath.add(nextTrack);
 
         long newScanTrackEndMillis = scanTrackEndMillis + (long) (nextTrack.getLength() * METERS_TO_MILLIS);
-        futureSpeedTargets.add(new SpeedTarget(scanTrackEndMillis, newScanTrackEndMillis, nextTrack.getMaximumSpeed(), false));
+        futureSpeedTargets.add(new SpeedTarget(scanTrackEndMillis, newScanTrackEndMillis, nextTrack.getMaximumSpeed()));
 
         scanEndNode = nextTrack.getNot(scanEndNode);
         scanTrackEndMillis = newScanTrackEndMillis;
@@ -508,14 +524,11 @@ public class RailMovement extends AbstractGameObject {
         public final long startMillis;
         public final long endMillis;
         public final float speed;
-        public final boolean isVoluntary;
 
-        public SpeedTarget(long startMillis, long endMillis, float speed, boolean isVoluntary) {
+        public SpeedTarget(long startMillis, long endMillis, float speed) {
             this.startMillis = startMillis;
             this.endMillis = endMillis;
             this.speed = speed;
-            this.isVoluntary = isVoluntary;
-            assert isVoluntary || speed > 0 : "Impassable target";
         }
 
         /** computes which speed target must be reacted on first */

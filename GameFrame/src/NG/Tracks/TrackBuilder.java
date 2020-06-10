@@ -192,7 +192,6 @@ public class TrackBuilder extends ToggleMouseTool {
         if (tracks.isEmpty()) return null;
 
         int lastIndex = tracks.size() - 1;
-
         for (int i = 0; i < lastIndex; i++) {
             TrackPiece track = tracks.get(i);
             NetworkNode.addConnection(track);
@@ -203,7 +202,8 @@ public class TrackBuilder extends ToggleMouseTool {
         NetworkNode.addConnection(lastTrack);
         game.state().addEntity(lastTrack);
 
-        RailTools.invalidateSignals(lastTrack);
+        RailTools.invalidateSignals(tracks.get(0));
+
         return lastTrack;
     }
 

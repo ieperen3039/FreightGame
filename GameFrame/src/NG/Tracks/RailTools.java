@@ -163,7 +163,7 @@ public final class RailTools {
         CircleTrack.Description circle = CircleTrack.getCircleDescription(nodePosition, nodeDirection, endPosition);
 
         float baseHeight = nodePosition.z();
-        float heightDiff = baseHeight - endPosition.z();
+        float heightDiff = endPosition.z() - baseHeight;
 
         Vector2f startToEnd = new Vector2f(endPosition.x() - nodePosition.x(), endPosition.y() - nodePosition.y());
         float dotOfCross = nodeDirection.x() * startToEnd.y - nodeDirection.y() * startToEnd.x;
@@ -223,7 +223,7 @@ public final class RailTools {
 
                 float vx = Math.cos(nextAngle) * circle.radius;
                 float vy = Math.sin(nextAngle) * circle.radius;
-                float vz = (nextAngleOffset / circle.angle) * heightDiff;
+                float vz = Math.abs(nextAngleOffset / circle.angle) * heightDiff;
 
                 Vector3f localEndPos = new Vector3f(circle.center, baseHeight).add(vx, vy, vz);
                 // rather than computing how MINIMUM_TRACK_LENGTH translates to iterations, we do it this way
@@ -533,7 +533,7 @@ public final class RailTools {
 
     /** invalidates the signal connections of all signals remotely connected to track */
     public static void invalidateSignals(TrackPiece track) {
-        // two different directions should
+        // two different directions should have two different lists
         invalidateSignals(track, track.getStartNode(), new ArrayList<>(0));
         invalidateSignals(track, track.getEndNode(), new ArrayList<>(0));
     }
