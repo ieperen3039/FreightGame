@@ -29,11 +29,12 @@ public class RailMovement extends AbstractGameObject {
     private static final float DELTA_TIME = 1f / 128f;
     private static final int METERS_TO_MILLIS = 1000;
     public static final int SCAN_BUFFER_MILLIS = 10;
+    private static final double SIGNAL_PATHING_TIMEOUT = 1.0 / 8;
 
     private final Train controller;
 
     private float speed; // real train speed in direction of facing in meters.
-    private double nextUpdateTime;
+    private double updateTime;
 
     private final Deque<TrackPiece> reservedPath = new ArrayDeque<>();
     private final PriorityQueue<SpeedTarget> futureSpeedTargets = new PriorityQueue<>();
@@ -67,10 +68,10 @@ public class RailMovement extends AbstractGameObject {
 
     private AveragingQueue accelerationAverage = new AveragingQueue((int) (0.1f / DELTA_TIME));
     private float maxSpeed = 0;
+    private double signalPathTimeout = Double.NEGATIVE_INFINITY;
 
     public RailMovement(
-            Game game, Train controller, double spawnTime, TrackPiece startPiece, float fraction,
-            boolean isPositiveDirection
+            Game game, Train controller, double spawnTime, TrackPiece startPiece, boolean isPositiveDirection
     ) {
         super(game);
         this.currentTrack = startPiece;
@@ -78,8 +79,9 @@ public class RailMovement extends AbstractGameObject {
 
         this.currentTotalMillis = 0;
         this.totalMillimeters = new LongInterpolator(0, 0L, spawnTime);
-        long trackStartDistanceMillis = (long) (-1 * startPiece.getLength() * METERS_TO_MILLIS * fraction);
+        long trackStartDistanceMillis = (long) (-1 * startPiece.getLength() * METERS_TO_MILLIS * 1);
         this.trackEndDistanceMillis = (long) (trackStartDistanceMillis + startPiece.getLength() * METERS_TO_MILLIS);
+//        this.trackEndDistanceMillis = 0;
 
         this.scanEndNode = isPositiveDirection ? startPiece.getEndNode() : startPiece.getStartNode();
 
@@ -87,7 +89,7 @@ public class RailMovement extends AbstractGameObject {
         this.tracks = new BlockingTimedArrayQueue<>(0);
         tracks.add(new Pair<>(startPiece, isPositiveDirection), trackStartDistanceMillis);
 
-        this.nextUpdateTime = spawnTime;
+        this.updateTime = spawnTime;
         this.isPositiveDirection = isPositiveDirection;
         this.speed = 0;
 
@@ -142,7 +144,7 @@ public class RailMovement extends AbstractGameObject {
     public void update(double gameTime) {
         float speed = this.speed;
 
-        while (nextUpdateTime < gameTime) {
+        while (updateTime < gameTime) {
             float accelerationFraction = 1f;
 
             if (speed == 0) { // case: the train is stopped
@@ -232,7 +234,7 @@ public class RailMovement extends AbstractGameObject {
             // s = vt + at^2 // movement in meters
             int movementMillis = (int) (speed * DELTA_TIME * METERS_TO_MILLIS);
             currentTotalMillis += movementMillis;
-            totalMillimeters.add(currentTotalMillis, nextUpdateTime);
+            totalMillimeters.add(currentTotalMillis, updateTime);
 
             // if a track is left, free it
             TrackPiece postPiece = tracks.getPrevious(currentTotalMillis - trainLengthMillis).left;
@@ -240,33 +242,37 @@ public class RailMovement extends AbstractGameObject {
                 prePiece.setOccupied(false);
             }
 
-            // look ahead the projected best-effort stop distance
-            long scanTargetMillis = currentTotalMillis + getBreakDistanceMillis(speed, 0) + movementMillis + SCAN_BUFFER_MILLIS;
-            while (scanTargetMillis > scanTrackEndMillis) {
-                // reserve the next part of the plan
-                assert scanEndNode.hasSignal();
+            if (!doStop && updateTime > signalPathTimeout) {
+                // look ahead the projected best-effort stop distance
+                long scanTargetMillis = currentTotalMillis + getBreakDistanceMillis(speed, 0) + movementMillis + SCAN_BUFFER_MILLIS;
+                while (scanTargetMillis > scanTrackEndMillis) {
+                    // reserve the next part of the plan
+                    assert scanEndNode.hasSignal();
 
-                Signal signal = scanEndNode.getSignal();
-                Deque<TrackPiece> path = signal.reservePath(controller, scanIsInPathDirection);
+                    Signal signal = scanEndNode.getSignal();
+                    Deque<TrackPiece> path = signal.reservePath(scanIsInPathDirection, controller::getTarget);
 
-                if (path.isEmpty()) {
-                    if (overridingSpeedTarget == null) {
-                        overridingSpeedTarget = new SpeedTarget(scanTrackEndMillis, scanTrackEndMillis, 0f);
-                        futureSpeedTargets.add(overridingSpeedTarget);
+                    if (path.isEmpty()) {
+                        signalPathTimeout = updateTime + SIGNAL_PATHING_TIMEOUT;
+
+                        if (overridingSpeedTarget == null) {
+                            overridingSpeedTarget = new SpeedTarget(scanTrackEndMillis, scanTrackEndMillis, 0f);
+                            futureSpeedTargets.add(overridingSpeedTarget);
+                        }
+
+                        break;
+
+                    } else if (overridingSpeedTarget != null) {
+                        futureSpeedTargets.remove(overridingSpeedTarget);
+                        overridingSpeedTarget = null;
                     }
 
-                    break;
-                } else if (overridingSpeedTarget != null) {
+                    for (TrackPiece track : path) {
+                        appendToPath(track);
+                    }
 
-                    futureSpeedTargets.remove(overridingSpeedTarget);
-                    overridingSpeedTarget = null;
+                    scanIsInPathDirection = !scanEndNode.isInDirectionOf(path.getLast());
                 }
-
-                for (TrackPiece track : path) {
-                    appendToPath(track);
-                }
-
-                scanIsInPathDirection = !scanEndNode.isInDirectionOf(path.getLast());
             }
 
             // case: the train is at the end of the track, and no new tracks are planned
@@ -286,7 +292,7 @@ public class RailMovement extends AbstractGameObject {
             }
 
             // loop end update
-            nextUpdateTime += DELTA_TIME;
+            updateTime += DELTA_TIME;
 
             this.speed = speed;
         }
@@ -367,7 +373,7 @@ public class RailMovement extends AbstractGameObject {
             nextTrack.setOccupied(true);
             appendToPath(nextTrack);
         }
-        scanEndNode.getSignal().validateConnections(); // optional
+        // optional
 
         scanIsInPathDirection = !scanEndNode.isInDirectionOf(nextTrack);
     }
@@ -457,7 +463,8 @@ public class RailMovement extends AbstractGameObject {
         update(time);
 
         double totalMillis = totalMillimeters.getInterpolated(time) + displacement * METERS_TO_MILLIS;
-        TrackPiece track = tracks.getPrevious(totalMillis).left;
+        Pair<TrackPiece, Boolean> previous = tracks.getPrevious(totalMillis);
+        TrackPiece track = previous.left;
         float localDistance = totalToLocalDistance.getInterpolated(totalMillis);
 
         float fractionTravelled = localDistance / track.getLength();

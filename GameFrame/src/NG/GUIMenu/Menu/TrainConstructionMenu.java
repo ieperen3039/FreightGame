@@ -21,7 +21,7 @@ public class TrainConstructionMenu extends SFrame {
         super("New Train");
 
         double gameTime = game.timer().getGameTime();
-        Train construction = new Train(game, gameTime, place, 1);
+        Train construction = new Train(game, gameTime, place);
         game.state().addEntity(construction);
 
         List<Locomotive.Properties> locomotiveTypes = game.objectTypes().locomotiveTypes;

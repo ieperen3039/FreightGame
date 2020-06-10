@@ -41,9 +41,9 @@ public class Train extends AbstractGameObject implements MovingEntity {
             300, 50, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
     );
 
-    public Train(Game game, double spawnTime, TrackPiece startPiece, float fraction) {
+    public Train(Game game, double spawnTime, TrackPiece startPiece) {
         super(game);
-        this.positionEngine = new RailMovement(game, this, spawnTime, startPiece, fraction, true);
+        this.positionEngine = new RailMovement(game, this, spawnTime, startPiece, true);
         this.spawnTime = spawnTime;
     }
 

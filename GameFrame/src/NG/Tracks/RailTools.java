@@ -253,8 +253,10 @@ public final class RailTools {
 
         if (node.getPosition().distance(endPosition) < 1 / 128f) {
             Logger.ERROR.print("Circle edge case", startToEnd, circle, sectionAngle);
-            TrackPiece t = tracks.remove(tracks.size() - 1);
-            node = t.getStartNode();
+            if (!tracks.isEmpty()) {
+                TrackPiece t = tracks.remove(tracks.size() - 1);
+                node = t.getStartNode();
+            }
         }
 
         if (endNode != null) {
@@ -470,6 +472,7 @@ public final class RailTools {
             List<TrackPiece> straightPieces = getStraightPieces(game, aNode, middle, middleNode, signalDistance, offset);
 
             float secondOffset = getOffset(straightPieces, offset);
+            assert (secondOffset <= signalDistance) : straightPieces;
             List<TrackPiece> circlePieces = getCirclePieces(
                     game, middleNode, aDirection, bPos, bNode, signalDistance, secondOffset
             );
@@ -484,6 +487,8 @@ public final class RailTools {
             List<TrackPiece> circlePieces = getCirclePieces(game, aNode, aDirection, middle, middleNode, signalDistance, offset);
 
             float secondOffset = getOffset(circlePieces, offset);
+            assert (secondOffset <= signalDistance) : circlePieces;
+
             List<TrackPiece> straightPieces = getStraightPieces(
                     game, middleNode, bPos, bNode, signalDistance, secondOffset
             );
@@ -493,7 +498,12 @@ public final class RailTools {
         }
     }
 
-    /** returns the signal offset of the given list of tracks, assuming these tracks have an offset as given */
+    /**
+     * computes the signal offset from of the given list of tracks. These tracks are assumed to be directed
+     * (get(i).endNode() == get(i+1).startNode()). If no signals are found, returns the total length of the tracks +
+     * offset
+     * @return the required signal offset for any next connection
+     */
     private static float getOffset(List<TrackPiece> tracks, float offset) {
         if (Float.isInfinite(offset)) return Float.POSITIVE_INFINITY;
         float newOffset = 0;
@@ -547,7 +557,6 @@ public final class RailTools {
         }
 
         if (node.hasSignal()) {
-            node.getSignal().invalidateConnections();
             return;
         }
 

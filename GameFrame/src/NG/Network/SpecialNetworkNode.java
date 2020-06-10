@@ -18,6 +18,6 @@ public class SpecialNetworkNode extends NetworkNode {
 
     @Override
     public String toString() {
-        return "SpecialNode{" + source + '}';
+        return "SpecialNode{" + source + "}(" + getEntriesA().size() + ":" + getEntriesB().size() + ")";
     }
 }

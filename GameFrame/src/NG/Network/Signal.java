@@ -4,7 +4,6 @@ import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
-import NG.Entities.Train;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
@@ -21,6 +20,7 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction.PRESS_ACTIVATE;
 
@@ -52,12 +52,6 @@ public class Signal extends AbstractGameObject implements Entity {
 
     private double despawnTime = Double.POSITIVE_INFINITY;
 
-    private Map<Signal, TrackPath> aSignals = new HashMap<>();
-    private Map<NetworkNode, TrackPath> aNodes = new HashMap<>();
-    private Map<Signal, TrackPath> bSignals = new HashMap<>();
-    private Map<NetworkNode, TrackPath> bNodes = new HashMap<>();
-    private boolean connectionsAreValid = false;
-
     /**
      * @param game                game instance
      * @param targetNode          node to attach to
@@ -66,9 +60,9 @@ public class Signal extends AbstractGameObject implements Entity {
      */
     public Signal(Game game, RailNode targetNode, boolean inSameDirection, boolean inOppositeDirection) {
         super(game);
-        this.inOppositeDirection = inOppositeDirection;
         assert inSameDirection || inOppositeDirection : "Signal is a block";
         this.hostNode = targetNode;
+        this.inOppositeDirection = inOppositeDirection;
         this.inSameDirection = inSameDirection;
         this.ringMiddle = new Vector3f(targetNode.getPosition()).add(0, 0, INNER_RADIUS - MARGIN);
     }
@@ -112,11 +106,7 @@ public class Signal extends AbstractGameObject implements Entity {
             return Color4f.CYAN;
         }
 
-        if (connectionsAreValid) {
-            return Color4f.WHITE;
-        } else {
-            return Color4f.BLACK;
-        }
+        return Color4f.WHITE;
     }
 
     @Override
@@ -136,8 +126,6 @@ public class Signal extends AbstractGameObject implements Entity {
                 assert false : "Impassible signal " + this;
                 inSameDirection = true;
             }
-
-            invalidateConnections();
         }
     }
 
@@ -160,78 +148,164 @@ public class Signal extends AbstractGameObject implements Entity {
         return hostNode;
     }
 
-    public void invalidateConnections() {
-        connectionsAreValid = false;
-    }
-
     /**
-     * validates the contents of {@code aNodes}, {@code bNodes}, {@code aSignals} and {@code bSignals}
+     * calculates the path of the given controller, positioned on hostNode, to the targets as given by the controller.
+     * @param controller      the target supplier, which should give a next target given a current position.
+     * @param inSameDirection whether the path should be calculated in the direction of the railnode. false iff {@link
+     *                        #getNode()}{@link RailNode#isInDirectionOf(TrackPiece) .isInDirectionOf(previousTrack)}
+     * @return a path from hostNode, via any possible targets, to a signal. Returns null if no such path exists.
+     * Guaranteed is {@code path == null || path.getLast().hasSignal()}
      */
-    public void validateConnections() {
-        if (connectionsAreValid) return;
+    private TrackPath getPath(Function<NetworkNode, NetworkPosition> controller, boolean inSameDirection) {
+        HashMap<Signal, TrackPath> signals = new HashMap<>();
+        HashMap<NetworkNode, TrackPath> nodes = new HashMap<>();
 
         NetworkNode networkNode = hostNode.getNetworkNode();
-        TrackPath path = new TrackPath();
+        List<NetworkNode.Direction> entries = inSameDirection ? networkNode.getEntriesA() : networkNode.getEntriesB();
 
-        aSignals.clear();
-        aNodes.clear();
-        bSignals.clear();
-        bNodes.clear();
+        // TODO trivial section shortcut ?
 
-        for (NetworkNode.Direction entry : networkNode.getEntriesA()) {
-            RailNode target = entry.trackPiece.getNot(hostNode);
-            registerPaths(target, entry.trackPiece, aSignals, aNodes, path);
+        for (NetworkNode.Direction entry : entries) {
+            TrackPiece trackPiece = entry.trackPiece;
+            collectPaths(trackPiece.getNot(hostNode), trackPiece, signals, nodes, new TrackPath(trackPiece));
+        }
+        NetworkPosition target = controller.apply(hostNode.getNetworkNode());
+
+        if (signals.isEmpty()) {
+            return null;
+
+        } else if (target == null) { // reserve random path
+            TrackPath[] paths = signals.values().toArray(new TrackPath[0]);
+            return paths[Toolbox.random.nextInt(paths.length)];
         }
 
-        for (NetworkNode.Direction entry : networkNode.getEntriesB()) {
-            RailNode target = entry.trackPiece.getNot(hostNode);
-            registerPaths(target, entry.trackPiece, bSignals, bNodes, path);
+        TrackPath pathViaNodes = new TrackPath();
+        boolean success;
+
+        do {
+            success = false;
+            for (NetworkNode targetNode : target.getNodes()) {
+                TrackPath pathToNode = nodes.get(targetNode);
+                if (pathToNode != null) {
+                    pathViaNodes.append(pathToNode);
+
+                    assert !pathToNode.path.isEmpty() : nodes; // usually caused by (controller.apply(node) == node)
+                    TrackPiece last = pathToNode.path.getLast();
+                    RailNode node = last.get(targetNode);
+                    if (node.hasSignal()) return pathViaNodes;
+
+                    // resource paths to this node
+                    signals.clear();
+                    nodes.clear();
+                    collectPaths(node, last, signals, nodes, new TrackPath());
+
+                    success = true;
+                    target = controller.apply(targetNode);
+                    break;
+                }
+            }
+        } while (success);
+
+        TrackPath pathToBest = null;
+        float leastDistance = Float.POSITIVE_INFINITY;
+
+        for (Signal other : signals.keySet()) {
+            TrackPath pathToSignal = signals.get(other);
+
+            float signalToTargetLength = getSignalToTargetLength(inSameDirection, target, other, pathToSignal);
+            float totalDist = pathToSignal.length + signalToTargetLength;
+
+            if (totalDist < leastDistance) {
+                leastDistance = totalDist;
+                pathToBest = pathToSignal;
+            }
         }
 
-        connectionsAreValid = true;
+        if (pathToBest == null) return null;
+        return pathViaNodes.append(pathToBest);
+    }
+
+    private float getSignalToTargetLength(
+            boolean inSameDirection, NetworkPosition target, Signal other, TrackPath pathToSignal
+    ) {
+        TrackPiece lastTrack = pathToSignal.path.getLast();
+        NetworkNode otherNetwork = other.hostNode.getNetworkNode();
+
+        NetworkNode startNode;
+        float signalToNetworkLength;
+        boolean inDirection;
+
+        if (otherNetwork.isNetworkCritical()) {
+            startNode = otherNetwork;
+            signalToNetworkLength = 0;
+            inDirection = !other.hostNode.isInDirectionOf(lastTrack);
+
+        } else {
+            List<NetworkNode.Direction> directions = !inSameDirection ? otherNetwork.getEntriesB() : otherNetwork.getEntriesA();
+            assert directions.size() == 1; // !networkNode.isNetworkCritical() => !networkNode.isSwitch()
+
+            NetworkNode.Direction direction = directions.get(0);
+            startNode = direction.network;
+            signalToNetworkLength = direction.distanceToNetworkNode;
+            inDirection = direction.networkIsInDirection;
+        }
+
+        NetworkPathFinder pathFinder = new NetworkPathFinder(startNode, inDirection, target);
+        NetworkPathFinder.Path pathNetworkToTarget = pathFinder.call();
+
+        if (pathNetworkToTarget == null) {
+            return Float.POSITIVE_INFINITY; // no path exists
+        }
+        return signalToNetworkLength + pathNetworkToTarget.getPathLength();
     }
 
     /**
-     * updates the signals and nodes in direction of {@code node}
-     * @param node           the node to analyse
-     * @param sourceTrack    the track where we are coming from, which is connected to node
-     * @param signals        the map [signals -> the shortest path to this signal]
-     * @param nodes          the map [nodes -> the shortest path to this node] for all nodes
-     * @param pathToPrevious path to the previous node
+     * collects the paths to all signals and nodes in the given direction
+     * @param node        the node to analyse
+     * @param sourceTrack the track where we are coming from, which is connected to node
+     * @param signals     the map [signals -> the shortest path to this signal]
+     * @param nodes       the map [nodes -> the shortest path to this node] for all nodes
+     * @param pathToNode  path to node
      */
-    private void registerPaths(
+    private void collectPaths(
             RailNode node, TrackPiece sourceTrack, Map<Signal, TrackPath> signals,
-            Map<NetworkNode, TrackPath> nodes, TrackPath pathToPrevious
+            Map<NetworkNode, TrackPath> nodes, TrackPath pathToNode
     ) {
-        pathToPrevious.path.addLast(sourceTrack);
-        pathToPrevious.length += sourceTrack.getLength();
-
         NetworkNode networkNode = node.getNetworkNode();
 
-        if (networkNode.isNetworkCritical()) {
+        if (nodes != null && networkNode.isNetworkCritical()) {
             TrackPath original = nodes.get(networkNode);
-            if (original == null || original.length > pathToPrevious.length) {
-                nodes.put(networkNode, new TrackPath(pathToPrevious));
+            if (original == null || original.length > pathToNode.length) {
+                nodes.put(networkNode, new TrackPath(pathToNode));
             }
         }
 
         if (node.hasSignal()) {
             Signal sig = node.getSignal();
             TrackPath original = signals.get(sig);
-            if (original == null || original.length > pathToPrevious.length) {
-                signals.put(sig, new TrackPath(pathToPrevious));
+            if (original == null || original.length > pathToNode.length) {
+                signals.put(sig, new TrackPath(pathToNode));
             }
 
         } else {
             List<NetworkNode.Direction> directions = networkNode.getNext(sourceTrack);
             for (NetworkNode.Direction entry : directions) {
-                RailNode target = entry.trackPiece.getNot(node);
-                registerPaths(target, entry.trackPiece, signals, nodes, pathToPrevious);
+                TrackPiece trackPiece = entry.trackPiece;
+                if (trackPiece.isOccupied()) continue;
+
+                // loop without signals: prevent infinite loops
+                if (!pathToNode.path.isEmpty() && pathToNode.path.getFirst() == trackPiece) return;
+
+                pathToNode.path.addLast(trackPiece);
+                pathToNode.length += trackPiece.getLength();
+
+                collectPaths(trackPiece.getNot(node), trackPiece, signals, nodes, pathToNode);
+
+                pathToNode.path.removeLast();
+                pathToNode.length -= trackPiece.getLength();
             }
         }
 
-        pathToPrevious.path.removeLast();
-        pathToPrevious.length -= sourceTrack.getLength();
     }
 
     /**
@@ -241,77 +315,27 @@ public class Signal extends AbstractGameObject implements Entity {
      * track.setOccupied(false)}.
      * <p>
      * If the path is not empty, then it starts and ends with a signal, with no signal inbetween.
-     * @param controller         the controller determining the path to take
      * @param trackIsInDirection whether the starting direction is the same as the direction of {@link #getNode()}
+     * @param targetFunction
      * @return a path from here to the next signal on the shortest available path toward target.
      */
-    public Deque<TrackPiece> reservePath(Train controller, boolean trackIsInDirection) {
-        validateConnections();
-
-        Map<Signal, TrackPath> signals;
-        Map<NetworkNode, TrackPath> nodes;
-
+    public Deque<TrackPiece> reservePath(
+            boolean trackIsInDirection, Function<NetworkNode, NetworkPosition> targetFunction
+    ) {
         if (trackIsInDirection) {
             if (!inOppositeDirection) {
                 return getEmptyPath();
             }
-            signals = aSignals;
-            nodes = aNodes;
 
         } else {
             if (!inSameDirection) {
                 return getEmptyPath();
             }
-            signals = bSignals;
-            nodes = bNodes;
         }
 
-        // TODO extract?
-        NetworkPosition target = controller.getTarget(hostNode.getNetworkNode());
-
-        if (signals.isEmpty()) return getEmptyPath();
-
-        if (target == null) { // reserve random path
-            TrackPath[] paths = signals.values().toArray(new TrackPath[0]);
-            TrackPath chosenPath = paths[Toolbox.random.nextInt(paths.length)];
-            return reserve(chosenPath);
-        }
-
-        for (NetworkNode targetNode : target.getNodes()) {
-            if (nodes.containsKey(targetNode)) { // reserve path to node, and path from node to signal
-                return reserve(nodes.get(targetNode));
-//                Deque<TrackPiece> reserve = reserve(nodes.get(targetNode));
-//                Deque<TrackPiece> pathToSignal = ;
-//
-//                ArrayDeque<TrackPiece> path = new ArrayDeque<>(reserve);
-//                path.addAll(pathToSignal);
-//                return path;
-            }
-        }
-
-
-        TrackPath pathToBest = null;
-        float leastDistance = Float.POSITIVE_INFINITY;
-
-        for (Signal other : signals.keySet()) {
-            other.validateConnections();
-            boolean inDirection = other.bSignals.containsKey(this);
-            NetworkPathFinder pathFinder = new NetworkPathFinder(other.hostNode, inDirection, target);
-
-            NetworkPathFinder.Path pathSignalToTarget = pathFinder.call();
-            TrackPath pathToSignal = signals.get(other);
-
-            if (pathSignalToTarget == null) continue; // no path exists
-            float totalDist = pathToSignal.length + pathSignalToTarget.getPathLength();
-
-            if (totalDist < leastDistance) {
-                pathToBest = pathToSignal;
-            }
-        }
-
-        if (pathToBest == null) return getEmptyPath();
-
-        return reserve(pathToBest);
+        TrackPath path = getPath(targetFunction, trackIsInDirection);
+        if (path == null) return getEmptyPath();
+        return reserve(path);
     }
 
     private Deque<TrackPiece> reserve(TrackPath pathToBest) {
@@ -366,11 +390,6 @@ public class Signal extends AbstractGameObject implements Entity {
         public final Deque<TrackPiece> path;
         public float length;
 
-        public TrackPath(Deque<TrackPiece> path, float length) {
-            this.path = path;
-            this.length = length;
-        }
-
         public TrackPath() {
             this.path = new ArrayDeque<>();
             this.length = 0;
@@ -379,6 +398,22 @@ public class Signal extends AbstractGameObject implements Entity {
         public TrackPath(TrackPath other) {
             this.path = new ArrayDeque<>(other.path);
             this.length = other.length;
+        }
+
+        public TrackPath(TrackPiece... initial) {
+            this.path = new ArrayDeque<>(initial.length);
+            this.length = 0;
+
+            for (TrackPiece trackPiece : initial) {
+                path.add(trackPiece);
+                length += trackPiece.getLength();
+            }
+        }
+
+        public TrackPath append(TrackPath other) {
+            path.addAll(other.path);
+            length += other.length;
+            return this;
         }
 
         @Override

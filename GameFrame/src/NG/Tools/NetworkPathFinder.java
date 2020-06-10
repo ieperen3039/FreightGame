@@ -2,7 +2,6 @@ package NG.Tools;
 
 import NG.Network.NetworkNode;
 import NG.Network.NetworkPosition;
-import NG.Network.RailNode;
 import NG.Tracks.TrackPiece;
 
 import java.util.*;
@@ -18,18 +17,22 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
     private final NetworkNode startNode;
 
     public NetworkPathFinder(TrackPiece currentTrack, NetworkNode position, NetworkPosition target) {
+        assert position.isNetworkCritical();
         this.targets = target.getNodes();
         this.startNode = position;
         this.startPredecessor = position.getEntryOf(currentTrack).network;
     }
 
-    public NetworkPathFinder(RailNode position, boolean inSameDirection, NetworkPosition target) {
-        NetworkNode networkNode = position.getNetworkNode();
+    public NetworkPathFinder(
+            NetworkNode networkNode, boolean inSameDirection, NetworkPosition target
+    ) {
+        assert networkNode.isNetworkCritical();
+
         List<NetworkNode.Direction> otherDirections = inSameDirection ? networkNode.getEntriesB() : networkNode.getEntriesA();
         assert !otherDirections.isEmpty();
 
-        this.targets = target.getNodes();
         this.startNode = networkNode;
+        this.targets = target.getNodes();
         this.startPredecessor = otherDirections.get(0).network;
     }
 
@@ -71,9 +74,10 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
 
             NetworkNode predecessor = predecessors.get(node);
             assert predecessor != null : node + " has not been added to predecessors";
+            assert predecessor.isNetworkCritical() : node + " is not a network critical node";
 
             List<NetworkNode.Direction> next = node.getNextFromNetwork(predecessor);
-            assert next != null : "one-directional connection from " + predecessor + " to " + node;
+            assert next != null : "one-directional connection : " + NetworkNode.getNetworkAsString(predecessor);
 
             float nodeDistance = distanceMap.get(node);
 
@@ -81,6 +85,7 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
                 NetworkNode nextNode = entry.network;
                 if (nextNode == null) continue; // empty dead end
                 if (nextNode == node) continue; // self-loop
+                NetworkNode.check(node);
 
                 float distance = nodeDistance + entry.distanceToNetworkNode;
                 Float knownDistance = distanceMap.getOrDefault(nextNode, Float.POSITIVE_INFINITY);

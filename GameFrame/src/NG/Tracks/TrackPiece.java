@@ -61,4 +61,10 @@ public interface TrackPiece extends Entity {
     boolean isOccupied();
 
     float getMaximumSpeed();
+
+    default RailNode get(NetworkNode targetNode) {
+        if (getStartNode().getNetworkNode().equals(targetNode)) return getStartNode();
+        if (getEndNode().getNetworkNode().equals(targetNode)) return getEndNode();
+        return null;
+    }
 }
