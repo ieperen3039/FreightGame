@@ -160,7 +160,7 @@ public class NetworkNode {
         Direction entry = list.get(i);
         // we propagate backwards, hence distance increases
         float newDistance = distanceToSource + entry.trackPiece.getLength();
-        assert !Float.isNaN(newDistance);
+        assert !Float.isNaN(newDistance) : distanceToSource + " + " + entry.trackPiece;
 
         // if this is already set correctly, then everything down the line is set correctly as well
         if (newNetworkNode == null) {

@@ -88,7 +88,7 @@ public interface TrackType {
             Function<Float, Vector3f> function, Function<Float, Vector3f> derivative,
             float width, float height, int resolution
     ) {
-        resolution = Math.max(1, resolution);
+        resolution = Math.min(10_000, Math.max(1, resolution));
 
         Vector3fc startPos = function.apply(0f);
         Vector3f startDir = derivative.apply(0f);

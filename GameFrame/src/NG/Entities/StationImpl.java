@@ -106,6 +106,9 @@ public class StationImpl extends Storage implements Station {
     }
 
     private void createNodes(TrackType type, Vector3f AToB, Vector3f BToA, Vector3f aPos, Vector3f bPos, int index) {
+        assert AToB.lengthSquared() > 0 : AToB;
+        assert BToA.lengthSquared() > 0 : BToA;
+
         SpecialNetworkNode ANode = new SpecialNetworkNode(this);
         forwardConnections[index] = new RailNode(aPos, type, AToB, ANode);
         nodes.add(ANode);

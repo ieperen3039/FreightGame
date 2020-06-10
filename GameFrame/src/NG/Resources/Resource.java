@@ -2,8 +2,12 @@ package NG.Resources;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -14,10 +18,10 @@ import java.util.function.Supplier;
  * @author Geert van Ieperen created on 25-2-2020.
  */
 public abstract class Resource<T> implements Serializable {
-    private static final List<Resource<?>> allResources = new ArrayList<>();
+    private static final List<WeakReference<Resource<?>>> allResources = Collections.synchronizedList(new ArrayList<>());
 
     /** number of calls to {@link #cool()} before this is dropped */
-    private static final int MAX_HEAT = 300;
+    private static final int MAX_HEAT = 300; // sec * FPS
 
     /** the cached element */
     protected transient T element = null;
@@ -25,7 +29,7 @@ public abstract class Resource<T> implements Serializable {
     private transient int heat = 0;
 
     public Resource() {
-        allResources.add(this);
+        allResources.add(new WeakReference<>(this));
     }
 
     /**
@@ -75,25 +79,42 @@ public abstract class Resource<T> implements Serializable {
         }
     }
 
+    public static long getNrOfActiveResources() {
+        synchronized (allResources) {
+            return allResources.stream()
+                    .map(Reference::get)
+                    .filter(Objects::nonNull)
+                    .filter(r -> r.element != null)
+                    .count();
+        }
+    }
+
     public static void cycle() {
-        int size = allResources.size();
-        // ignore all elements added during this loop
-        for (int i = 0; i < size; i++) {
-            allResources.get(i).cool();
+        synchronized (allResources) {
+            allResources.removeIf(r -> r.get() == null);
+            for (WeakReference<Resource<?>> resourceRef : allResources) {
+                Resource<?> resource = resourceRef.get();
+                if (resource != null) {
+                    resource.cool();
+                }
+            }
         }
     }
 
     public static void dropAll() {
-        int size = allResources.size();
-        // ignore all elements added during this loop
-        for (int i = 0; i < size; i++) {
-            allResources.get(i).drop();
+        synchronized (allResources) {
+            for (WeakReference<Resource<?>> resourceRef : allResources) {
+                Resource<?> resource = resourceRef.get();
+                if (resource != null) {
+                    resource.drop();
+                }
+            }
         }
     }
 
     private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        allResources.add(this);
+        allResources.add(new WeakReference<>(this));
     }
 
     /**

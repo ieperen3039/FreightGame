@@ -120,6 +120,9 @@ public class TrackBuilder extends ToggleMouseTool {
                     if (firstNode == null) {
                         firstNode = targetNode;
 
+                    } else if (firstNode == targetNode) {
+                        return;
+
                     } else {
                         List<TrackPiece> connection =
                                 RailTools.createConnection(game, firstNode, targetNode, signalDistance);
@@ -128,6 +131,7 @@ public class TrackBuilder extends ToggleMouseTool {
                             processTracksReturnLast(game, connection);
                             firstNode = null;
                         }
+
                     }
                 }
                 return;
@@ -146,6 +150,8 @@ public class TrackBuilder extends ToggleMouseTool {
                     } else {
                         RailNode ghostNodeFirst = new RailNode(firstNode, ghostType);
                         RailNode ghostNodeTarget = getIfExisting(game, trackPiece, fraction);
+
+                        if (ghostNodeTarget == firstNode) return;
 
                         if (ghostNodeTarget == null) {
                             Vector3f dir = trackPiece.getDirectionFromFraction(fraction);

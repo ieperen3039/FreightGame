@@ -32,7 +32,7 @@ public class DefaultMapGenerator implements MapGeneratorMod {
         this.majorGenerator = new OpenSimplexNoise(seed);
         this.minorGenerator = new OpenSimplexNoise(seed + 1);
         this.properties = Map.of(
-                MAJOR_AMPLITUDE, new Property(MAJOR_AMPLITUDE, 0, 100, 1),
+                MAJOR_AMPLITUDE, new Property(MAJOR_AMPLITUDE, 0, 100, 10),
                 MINOR_AMPLITUDE, new Property(MINOR_AMPLITUDE, 0, 100, 0)
         );
     }

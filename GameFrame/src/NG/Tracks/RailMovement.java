@@ -14,6 +14,7 @@ import NG.Network.RailNode;
 import NG.Network.Signal;
 import NG.Tools.Logger;
 import NG.Tools.NetworkPathFinder;
+import NG.Tools.Toolbox;
 import org.joml.Math;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -238,8 +239,7 @@ public class RailMovement extends AbstractGameObject {
                 assert scanEndNode.hasSignal();
 
                 Signal signal = scanEndNode.getSignal();
-                NetworkPosition target = controller.getTarget(scanEndNode.getNetworkNode());
-                Deque<TrackPiece> path = signal.reservePath(target, scanIsInPathDirection);
+                Deque<TrackPiece> path = signal.reservePath(controller, scanIsInPathDirection);
 
                 if (path.isEmpty()) {
                     futureSpeedTargets.add(new SpeedTarget(scanTrackEndMillis, scanTrackEndMillis, 0f, true));
@@ -321,23 +321,29 @@ public class RailMovement extends AbstractGameObject {
             List<NetworkNode.Direction> next = networkNode.getNext(nextTrack);
             if (next.isEmpty()) return; // EOL
 
+            // we have to accept all network-critical nodes in path
+            // hence even if it is straight, we have to do path finding.
             if (!networkNode.isNetworkCritical()) { // straight w/o signal
                 assert next.size() == 1;
                 nextTrack = next.get(0).trackPiece;
 
             } else {
-                if (path == null) {
-                    // we have to remove all network-critical nodes off the path
-                    // hence even if it is straight, we have to do path finding.
-                    path = new NetworkPathFinder(nextTrack, networkNode, target).call();
-                }
+                if (target == null) {
+                    int randIndex = Toolbox.random.nextInt(next.size());
+                    nextTrack = next.get(randIndex).trackPiece;
 
-                NetworkNode targetNode = path.remove();
+                } else {
+                    if (path == null) {
+                        path = new NetworkPathFinder(nextTrack, networkNode, target).call();
+                    }
 
-                for (NetworkNode.Direction entry : next) {
-                    if (entry.network.equals(targetNode)) {
-                        nextTrack = entry.trackPiece;
-                        break;
+                    NetworkNode targetNode = path.remove();
+
+                    for (NetworkNode.Direction entry : next) {
+                        if (entry.network.equals(targetNode)) {
+                            nextTrack = entry.trackPiece;
+                            break;
+                        }
                     }
                 }
             }

@@ -20,7 +20,7 @@ import org.joml.*;
  */
 public class CircleTrack extends AbstractGameObject implements TrackPiece {
     private static final float EPSILON = 1 / 256f;
-    public static final float MAX_RENDER_SIZE = 100f;
+    public static final float MAX_RENDER_SIZE = 50f;
     private final TrackType type;
     private final RailNode startNode;
     private final RailNode endNode;
@@ -124,6 +124,9 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         }
 
         this.endNode = (optionalEndNode != null) ? optionalEndNode : new RailNode(endPosition, type, angleToDirection(endTheta));
+
+        assert !Float.isNaN(radius) : this;
+        assert !Float.isNaN(angle) : this;
     }
 
     @Override

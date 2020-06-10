@@ -140,20 +140,38 @@ public class Train extends AbstractGameObject implements MovingEntity {
     }
 
     public NetworkPosition getTarget(NetworkNode currentNode) {
+        return getTarget(currentNode, 0);
+    }
+
+    public NetworkPosition getTarget(NetworkNode currentNode, int i) {
+        if (!updateTarget(currentNode)) return null;
+
+        Schedule.Node nextNode = currentTarget;
+        for (int j = 0; j < i; j++) {
+            nextNode = schedule.getNextNode(nextNode);
+        }
+
+        return nextNode.element;
+    }
+
+    /** @return true iff this train has a schedule ; currentTarget is not null */
+    private boolean updateTarget(NetworkNode currentNode) {
         if (currentTarget == null) {
             currentTarget = schedule.getFirstNode();
         }
 
-        if (currentTarget != null) {
-            Set<NetworkNode> targetNodes = currentTarget.element.getNodes();
-            if (targetNodes.contains(currentNode)) {
-                currentTarget = schedule.getNextNode(currentTarget);
-            }
+        if (currentTarget == null) return false;
 
-            return currentTarget.element;
+        Set<NetworkNode> targetNodes = currentTarget.element.getNodes();
+        if (targetNodes.contains(currentNode)) {
+            currentTarget = schedule.getNextNode(currentTarget);
         }
 
-        return null;
+        return true;
+    }
+
+    public int getScheduleSize() {
+        return schedule.size();
     }
 
     private class TrainUI extends SFrame {

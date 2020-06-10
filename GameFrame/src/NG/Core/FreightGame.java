@@ -24,6 +24,7 @@ import NG.Rendering.Lights.SingleShadowMapLights;
 import NG.Rendering.RenderLoop;
 import NG.Rendering.Shaders.BlinnPhongShader;
 import NG.Rendering.Shaders.WorldBPShader;
+import NG.Resources.Resource;
 import NG.Settings.Settings;
 import NG.Tools.Directory;
 import NG.Tools.Logger;
@@ -74,7 +75,7 @@ public class FreightGame implements Game, ModLoader {
                 // manual aligning will do the trick
                 "\n\tSystem OS:          " + System.getProperty("os.name") +
                 "\n\tJava VM:            " + System.getProperty("java.runtime.version") +
-                "\n\tFrame version:      " + getVersionNumber() +
+                "\n\tGame version:       " + getVersionNumber() +
                 "\n\tWorking directory:  " + Directory.workDirectory() +
                 "\n\tMods directory:     " + Directory.hardMods.getPath()
         );
@@ -136,7 +137,8 @@ public class FreightGame implements Game, ModLoader {
         renderer.renderSequence(new BlinnPhongShader())
                 .add((gl, game) -> game.lights().draw(gl))
                 .add((gl, game) -> game.state().draw(gl))
-                .add((gl, game) -> game.inputHandling().getMouseTool().draw(gl));
+                .add((gl, game) -> game.inputHandling().getMouseTool().draw(gl))
+                .add((gl, game) -> Resource.cycle());
         // particles
         renderer.renderSequence(new ParticleShader())
                 .add((gl, game) -> game.particles().draw(gl));
@@ -149,6 +151,8 @@ public class FreightGame implements Game, ModLoader {
         mainMenu = new MainMenu(this, this, renderer::stopLoop);
         frameManager.addFrameCenter(mainMenu, window);
         gameState.start();
+
+        Logger.printOnline(() -> String.format("%4d resources active", Resource.getNrOfActiveResources()));
 
         Logger.INFO.print("Finished initialisation\n");
     }

@@ -55,11 +55,11 @@ public interface MapGeneratorMod extends Mod {
         public final float maximum;
         public float current;
 
-        public Property(String name, float minimum, float maximum, float current) {
+        public Property(String name, float minimum, float maximum, float initial) {
             this.name = name;
             this.minimum = minimum;
             this.maximum = maximum;
-            this.current = current;
+            this.current = initial;
         }
     }
 }
