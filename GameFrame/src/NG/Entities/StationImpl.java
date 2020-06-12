@@ -2,10 +2,15 @@ package NG.Entities;
 
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
+import NG.Freight.Freight;
+import NG.GUIMenu.Components.SActiveTextArea;
+import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SFrame;
+import NG.GUIMenu.Menu.MainMenu;
 import NG.GameState.Storage;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
+import NG.Mods.DebugCubes;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.Network.SpecialNetworkNode;
@@ -35,6 +40,10 @@ public class StationImpl extends Storage implements Station {
     public static final float HEIGHT = 0.1f;
     private static int nr = 1;
 
+    public static final DebugCubes DEBUG_CUBES = new DebugCubes();
+    private static final double GOOD_SPAWN_RATE = 1.0;
+    private double nextGoodSpawn;
+
     protected String stationName = "Station " + (nr++);
 
     private final float orientation;
@@ -58,6 +67,7 @@ public class StationImpl extends Storage implements Station {
         this.realWidth = numberOfPlatforms * PLATFORM_SIZE;
         this.orientation = orientation;
         this.nodes = new HashSet<>();
+        this.nextGoodSpawn = game.timer().getGameTime();
 
         float trackHeight = HEIGHT + 0.1f;
 
@@ -120,6 +130,11 @@ public class StationImpl extends Storage implements Station {
 
     @Override
     public void update() {
+        double now = game.timer().getGameTime();
+        if (now > nextGoodSpawn) {
+            contents.store(new Freight(DEBUG_CUBES, 1, nextGoodSpawn, this));
+            nextGoodSpawn += GOOD_SPAWN_RATE;
+        }
     }
 
     @Override
@@ -187,8 +202,10 @@ public class StationImpl extends Storage implements Station {
 
     protected class StationUI extends SFrame {
         StationUI() {
-            super(StationImpl.this.toString(), 500, 300);
-
+            super(stationName, 500, 300);
+            setMainPanel(SContainer.column(
+                    new SActiveTextArea(() -> String.valueOf(StationImpl.this.contents()), MainMenu.TEXT_PROPERTIES)
+            ));
             // add buttons etc.
         }
     }

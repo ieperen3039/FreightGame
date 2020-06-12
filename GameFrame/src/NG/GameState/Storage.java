@@ -14,8 +14,8 @@ import org.joml.Vector3fc;
  * @author Geert van Ieperen. Created on 12-11-2018.
  */
 public abstract class Storage extends AbstractGameObject implements Entity {
-    private final FreightStorage contents;
-    private final Vector3f position;
+    protected final FreightStorage contents;
+    protected final Vector3f position;
 
     protected double spawnTime;
     protected double despawnTime = Double.POSITIVE_INFINITY;

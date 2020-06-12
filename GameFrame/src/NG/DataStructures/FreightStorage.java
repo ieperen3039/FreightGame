@@ -6,6 +6,8 @@ import NG.Tools.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A collection of Freight entities.
@@ -54,5 +56,20 @@ public class FreightStorage {
         storage.removeAll(batch);
 
         return batch;
+    }
+
+    @Override
+    public String toString() {
+        Map<String, Integer> contents = new HashMap<>();
+        for (Freight freight : storage) {
+            String typeName = freight.type.name();
+
+            if (contents.containsKey(typeName)) {
+                contents.put(typeName, contents.get(typeName) + freight.quantity());
+            } else {
+                contents.put(typeName, freight.quantity());
+            }
+        }
+        return "FreightStorage" + contents;
     }
 }

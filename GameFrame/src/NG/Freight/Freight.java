@@ -16,11 +16,11 @@ import NG.Mods.FreightType;
 public class Freight {
     public final FreightType type;
 
-    private final int pickupTime;
+    private final double pickupTime;
     private final Entity pickupPlace;
     private int quantity;
 
-    public Freight(FreightType type, int quantity, int pickupTime, Entity pickupPlace) {
+    public Freight(FreightType type, int quantity, double pickupTime, Entity pickupPlace) {
         this.type = type;
         this.quantity = quantity;
         this.pickupTime = pickupTime;
