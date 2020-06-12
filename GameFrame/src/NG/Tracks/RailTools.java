@@ -97,7 +97,9 @@ public final class RailTools {
         assert offset >= 0;
         assert offset <= spacing; // spacing >= 0
         if (offset == 0) {
-            node.addSignal(game);
+            if (Float.isFinite(spacing)) {
+                node.addSignal(game);
+            }
             offset = spacing; // prevent zero-length tracks
         }
         List<TrackPiece> tracks = new ArrayList<>();
@@ -273,7 +275,7 @@ public final class RailTools {
 
         Vector3f antiDirection = new Vector3f(aDirection).negate();
         List<NetworkNode.Direction> predecessors = aNode.getEntriesFromDirection(antiDirection);
-        float distanceToSignal = getShortestDistanceToSignal(aNode, predecessors);
+        float distanceToSignal = getDistanceToSignal(aNode, predecessors);
         return Math.max(signalDistance - distanceToSignal, 0);
     }
 
@@ -282,7 +284,7 @@ public final class RailTools {
      * @return the shortest distance from {@code node} to any signal in {@code list}. If no signal is found, return
      * {@link Float#POSITIVE_INFINITY}
      */
-    private static float getShortestDistanceToSignal(RailNode node, List<NetworkNode.Direction> list) {
+    private static float getDistanceToSignal(RailNode node, List<NetworkNode.Direction> list) {
         float shortest = Float.POSITIVE_INFINITY;
         for (NetworkNode.Direction entry : list) {
             TrackPiece trackPiece = entry.trackPiece;
@@ -292,7 +294,7 @@ public final class RailTools {
 
             if (!other.hasSignal()) {
                 List<NetworkNode.Direction> next = other.getNetworkNode().getNext(trackPiece);
-                length += getShortestDistanceToSignal(other, next);
+                length += getDistanceToSignal(other, next);
             }
 
             if (length < shortest) {
@@ -430,7 +432,7 @@ public final class RailTools {
                 RailNode middleNode = new RailNode(middle, aNode.getType(), middleDirection);
                 List<TrackPiece> circlePieces = getCirclePieces(game, aNode, aDirection, middle, middleNode, signalDistance, offset);
 
-                float secondOffset = getOffset(circlePieces, offset);
+                float secondOffset = getDistanceToSignal(circlePieces, offset);
                 List<TrackPiece> newPieces = getCirclePieces(game, middleNode, middleDirection, bPos, bNode, signalDistance, secondOffset);
 
                 circlePieces.addAll(newPieces);
@@ -471,7 +473,7 @@ public final class RailTools {
 
             List<TrackPiece> straightPieces = getStraightPieces(game, aNode, middle, middleNode, signalDistance, offset);
 
-            float secondOffset = getOffset(straightPieces, offset);
+            float secondOffset = Math.max(signalDistance - getDistanceToSignal(straightPieces, offset), 0);
             assert (secondOffset <= signalDistance) : straightPieces;
             List<TrackPiece> circlePieces = getCirclePieces(
                     game, middleNode, aDirection, bPos, bNode, signalDistance, secondOffset
@@ -486,7 +488,7 @@ public final class RailTools {
 
             List<TrackPiece> circlePieces = getCirclePieces(game, aNode, aDirection, middle, middleNode, signalDistance, offset);
 
-            float secondOffset = getOffset(circlePieces, offset);
+            float secondOffset = Math.max(signalDistance - getDistanceToSignal(circlePieces, offset), 0);
             assert (secondOffset <= signalDistance) : circlePieces;
 
             List<TrackPiece> straightPieces = getStraightPieces(
@@ -504,7 +506,7 @@ public final class RailTools {
      * offset
      * @return the required signal offset for any next connection
      */
-    private static float getOffset(List<TrackPiece> tracks, float offset) {
+    private static float getDistanceToSignal(List<TrackPiece> tracks, float offset) {
         if (Float.isInfinite(offset)) return Float.POSITIVE_INFINITY;
         float newOffset = 0;
         int i = tracks.size() - 1;
@@ -515,7 +517,7 @@ public final class RailTools {
             }
             newOffset += track.getLength();
         }
-        return newOffset + offset;
+        return offset + newOffset;
     }
 
     private static Vector3f getMiddlePosition(
