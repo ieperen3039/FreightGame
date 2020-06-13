@@ -13,10 +13,10 @@ import NG.DataStructures.Tracked.TrackedObject;
 @SuppressWarnings("WeakerAccess")
 public class GameTimer {
     /** multiplication factor to multiply system time units to game-seconds */
-    private static final double SYSTEM_TO_SECONDS = 1e-9;
-    private static final int RESOLUTION = 10_000; // 1/10th millisecond accuracy
-    private static final double SYSTEM_TO_RESOLUTION = RESOLUTION * SYSTEM_TO_SECONDS;
-    private static final double RESOLUTION_TO_SECONDS = 1.0 / RESOLUTION;
+    protected static final double SYSTEM_TO_SECONDS = 1e-9;
+    protected static final int RESOLUTION = 10_000; // 1/10th millisecond accuracy
+    protected static final double SYSTEM_TO_RESOLUTION = RESOLUTION * SYSTEM_TO_SECONDS;
+    protected static final double RESOLUTION_TO_SECONDS = 1.0 / RESOLUTION;
 
     /** timer ticks since creating this gametimer */
     protected long currentInternalTime = 0;
@@ -26,7 +26,7 @@ public class GameTimer {
     protected final TrackedObject<Long> gameTime;
     protected final TrackedObject<Long> renderTime;
     protected boolean isPaused = false;
-    private final long renderDelay;
+    protected final long renderDelay;
 
     public GameTimer(float renderDelay) {
         this(0f, renderDelay);
