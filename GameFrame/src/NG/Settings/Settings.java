@@ -11,8 +11,7 @@ public class Settings {
     public boolean DEBUG = true;
 
     // game engine settings
-    public int TARGET_TPS = 10;
-    public boolean WRITE_CLICK_SHADER_IMAGE = false;
+    public int TARGET_TPS = 20;
 
     // video settings
     public int TARGET_FPS = 60;

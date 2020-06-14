@@ -1,5 +1,8 @@
 package NG.Entities;
 
+import NG.DataStructures.Generic.Pair;
+import NG.Freight.Cargo;
+import NG.Mods.CargoType;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
@@ -11,6 +14,7 @@ import org.joml.Quaternionfc;
 import org.joml.Vector3fc;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Geert van Ieperen created on 19-5-2020.
@@ -34,6 +38,35 @@ public interface TrainElement {
     }
 
     Properties getProperties();
+
+    Map<CargoType, Integer> getCargoTypes();
+
+    Pair<CargoType, Integer> getContents();
+
+    /**
+     * adds the given cargo to this train element
+     * @param cargo the cargo to load
+     * @return the time it will take to load this cargo
+     * @throws IllegalArgumentException if the cargo cannot be added to this element
+     */
+    double addContents(Cargo cargo) throws IllegalArgumentException;
+
+    default int getStorableAmount(CargoType type) {
+        Pair<CargoType, Integer> contents = getContents();
+
+        if (contents.right == 0) {
+            Map<CargoType, Integer> capacity = getCargoTypes();
+            //noinspection Java8MapApi
+            return capacity.containsKey(type) ? capacity.get(type) : 0;
+
+        } else if (contents.left != type) {
+            return 0;
+
+        } else {
+            Integer capacity = getCargoTypes().get(type);
+            return capacity - contents.right;
+        }
+    }
 
     class Properties {
         private final String name;

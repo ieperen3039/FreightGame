@@ -1,8 +1,8 @@
 package NG.Entities;
 
+import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
-import NG.GameState.Storage;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Network.NetworkNode;
@@ -25,16 +25,19 @@ import static NG.Entities.StationImpl.PLATFORM_SIZE;
  * A basic implementation of a station. There is likely no need for another station
  * @author Geert van Ieperen created on 27-1-2019.
  */
-public class StationGhost extends Storage implements Station {
+public class StationGhost extends AbstractGameObject implements Station {
     public static final float HEIGHT = 0.1f;
+    private Vector3f position = new Vector3f();
     private float orientation = 0;
+
+    protected double despawnTime = Double.POSITIVE_INFINITY;
 
     private int numberOfPlatforms;
     private float length;
     private float realWidth;
 
     public StationGhost(Game game, int nrOfPlatforms, int length) {
-        super(new Vector3f(), game, game.timer().getGameTime());
+        super(game);
         this.game = game;
         assert nrOfPlatforms > 0 : "created station with " + nrOfPlatforms + " platforms";
 
@@ -55,7 +58,7 @@ public class StationGhost extends Storage implements Station {
     public void draw(SGL gl) {
         gl.pushMatrix();
         {
-            gl.translate(getPosition());
+            gl.translate(position);
             gl.rotate(Vectors.Z, orientation);
 
             ShaderProgram shader = gl.getShader();
@@ -82,13 +85,17 @@ public class StationGhost extends Storage implements Station {
     }
 
     public void setPosition(Vector3fc position) {
-        // makes it public
-        super.setPosition(position);
+        this.position.set(position);
     }
 
     @Override
     public void reactMouse(MouseAction action) {
         // handled by StationBuilder
+    }
+
+    @Override
+    public void despawn(double gameTime) {
+        despawnTime = gameTime;
     }
 
     public float getLength() {
@@ -104,9 +111,24 @@ public class StationGhost extends Storage implements Station {
         return Collections.emptySet();
     }
 
+    @Override
+    public NetworkNode getStopNode(NetworkNode node) {
+        return null;
+    }
+
+    @Override
+    public void loadAvailable(Train train) {
+    }
+
+    @Override
+    public Vector3fc getPosition() {
+        return position;
+    }
+
     Station solidify(Game game, TrackType trackType, double gameTime) {
         return new StationImpl(game,
-                numberOfPlatforms, (int) length, trackType, getPosition(), orientation, gameTime
+                numberOfPlatforms, (int) length, trackType, position, orientation, gameTime
         );
     }
+
 }

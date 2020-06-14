@@ -2,7 +2,7 @@ package NG.Entities;
 
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
-import NG.Freight.Freight;
+import NG.Freight.Cargo;
 import NG.GUIMenu.Components.SActiveTextArea;
 import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SFrame;
@@ -10,7 +10,7 @@ import NG.GUIMenu.Menu.MainMenu;
 import NG.GameState.Storage;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
-import NG.Mods.DebugCubes;
+import NG.Mods.CargoType;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.Network.SpecialNetworkNode;
@@ -36,12 +36,13 @@ import static NG.Tools.Vectors.sin;
  * @author Geert van Ieperen created on 27-1-2019.
  */
 public class StationImpl extends Storage implements Station {
+    public static final CargoType DEBUG_CUBES = new CargoType("Debug Cubes", 100, 1);
+
     public static final float PLATFORM_SIZE = 1.2f;
     public static final float HEIGHT = 0.1f;
     private static int nr = 1;
 
-    public static final DebugCubes DEBUG_CUBES = new DebugCubes();
-    private static final double GOOD_SPAWN_RATE = 1.0;
+    private static final double GOOD_SPAWN_RATE = 0.2;
     private double nextGoodSpawn;
 
     protected String stationName = "Station " + (nr++);
@@ -132,8 +133,8 @@ public class StationImpl extends Storage implements Station {
     public void update() {
         double now = game.timer().getGameTime();
         if (now > nextGoodSpawn) {
-            contents.store(new Freight(DEBUG_CUBES, 1, nextGoodSpawn, this));
-            nextGoodSpawn += GOOD_SPAWN_RATE;
+            contents.add(new Cargo(DEBUG_CUBES, 1, nextGoodSpawn, this));
+            nextGoodSpawn += 1 / GOOD_SPAWN_RATE;
         }
     }
 
@@ -200,9 +201,26 @@ public class StationImpl extends Storage implements Station {
         return nodes;
     }
 
+    public NetworkNode getStopNode(NetworkNode arrivalNode) {
+        for (int i = 0; i < forwardConnections.length; i++) {
+            NetworkNode forwardNode = forwardConnections[i].getNetworkNode();
+            NetworkNode backwardNode = backwardConnections[i].getNetworkNode();
+
+            if (forwardNode == arrivalNode) {
+                return backwardNode;
+            }
+
+            if (backwardNode == arrivalNode) {
+                return forwardNode;
+            }
+        }
+
+        return null;
+    }
+
     protected class StationUI extends SFrame {
         StationUI() {
-            super(stationName, 500, 300);
+            super(stationName, 300, 0);
             setMainPanel(SContainer.column(
                     new SActiveTextArea(() -> String.valueOf(StationImpl.this.contents()), MainMenu.TEXT_PROPERTIES)
             ));

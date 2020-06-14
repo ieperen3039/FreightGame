@@ -106,6 +106,10 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
         return node.next;
     }
 
+    public Node getPreviousNode(Node node) {
+        return node.prev;
+    }
+
     public Iterable<Node> nodes() {
         return () -> new Iterator<>() {
             int i = 0;
@@ -152,10 +156,6 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
         return size;
     }
 
-    public ScheduleUI getUI(Game game) {
-        return new ScheduleUI(game);
-    }
-
     /**
      * removes the given node. This change is reflected in all ScheduleNodes and Iterators of this collection.
      * @param node the node to remove.
@@ -195,30 +195,32 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
         }
     }
 
-    public class ScheduleUI extends SFrame {
+    public static class ScheduleUI extends SFrame {
         private final Game game;
-        private Node selectedNode;
+        private final Schedule schedule;
         private final SContainer body;
+        private Node selectedNode;
 
-        public ScheduleUI(Game game) {
+        public ScheduleUI(Game game, Schedule schedule) {
             super("Schedule");
             this.game = game;
+            this.schedule = schedule;
             body = SContainer.singleton(new SFiller());
 
             setMainPanel(SContainer.column(
                     body,
                     SContainer.row(
                             new SButton("Add Station", this::setAdder),
-                            new SButton("Remove", () -> removeNode(selectedNode == null ? firstNode.prev : selectedNode))
+                            new SButton("Remove", () -> schedule.removeNode(selectedNode == null ? schedule.firstNode.prev : selectedNode))
                     )
             ));
             updateBody();
         }
 
         private void updateBody() {
-            SPanel panel = new SPanel(1, size);
+            SPanel panel = new SPanel(1, schedule.size);
             int i = 0;
-            for (Node node : nodes()) {
+            for (Node node : schedule.nodes()) {
                 SExtendedTextArea text = new SExtendedTextArea(node.element.toString(), MainMenu.TEXT_PROPERTIES);
                 text.setClickListener((button, xRel, yRel) -> {
                     if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
@@ -237,7 +239,7 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
                 public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
                     if (getMouseAction() == MouseAction.PRESS_ACTIVATE) {
                         if (entity instanceof NetworkPosition) {
-                            addAfter(selectedNode, (NetworkPosition) entity);
+                            schedule.addAfter(selectedNode, (NetworkPosition) entity);
                             updateBody();
                         }
                     }
@@ -248,5 +250,12 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
                 }
             });
         }
+    }
+
+    /**
+     * @author Geert van Ieperen created on 14-6-2020.
+     */
+    public interface UpdateListener {
+        void onScheduleUpdate(NetworkPosition element);
     }
 }

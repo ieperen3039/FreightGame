@@ -150,13 +150,16 @@ public class Signal extends AbstractGameObject implements Entity {
 
     /**
      * calculates the path of the given controller, positioned on hostNode, to the targets as given by the controller.
-     * @param controller      the target supplier, which should give a next target given a current position.
+     * @param targets         the target supplier, which should give a next target given a scheduling depth.
      * @param inSameDirection whether the path should be calculated in the direction of the railnode. false iff {@link
      *                        #getNode()}{@link RailNode#isInDirectionOf(TrackPiece) .isInDirectionOf(previousTrack)}
+     * @param targetStart     the initial scheduling depth
      * @return a path from hostNode, via any possible targets, to a signal. Returns null if no such path exists.
      * Guaranteed is {@code path == null || path.getLast().hasSignal()}
      */
-    private TrackPath getPath(Function<NetworkNode, NetworkPosition> controller, boolean inSameDirection) {
+    private TrackPath getPath(
+            Function<Integer, NetworkPosition> targets, boolean inSameDirection, int targetStart
+    ) {
         HashMap<Signal, TrackPath> signals = new HashMap<>();
         HashMap<NetworkNode, TrackPath> nodes = new HashMap<>();
 
@@ -164,12 +167,13 @@ public class Signal extends AbstractGameObject implements Entity {
         List<NetworkNode.Direction> entries = inSameDirection ? networkNode.getEntriesA() : networkNode.getEntriesB();
 
         // TODO trivial section shortcut ?
+        int depth = targetStart;
 
         for (NetworkNode.Direction entry : entries) {
             TrackPiece trackPiece = entry.trackPiece;
             collectPaths(trackPiece.getNot(hostNode), trackPiece, signals, nodes, new TrackPath(trackPiece));
         }
-        NetworkPosition target = controller.apply(hostNode.getNetworkNode());
+        NetworkPosition target = targets.apply(depth++);
 
         if (signals.isEmpty()) {
             return null;
@@ -187,6 +191,13 @@ public class Signal extends AbstractGameObject implements Entity {
             for (NetworkNode targetNode : target.getNodes()) {
                 TrackPath pathToNode = nodes.get(targetNode);
                 if (pathToNode != null) {
+                    // if this node has a stopNode, find a path to that node instead
+                    NetworkNode stopNode = target.getStopNode(targetNode);
+                    if (stopNode != null && nodes.containsKey(stopNode)) {
+                        targetNode = stopNode;
+                        pathToNode = nodes.get(targetNode);
+                    }
+
                     pathViaNodes.append(pathToNode);
 
                     assert !pathToNode.path.isEmpty() : nodes; // usually caused by (controller.apply(node) == node)
@@ -194,13 +205,13 @@ public class Signal extends AbstractGameObject implements Entity {
                     RailNode node = last.get(targetNode);
                     if (node.hasSignal()) return pathViaNodes;
 
-                    // resource paths to this node
+                    // re-source paths to this node
                     signals.clear();
                     nodes.clear();
                     collectPaths(node, last, signals, nodes, new TrackPath());
 
                     success = true;
-                    target = controller.apply(targetNode);
+                    target = targets.apply(depth++);
                     break;
                 }
             }
@@ -320,7 +331,7 @@ public class Signal extends AbstractGameObject implements Entity {
      * @return a path from here to the next signal on the shortest available path toward target.
      */
     public Deque<TrackPiece> reservePath(
-            boolean trackIsInDirection, Function<NetworkNode, NetworkPosition> targetFunction
+            boolean trackIsInDirection, Function<Integer, NetworkPosition> targetFunction
     ) {
         if (trackIsInDirection) {
             if (!inOppositeDirection) {
@@ -333,7 +344,7 @@ public class Signal extends AbstractGameObject implements Entity {
             }
         }
 
-        TrackPath path = getPath(targetFunction, trackIsInDirection);
+        TrackPath path = getPath(targetFunction, trackIsInDirection, 0);
         if (path == null) return getEmptyPath();
         return reserve(path);
     }

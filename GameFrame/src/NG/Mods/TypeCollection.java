@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class TypeCollection {
     public final List<TrackType> trackTypes = new ArrayList<>();
-    public final List<FreightType> freightsTypes = new ArrayList<>();
+    public final List<CargoType> freightsTypes = new ArrayList<>();
     public final List<Locomotive.Properties> locomotiveTypes = new ArrayList<>();
     public final List<Wagon.Properties> wagonTypes = new ArrayList<>();
 }

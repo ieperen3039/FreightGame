@@ -7,4 +7,6 @@ import java.util.Set;
  */
 public interface NetworkPosition {
     Set<NetworkNode> getNodes();
+
+    NetworkNode getStopNode(NetworkNode node);
 }

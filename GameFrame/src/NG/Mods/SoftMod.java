@@ -3,6 +3,7 @@ package NG.Mods;
 import NG.Core.Game;
 import NG.Core.Version;
 import NG.Entities.Locomotive;
+import NG.Entities.StationImpl;
 import NG.Entities.Wagon;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Resources.Resource;
@@ -88,8 +89,9 @@ public class SoftMod implements Mod {
                 float linearResistance = findOrThrow(wagonNode, "r1").floatValue();
 
                 List<String> railtypes = getRailTypes(wagonNode, "railtypes");
+                Map<CargoType, Integer> capacity = Map.of(StationImpl.DEBUG_CUBES, 10);
 
-                wagons.add(new Wagon.Properties(name, length, mass, linearResistance, mesh, railtypes, maxSpeed));
+                wagons.add(new Wagon.Properties(name, length, mass, linearResistance, mesh, railtypes, maxSpeed, capacity));
             }
         }
     }

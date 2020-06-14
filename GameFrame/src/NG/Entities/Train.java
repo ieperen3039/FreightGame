@@ -2,6 +2,8 @@ package NG.Entities;
 
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
+import NG.DataStructures.Generic.Pair;
+import NG.Freight.Cargo;
 import NG.GUIMenu.Components.SActiveTextArea;
 import NG.GUIMenu.Components.SButton;
 import NG.GUIMenu.Components.SContainer;
@@ -9,9 +11,12 @@ import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
+import NG.GameState.Storage;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
+import NG.Mods.CargoType;
 import NG.Network.NetworkNode;
 import NG.Network.NetworkPosition;
+import NG.Network.RailNode;
 import NG.Network.Schedule;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Tracks.RailMovement;
@@ -20,8 +25,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -33,9 +37,11 @@ public class Train extends AbstractGameObject implements MovingEntity {
 
     private final RailMovement positionEngine;
     private final List<TrainElement> entities = new CopyOnWriteArrayList<>();
+    private final List<Schedule.UpdateListener> scheduleUpdateListeners = new ArrayList<>();
 
     private final Schedule schedule = new Schedule();
     private Schedule.Node currentTarget = null;
+    private double loadTimer = Double.NEGATIVE_INFINITY;
 
     private static final SComponentProperties BUTTON_PROPERTIES = new SComponentProperties(
             300, 50, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
@@ -44,20 +50,53 @@ public class Train extends AbstractGameObject implements MovingEntity {
     public Train(Game game, double spawnTime, TrackPiece startPiece) {
         super(game);
         this.positionEngine = new RailMovement(game, this, spawnTime, startPiece, true);
+        addScheduleListener(positionEngine);
         this.spawnTime = spawnTime;
+    }
+
+    @Override
+    public void update() {
+        positionEngine.update();
+
+        Schedule.Node currentTarget = getCurrentTarget();
+        if (positionEngine.getSpeed() == 0 && !isLoading() && currentTarget != null) {
+            // check whether we have loading to do
+            NetworkPosition target = currentTarget.element;
+
+            if (target instanceof Storage) {
+                double gameTime = game.timer().getGameTime();
+                TrackPiece currentTrack = positionEngine.getTracksAt(gameTime).left;
+                NetworkNode startNode = currentTrack.getStartNode().getNetworkNode();
+                NetworkNode endNode = currentTrack.getEndNode().getNetworkNode();
+
+                Set<NetworkNode> targetNodes = target.getNodes();
+                // if both ends of our current track are part of this same target, we assume we are on the target itself
+                if (targetNodes.contains(startNode) && targetNodes.contains(endNode)) {
+                    Map<CargoType, Integer> transferableCargo = Storage.getTransferableCargo((Storage) target, this);
+                    // if there is nothing to transfer, then we are already done, and we should continue our journey
+                    if (transferableCargo.isEmpty()) {
+                        goToNext();
+
+                    } else { // otherwise, start loading
+                        Storage storage = (Storage) target;
+                        storage.load(this, transferableCargo);
+                    }
+                }
+            }
+        }
     }
 
     public void addElement(TrainElement e) {
         entities.add(e);
-        updateForceFunction();
+        updateProperties();
     }
 
     public void removeLastElement() {
         entities.remove(entities.size() - 1);
-        updateForceFunction();
+        updateProperties();
     }
 
-    private void updateForceFunction() {
+    private void updateProperties() {
         float totalMass = 0;
         float totalTractiveEffort = 0;
         float totalR1 = 0;
@@ -76,15 +115,13 @@ public class Train extends AbstractGameObject implements MovingEntity {
             if (props instanceof Locomotive.Properties) {
                 Locomotive.Properties lProps = (Locomotive.Properties) props;
                 totalTractiveEffort += lProps.tractiveEffort;
+
+            } else if (props instanceof Wagon.Properties) {
+                Wagon.Properties wProps = (Wagon.Properties) props;
             }
         }
 
         positionEngine.setProperties(totalTractiveEffort, totalMass, totalR1, totalR2, 5, totalLength, maxSpeed);
-    }
-
-    @Override
-    public void update() {
-        positionEngine.update();
     }
 
     @Override
@@ -126,6 +163,66 @@ public class Train extends AbstractGameObject implements MovingEntity {
         return sum;
     }
 
+    public Map<CargoType, Integer> getFreeSpace() {
+        Map<CargoType, Integer> capacity = new HashMap<>();
+
+        for (TrainElement entity : entities) {
+            Pair<CargoType, Integer> contents = entity.getContents();
+            if (contents.right > 0) {
+                int typeCapacity = entity.getCargoTypes().get(contents.left);
+                capacity.put(contents.left, typeCapacity - contents.right);
+
+            } else {
+                Map<CargoType, Integer> cargoTypes = entity.getCargoTypes();
+                for (CargoType type : cargoTypes.keySet()) {
+                    capacity.merge(type, cargoTypes.get(type), Integer::sum);
+                }
+            }
+        }
+
+        return capacity;
+    }
+
+    public Map<CargoType, Integer> getContents() {
+        Map<CargoType, Integer> capacity = new HashMap<>();
+
+        for (TrainElement entity : entities) {
+            Pair<CargoType, Integer> contents = entity.getContents();
+            if (contents.right > 0) {
+                capacity.merge(contents.left, contents.right, Integer::sum);
+            }
+        }
+
+        return capacity;
+    }
+
+    /** true iff the cargo has been stored in its entirety */
+    public boolean store(Cargo cargo) {
+        assert cargo.quantity() > 0 : cargo;
+
+        for (TrainElement entity : entities) {
+            int toStore = entity.getStorableAmount(cargo.type);
+
+            if (toStore > 0) {
+                if (toStore >= cargo.quantity()) {
+                    store(cargo, entity);
+                    return true;
+
+                } else {
+                    Cargo part = cargo.split(toStore);
+                    store(part, entity);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void store(Cargo cargo, TrainElement entity) {
+        double loadTime = entity.addContents(cargo);
+        loadTimer = Math.max(game.timer().getGameTime() + loadTime, loadTimer);
+    }
+
     @Override
     public void despawn(double gameTime) {
         despawnTime = gameTime;
@@ -141,39 +238,90 @@ public class Train extends AbstractGameObject implements MovingEntity {
         return despawnTime;
     }
 
-    public NetworkPosition getTarget(NetworkNode currentNode) {
-        return getTarget(currentNode, 0);
-    }
+    /**
+     * @param scheduleDepth the number of targets in the schedule to look ahead, for any signed value
+     * @return the target on the given number of steps from the current target, or null if the schedule is empty
+     */
+    public NetworkPosition getTarget(int scheduleDepth) {
+        Schedule.Node nextNode = getCurrentTarget();
+        if (nextNode == null) return null;
 
-    public NetworkPosition getTarget(NetworkNode currentNode, int i) {
-        if (!updateTarget(currentNode)) return null;
+        if (scheduleDepth > 0) {
+            for (int j = 0; j < scheduleDepth; j++) {
+                nextNode = schedule.getNextNode(nextNode);
+            }
 
-        Schedule.Node nextNode = currentTarget;
-        for (int j = 0; j < i; j++) {
-            nextNode = schedule.getNextNode(nextNode);
+        } else if (scheduleDepth < 0) {
+            for (int j = 0; j > scheduleDepth; j--) {
+                nextNode = schedule.getPreviousNode(nextNode);
+            }
         }
 
         return nextNode.element;
     }
 
-    /** @return true iff this train has a schedule ; currentTarget is not null */
-    private boolean updateTarget(NetworkNode currentNode) {
+    public boolean isLoading() {
+        return loadTimer > game.timer().getGameTime();
+    }
+
+    public void onArrival(RailNode newNode) {
+        Schedule.Node currentTarget = getCurrentTarget();
+        if (currentTarget != null) {
+            NetworkPosition target = currentTarget.element;
+            NetworkNode networkNode = newNode.getNetworkNode();
+            if (target.getNodes().contains(networkNode)) {
+                if (!shouldWaitFor(target)) {
+                    goToNext();
+                }
+            }
+        }
+    }
+
+    public boolean shouldWaitFor(NetworkPosition target) {
+        if (isLoading()) return true;
+
+        Schedule.Node currentTarget = getCurrentTarget();
+        if (currentTarget == null) return false;
+        if (target != currentTarget.element) return false;
+
+        if (target instanceof Storage) {
+            Map<CargoType, Integer> transferableCargo = Storage.getTransferableCargo((Storage) target, this);
+            return !transferableCargo.isEmpty();
+        }
+
+        return false;
+    }
+
+    public void addScheduleListener(Schedule.UpdateListener listener) {
+        scheduleUpdateListeners.add(listener);
+    }
+
+    public void removeScheduleListener(Schedule.UpdateListener listener) {
+        scheduleUpdateListeners.remove(listener);
+    }
+
+    private void goToNext() {
+        Schedule.Node currentTarget = getCurrentTarget();
+        if (currentTarget == null) {
+            this.currentTarget = schedule.getFirstNode();
+
+        } else {
+            this.currentTarget = schedule.getNextNode(currentTarget);
+        }
+
+        if (this.currentTarget != null) {
+            scheduleUpdateListeners.forEach(l -> l.onScheduleUpdate(this.currentTarget.element));
+        }
+    }
+
+    public Schedule.Node getCurrentTarget() {
+        if (schedule.isEmpty()) return null;
+
         if (currentTarget == null) {
             currentTarget = schedule.getFirstNode();
         }
 
-        if (currentTarget == null) return false;
-
-        Set<NetworkNode> targetNodes = currentTarget.element.getNodes();
-        if (targetNodes.contains(currentNode)) {
-            currentTarget = schedule.getNextNode(currentTarget);
-        }
-
-        return true;
-    }
-
-    public int getScheduleSize() {
-        return schedule.size();
+        return currentTarget;
     }
 
     private class TrainUI extends SFrame {
@@ -182,25 +330,27 @@ public class Train extends AbstractGameObject implements MovingEntity {
             super(Train.this.toString());
             setMainPanel(SContainer.column(
                     new SActiveTextArea(this::getStatus, 50),
-                    new SActiveTextArea(() -> String.format("Speed: %6.02f", positionEngine.getSpeed()), 50),
+                    new SActiveTextArea(() -> String.format("Speed: %5.01f", positionEngine.getSpeed()), 50),
+                    new SActiveTextArea(() -> String.format("Cargo: %s", getContents()), 50),
                     new SButton("Start", positionEngine::start, BUTTON_PROPERTIES),
                     new SButton("Stop", positionEngine::stop, BUTTON_PROPERTIES),
                     new SButton("Reverse", positionEngine::reverse, BUTTON_PROPERTIES),
-                    new SButton("Schedule", () -> game.gui().addFrame(schedule.getUI(game)), BUTTON_PROPERTIES)
+                    new SButton("Schedule", () -> game.gui()
+                            .addFrame(new Schedule.ScheduleUI(game, schedule)), BUTTON_PROPERTIES)
             ));
             pack();
         }
 
         private String getStatus() {
-            if (currentTarget == null) {
+            if (getCurrentTarget() == null) {
                 currentTarget = schedule.getFirstNode();
             }
-            if (currentTarget != null) {
+            if (getCurrentTarget() != null) {
                 if (!positionEngine.hasPath()) {
                     return "Waiting for free path...";
                 }
 
-                return "Now heading for " + currentTarget.element;
+                return "Now heading for " + getCurrentTarget().element;
             }
 
             if (positionEngine.isStopping()) {
