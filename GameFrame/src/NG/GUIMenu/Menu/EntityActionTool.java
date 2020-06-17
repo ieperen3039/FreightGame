@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 /**
  * @author Geert van Ieperen created on 27-5-2020.
  */
-class EntityActionTool extends AbstractMouseTool {
+public class EntityActionTool extends AbstractMouseTool {
     private final Predicate<Entity> guard;
     private final Consumer<Entity> action;
 

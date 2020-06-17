@@ -3,7 +3,7 @@ package NG.Tracks;
 import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
-import NG.InputHandling.MouseTools.ToggleMouseTool;
+import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
@@ -19,8 +19,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author Geert van Ieperen created on 16-12-2018.
  */
-public class TrackBuilder extends ToggleMouseTool {
+public class TrackBuilder extends AbstractMouseTool {
     private static final float HEIGHT_ABOVE_GROUND = 0.2f;
+    protected final Runnable deactivation;
     private final TrackType type;
     private RailNode firstNode;
     private Vector3fc firstPosition;
@@ -36,7 +37,8 @@ public class TrackBuilder extends ToggleMouseTool {
      * @param source
      */
     public TrackBuilder(Game game, TrackType type, SToggleButton source) {
-        super(game, () -> source.setActive(false));
+        super(game);
+        this.deactivation = () -> source.setActive(false);
         this.type = type;
         this.ghostType = new TrackTypeGhost(type);
     }
@@ -227,7 +229,7 @@ public class TrackBuilder extends ToggleMouseTool {
     @Override
     public void dispose() {
         clearGhostTracks();
-        super.dispose();
+        deactivation.run();
     }
 
     @Override

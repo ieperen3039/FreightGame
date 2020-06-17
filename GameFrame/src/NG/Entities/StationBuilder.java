@@ -3,7 +3,7 @@ package NG.Entities;
 import NG.Core.Game;
 import NG.GUIMenu.Components.*;
 import NG.GUIMenu.Menu.MainMenu;
-import NG.InputHandling.MouseTools.ToggleMouseTool;
+import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
@@ -23,7 +23,7 @@ import java.util.function.Consumer;
 /**
  * @author Geert van Ieperen created on 30-4-2020.
  */
-public class StationBuilder extends ToggleMouseTool {
+public class StationBuilder extends AbstractMouseTool {
     private static final float EPSILON = 1 / 128f;
     private static final int RING_RADIAL_PARTS = 64;
     private static final float RING_THICKNESS = 0.1f;
@@ -31,6 +31,7 @@ public class StationBuilder extends ToggleMouseTool {
     private static final Map<Float, Resource<Mesh>> meshes = new HashMap<>();
 
     private static final String[] numbers = new String[12];
+    protected final Runnable deactivation;
 
     static {
         for (int i = 0; i < numbers.length; i++) {
@@ -46,7 +47,8 @@ public class StationBuilder extends ToggleMouseTool {
     private boolean cursorIsOnMap = false;
 
     public StationBuilder(Game game, SToggleButton source, TrackType trackType) {
-        super(game, () -> source.setActive(false));
+        super(game);
+        this.deactivation = () -> source.setActive(false);
         this.station = new StationGhost(game, 1, 6);
         this.trackType = trackType;
 
@@ -57,7 +59,7 @@ public class StationBuilder extends ToggleMouseTool {
     @Override
     public void onClick(int button, int x, int y) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-            dispose();
+            game.inputHandling().setMouseTool(null);
 
         } else {
             super.onClick(button, x, y);
@@ -73,7 +75,7 @@ public class StationBuilder extends ToggleMouseTool {
     @Override
     public void dispose() {
         selector.dispose();
-        super.dispose();
+        deactivation.run();
     }
 
     public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
@@ -139,7 +141,7 @@ public class StationBuilder extends ToggleMouseTool {
         game.state().addEntity(newStation);
 
         station.despawn(gameTime);
-        this.dispose();
+        game.inputHandling().setMouseTool(null);
     }
 
     private class SizeSelector extends SFrame {

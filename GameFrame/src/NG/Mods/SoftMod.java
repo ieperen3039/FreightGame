@@ -87,11 +87,12 @@ public class SoftMod implements Mod {
                 float length = findOrThrow(wagonNode, "length").floatValue();
                 float maxSpeed = findOrThrow(wagonNode, "max_speed").floatValue();
                 float linearResistance = findOrThrow(wagonNode, "r1").floatValue();
+                float loadTime = findOrThrow(wagonNode, "load_time").floatValue();
 
                 List<String> railtypes = getRailTypes(wagonNode, "railtypes");
                 Map<CargoType, Integer> capacity = Map.of(StationImpl.DEBUG_CUBES, 10);
 
-                wagons.add(new Wagon.Properties(name, length, mass, linearResistance, mesh, railtypes, maxSpeed, capacity));
+                wagons.add(new Wagon.Properties(name, length, mass, linearResistance, mesh, railtypes, maxSpeed, capacity, loadTime));
             }
         }
     }

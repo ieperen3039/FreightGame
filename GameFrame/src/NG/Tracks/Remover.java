@@ -2,37 +2,37 @@ package NG.Tracks;
 
 import NG.Core.Game;
 import NG.Entities.Entity;
-import NG.Entities.Station;
-import NG.Entities.StationGhost;
 import NG.GUIMenu.Components.SToggleButton;
-import NG.InputHandling.MouseTools.ToggleMouseTool;
-import org.joml.Vector3fc;
+import NG.GUIMenu.Menu.EntityActionTool;
+import NG.Network.Signal;
 
 /**
  * @author Geert van Ieperen created on 29-4-2020.
  */
-public class Remover extends ToggleMouseTool {
+public class Remover extends EntityActionTool {
+    protected final Runnable deactivation;
+
     public Remover(Game game, SToggleButton source) {
-        super(game, () -> source.setActive(false));
+        super(game, e -> true, e -> removeEntity(e, game));
+        this.deactivation = () -> source.setActive(false);
     }
 
-    @Override
-    public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
+    private static void removeEntity(Entity entity, Game game) {
         double gameTime = game.timer().getGameTime();
-        switch (getMouseAction()) {
-            case PRESS_ACTIVATE:
-                if (entity instanceof TrackPiece) {
-                    RailTools.removeTrackPiece((TrackPiece) entity, gameTime);
 
-                } else if (entity instanceof StationGhost) {
-                    Station station = (Station) entity;
-                    station.despawn(gameTime);
-                }
+        if (entity instanceof TrackPiece) {
+            RailTools.removeTrackPiece((TrackPiece) entity, gameTime);
+
+        } else if (entity instanceof Signal) {
+            ((Signal) entity).getNode().removeSignal(game);
+
+        } else {
+            entity.despawn(gameTime);
         }
     }
 
     @Override
-    public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
-
+    public void dispose() {
+        deactivation.run();
     }
 }

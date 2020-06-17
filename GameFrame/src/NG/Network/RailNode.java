@@ -94,6 +94,10 @@ public class RailNode {
         return networkNode;
     }
 
+    public boolean hasSignal() {
+        return signal != null;
+    }
+
     public Signal getSignal() {
         return signal;
     }
@@ -103,8 +107,9 @@ public class RailNode {
         game.state().addEntity(signal);
     }
 
-    public boolean hasSignal() {
-        return signal != null;
+    public void removeSignal(Game game) {
+        signal.despawn(game.timer().getGameTime());
+        signal = null;
     }
 
     public List<NetworkNode.Direction> getEntriesFromDirection(Vector3fc nodeDirection) {

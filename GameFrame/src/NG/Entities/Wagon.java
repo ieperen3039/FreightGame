@@ -73,11 +73,11 @@ public class Wagon implements TrainElement {
         public Properties(
                 String name, float length, float mass, float linearResistance,
                 Resource<Mesh> mesh, List<String> trackTypes, float maxSpeed,
-                Map<CargoType, Integer> capacity
+                Map<CargoType, Integer> capacity, double loadingTime
         ) {
             super(name, length, mass, linearResistance, 0, maxSpeed, mesh, trackTypes);
             this.capacity = Collections.unmodifiableMap(capacity);
-            loadingTime = 0;
+            this.loadingTime = loadingTime;
         }
     }
 }

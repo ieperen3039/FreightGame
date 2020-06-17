@@ -3,7 +3,7 @@ package NG.Network;
 import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
-import NG.InputHandling.MouseTools.ToggleMouseTool;
+import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Tracks.RailTools;
 import NG.Tracks.TrackPiece;
@@ -13,12 +13,14 @@ import org.joml.Vector3fc;
 /**
  * @author Geert van Ieperen created on 24-5-2020.
  */
-public class SignalBuilder extends ToggleMouseTool {
+public class SignalBuilder extends AbstractMouseTool {
 
+    protected final Runnable deactivation;
     private Signal ghostSignal;
 
     public SignalBuilder(Game game, SToggleButton source) {
-        super(game, () -> source.setActive(false));
+        super(game);
+        this.deactivation = () -> source.setActive(false);
     }
 
     @Override
@@ -78,5 +80,10 @@ public class SignalBuilder extends ToggleMouseTool {
         if (ghostSignal != null) {
             ghostSignal.draw(gl);
         }
+    }
+
+    @Override
+    public void dispose() {
+        deactivation.run();
     }
 }

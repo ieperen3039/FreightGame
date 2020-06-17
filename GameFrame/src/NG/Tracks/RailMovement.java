@@ -57,8 +57,8 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
     private double signalPathTimeout = Double.NEGATIVE_INFINITY;
     private SpeedTarget endOfTrackBrakeTarget;
 
-    private NetworkPosition targetScanTarget;
-    private NetworkNode targetScanStopNode;
+    private Deque<NetworkPosition> targetScanTarget = new ArrayDeque<>(2);
+    private Deque<NetworkNode> targetScanStopNode = new ArrayDeque<>(2);
     private float maxSpeed = 0;
 
     private LongInterpolator totalMillimeters;
@@ -441,20 +441,20 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
 
         NetworkPosition target = controller.getTarget(scanTargetsAhead);
         if (target != null && target.getNodes().contains(scanNode)) {
-            assert targetScanStopNode == null : "previous stop node has not been processed yet";
-            targetScanStopNode = target.getStopNode(scanNode);
-            targetScanTarget = target;
+            targetScanStopNode.add(target.getStopNode(scanNode));
+            targetScanTarget.add(target);
             scanTargetsAhead++;
         }
 
-        if (scanNode == targetScanStopNode) { // implicit null check for targetScanStopTrack
-            NetworkPosition waitTarget = targetScanTarget;
+        if (scanNode.equals(targetScanStopNode.peek())) { // implicit null check for targetScanStopTrack
+            targetScanStopNode.remove(); // == scanNode
+            NetworkPosition waitTarget = targetScanTarget.remove();
+
             SpeedTarget speedTarget = new SpeedTarget(
                     scanTrackEndMillis, scanTrackEndMillis, 0,
                     () -> controller.shouldWaitFor(waitTarget)
             );
             futureSpeedTargets.add(speedTarget);
-            targetScanStopNode = null;
         }
     }
 

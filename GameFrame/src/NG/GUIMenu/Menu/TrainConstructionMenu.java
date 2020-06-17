@@ -17,11 +17,13 @@ import java.util.List;
  * @author Geert van Ieperen created on 21-5-2020.
  */
 public class TrainConstructionMenu extends SFrame {
+    private static int id = 0;
+
     public TrainConstructionMenu(Game game, TrackPiece place) {
         super("New Train");
 
         double gameTime = game.timer().getGameTime();
-        Train construction = new Train(game, gameTime, place);
+        Train construction = new Train(game, id++, gameTime, place);
         game.state().addEntity(construction);
 
         List<Locomotive.Properties> locomotiveTypes = game.objectTypes().locomotiveTypes;

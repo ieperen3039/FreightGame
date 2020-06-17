@@ -19,6 +19,7 @@ import NG.Network.NetworkPosition;
 import NG.Network.RailNode;
 import NG.Network.Schedule;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Tools.Logger;
 import NG.Tracks.RailMovement;
 import NG.Tracks.TrackPiece;
 import org.joml.Quaternionf;
@@ -32,9 +33,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Geert van Ieperen created on 19-5-2020.
  */
 public class Train extends AbstractGameObject implements MovingEntity {
-    protected double spawnTime;
-    protected double despawnTime = Double.POSITIVE_INFINITY;
+    private static final SComponentProperties BUTTON_PROPERTIES = new SComponentProperties(
+            300, 50, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
+    );
 
+    private final int id;
     private final RailMovement positionEngine;
     private final List<TrainElement> entities = new CopyOnWriteArrayList<>();
     private final List<Schedule.UpdateListener> scheduleUpdateListeners = new ArrayList<>();
@@ -43,12 +46,12 @@ public class Train extends AbstractGameObject implements MovingEntity {
     private Schedule.Node currentTarget = null;
     private double loadTimer = Double.NEGATIVE_INFINITY;
 
-    private static final SComponentProperties BUTTON_PROPERTIES = new SComponentProperties(
-            300, 50, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
-    );
+    protected double spawnTime;
+    protected double despawnTime = Double.POSITIVE_INFINITY;
 
-    public Train(Game game, double spawnTime, TrackPiece startPiece) {
+    public Train(Game game, int id, double spawnTime, TrackPiece startPiece) {
         super(game);
+        this.id = id;
         this.positionEngine = new RailMovement(game, this, spawnTime, startPiece, true);
         addScheduleListener(positionEngine);
         this.spawnTime = spawnTime;
@@ -72,14 +75,17 @@ public class Train extends AbstractGameObject implements MovingEntity {
                 Set<NetworkNode> targetNodes = target.getNodes();
                 // if both ends of our current track are part of this same target, we assume we are on the target itself
                 if (targetNodes.contains(startNode) && targetNodes.contains(endNode)) {
-                    Map<CargoType, Integer> transferableCargo = Storage.getTransferableCargo((Storage) target, this);
-                    // if there is nothing to transfer, then we are already done, and we should continue our journey
-                    if (transferableCargo.isEmpty()) {
-                        goToNext();
+                    if (!isLoading()) {
+                        Map<CargoType, Integer> transferableCargo = Storage.getTransferableCargo((Storage) target, this);
+                        // if there is nothing to transfer, then we are already done, and we should continue our journey
+                        if (transferableCargo.isEmpty()) {
+                            goToNext();
 
-                    } else { // otherwise, start loading
-                        Storage storage = (Storage) target;
-                        storage.load(this, transferableCargo);
+                        } else { // otherwise, start loading
+                            Storage storage = (Storage) target;
+                            storage.load(this, transferableCargo);
+                            Logger.DEBUG.printf("Loading %s for %6.03f seconds", this, loadTimer - gameTime);
+                        }
                     }
                 }
             }
@@ -199,28 +205,30 @@ public class Train extends AbstractGameObject implements MovingEntity {
     /** true iff the cargo has been stored in its entirety */
     public boolean store(Cargo cargo) {
         assert cargo.quantity() > 0 : cargo;
+        boolean complete = false;
 
+        double loadTime = 0;
         for (TrainElement entity : entities) {
             int toStore = entity.getStorableAmount(cargo.type);
 
             if (toStore > 0) {
                 if (toStore >= cargo.quantity()) {
-                    store(cargo, entity);
-                    return true;
+                    loadTime += entity.addContents(cargo);
+                    complete = true;
+                    break;
 
                 } else {
                     Cargo part = cargo.split(toStore);
-                    store(part, entity);
+                    loadTime += entity.addContents(part);
                 }
             }
         }
 
-        return false;
-    }
+        double gameTime = game.timer().getGameTime();
+        if (loadTimer < gameTime) loadTimer = gameTime;
+        loadTimer = loadTimer + loadTime;
 
-    private void store(Cargo cargo, TrainElement entity) {
-        double loadTime = entity.addContents(cargo);
-        loadTimer = Math.max(game.timer().getGameTime() + loadTime, loadTimer);
+        return complete;
     }
 
     @Override
@@ -322,6 +330,11 @@ public class Train extends AbstractGameObject implements MovingEntity {
         }
 
         return currentTarget;
+    }
+
+    @Override
+    public String toString() {
+        return "Train " + id;
     }
 
     private class TrainUI extends SFrame {
