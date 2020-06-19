@@ -77,6 +77,13 @@ public class TestScenario extends Scenario {
         addConnections(game, bypass3, node31);
         addConnections(game, bypass3, node23);
 
+        node12.addSignal(game);
+        node23.addSignal(game);
+        node31.addSignal(game);
+        bypass1.addSignal(game);
+        bypass2.addSignal(game);
+        bypass3.addSignal(game);
+
         gameState.addEntity(station1);
         gameState.addEntity(station2);
         gameState.addEntity(station3);
@@ -94,7 +101,6 @@ public class TestScenario extends Scenario {
     ) {
         Vector3f direction = new Vector3f(offset).rotateZ(-1 / 4f * TAU);
         RailNode node = new RailNode(getGroundPos(game, center, offset), type, direction);
-        node.addSignal(game);
 
         List<RailNode> nodesStation12 = station1.getNodesOfDirection(direction);
         addConnections(game, node, nodesStation12);
@@ -106,6 +112,7 @@ public class TestScenario extends Scenario {
 
     private void addConnections(Game game, RailNode targetNode, List<RailNode> stationNodes) {
         for (RailNode stationNode : stationNodes) {
+            stationNode.addSignal(game);
             addConnections(game, stationNode, targetNode);
         }
     }

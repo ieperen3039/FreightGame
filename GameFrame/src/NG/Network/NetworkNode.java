@@ -301,6 +301,15 @@ public class NetworkNode {
             twoToOne = twoNode.bDirection;
         }
 
+        // entangle the occupied setting of the tracks involved
+        for (Direction direction : oneToTwo) {
+            TrackPiece.entangleTrackOccupation(track, direction.trackPiece);
+        }
+
+        for (Direction direction : twoToOne) {
+            TrackPiece.entangleTrackOccupation(track, direction.trackPiece);
+        }
+
         oneToTwo.add(new Direction(twoNode, track, null, 0, false));
         twoToOne.add(new Direction(oneNode, track, null, 0, false));
 

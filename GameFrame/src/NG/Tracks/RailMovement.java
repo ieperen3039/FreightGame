@@ -92,7 +92,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
 
         this.totalToLocalDistance = new FloatInterpolator(0, 0f, trackStartDistanceMillis, startPiece.getLength(), trackEndDistanceMillis);
         this.tracks = new BlockingTimedArrayQueue<>(0);
-        tracks.add(new Pair<>(startPiece, isPositiveDirection), trackStartDistanceMillis);
+        tracks.add(new Pair<>(startPiece, isPositiveDirection), trackStartDistanceMillis - 1);
 
         this.updateTime = spawnTime;
         this.isPositiveDirection = isPositiveDirection;
@@ -297,7 +297,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
                         signalPathTimeout = updateTime + SIGNAL_PATHING_TIMEOUT;
 
                         if (endOfTrackBrakeTarget == null || endOfTrackBrakeTarget.isInvalid()) {
-                            endOfTrackBrakeTarget = new SpeedTarget(scanTrackEndMillis, scanTrackEndMillis, 0f, path::isEmpty);
+                            endOfTrackBrakeTarget = new SpeedTarget(scanTrackEndMillis, scanTrackEndMillis, 0f, () -> scanTrackEndMillis < scanTargetMillis);
                             futureSpeedTargets.add(endOfTrackBrakeTarget);
                         }
                         break;

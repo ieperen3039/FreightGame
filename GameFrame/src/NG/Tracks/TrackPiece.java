@@ -64,7 +64,10 @@ public abstract class TrackPiece extends AbstractGameObject implements Entity {
 
     @Override
     public void update() {
+        double gameTime = game.timer().getGameTime();
         this.doRenderClickBox = game.keyControl().isShiftPressed();
+
+        entangledTracks.removeIf(t -> t.isDespawnedAt(gameTime));
     }
 
     @Override
@@ -140,15 +143,16 @@ public abstract class TrackPiece extends AbstractGameObject implements Entity {
         return false;
     }
 
-    public void entangleWith(TrackPiece other) {
-        entangledTracks.add(other);
-    }
-
     public abstract float getMaximumSpeed();
 
     public RailNode get(NetworkNode targetNode) {
         if (getStartNode().getNetworkNode().equals(targetNode)) return getStartNode();
         if (getEndNode().getNetworkNode().equals(targetNode)) return getEndNode();
         return null;
+    }
+
+    public static void entangleTrackOccupation(TrackPiece track, TrackPiece trackPiece) {
+        trackPiece.entangledTracks.add(track);
+        track.entangledTracks.add(trackPiece);
     }
 }
