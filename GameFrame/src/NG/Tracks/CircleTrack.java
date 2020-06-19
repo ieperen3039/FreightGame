@@ -1,14 +1,9 @@
 package NG.Tracks;
 
-import NG.Core.AbstractGameObject;
 import NG.Core.Game;
-import NG.InputHandling.ClickShader;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
-import NG.Rendering.Shaders.MaterialShader;
-import NG.Rendering.Shaders.ShaderProgram;
 import NG.Resources.GeneratorResource;
 import NG.Resources.Resource;
 import NG.Tools.Vectors;
@@ -18,7 +13,7 @@ import org.joml.*;
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
  */
-public class CircleTrack extends AbstractGameObject implements TrackPiece {
+public class CircleTrack extends TrackPiece {
     private static final float EPSILON = 1 / 256f;
     public static final float MAX_RENDER_SIZE = 50f;
     private final TrackType type;
@@ -36,12 +31,6 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
 
     private final Resource<Mesh> mesh;
     private final Resource<Mesh> clickBox;
-    private double despawnTime = Float.POSITIVE_INFINITY;
-    private double spawnTime = Float.NEGATIVE_INFINITY;
-
-    private boolean renderClickBox = false;
-    private boolean isOccupied = false;
-    private final boolean isStatic;
 
     /**
      * @param game           the current game instance
@@ -74,12 +63,11 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
             Game game, TrackType type, RailNode startNode, Vector3fc startDirection, Vector3fc endPosition,
             RailNode optionalEndNode, boolean modifiable
     ) {
-        super(game);
+        super(game, type, modifiable);
         assert startNode.getPosition().distanceSquared(endPosition) > 0 : startNode;
 
         this.type = type;
         this.startNode = startNode;
-        this.isStatic = !modifiable;
 
         Vector3fc startPosition = startNode.getPosition();
         Vector2fc startPosFlat = new Vector2f(startPosition.x(), startPosition.y());
@@ -132,38 +120,10 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     }
 
     @Override
-    public void update() {
-        this.renderClickBox = game.keyControl().isShiftPressed();
-    }
-
-    @Override
-    public void draw(SGL gl) {
-        ShaderProgram shader = gl.getShader();
-        Mesh meshToRender;
-
-        if (renderClickBox || shader instanceof ClickShader) {
-            meshToRender = clickBox.get();
-
-        } else {
-            meshToRender = mesh.get();
-        }
-
-        if (shader instanceof MaterialShader) {
-            type.setMaterial((MaterialShader) shader, this);
-        }
-
-        gl.pushMatrix();
-        {
-            gl.translate(center);
-            gl.rotate(startTheta, 0, 0, 1);
-            gl.render(meshToRender, this);
-        }
-        gl.popMatrix();
-    }
-
-    @Override
-    public void reactMouse(AbstractMouseTool.MouseAction action) {
-
+    protected void draw(SGL gl, boolean renderClickBox) {
+        gl.translate(center);
+        gl.rotate(startTheta, 0, 0, 1);
+        gl.render(renderClickBox ? clickBox.get() : mesh.get(), this);
     }
 
     @Override
@@ -171,21 +131,6 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         float dx = Math.abs(radius * angle);
         float dy = heightDiff;
         return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    @Override
-    public boolean isStatic() {
-        return isStatic;
-    }
-
-    @Override
-    public void setOccupied(boolean occupied) {
-        isOccupied = occupied;
-    }
-
-    @Override
-    public boolean isOccupied() {
-        return isOccupied;
     }
 
     @Override
@@ -227,21 +172,6 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
     }
 
     @Override
-    public void despawn(double gameTime) {
-        despawnTime = gameTime;
-    }
-
-    @Override
-    public double getSpawnTime() {
-        return spawnTime;
-    }
-
-    @Override
-    public double getDespawnTime() {
-        return despawnTime;
-    }
-
-    @Override
     public float getFractionOfClosest(Vector3fc origin, Vector3fc direction) {
         float t = (center.z() - origin.z()) / direction.z();
         Vector3f rayPoint = new Vector3f(direction).mul(t).add(origin);
@@ -266,17 +196,20 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
         return startTheta < endTheta;
     }
 
-    @Override
-    public TrackType getType() {
-        return type;
-    }
-
     public RailNode getStartNode() {
         return startNode;
     }
 
     public RailNode getEndNode() {
         return endNode;
+    }
+
+    protected Mesh getMesh() {
+        return mesh.get();
+    }
+
+    public Mesh getClickBox() {
+        return clickBox.get();
     }
 
     @Override

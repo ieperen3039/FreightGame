@@ -1,53 +1,123 @@
 package NG.Tracks;
 
+import NG.Core.AbstractGameObject;
+import NG.Core.Game;
 import NG.Entities.Entity;
+import NG.InputHandling.ClickShader;
+import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
+import NG.Rendering.MatrixStack.SGL;
+import NG.Rendering.Shaders.MaterialShader;
+import NG.Rendering.Shaders.ShaderProgram;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
  */
-public interface TrackPiece extends Entity {
+public abstract class TrackPiece extends AbstractGameObject implements Entity {
+    protected final TrackType type;
+    protected final boolean isModifiable;
+
+    protected double spawnTime = Double.NEGATIVE_INFINITY;
+    protected double despawnTime = Double.POSITIVE_INFINITY;
+
+    private boolean doRenderClickBox = false;
+    private boolean isOccupied = false;
+
+    // if any of these is occupied, this is occupied as well
+    private List<TrackPiece> entangledTracks = new ArrayList<>();
+
+    public TrackPiece(Game game, TrackType type, boolean modifiable) {
+        super(game);
+        this.type = type;
+        isModifiable = modifiable;
+    }
 
     @Override
-    default UpdateFrequency getUpdateFrequency() {
+    public UpdateFrequency getUpdateFrequency() {
         return UpdateFrequency.NEVER;
     }
 
-    TrackType getType();
+    public TrackType getType() {
+        return type;
+    }
 
     /**
      * @return the node at the position of getPositionFromFraction(0)
      */
-    RailNode getStartNode();
+    public abstract RailNode getStartNode();
 
     /**
      * @return the node at the position of getPositionFromFraction(1)
      */
-    RailNode getEndNode();
+    public abstract RailNode getEndNode();
 
-    default RailNode getNot(RailNode node) {
+    public RailNode getNot(RailNode node) {
         RailNode startNode = getStartNode();
         return node == startNode ? getEndNode() : startNode;
     }
 
-    float getFractionOfClosest(Vector3fc origin, Vector3fc direction);
+    @Override
+    public void update() {
+        this.doRenderClickBox = game.keyControl().isShiftPressed();
+    }
 
-    Vector3f getPositionFromFraction(float fraction);
+    @Override
+    public void draw(SGL gl) {
+        ShaderProgram shader = gl.getShader();
 
-    Vector3f getDirectionFromFraction(float fraction);
+        if (shader instanceof MaterialShader) {
+            type.setMaterial((MaterialShader) shader, this);
+        }
 
-    float getLength();
+        gl.pushMatrix();
+        {
+            boolean renderClickBox = doRenderClickBox || shader instanceof ClickShader;
+            draw(gl, renderClickBox);
+        }
+        gl.popMatrix();
+    }
 
-    /**
-     * some special rail pieces can't be split or removed by themself, for instance rails in stations.
-     * @return false iff this track may not be removed or split by standard user-controlled rail builders.
-     */
-    boolean isStatic();
+    protected abstract void draw(SGL gl, boolean clickBox);
 
-    default boolean isValid() {
+    @Override
+    public void reactMouse(AbstractMouseTool.MouseAction action) {
+
+    }
+
+    @Override
+    public void despawn(double gameTime) {
+        despawnTime = gameTime;
+    }
+
+    @Override
+    public double getSpawnTime() {
+        return spawnTime;
+    }
+
+    @Override
+    public double getDespawnTime() {
+        return despawnTime;
+    }
+
+    public abstract float getFractionOfClosest(Vector3fc origin, Vector3fc direction);
+
+    public abstract Vector3f getPositionFromFraction(float fraction);
+
+    public abstract Vector3f getDirectionFromFraction(float fraction);
+
+    public abstract float getLength();
+
+    public boolean isStatic() {
+        return !isModifiable;
+    }
+
+    public boolean isValid() {
         NetworkNode startNNode = getStartNode().getNetworkNode();
         NetworkNode endNNode = getEndNode().getNetworkNode();
         if (startNNode.getEntryOf(endNNode) == null || endNNode.getEntryOf(startNNode) == null) {
@@ -56,13 +126,27 @@ public interface TrackPiece extends Entity {
         return true;
     }
 
-    void setOccupied(boolean occupied);
+    public void setOccupied(boolean occupied) {
+        this.isOccupied = occupied;
+    }
 
-    boolean isOccupied();
+    public boolean isOccupied() {
+        if (isOccupied) return true;
 
-    float getMaximumSpeed();
+        for (TrackPiece other : entangledTracks) {
+            if (other.isOccupied) return true;
+        }
 
-    default RailNode get(NetworkNode targetNode) {
+        return false;
+    }
+
+    public void entangleWith(TrackPiece other) {
+        entangledTracks.add(other);
+    }
+
+    public abstract float getMaximumSpeed();
+
+    public RailNode get(NetworkNode targetNode) {
         if (getStartNode().getNetworkNode().equals(targetNode)) return getStartNode();
         if (getEndNode().getNetworkNode().equals(targetNode)) return getEndNode();
         return null;

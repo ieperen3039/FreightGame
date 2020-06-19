@@ -1,14 +1,9 @@
 package NG.Tracks;
 
-import NG.Core.AbstractGameObject;
 import NG.Core.Game;
-import NG.InputHandling.ClickShader;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
-import NG.Rendering.Shaders.MaterialShader;
-import NG.Rendering.Shaders.ShaderProgram;
 import NG.Resources.GeneratorResource;
 import NG.Resources.Resource;
 import org.joml.Vector3f;
@@ -17,23 +12,15 @@ import org.joml.Vector3fc;
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
  */
-public class StraightTrack extends AbstractGameObject implements TrackPiece {
-    private final TrackType type;
-
+public class StraightTrack extends TrackPiece {
     private final RailNode startNode;
     private final RailNode endNode;
 
     private final Vector3fc direction;
     private final float length;
-    private final boolean isModifiable;
 
-    protected double spawnTime = Double.NEGATIVE_INFINITY;
-    protected double despawnTime = Double.POSITIVE_INFINITY;
-
-    private final Resource<Mesh> mesh;
-    private final Resource<Mesh> clickBox;
-    private boolean renderClickBox = false;
-    private boolean isOccupied = false;
+    protected final Resource<Mesh> mesh;
+    protected final Resource<Mesh> clickBox;
 
     /**
      * create a straight piece of track based on an initial node and an endposition. A new node is generated, and is
@@ -74,9 +61,8 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
             Game game, TrackType type, RailNode startNode, RailNode endNode, Vector3fc endNodePosition,
             boolean modifiable
     ) {
-        super(game);
+        super(game, type, modifiable);
 
-        this.type = type;
         this.startNode = startNode;
         Vector3fc displacement = new Vector3f(endNodePosition).sub(startNode.getPosition());
         this.length = displacement.length();
@@ -92,9 +78,13 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
             this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
             this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
         }
-        isModifiable = modifiable;
 
         assert check(startNode, this.endNode, direction);
+    }
+
+    @Override
+    public float getMaximumSpeed() {
+        return type.getMaximumSpeed();
     }
 
     private static boolean check(RailNode startNode, RailNode endNode, Vector3fc direction) {
@@ -114,52 +104,9 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     }
 
     @Override
-    public void update() {
-        this.renderClickBox = game.keyControl().isShiftPressed();
-    }
-
-    @Override
-    public void draw(SGL gl) {
-        ShaderProgram shader = gl.getShader();
-        Mesh meshToRender;
-
-        if (renderClickBox || shader instanceof ClickShader) {
-            meshToRender = clickBox.get();
-
-        } else {
-            meshToRender = mesh.get();
-        }
-
-        if (shader instanceof MaterialShader) {
-            type.setMaterial((MaterialShader) shader, this);
-        }
-
-        gl.pushMatrix();
-        {
-            gl.translate(startNode.getPosition());
-            gl.render(meshToRender, this);
-        }
-        gl.popMatrix();
-    }
-
-    @Override
-    public void reactMouse(AbstractMouseTool.MouseAction action) {
-
-    }
-
-    @Override
-    public void despawn(double gameTime) {
-        despawnTime = gameTime;
-    }
-
-    @Override
-    public double getSpawnTime() {
-        return spawnTime;
-    }
-
-    @Override
-    public double getDespawnTime() {
-        return despawnTime;
+    protected void draw(SGL gl, boolean renderClickBox) {
+        gl.translate(startNode.getPosition());
+        gl.render(renderClickBox ? clickBox.get() : mesh.get(), this);
     }
 
     @Override
@@ -175,9 +122,16 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
         return scalar / length;
     }
 
-    @Override
-    public TrackType getType() {
-        return type;
+    public float getLength() {
+        return length;
+    }
+
+    protected Mesh getMesh() {
+        return mesh.get();
+    }
+
+    public Mesh getClickBox() {
+        return clickBox.get();
     }
 
     @Override
@@ -188,31 +142,6 @@ public class StraightTrack extends AbstractGameObject implements TrackPiece {
     @Override
     public RailNode getEndNode() {
         return endNode;
-    }
-
-    @Override
-    public float getLength() {
-        return length;
-    }
-
-    @Override
-    public boolean isStatic() {
-        return !isModifiable;
-    }
-
-    @Override
-    public void setOccupied(boolean occupied) {
-        this.isOccupied = occupied;
-    }
-
-    @Override
-    public boolean isOccupied() {
-        return isOccupied;
-    }
-
-    @Override
-    public float getMaximumSpeed() {
-        return type.getMaximumSpeed();
     }
 
     @Override
