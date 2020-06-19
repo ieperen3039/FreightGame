@@ -3,7 +3,7 @@ package NG.GameMap;
 import NG.Core.Game;
 import NG.Mods.Mod;
 
-import java.util.Map;
+import java.util.Collection;
 
 /**
  * @author Geert van Ieperen. Created on 29-9-2018.
@@ -20,7 +20,9 @@ public interface MapGeneratorMod extends Mod {
      * @return a list of properties and their current value.
      * @see #getMapSeed()
      */
-    Map<String, Property> getProperties();
+    Collection<Property> getProperties();
+
+    void setProperty(String name, float value);
 
     /**
      * generate a heightmap which will be used to render the world.

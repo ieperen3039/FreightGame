@@ -39,6 +39,7 @@ public class Settings {
     public static final float CLICK_BOX_RESOLUTION = 1f;
 
     // in-game functional settings
+    public static final float TRACK_HEIGHT_ABOVE_GROUND = 0.2f;
     public static int STATION_RANGE = 5;
 
     // in-game appearance settings

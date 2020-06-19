@@ -75,6 +75,8 @@ public class CircleTrack extends AbstractGameObject implements TrackPiece {
             RailNode optionalEndNode, boolean modifiable
     ) {
         super(game);
+        assert startNode.getPosition().distanceSquared(endPosition) > 0 : startNode;
+
         this.type = type;
         this.startNode = startNode;
         this.isStatic = !modifiable;

@@ -1,25 +1,22 @@
 package NG.GUIMenu.Menu;
 
-import NG.Camera.Camera;
+import NG.Content.Scenario;
+import NG.Content.TestScenario;
 import NG.Core.Game;
 import NG.Core.ModLoader;
-import NG.Entities.Cube;
-import NG.Entities.Entity;
+import NG.Entities.Locomotive;
+import NG.Entities.Train;
+import NG.Entities.Wagon;
 import NG.GUIMenu.Components.*;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
-import NG.GameMap.DefaultMapGenerator;
-import NG.GameMap.MapGeneratorMod;
-import NG.Mods.Mod;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
-import NG.Settings.Settings;
 import NG.Tools.Logger;
+import NG.Tools.Toolbox;
 import NG.Tracks.TrackPiece;
-import org.joml.Vector2f;
 import org.joml.Vector2i;
-import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -48,20 +45,19 @@ public class MainMenu extends SFrame {
     private final Vector2i topButtonPos;
     private final Vector2i bottomButtonPos;
     private final Game game;
-    private final ModLoader modLoader;
     private final SFrame newGameFrame;
 
     public MainMenu(Game game, ModLoader modManager, Runnable terminateProgram) {
         super("Main Menu", 400, 500, false);
         this.game = game;
-        this.modLoader = modManager;
         topButtonPos = new Vector2i(1, -1);
         bottomButtonPos = new Vector2i(1, NUM_BUTTONS);
 
-        newGameFrame = new NewGameFrame(game, modLoader);
+        newGameFrame = new NewGameFrame(game, modManager);
+        Scenario testScenario = new TestScenario(modManager);
 
         STextComponent newGame = new SButton("Start new game", this::showNewGame, MAIN_BUTTON_PROPERTIES);
-        STextComponent justStart = new SButton("Start Testworld", this::testWorld, MAIN_BUTTON_PROPERTIES);
+        STextComponent justStart = new SButton("Start Testworld", () -> testScenario.apply(game), MAIN_BUTTON_PROPERTIES);
         STextComponent exitGame = new SButton("Exit game", terminateProgram, MAIN_BUTTON_PROPERTIES);
 
         setMainPanel(SContainer.row(
@@ -76,35 +72,9 @@ public class MainMenu extends SFrame {
         ));
     }
 
-    private void testWorld() {
-        Settings settings = game.settings();
-        int xSize = 100;
-        int ySize = 100;
-
-        // random map
-        List<Mod> mods = modLoader.allMods();
-        MapGeneratorMod mapGenerator = new DefaultMapGenerator(0);
-        mapGenerator.setSize(xSize, ySize);
-
-        modLoader.initMods(mods);
-        game.map().generateNew(game, mapGenerator);
-
-        // set camera to middle of map
-        Vector2f size = game.map().getSize();
-        Vector3f cameraFocus = new Vector3f(size.x / 2, size.y / 2, 0);
-        Camera cam = game.camera();
-        Vector3f cameraEye = new Vector3f(cameraFocus).add(-20, -20, 20);
-        cam.set(cameraFocus, cameraEye);
-
-        Vector3f pos = new Vector3f(cameraFocus).add(0, 0, 20);
-        Entity cube = new Cube(game, pos);
-        game.state().addEntity(cube);
-
-        game.lights().addDirectionalLight(
-                new Vector3f(1, 1.5f, 0.5f), settings.SUNLIGHT_COLOR, settings.SUNLIGHT_INTENSITY
-        );
-
+    public static SToolBar getToolBar(Game game, ModLoader modLoader) {
         SToolBar toolBar = new SToolBar(game, true);
+
         toolBar.addButton(
                 "Build Track",
                 () -> game.gui().addFrame(new BuildMenu(game))
@@ -114,7 +84,7 @@ public class MainMenu extends SFrame {
                 "New Train",
                 () -> game.inputHandling().setMouseTool(new EntityActionTool(
                         game, e -> e instanceof TrackPiece,
-                        entity -> game.gui().addFrame(new TrainConstructionMenu(game, (TrackPiece) entity))
+                        entity -> buildMaxLengthTrain((TrackPiece) entity, game)
                 ))
         );
 
@@ -148,11 +118,26 @@ public class MainMenu extends SFrame {
             game.gui().clear();
             modLoader.stopGame();
         });
-        game.gui().setToolBar(toolBar);
 
-        // start
-        modLoader.startGame();
-        newGameFrame.setVisible(false);
+        return toolBar;
+    }
+
+    private static void buildMaxLengthTrain(TrackPiece trackPiece, Game game) {
+        float trackLength = trackPiece.getLength();
+        double gameTime = game.timer().getGameTime();
+        Train construction = new Train(game, Toolbox.random.nextInt(100), gameTime, trackPiece);
+        game.state().addEntity(construction);
+
+        List<Locomotive.Properties> locomotiveTypes = game.objectTypes().locomotiveTypes;
+        List<Wagon.Properties> wagonTypes = game.objectTypes().wagonTypes;
+
+        construction.addElement(new Locomotive(locomotiveTypes.get(0)));
+        Wagon wagon = new Wagon(wagonTypes.get(0));
+
+        while (construction.getLength() + wagon.properties.length < trackLength) {
+            construction.addElement(wagon);
+            wagon = new Wagon(wagonTypes.get(0));
+        }
     }
 
     private void showNewGame() {

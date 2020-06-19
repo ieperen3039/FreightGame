@@ -2,8 +2,8 @@ package NG.GameMap;
 
 import NG.Core.Version;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 
 /**
  * @author Geert van Ieperen created on 6-3-2019.
@@ -16,8 +16,13 @@ public class FixedMapGenerator implements MapGeneratorMod {
     }
 
     @Override
-    public Map<String, Property> getProperties() {
-        return Collections.emptyMap();
+    public Collection<Property> getProperties() {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public void setProperty(String name, float value) {
+        throw new IllegalArgumentException("This generator has no properties");
     }
 
     @Override

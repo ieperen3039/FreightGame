@@ -196,6 +196,7 @@ public class FreightGame implements Game, ModLoader {
     public void startGame() {
         frameManager.removeElement(mainMenu);
         mainMenu = null;
+        frameManager.setToolBar(MainMenu.getToolBar(this, this));
 
         gameState.unPause();
     }

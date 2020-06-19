@@ -7,6 +7,7 @@ import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Settings.Settings;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import org.joml.Vector3f;
@@ -20,7 +21,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Geert van Ieperen created on 16-12-2018.
  */
 public class TrackBuilder extends AbstractMouseTool {
-    private static final float HEIGHT_ABOVE_GROUND = 0.2f;
     protected final Runnable deactivation;
     private final TrackType type;
     private RailNode firstNode;
@@ -55,7 +55,7 @@ public class TrackBuilder extends AbstractMouseTool {
 
     @Override
     public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
-        Vector3f liftedPosition = new Vector3f(position).add(0, 0, HEIGHT_ABOVE_GROUND);
+        Vector3f liftedPosition = new Vector3f(position).add(0, 0, Settings.TRACK_HEIGHT_ABOVE_GROUND);
         switch (getMouseAction()) {
             case PRESS_ACTIVATE:
                 if (firstNode != null) {

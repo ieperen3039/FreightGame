@@ -15,8 +15,8 @@ import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Geert van Ieperen. Created on 21-11-2018.
@@ -86,11 +86,11 @@ public class NewGameFrame extends SFrame {
         SButton propertiesComponent = new SButton("Set Generator Properties", () -> {
             // collect map generator properties
             MapGeneratorMod generator = mapGeneratorList.get(mapGeneratorSelector.getSelectedIndex());
-            Map<String, MapGeneratorMod.Property> properties = generator.getProperties();
+            Collection<MapGeneratorMod.Property> properties = generator.getProperties();
             SPanel propPanel = new SPanel(2, properties.size());
             Vector2i propertyButtonPos = new Vector2i(0, -1);
 
-            for (MapGeneratorMod.Property property : properties.values()) {
+            for (MapGeneratorMod.Property property : properties) {
                 SSlider slider = new SSlider(property.minimum, property.maximum, property.current, MainMenu.BUTTON_PROPERTIES_STRETCH);
                 slider.addChangeListener(newValue -> property.current = newValue);
 

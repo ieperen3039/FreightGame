@@ -17,7 +17,7 @@ import java.util.List;
  * @author Geert van Ieperen created on 21-5-2020.
  */
 public class TrainConstructionMenu extends SFrame {
-    private static int id = 0;
+    private static int id = 1;
 
     public TrainConstructionMenu(Game game, TrackPiece place) {
         super("New Train");

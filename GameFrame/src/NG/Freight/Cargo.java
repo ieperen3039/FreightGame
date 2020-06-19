@@ -42,9 +42,6 @@ public class Cargo {
 
     @Override
     public String toString() {
-        return "Cargo{" +
-                "type=" + type +
-                ", quantity=" + quantity +
-                '}';
+        return "Cargo{" + type + ":" + quantity + '}';
     }
 }

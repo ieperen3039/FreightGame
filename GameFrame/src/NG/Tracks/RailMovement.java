@@ -296,7 +296,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
                         // stop at the end, retry after a timeout
                         signalPathTimeout = updateTime + SIGNAL_PATHING_TIMEOUT;
 
-                        if (endOfTrackBrakeTarget.isInvalid()) {
+                        if (endOfTrackBrakeTarget == null || endOfTrackBrakeTarget.isInvalid()) {
                             endOfTrackBrakeTarget = new SpeedTarget(scanTrackEndMillis, scanTrackEndMillis, 0f, path::isEmpty);
                             futureSpeedTargets.add(endOfTrackBrakeTarget);
                         }

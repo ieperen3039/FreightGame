@@ -66,4 +66,9 @@ public class CargoType {
         float realValue = unitPricePerMeter * correctedDistance;
         return new Valuta((int) realValue);
     }
+
+    @Override
+    public String toString() {
+        return name();
+    }
 }

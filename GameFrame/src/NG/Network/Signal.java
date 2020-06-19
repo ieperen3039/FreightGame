@@ -200,7 +200,7 @@ public class Signal extends AbstractGameObject implements Entity {
 
                     pathViaNodes.append(pathToNode);
 
-                    assert !pathToNode.path.isEmpty() : nodes; // usually caused by (controller.apply(node) == node)
+                    assert !pathToNode.path.isEmpty() : nodes; // usually caused by (targets.apply(depth) == targets.apply(depth + 1))
                     TrackPiece last = pathToNode.path.getLast();
                     RailNode node = last.get(targetNode);
                     if (node.hasSignal()) return pathViaNodes;
@@ -210,8 +210,11 @@ public class Signal extends AbstractGameObject implements Entity {
                     nodes.clear();
                     collectPaths(node, last, signals, nodes, new TrackPath());
 
+                    NetworkPosition newTarget = targets.apply(depth++);
+                    if (newTarget == target) break;
+
                     success = true;
-                    target = targets.apply(depth++);
+                    target = newTarget;
                     break;
                 }
             }

@@ -3,6 +3,7 @@ package NG.GameMap;
 import NG.Core.Version;
 import NG.Tools.OpenSimplexNoise;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -15,8 +16,8 @@ public class DefaultMapGenerator implements MapGeneratorMod {
     private static final double MAJOR_DENSITY = 0.02;
     private static final double MINOR_DENSITY = 0.2;
 
-    private static final String MAJOR_AMPLITUDE = "Major amplitude";
-    private static final String MINOR_AMPLITUDE = "Minor amplitude";
+    public static final String MAJOR_AMPLITUDE = "Major amplitude";
+    public static final String MINOR_AMPLITUDE = "Minor amplitude";
 
     private float progress = 0;
     private int seed;
@@ -32,14 +33,25 @@ public class DefaultMapGenerator implements MapGeneratorMod {
         this.majorGenerator = new OpenSimplexNoise(seed);
         this.minorGenerator = new OpenSimplexNoise(seed + 1);
         this.properties = Map.of(
-                MAJOR_AMPLITUDE, new Property(MAJOR_AMPLITUDE, 0, 100, 10),
-                MINOR_AMPLITUDE, new Property(MINOR_AMPLITUDE, 0, 100, 0)
+                MAJOR_AMPLITUDE, new Property(MAJOR_AMPLITUDE, 0, 100, 20),
+                MINOR_AMPLITUDE, new Property(MINOR_AMPLITUDE, 0, 100, 1)
         );
     }
 
     @Override
-    public Map<String, Property> getProperties() {
-        return properties;
+    public Collection<Property> getProperties() {
+        return properties.values();
+    }
+
+    @Override
+    public void setProperty(String name, float value) {
+        Property property = properties.get(name);
+        if (property == null) throw new IllegalArgumentException("Invalid property " + name);
+        if (value > property.maximum || value < property.minimum) {
+            throw new IllegalArgumentException("Value out of range: " + value);
+        }
+
+        property.current = value;
     }
 
     @Override

@@ -3,8 +3,8 @@ package NG.GameMap;
 import NG.Core.Version;
 import org.joml.Vector2ic;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 
 /**
  * Generates the heightmap back from the given map, by querying the heights.
@@ -21,8 +21,13 @@ public class CopyGenerator implements MapGeneratorMod {
     }
 
     @Override
-    public Map<String, Property> getProperties() {
-        return Collections.emptyMap();
+    public Collection<Property> getProperties() {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public void setProperty(String name, float value) {
+        throw new IllegalArgumentException("This generator has no properties");
     }
 
     @Override

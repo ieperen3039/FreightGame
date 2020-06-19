@@ -26,6 +26,7 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static NG.Tools.Vectors.cos;
@@ -199,6 +200,16 @@ public class StationImpl extends Storage implements Station {
     @Override
     public Set<NetworkNode> getNodes() {
         return nodes;
+    }
+
+    public List<RailNode> getNodesOfDirection(Vector3fc direction) {
+        Vector3f stationDirection = new Vector3f(cos(orientation), sin(orientation), 0);
+        if (stationDirection.dot(direction) > 0) {
+            return List.of(forwardConnections);
+
+        } else {
+            return List.of(backwardConnections);
+        }
     }
 
     public NetworkNode getStopNode(NetworkNode arrivalNode) {
