@@ -26,7 +26,10 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -66,28 +69,26 @@ public class Train extends AbstractGameObject implements MovingEntity {
             // check whether we have loading to do
             NetworkPosition target = currentTarget.element;
 
-            if (target instanceof Storage) {
+            if (target instanceof Storage && !isLoading()) {
                 double gameTime = game.timer().getGameTime();
                 TrackPiece currentTrack = positionEngine.getTracksAt(gameTime).left;
-                NetworkNode startNode = currentTrack.getStartNode().getNetworkNode();
-                NetworkNode endNode = currentTrack.getEndNode().getNetworkNode();
+                RailNode endNodeR = currentTrack.getEndNode();
+                NetworkNode endNodeN = endNodeR.getNetworkNode();
 
-                Set<NetworkNode> targetNodes = target.getNodes();
-                // if both ends of our current track are part of this same target, we assume we are on the target itself
-                if (targetNodes.contains(startNode) && targetNodes.contains(endNode)) {
-                    if (!isLoading()) {
-                        Map<CargoType, Integer> transferableCargo = Storage.getTransferableCargo((Storage) target, this);
-                        // if there is nothing to transfer, then we are already done, and we should continue our journey
-                        if (transferableCargo.isEmpty()) {
-                            goToNext();
+                boolean isWithinLoadingArea = target.containsNode(currentTrack, endNodeN);
+                if (isWithinLoadingArea) {
+                    Map<CargoType, Integer> transferableCargo = Storage.getTransferableCargo((Storage) target, this);
+                    // if there is nothing to transfer, then we are already done, and we should continue our journey
+                    if (transferableCargo.isEmpty()) {
+                        goToNext();
 
-                        } else { // otherwise, start loading
-                            Storage storage = (Storage) target;
-                            storage.load(this, transferableCargo);
-                            Logger.DEBUG.printf("Loading %s for %6.03f seconds", this, loadTimer - gameTime);
-                        }
+                    } else { // otherwise, start loading
+                        Storage storage = (Storage) target;
+                        storage.load(this, transferableCargo);
+                        Logger.DEBUG.printf("Loading %s for %4.01f seconds", this, loadTimer - gameTime);
                     }
                 }
+
             }
         }
     }

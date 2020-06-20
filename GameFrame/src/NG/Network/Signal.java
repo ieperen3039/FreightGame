@@ -3,6 +3,7 @@ package NG.Network;
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
+import NG.DataStructures.Generic.Pair;
 import NG.Entities.Entity;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Rendering.Material;
@@ -40,6 +41,7 @@ public class Signal extends AbstractGameObject implements Entity {
     private final static Resource<Mesh> RING_MESH = new GeneratorResource<>(() ->
             GenericShapes.createRing(INNER_RADIUS + MARGIN, RING_RESOLUTION, COLOR_OFFSET / 2f), Mesh::dispose
     );
+    private static final float TRACK_OCCUPATION_PENALTY = 10f;
 
     /** the node where this signals is placed on */
     private final RailNode hostNode;
@@ -179,46 +181,57 @@ public class Signal extends AbstractGameObject implements Entity {
             return null;
 
         } else if (target == null) { // reserve random path
-            TrackPath[] paths = signals.values().toArray(new TrackPath[0]);
+            TrackPath[] paths = signals.values().stream()
+                    .filter(path -> !path.isOccupied)
+                    .toArray(TrackPath[]::new);
+
+            if (paths.length == 0) return null;
             return paths[Toolbox.random.nextInt(paths.length)];
         }
 
         TrackPath pathViaNodes = new TrackPath();
-        boolean success;
 
         do {
-            success = false;
-            for (NetworkNode targetNode : target.getNodes()) {
-                TrackPath pathToNode = nodes.get(targetNode);
+            NetworkNode targetOfBest = null;
+            TrackPath bestPath = null;
+            float lengthOfBest = Float.POSITIVE_INFINITY;
+
+            // get best path to target node
+            for (Pair<NetworkNode, Boolean> targetNode : target.getNodes()) {
+                TrackPath pathToNode = nodes.get(targetNode.left);
+
                 if (pathToNode != null) {
-                    // if this node has a stopNode, find a path to that node instead
-                    NetworkNode stopNode = target.getStopNode(targetNode);
-                    if (stopNode != null && nodes.containsKey(stopNode)) {
-                        targetNode = stopNode;
-                        pathToNode = nodes.get(targetNode);
+                    TrackPiece arrivalTrack = pathToNode.path.getLast();
+                    if (targetNode.left.isInDirectionOf(arrivalTrack) == targetNode.right) {
+                        float adjLength = pathToNode.adjLength();
+                        if (adjLength < lengthOfBest) {
+                            bestPath = pathToNode;
+                            lengthOfBest = adjLength;
+                            targetOfBest = targetNode.left;
+                        }
                     }
-
-                    pathViaNodes.append(pathToNode);
-
-                    assert !pathToNode.path.isEmpty() : nodes; // usually caused by (targets.apply(depth) == targets.apply(depth + 1))
-                    TrackPiece last = pathToNode.path.getLast();
-                    RailNode node = last.get(targetNode);
-                    if (node.hasSignal()) return pathViaNodes;
-
-                    // re-source paths to this node
-                    signals.clear();
-                    nodes.clear();
-                    collectPaths(node, last, signals, nodes, new TrackPath());
-
-                    NetworkPosition newTarget = targets.apply(depth++);
-                    if (newTarget == target) break;
-
-                    success = true;
-                    target = newTarget;
-                    break;
                 }
             }
-        } while (success);
+
+            if (bestPath == null) break;
+//            assert targetOfBest != null;
+
+            pathViaNodes.append(bestPath);
+
+            assert !bestPath.path.isEmpty() : nodes; // usually caused by (targets.apply(depth) == targets.apply(depth + 1))
+            TrackPiece last = bestPath.path.getLast();
+            RailNode node = last.get(targetOfBest);
+            if (node.hasSignal()) return pathViaNodes;
+
+            // re-source paths to this node
+            signals.clear();
+            nodes.clear();
+            collectPaths(node, last, signals, nodes, new TrackPath());
+
+            NetworkPosition newTarget = targets.apply(depth++);
+            if (newTarget == target) break;
+            target = newTarget;
+        } while (true);
 
         TrackPath pathToBest = null;
         float leastDistance = Float.POSITIVE_INFINITY;
@@ -289,7 +302,7 @@ public class Signal extends AbstractGameObject implements Entity {
 
         if (nodes != null && networkNode.isNetworkCritical()) {
             TrackPath original = nodes.get(networkNode);
-            if (original == null || original.length > pathToNode.length) {
+            if (original == null || original.adjLength() > pathToNode.adjLength()) {
                 nodes.put(networkNode, new TrackPath(pathToNode));
             }
         }
@@ -297,26 +310,31 @@ public class Signal extends AbstractGameObject implements Entity {
         if (node.hasSignal()) {
             Signal sig = node.getSignal();
             TrackPath original = signals.get(sig);
-            if (original == null || original.length > pathToNode.length) {
+            if (original == null || original.adjLength() > pathToNode.adjLength()) {
                 signals.put(sig, new TrackPath(pathToNode));
             }
 
         } else {
             List<NetworkNode.Direction> directions = networkNode.getNext(sourceTrack);
+            boolean wasOccupied = pathToNode.isOccupied;
+
             for (NetworkNode.Direction entry : directions) {
                 TrackPiece trackPiece = entry.trackPiece;
-                if (trackPiece.isOccupied()) continue;
+
 
                 // loop without signals: prevent infinite loops
                 if (!pathToNode.path.isEmpty() && pathToNode.path.getFirst() == trackPiece) return;
 
+                float trackPieceLength = trackPiece.getLength();
                 pathToNode.path.addLast(trackPiece);
-                pathToNode.length += trackPiece.getLength();
+                pathToNode.length += trackPieceLength;
+                if (trackPiece.isOccupied()) pathToNode.isOccupied = true;
 
                 collectPaths(trackPiece.getNot(node), trackPiece, signals, nodes, pathToNode);
 
                 pathToNode.path.removeLast();
-                pathToNode.length -= trackPiece.getLength();
+                pathToNode.length -= trackPieceLength;
+                pathToNode.isOccupied = wasOccupied;
             }
         }
 
@@ -348,12 +366,14 @@ public class Signal extends AbstractGameObject implements Entity {
         }
 
         TrackPath path = getPath(targetFunction, trackIsInDirection, 0);
-        if (path == null) return getEmptyPath();
+        if (path == null || path.isOccupied) return getEmptyPath();
+
         return reserve(path);
     }
 
     private Deque<TrackPiece> reserve(TrackPath pathToBest) {
         for (TrackPiece piece : pathToBest.path) {
+            assert !piece.isOccupied();
             piece.setOccupied(true);
         }
 
@@ -403,6 +423,7 @@ public class Signal extends AbstractGameObject implements Entity {
     private static class TrackPath implements java.io.Serializable {
         public final Deque<TrackPiece> path;
         public float length;
+        public boolean isOccupied = false;
 
         public TrackPath() {
             this.path = new ArrayDeque<>();
@@ -412,6 +433,7 @@ public class Signal extends AbstractGameObject implements Entity {
         public TrackPath(TrackPath other) {
             this.path = new ArrayDeque<>(other.path);
             this.length = other.length;
+            this.isOccupied = other.isOccupied;
         }
 
         public TrackPath(TrackPiece... initial) {
@@ -421,12 +443,14 @@ public class Signal extends AbstractGameObject implements Entity {
             for (TrackPiece trackPiece : initial) {
                 path.add(trackPiece);
                 length += trackPiece.getLength();
+                if (trackPiece.isOccupied()) isOccupied = true;
             }
         }
 
         public TrackPath append(TrackPath other) {
             path.addAll(other.path);
             length += other.length;
+            isOccupied = isOccupied || other.isOccupied;
             return this;
         }
 
@@ -448,7 +472,16 @@ public class Signal extends AbstractGameObject implements Entity {
 
         @Override
         public String toString() {
-            return String.format("Path (%5.01f in %2d pieces)", length, path.size());
+            if (isOccupied) {
+                return String.format("Path (%5.01fu in %2d pieces, occupied)", length, path.size());
+            } else {
+
+                return String.format("Path (%5.01fu in %2d pieces)", length, path.size());
+            }
+        }
+
+        public float adjLength() {
+            return length + (isOccupied ? TRACK_OCCUPATION_PENALTY : 0);
         }
     }
 }

@@ -2,6 +2,7 @@ package NG.Entities;
 
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
+import NG.DataStructures.Generic.Pair;
 import NG.Freight.Cargo;
 import NG.GUIMenu.Components.SActiveTextArea;
 import NG.GUIMenu.Components.SContainer;
@@ -25,9 +26,8 @@ import NG.Tracks.TrackType;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static NG.Tools.Vectors.cos;
 import static NG.Tools.Vectors.sin;
@@ -43,8 +43,8 @@ public class StationImpl extends Storage implements Station {
     public static final float HEIGHT = 0.1f;
     private static int nr = 1;
 
-    private static final double GOOD_SPAWN_RATE = 0.2;
-    private double nextGoodSpawn;
+    private static final double GOOD_SPAWN_RATE = 0.02; // chunks per second
+    private double nextCargoSpawn;
 
     protected String stationName = "Station " + (nr++);
 
@@ -55,7 +55,7 @@ public class StationImpl extends Storage implements Station {
 
     private final RailNode[] forwardConnections;
     private final RailNode[] backwardConnections;
-    private final Set<NetworkNode> nodes;
+    private final List<Pair<NetworkNode, Boolean>> nodes;
 
     public StationImpl(
             Game game, int numberOfPlatforms, int length, TrackType type, Vector3fc position, float orientation,
@@ -68,8 +68,8 @@ public class StationImpl extends Storage implements Station {
         this.length = length;
         this.realWidth = numberOfPlatforms * PLATFORM_SIZE;
         this.orientation = orientation;
-        this.nodes = new HashSet<>();
-        this.nextGoodSpawn = game.timer().getGameTime();
+        this.nodes = new ArrayList<>(numberOfPlatforms * 2);
+        this.nextCargoSpawn = game.timer().getGameTime();
 
         float trackHeight = HEIGHT + 0.1f;
 
@@ -121,21 +121,22 @@ public class StationImpl extends Storage implements Station {
         assert AToB.lengthSquared() > 0 : AToB;
         assert BToA.lengthSquared() > 0 : BToA;
 
+        // both nodes have direction to inside the station
         SpecialNetworkNode ANode = new SpecialNetworkNode(this);
         forwardConnections[index] = new RailNode(aPos, type, AToB, ANode);
-        nodes.add(ANode);
+        nodes.add(new Pair<>(ANode, false));
 
         SpecialNetworkNode BNode = new SpecialNetworkNode(this);
         backwardConnections[index] = new RailNode(bPos, type, BToA, BNode);
-        nodes.add(BNode);
+        nodes.add(new Pair<>(BNode, false));
     }
 
     @Override
     public void update() {
         double now = game.timer().getGameTime();
-        if (now > nextGoodSpawn) {
-            contents.add(new Cargo(DEBUG_CUBES, 1, nextGoodSpawn, this));
-            nextGoodSpawn += 1 / GOOD_SPAWN_RATE;
+        if (now > nextCargoSpawn) {
+            contents.add(new Cargo(DEBUG_CUBES, 4, nextCargoSpawn, this));
+            nextCargoSpawn += 1 / GOOD_SPAWN_RATE;
         }
     }
 
@@ -198,7 +199,7 @@ public class StationImpl extends Storage implements Station {
     }
 
     @Override
-    public Set<NetworkNode> getNodes() {
+    public List<Pair<NetworkNode, Boolean>> getNodes() {
         return nodes;
     }
 
@@ -210,23 +211,6 @@ public class StationImpl extends Storage implements Station {
         } else {
             return List.of(backwardConnections);
         }
-    }
-
-    public NetworkNode getStopNode(NetworkNode arrivalNode) {
-        for (int i = 0; i < forwardConnections.length; i++) {
-            NetworkNode forwardNode = forwardConnections[i].getNetworkNode();
-            NetworkNode backwardNode = backwardConnections[i].getNetworkNode();
-
-            if (forwardNode == arrivalNode) {
-                return backwardNode;
-            }
-
-            if (backwardNode == arrivalNode) {
-                return forwardNode;
-            }
-        }
-
-        return null;
     }
 
     protected class StationUI extends SFrame {

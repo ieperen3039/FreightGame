@@ -1,5 +1,6 @@
 package NG.Tools;
 
+import NG.DataStructures.Generic.Pair;
 import NG.Network.NetworkNode;
 import NG.Network.NetworkPosition;
 import NG.Tracks.TrackPiece;
@@ -18,9 +19,14 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
 
     public NetworkPathFinder(TrackPiece currentTrack, NetworkNode position, NetworkPosition target) {
         assert position.isNetworkCritical();
-        this.targets = target.getNodes();
         this.startNode = position;
         this.startPredecessor = position.getEntryOf(currentTrack).network;
+
+        List<Pair<NetworkNode, Boolean>> nodes = target.getNodes();
+        this.targets = new HashSet<>(nodes.size());
+        for (Pair<NetworkNode, Boolean> node : nodes) {
+            targets.add(node.left);
+        }
     }
 
     public NetworkPathFinder(
@@ -31,8 +37,13 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
         List<NetworkNode.Direction> otherDirections = inSameDirection ? networkNode.getEntriesB() : networkNode.getEntriesA();
         assert !otherDirections.isEmpty();
 
+        List<Pair<NetworkNode, Boolean>> nodes = target.getNodes();
+        this.targets = new HashSet<>(nodes.size());
+        for (Pair<NetworkNode, Boolean> node : nodes) {
+            targets.add(node.left);
+        }
+
         this.startNode = networkNode;
-        this.targets = target.getNodes();
         this.startPredecessor = otherDirections.get(0).network;
     }
 

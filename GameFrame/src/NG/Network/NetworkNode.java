@@ -577,6 +577,11 @@ public class NetworkNode {
         return edges;
     }
 
+    public boolean isInDirectionOf(TrackPiece currentTarget) {
+        int indexOf = getIndexOf(getEntriesA(), currentTarget, direction -> direction.trackPiece);
+        return indexOf < 0;
+    }
+
     private static class Edge {
         final NetworkNode thisNode;
         final int thisID;

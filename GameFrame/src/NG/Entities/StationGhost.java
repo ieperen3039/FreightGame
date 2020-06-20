@@ -3,6 +3,7 @@ package NG.Entities;
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
+import NG.DataStructures.Generic.Pair;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Network.NetworkNode;
@@ -17,7 +18,7 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 
 import static NG.Entities.StationImpl.PLATFORM_SIZE;
 
@@ -107,13 +108,8 @@ public class StationGhost extends AbstractGameObject implements Station {
     }
 
     @Override
-    public Set<NetworkNode> getNodes() {
-        return Collections.emptySet();
-    }
-
-    @Override
-    public NetworkNode getStopNode(NetworkNode node) {
-        return null;
+    public List<Pair<NetworkNode, Boolean>> getNodes() {
+        return Collections.emptyList();
     }
 
     @Override

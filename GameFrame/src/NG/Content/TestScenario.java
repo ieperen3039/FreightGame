@@ -107,12 +107,15 @@ public class TestScenario extends Scenario {
         List<RailNode> nodesStation21 = station2.getNodesOfDirection(direction.negate());
         addConnections(game, node, nodesStation21);
 
+        for (RailNode stationNode : nodesStation12) {
+            stationNode.addSignal(game);
+        }
+
         return node;
     }
 
     private void addConnections(Game game, RailNode targetNode, List<RailNode> stationNodes) {
         for (RailNode stationNode : stationNodes) {
-            stationNode.addSignal(game);
             addConnections(game, stationNode, targetNode);
         }
     }

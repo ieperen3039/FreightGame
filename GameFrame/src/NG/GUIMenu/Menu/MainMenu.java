@@ -123,6 +123,8 @@ public class MainMenu extends SFrame {
     }
 
     private static void buildMaxLengthTrain(TrackPiece trackPiece, Game game) {
+        trackPiece.setOccupied(true);
+
         float trackLength = trackPiece.getLength();
         double gameTime = game.timer().getGameTime();
         Train construction = new Train(game, Toolbox.random.nextInt(100), gameTime, trackPiece);
