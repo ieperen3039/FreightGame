@@ -274,33 +274,35 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
             }
 
             if (!doStop && updateTime > signalPathTimeout) {
-                // look ahead the projected best-effort stop distance
-                long scanTargetMillis = currentTotalMillis + getBreakDistanceMillis(speed, 0) + movementMillis + SCAN_BUFFER_MILLIS;
-                while (scanTargetMillis > scanTrackEndMillis) {
-                    // reserve the next part of the plan
-                    assert scanEndNode.hasSignal();
+                if (scanTargetsAhead == 0) { // <- this line took longer than it should
+                    // look ahead the projected best-effort stop distance
+                    long scanTargetMillis = currentTotalMillis + getBreakDistanceMillis(speed, 0) + movementMillis + SCAN_BUFFER_MILLIS;
+                    while (scanTargetMillis > scanTrackEndMillis) {
+                        // reserve the next part of the plan
+                        assert scanEndNode.hasSignal();
 
-                    Signal signal = scanEndNode.getSignal();
-                    Deque<TrackPiece> path = signal.reservePath(scanIsInPathDirection,
-                            depth -> controller.getTarget(depth + scanTargetsAhead)
-                    );
+                        Signal signal = scanEndNode.getSignal();
+                        Deque<TrackPiece> path = signal.reservePath(scanIsInPathDirection,
+                                depth -> controller.getTarget(depth + scanTargetsAhead)
+                        );
 
-                    if (path.isEmpty()) {
-                        // stop at the end, retry after a timeout
-                        signalPathTimeout = updateTime + SIGNAL_PATHING_TIMEOUT;
+                        if (path.isEmpty()) {
+                            // stop at the end, retry after a timeout
+                            signalPathTimeout = updateTime + SIGNAL_PATHING_TIMEOUT;
 
-                        if (endOfTrackBrakeTarget == null || endOfTrackBrakeTarget.isInvalid()) {
-                            endOfTrackBrakeTarget = new SpeedTarget(scanTrackEndMillis, scanTrackEndMillis, 0f, () -> scanTrackEndMillis < scanTargetMillis);
-                            futureSpeedTargets.add(endOfTrackBrakeTarget);
+                            if (endOfTrackBrakeTarget == null || endOfTrackBrakeTarget.isInvalid()) {
+                                endOfTrackBrakeTarget = new SpeedTarget(scanTrackEndMillis, scanTrackEndMillis, 0f, () -> scanTrackEndMillis < scanTargetMillis);
+                                futureSpeedTargets.add(endOfTrackBrakeTarget);
+                            }
+                            break;
                         }
-                        break;
-                    }
 
-                    for (TrackPiece track : path) {
-                        appendToPath(track);
-                    }
+                        for (TrackPiece track : path) {
+                            appendToPath(track);
+                        }
 
-                    scanIsInPathDirection = !scanEndNode.isInDirectionOf(path.getLast());
+                        scanIsInPathDirection = !scanEndNode.isInDirectionOf(path.getLast());
+                    }
                 }
             }
 

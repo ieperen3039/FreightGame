@@ -364,7 +364,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
         }
     }
 
-    public Schedule.Node getCurrentTarget() {
+    private Schedule.Node getCurrentTarget() {
         if (schedule.isEmpty()) return null;
 
         if (currentTarget == null) {
