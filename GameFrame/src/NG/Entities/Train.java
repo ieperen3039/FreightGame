@@ -184,6 +184,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
             // -displacement because we place front to back
             Vector3f position = positionEngine.getPosition(now, -displacement);
             Quaternionf rotation = positionEngine.getRotation(now, -displacement);
+
             entity.draw(gl, position, rotation, this);
             displacement += entity.getProperties().length;
         }

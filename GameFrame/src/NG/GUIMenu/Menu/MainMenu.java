@@ -50,8 +50,10 @@ public class MainMenu extends SFrame {
 
         newGameFrame = new NewGameFrame(game, modManager);
         Scenario testScenario = new TestScenario(modManager);
+        Scenario emptyScenario = new Scenario.Empty(modManager);
 
         STextComponent newGame = new SButton("Start new game", this::showNewGame, MAIN_BUTTON_PROPERTIES);
+        STextComponent startEmpty = new SButton("Start empty world", () -> emptyScenario.apply(game), MAIN_BUTTON_PROPERTIES);
         STextComponent justStart = new SButton("Start Testworld", () -> testScenario.apply(game), MAIN_BUTTON_PROPERTIES);
         STextComponent exitGame = new SButton("Exit game", terminateProgram, MAIN_BUTTON_PROPERTIES);
 
@@ -60,6 +62,7 @@ public class MainMenu extends SFrame {
                 SContainer.column(
                         newGame,
                         justStart,
+                        startEmpty,
                         new SFiller().setGrowthPolicy(false, true),
                         exitGame
                 ),

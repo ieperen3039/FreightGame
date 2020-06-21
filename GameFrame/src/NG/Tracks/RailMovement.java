@@ -12,6 +12,7 @@ import NG.Network.*;
 import NG.Tools.Logger;
 import NG.Tools.NetworkPathFinder;
 import NG.Tools.Toolbox;
+import NG.Tools.Vectors;
 import org.joml.Math;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -578,15 +579,8 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
 
     public Quaternionf getRotation(double time, float displacement) {
 //        update(time); // included in getDirection(time)
-        Vector3f direction = getDirection(time, displacement).normalize();
-
-        float yawAngle = Math.atan2(direction.y, direction.x);
-        float hzMovement = Math.sqrt(direction.x * direction.x + direction.y * direction.y);
-        float pitchAngle = Math.atan2(direction.z, hzMovement);
-
-        return new Quaternionf()
-                .rotateAxis(pitchAngle, -1, 0, 0)
-                .rotateAxis(yawAngle, 0, 0, 1);
+        Vector3f direction = getDirection(time, displacement);
+        return Vectors.xTo(direction);
     }
 
     public void discardUpTo(float time) {

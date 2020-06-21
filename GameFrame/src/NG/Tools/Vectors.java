@@ -360,7 +360,14 @@ public final class Vectors {
         if (direction.y() == 0 && direction.z() == 0 && direction.x() < 0) {
             return new Quaternionf().rotateZ((float) java.lang.Math.PI);
         }
-        return new Quaternionf().rotateTo(X, new Vector3f(direction).normalize());
+
+        float yawAngle = Math.atan2(direction.y(), direction.x());
+        float hzMovement = Math.sqrt(direction.x() * direction.x() + direction.y() * direction.y());
+        float pitchAngle = Math.atan2(direction.z(), hzMovement);
+
+        return new Quaternionf()
+                .rotateY(-pitchAngle)
+                .rotateLocalZ(yawAngle);
     }
 
     public static final class Scaling {

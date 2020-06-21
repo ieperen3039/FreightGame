@@ -162,7 +162,7 @@ public class CircleTrack extends TrackPiece {
     private Vector3f angleToDirection(float absoluteAngle) {
         float dx = -Math.sin(absoluteAngle);
         float dy = Math.cos(absoluteAngle);
-        float dz = heightDiff / (radius * angle);
+        float dz = heightDiff / Math.abs(radius * angle);
 
         if (!isClockwise()) {
             return new Vector3f(-dx, -dy, dz);
