@@ -1,4 +1,4 @@
-package NG.Tracks;
+package NG.GUIMenu.BuildTools;
 
 import NG.Core.Game;
 import NG.Entities.Entity;
@@ -10,6 +10,7 @@ import NG.Rendering.MatrixStack.SGL;
 import NG.Settings.Settings;
 import NG.Tools.Logger;
 import NG.Tools.Vectors;
+import NG.Tracks.*;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.lwjgl.glfw.GLFW;
@@ -85,6 +86,7 @@ public class TrackBuilder extends AbstractMouseTool {
                 }
 
                 return;
+
             case HOVER:
                 clearGhostTracks();
 
@@ -98,6 +100,8 @@ public class TrackBuilder extends AbstractMouseTool {
                     RailNode ghostNode = new RailNode(firstPosition, ghostType, toNode, null);
                     ghostTracks.add(new StraightTrack(game, ghostType, ghostNode, liftedPosition, true));
                 }
+
+                return;
             default:
         }
     }
@@ -137,6 +141,7 @@ public class TrackBuilder extends AbstractMouseTool {
                     }
                 }
                 return;
+
             case HOVER:
                 clearGhostTracks();
 
@@ -170,6 +175,8 @@ public class TrackBuilder extends AbstractMouseTool {
                         ghostTracks.addAll(connection);
                     }
                 }
+
+                return;
             default:
         }
     }

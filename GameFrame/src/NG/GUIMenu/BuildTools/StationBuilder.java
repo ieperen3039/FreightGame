@@ -1,6 +1,10 @@
-package NG.Entities;
+package NG.GUIMenu.BuildTools;
 
 import NG.Core.Game;
+import NG.DataStructures.Generic.Color4f;
+import NG.Entities.Entity;
+import NG.Entities.Station;
+import NG.Entities.StationGhost;
 import NG.GUIMenu.Components.*;
 import NG.GUIMenu.Menu.MainMenu;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
@@ -13,12 +17,15 @@ import NG.Resources.GeneratorResource;
 import NG.Resources.Resource;
 import NG.Tools.Vectors;
 import NG.Tracks.TrackType;
+import org.joml.Math;
 import org.joml.*;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import static NG.Entities.StationImpl.PLATFORM_SIZE;
+import static NG.Settings.Settings.STATION_RANGE;
 
 /**
  * @author Geert van Ieperen created on 30-4-2020.
@@ -54,16 +61,6 @@ public class StationBuilder extends AbstractMouseTool {
 
         selector = new SizeSelector();
         game.gui().addFrame(selector);
-    }
-
-    @Override
-    public void onClick(int button, int x, int y) {
-        if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-            game.inputHandling().setMouseTool(null);
-
-        } else {
-            super.onClick(button, x, y);
-        }
     }
 
     @Override
@@ -117,18 +114,30 @@ public class StationBuilder extends AbstractMouseTool {
         }
 
         if (cursorIsOnMap) {
-            Resource<Mesh> meshResource = meshes.computeIfAbsent(station.getLength(), (size) -> new GeneratorResource<>(
-                    () -> GenericShapes.createRing((size + RING_THICKNESS) / 2f, RING_RADIAL_PARTS, RING_THICKNESS), Mesh::dispose
-            ));
-
-            MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH));
             gl.pushMatrix();
             {
                 gl.translate(cursorPosition);
-                gl.render(meshResource.get(), station);
+
+                MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREY));
+                float diameter = pythagoras(station.getLength(), station.getNumberOfPlatforms() * PLATFORM_SIZE);
+                gl.render(getRingMesh(diameter / 2), station);
+
+                MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREEN));
+                gl.render(getRingMesh(STATION_RANGE), station);
             }
             gl.popMatrix();
         }
+    }
+
+    private float pythagoras(float a, float b) {
+        return Math.sqrt(a * a + b * b);
+    }
+
+    protected Mesh getRingMesh(float radius) {
+        Resource<Mesh> meshResource = meshes.computeIfAbsent(radius, (r) -> new GeneratorResource<>(
+                () -> GenericShapes.createRing((r + RING_THICKNESS), RING_RADIAL_PARTS, RING_THICKNESS), Mesh::dispose
+        ));
+        return meshResource.get();
     }
 
     @Override
@@ -181,5 +190,4 @@ public class StationBuilder extends AbstractMouseTool {
             }
         }
     }
-
 }

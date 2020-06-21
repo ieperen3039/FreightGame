@@ -28,16 +28,10 @@ public class EntityActionTool extends AbstractMouseTool {
                 action.accept(entity);
                 game.inputHandling().setMouseTool(null);
             }
-
-        } else if (getMouseAction() == MouseAction.PRESS_DEACTIVATE) {
-            game.inputHandling().setMouseTool(null);
         }
     }
 
     @Override
     public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
-        if (getMouseAction() == MouseAction.PRESS_DEACTIVATE) {
-            game.inputHandling().setMouseTool(null);
-        }
     }
 }

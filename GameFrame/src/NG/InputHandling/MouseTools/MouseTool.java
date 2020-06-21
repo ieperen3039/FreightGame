@@ -28,8 +28,8 @@ public interface MouseTool extends MouseListener {
     /**
      * applies the functionality of this tool to the given position in the world
      * @param position  a position in the world where is clicked.
-     * @param origin    screen x position of the mouse in pixels from left
-     * @param direction screen y position of the mouse in pixels from top
+     * @param origin    the start point of the ray that hits this entity
+     * @param direction the direction of the ray that hits this entity
      */
     void apply(Vector3fc position, Vector3fc origin, Vector3fc direction);
 
@@ -38,7 +38,4 @@ public interface MouseTool extends MouseListener {
      */
     default void dispose() {
     }
-
-    ;
-
 }

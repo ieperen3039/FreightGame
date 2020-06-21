@@ -3,12 +3,12 @@ package NG.Entities;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Generic.Pair;
+import NG.DataStructures.Valuta;
 import NG.Freight.Cargo;
 import NG.GUIMenu.Components.SActiveTextArea;
 import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Menu.MainMenu;
-import NG.GameState.Storage;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Mods.CargoType;
@@ -19,6 +19,7 @@ import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shapes.GenericShapes;
+import NG.Settings.Settings;
 import NG.Tools.Vectors;
 import NG.Tracks.StraightTrack;
 import NG.Tracks.TrackPiece;
@@ -26,8 +27,7 @@ import NG.Tracks.TrackType;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static NG.Tools.Vectors.cos;
 import static NG.Tools.Vectors.sin;
@@ -37,14 +37,9 @@ import static NG.Tools.Vectors.sin;
  * @author Geert van Ieperen created on 27-1-2019.
  */
 public class StationImpl extends Storage implements Station {
-    public static final CargoType DEBUG_CUBES = new CargoType("Debug Cubes", 100, 1);
-
     public static final float PLATFORM_SIZE = 1.2f;
     public static final float HEIGHT = 0.1f;
     private static int nr = 1;
-
-    private static final double GOOD_SPAWN_RATE = 0.02; // chunks per second
-    private double nextCargoSpawn;
 
     protected String stationName = "Station " + (nr++);
 
@@ -56,12 +51,15 @@ public class StationImpl extends Storage implements Station {
     private final RailNode[] forwardConnections;
     private final RailNode[] backwardConnections;
     private final List<Pair<NetworkNode, Boolean>> nodes;
+    private final List<Industry> industries = new ArrayList<>();
+    // make sure only one of each type is added to this collection
+    private final Set<CargoType> industryAcceptedCargo = new HashSet<>();
 
     public StationImpl(
             Game game, int numberOfPlatforms, int length, TrackType type, Vector3fc position, float orientation,
             double spawnTime
     ) {
-        super(position, game, spawnTime);
+        super(game, position, spawnTime);
         assert numberOfPlatforms > 0 : "created station with " + numberOfPlatforms + " platforms";
         this.game = game;
         this.numberOfPlatforms = numberOfPlatforms;
@@ -69,7 +67,6 @@ public class StationImpl extends Storage implements Station {
         this.realWidth = numberOfPlatforms * PLATFORM_SIZE;
         this.orientation = orientation;
         this.nodes = new ArrayList<>(numberOfPlatforms * 2);
-        this.nextCargoSpawn = game.timer().getGameTime();
 
         float trackHeight = HEIGHT + 0.1f;
 
@@ -115,6 +112,8 @@ public class StationImpl extends Storage implements Station {
             NetworkNode.addConnection(trackConnection);
             game.state().addEntity(trackConnection);
         }
+
+        recalculateNearbyIndustries();
     }
 
     private void createNodes(TrackType type, Vector3f AToB, Vector3f BToA, Vector3f aPos, Vector3f bPos, int index) {
@@ -133,11 +132,6 @@ public class StationImpl extends Storage implements Station {
 
     @Override
     public void update() {
-        double now = game.timer().getGameTime();
-        if (now > nextCargoSpawn) {
-            contents.add(new Cargo(DEBUG_CUBES, 4, nextCargoSpawn, this));
-            nextCargoSpawn += 1 / GOOD_SPAWN_RATE;
-        }
     }
 
     @Override
@@ -213,13 +207,64 @@ public class StationImpl extends Storage implements Station {
         }
     }
 
+    @Override
+    public Map<CargoType, Integer> getAvailableCargo() {
+        Map<CargoType, Integer> available = getContents().asMap();
+        for (Industry industry : industries) {
+            industry.getContents().addToMap(available);
+        }
+        return available;
+    }
+
+    @Override
+    public boolean load(Train train, CargoType cargoType, int amount, boolean oldFirst) {
+        assert amount > 0;
+        float remainder = loadThis(train, cargoType, amount);
+
+        if (remainder == 0) return true;
+
+        for (Industry industry : industries) {
+            remainder = industry.loadThis(train, cargoType, amount);
+            if (remainder == 0) return true;
+        }
+
+        return false;
+    }
+
+    public void recalculateNearbyIndustries() {
+        industries.clear();
+        industries.addAll(Industry.getNearbyIndustries(game, getPosition(), Settings.STATION_RANGE));
+        industryAcceptedCargo.clear();
+
+        for (Industry industry : industries) {
+            Collection<CargoType> acceptedCargo = industry.getAcceptedCargo();
+            industryAcceptedCargo.addAll(acceptedCargo);
+        }
+    }
+
+    @Override
+    public Collection<CargoType> getAcceptedCargo() {
+        return industryAcceptedCargo;
+    }
+
+    @Override
+    public Valuta sell(Cargo cargo) {
+        // TODO
+        return Valuta.ofUnitValue(100_000);
+    }
+
     protected class StationUI extends SFrame {
         StationUI() {
             super(stationName, 300, 0);
             setMainPanel(SContainer.column(
-                    new SActiveTextArea(() -> String.valueOf(StationImpl.this.contents()), MainMenu.TEXT_PROPERTIES)
+                    new SActiveTextArea(() -> "Industries: " + industries, MainMenu.TEXT_PROPERTIES),
+                    new SActiveTextArea(this::text, MainMenu.TEXT_PROPERTIES)
             ));
             // add buttons etc.
+        }
+
+        private String text() {
+            return "Cargo : " + getAvailableCargo();
         }
     }
 

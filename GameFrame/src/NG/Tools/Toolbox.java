@@ -452,4 +452,17 @@ public final class Toolbox {
 //        (target - a) / (b - a) = f;
         return (target - a) / (b - a);
     }
+
+    public static <T> Map<T, Integer> getIntersection(Map<T, Integer> a, Map<T, Integer> b) {
+        Map<T, Integer> intersection = new HashMap<>();
+        for (T type : a.keySet()) {
+            if (b.containsKey(type)) {
+                int amount = Math.min(a.get(type), b.get(type));
+                if (amount > 0) {
+                    intersection.put(type, amount);
+                }
+            }
+        }
+        return intersection;
+    }
 }

@@ -50,8 +50,8 @@ public abstract class AbstractMouseTool implements MouseTool {
                 mouseAction = PRESS_ACTIVATE;
                 break;
             case GLFW.GLFW_MOUSE_BUTTON_RIGHT:
-                mouseAction = PRESS_DEACTIVATE;
-                break;
+                game.inputHandling().setMouseTool(null);
+                return;
         }
 
         if (game.gui().checkMouseClick(button, x, y)) {

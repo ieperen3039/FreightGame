@@ -52,7 +52,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
 
     private RailNode scanEndNode; // track that is scanned latest
     private long scanTrackEndMillis; // total distance to the end of scanTrack
-    private boolean scanIsInPathDirection;
+    private boolean scanIsInPathDirection; // TODO can we use NetworkPosition#getNodes()?
     private int scanTargetsAhead = 0;
     private double signalPathTimeout = Double.NEGATIVE_INFINITY;
     private SpeedTarget endOfTrackBrakeTarget;
@@ -400,6 +400,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
                 } else {
                     if (path == null) {
                         path = new NetworkPathFinder(nextTrack, networkNode, target).call();
+                        if (path.isEmpty()) return;
                     }
 
                     NetworkNode targetNode = path.remove();
@@ -417,7 +418,6 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
             appendToPath(nextTrack);
         }
 
-        // optional
         scanIsInPathDirection = !scanEndNode.isInDirectionOf(nextTrack);
     }
 
@@ -465,7 +465,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
             newNode = next.getEndNode();
         }
 
-        controller.onArrival(newNode);
+        controller.onArrival(next, newNode);
     }
 
     @Override
@@ -506,6 +506,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         return maxSpeed;
     }
 
+    /** doStop || doReverse */
     public boolean isStopping() {
         return doStop || doReverse;
     }

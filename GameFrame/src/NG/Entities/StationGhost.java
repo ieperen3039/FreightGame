@@ -4,8 +4,11 @@ import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Generic.Pair;
+import NG.DataStructures.Valuta;
+import NG.Freight.Cargo;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
+import NG.Mods.CargoType;
 import NG.Network.NetworkNode;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
@@ -17,8 +20,10 @@ import NG.Tracks.TrackType;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static NG.Entities.StationImpl.PLATFORM_SIZE;
 
@@ -113,7 +118,23 @@ public class StationGhost extends AbstractGameObject implements Station {
     }
 
     @Override
-    public void loadAvailable(Train train) {
+    public boolean load(Train train, CargoType cargo, int amount, boolean oldFirst) {
+        return false;
+    }
+
+    @Override
+    public Collection<CargoType> getAcceptedCargo() {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public Valuta sell(Cargo cargo) {
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public Map<CargoType, Integer> getAvailableCargo() {
+        return Collections.emptyMap();
     }
 
     @Override
@@ -121,7 +142,7 @@ public class StationGhost extends AbstractGameObject implements Station {
         return position;
     }
 
-    Station solidify(Game game, TrackType trackType, double gameTime) {
+    public Station solidify(Game game, TrackType trackType, double gameTime) {
         return new StationImpl(game,
                 numberOfPlatforms, (int) length, trackType, position, orientation, gameTime
         );

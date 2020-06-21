@@ -63,8 +63,8 @@ public class CargoType {
         }
 
         float correctedDistance = distanceTravelled - MINIMUM_PAYMENT_DISTANCE;
-        float realValue = unitPricePerMeter * correctedDistance;
-        return new Valuta((int) realValue);
+        float unitValue = unitPricePerMeter * correctedDistance;
+        return Valuta.ofUnitValue((int) unitValue);
     }
 
     @Override

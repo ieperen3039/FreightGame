@@ -6,6 +6,7 @@ import NG.Mods.CargoType;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Resources.Resource;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -31,18 +32,44 @@ public class Locomotive implements TrainElement {
     }
 
     @Override
+    public CargoType getCurrentCargoType() {
+        return CargoType.NO_CARGO;
+    }
+
+    @Override
     public Pair<CargoType, Integer> getContents() {
         return new Pair<>(CargoType.NO_CARGO, 0);
     }
 
     @Override
-    public double addContents(Cargo cargo) throws IllegalArgumentException {
+    public Collection<Cargo> getContentElements() {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public Collection<Cargo> take(int amount) {
+        throw new IllegalArgumentException("This train doesn't have any cargo");
+//        return Collections.emptyList();
+    }
+
+    @Override
+    public void addContents(Cargo cargo) throws IllegalArgumentException {
         throw new IllegalArgumentException("This train doesn't accept any cargo");
     }
 
     @Override
     public int getStorableAmount(CargoType type) {
         return 0;
+    }
+
+    @Override
+    public double getLoadTime(Cargo cargo) {
+        return 0;
+    }
+
+    @Override
+    public Collection<Cargo> takeAll() {
+        return Collections.emptyList();
     }
 
     public static class Properties extends TrainElement.Properties {

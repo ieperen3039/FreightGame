@@ -47,9 +47,13 @@ public class MouseToolCallbacks implements GameAspect {
     }
 
     public void setMouseTool(MouseTool tool) {
-        if (currentTool != DEFAULT_MOUSE_TOOL) currentTool.dispose();
-        currentTool = (tool != null) ? tool : DEFAULT_MOUSE_TOOL;
-        Logger.DEBUG.print("Set mousetool to " + currentTool);
+        MouseTool newTool = (tool != null) ? tool : DEFAULT_MOUSE_TOOL;
+
+        if (!currentTool.equals(newTool)) {
+            if (currentTool != DEFAULT_MOUSE_TOOL) currentTool.dispose();
+            currentTool = newTool;
+            Logger.DEBUG.print("Set mousetool to " + newTool);
+        }
     }
 
     public MouseTool getMouseTool() {

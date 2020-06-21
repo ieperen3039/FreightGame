@@ -504,7 +504,7 @@ public class NetworkNode {
 
     public Set<NetworkNode> getAllNodes(NetworkNode startNode) {
         Set<NetworkNode> seen = new HashSet<>();
-        Deque<NetworkNode> open = new ArrayDeque<NetworkNode>();
+        Deque<NetworkNode> open = new ArrayDeque<>();
         open.add(startNode);
         seen.add(startNode);
 
@@ -548,9 +548,9 @@ public class NetworkNode {
     }
 
     private static List<Edge> getNetworkEdges(NetworkNode startNode) {
-        List<Edge> edges = new ArrayList<Edge>();
-        Map<NetworkNode, Integer> seen = new HashMap<NetworkNode, Integer>();
-        Deque<NetworkNode> open = new ArrayDeque<NetworkNode>();
+        List<Edge> edges = new ArrayList<>();
+        Map<NetworkNode, Integer> seen = new HashMap<>();
+        Deque<NetworkNode> open = new ArrayDeque<>();
         open.add(startNode);
         seen.put(startNode, 0);
 

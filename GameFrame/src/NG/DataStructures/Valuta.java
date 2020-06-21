@@ -5,13 +5,25 @@ package NG.DataStructures;
  * @author Geert van Ieperen created on 21-1-2019.
  */
 public class Valuta {
-    int quantity;
+    private int quantity;
 
-    public Valuta(int quantity) {
+    private Valuta(int quantity) {
         this.quantity = quantity;
     }
 
-    public float getValue() {
+    public float getValueUnits() {
         return quantity;
+    }
+
+    public float getEuros() {
+        return 10f * quantity;
+    }
+
+    public void add(Valuta other) {
+        quantity += other.quantity;
+    }
+
+    public static Valuta ofUnitValue(int quantity) {
+        return new Valuta(quantity);
     }
 }

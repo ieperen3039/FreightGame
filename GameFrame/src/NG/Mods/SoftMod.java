@@ -2,8 +2,8 @@ package NG.Mods;
 
 import NG.Core.Game;
 import NG.Core.Version;
+import NG.Entities.Industry;
 import NG.Entities.Locomotive;
-import NG.Entities.StationImpl;
 import NG.Entities.Wagon;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Resources.Resource;
@@ -90,7 +90,7 @@ public class SoftMod implements Mod {
                 float loadTime = findOrThrow(wagonNode, "load_time").floatValue();
 
                 List<String> railtypes = getRailTypes(wagonNode, "railtypes");
-                Map<CargoType, Integer> capacity = Map.of(StationImpl.DEBUG_CUBES, 10);
+                Map<CargoType, Integer> capacity = Map.of(Industry.DEBUG_CUBES, 10);
 
                 wagons.add(new Wagon.Properties(name, length, mass, linearResistance, mesh, railtypes, maxSpeed, capacity, loadTime));
             }

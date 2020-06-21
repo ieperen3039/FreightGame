@@ -1,5 +1,6 @@
 package NG.Entities;
 
+import NG.DataStructures.CargoCollection;
 import NG.DataStructures.Generic.Pair;
 import NG.Freight.Cargo;
 import NG.Mods.CargoType;
@@ -13,8 +14,8 @@ import java.util.*;
  */
 public class Wagon implements TrainElement {
     public final Properties properties;
-    private CargoType currentType;
     private Collection<Cargo> contents;
+    private CargoType currentType = CargoType.NO_CARGO;
 
     public Wagon(Properties properties) {
         this.properties = properties;
@@ -31,6 +32,12 @@ public class Wagon implements TrainElement {
         return properties.capacity;
     }
 
+    @Override
+    public CargoType getCurrentCargoType() {
+        if (contents.isEmpty()) return CargoType.NO_CARGO;
+        return currentType;
+    }
+
     private int getCargoAmount() {
         int totalContents = 0;
         for (Cargo cargo : contents) {
@@ -41,12 +48,28 @@ public class Wagon implements TrainElement {
 
     @Override
     public Pair<CargoType, Integer> getContents() {
-        int totalContents = getCargoAmount();
-        return new Pair<>(currentType, totalContents);
+        return new Pair<>(currentType, getCargoAmount());
     }
 
     @Override
-    public double addContents(Cargo cargo) throws IllegalArgumentException {
+    public Collection<Cargo> getContentElements() {
+        return contents;
+    }
+
+    @Override
+    public Collection<Cargo> take(int amount) {
+        return CargoCollection.remove(currentType, amount, contents);
+    }
+
+    @Override
+    public Collection<Cargo> takeAll() {
+        Collection<Cargo> returnValue = new ArrayList<>(contents);
+        contents.clear();
+        return returnValue;
+    }
+
+    @Override
+    public void addContents(Cargo cargo) throws IllegalArgumentException {
         if (!properties.capacity.containsKey(cargo.type)) {
             throw new IllegalArgumentException("Tried adding cargo of wrong type");
         }
@@ -62,7 +85,11 @@ public class Wagon implements TrainElement {
 
         currentType = cargo.type;
         contents.add(cargo);
+    }
 
+    @Override
+    public double getLoadTime(Cargo cargo) {
+        int maximum = properties.capacity.get(cargo.type);
         return ((double) cargo.quantity() / maximum) * properties.loadingTime;
     }
 

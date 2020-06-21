@@ -3,6 +3,7 @@ package NG.Entities;
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Pair;
+import NG.DataStructures.Valuta;
 import NG.Freight.Cargo;
 import NG.GUIMenu.Components.SActiveTextArea;
 import NG.GUIMenu.Components.SButton;
@@ -11,7 +12,6 @@ import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
-import NG.GameState.Storage;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Mods.CargoType;
 import NG.Network.NetworkNode;
@@ -26,10 +26,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -69,7 +66,9 @@ public class Train extends AbstractGameObject implements MovingEntity {
             // check whether we have loading to do
             NetworkPosition target = currentTarget.element;
 
-            if (target instanceof Storage && !isLoading()) {
+            if (target instanceof Station) {
+                Station station = (Station) target;
+
                 double gameTime = game.timer().getGameTime();
                 TrackPiece currentTrack = positionEngine.getTracksAt(gameTime).left;
                 RailNode endNodeR = currentTrack.getEndNode();
@@ -77,20 +76,63 @@ public class Train extends AbstractGameObject implements MovingEntity {
 
                 boolean isWithinLoadingArea = target.containsNode(currentTrack, endNodeN);
                 if (isWithinLoadingArea) {
-                    Map<CargoType, Integer> transferableCargo = Storage.getTransferableCargo((Storage) target, this);
-                    // if there is nothing to transfer, then we are already done, and we should continue our journey
-                    if (transferableCargo.isEmpty()) {
-                        goToNext();
+                    if (canDeposit(station)) {
+                        depositAvailable(station);
 
-                    } else { // otherwise, start loading
-                        Storage storage = (Storage) target;
-                        storage.load(this, transferableCargo);
-                        Logger.DEBUG.printf("Loading %s for %4.01f seconds", this, loadTimer - gameTime);
+                    } else {
+                        Map<CargoType, Integer> transferableCargo = station.getTransferableCargo(this);
+                        if (!transferableCargo.isEmpty()) {
+                            CargoType anyType = transferableCargo.keySet().iterator().next();
+                            station.load(this, anyType, transferableCargo.get(anyType), true);
+
+                            Logger.DEBUG.printf("Loading %s for %4.01f seconds", this, loadTimer - gameTime);
+
+                        } else { // !canDeposit(station) && !canLoad(station)
+                            // if there is nothing to transfer, then we are already done, and we should continue our journey
+                            goToNext();
+                        }
                     }
                 }
-
             }
         }
+    }
+
+    /** station -> train */
+    private boolean canLoad(Station station) {
+        return station.getTransferableCargo(this).isEmpty();
+    }
+
+    /** train -> station */
+    private boolean canDeposit(Station station) {
+        Collection<CargoType> acceptedCargo = station.getAcceptedCargo();
+        for (TrainElement entity : entities) {
+            Pair<CargoType, Integer> contents = entity.getContents();
+            if (acceptedCargo.contains(contents.left) && contents.right > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected void depositAvailable(Station storage) {
+        Collection<CargoType> acceptedCargo = storage.getAcceptedCargo();
+        Valuta income = Valuta.ofUnitValue(0);
+
+        for (TrainElement entity : entities) {
+            // if these contents can be sold
+            if (acceptedCargo.contains(entity.getCurrentCargoType())) {
+                // sell
+                Collection<Cargo> elts = entity.takeAll();
+                for (Cargo cargo : elts) {
+                    addLoadTime(entity.getLoadTime(cargo));
+                    Valuta sellValue = storage.sell(cargo);
+                    income.add(sellValue);
+                }
+            }
+        }
+
+        // TODO add income to player pocket
     }
 
     public void addElement(TrainElement e) {
@@ -214,22 +256,28 @@ public class Train extends AbstractGameObject implements MovingEntity {
 
             if (toStore > 0) {
                 if (toStore >= cargo.quantity()) {
-                    loadTime += entity.addContents(cargo);
+                    loadTime += entity.getLoadTime(cargo);
+                    entity.addContents(cargo);
                     complete = true;
                     break;
 
                 } else {
                     Cargo part = cargo.split(toStore);
-                    loadTime += entity.addContents(part);
+                    loadTime += entity.getLoadTime(part);
+                    entity.addContents(part);
                 }
             }
         }
 
+        addLoadTime(loadTime);
+
+        return complete;
+    }
+
+    protected void addLoadTime(double loadTime) {
         double gameTime = game.timer().getGameTime();
         if (loadTimer < gameTime) loadTimer = gameTime;
         loadTimer = loadTimer + loadTime;
-
-        return complete;
     }
 
     @Override
@@ -273,15 +321,14 @@ public class Train extends AbstractGameObject implements MovingEntity {
         return loadTimer > game.timer().getGameTime();
     }
 
-    public void onArrival(RailNode newNode) {
+    public void onArrival(TrackPiece next, RailNode newNode) {
         Schedule.Node currentTarget = getCurrentTarget();
         if (currentTarget != null) {
             NetworkPosition target = currentTarget.element;
             NetworkNode networkNode = newNode.getNetworkNode();
-            if (target.getNodes().contains(networkNode)) {
-                if (!shouldWaitFor(target)) {
-                    goToNext();
-                }
+
+            if (target.containsNode(next, networkNode) && !shouldWaitFor(target)) {
+                goToNext();
             }
         }
     }
@@ -291,14 +338,8 @@ public class Train extends AbstractGameObject implements MovingEntity {
 
         Schedule.Node currentTarget = getCurrentTarget();
         if (currentTarget == null) return false;
-        if (target != currentTarget.element) return false;
 
-        if (target instanceof Storage) {
-            Map<CargoType, Integer> transferableCargo = Storage.getTransferableCargo((Storage) target, this);
-            return !transferableCargo.isEmpty();
-        }
-
-        return false;
+        return target == currentTarget.element;
     }
 
     public void addScheduleListener(Schedule.UpdateListener listener) {
@@ -356,15 +397,9 @@ public class Train extends AbstractGameObject implements MovingEntity {
         }
 
         private String getStatus() {
-            if (getCurrentTarget() == null) {
-                currentTarget = schedule.getFirstNode();
-            }
-            if (getCurrentTarget() != null) {
-                if (!positionEngine.hasPath()) {
-                    return "Waiting for free path...";
-                }
-
-                return "Now heading for " + getCurrentTarget().element;
+            if (isLoading()) {
+                double time = loadTimer - game.timer().getGameTime();
+                return String.format("Loading / Unloading (%4.01f sec left)", time);
             }
 
             if (positionEngine.isStopping()) {
@@ -374,8 +409,25 @@ public class Train extends AbstractGameObject implements MovingEntity {
                 return "Stopping...";
             }
 
-            return "No schedule";
-        }
+            Schedule.Node target = getCurrentTarget();
 
+            if (target == null) {
+                return "No schedule";
+            }
+
+            if (!positionEngine.hasPath()) {
+                if (shouldWaitFor(target.element)) {
+                    if (positionEngine.getSpeed() == 0) {
+                        return "Stopped at station (not loading)";
+                    }
+
+                    return "Stopping at station";
+                }
+
+                return "Waiting for free path...";
+            }
+
+            return "Now heading for " + target.element;
+        }
     }
 }

@@ -8,14 +8,11 @@ import java.lang.reflect.Field;
  * @author Geert van Ieperen created on 25-2-2020.
  */
 public abstract class AbstractGameObject implements GameObject {
-    private static final boolean REFLECTIVE_INIT = true;
     protected transient Game game;
 
     public AbstractGameObject(Game game) {
         this.game = game;
     }
-
-//    protected abstract void restoreFields(Game game);
 
     @Override
     public final void restore(Game game) {
@@ -23,23 +20,23 @@ public abstract class AbstractGameObject implements GameObject {
             this.game = game;
 
             // replaces restoreFields(Game game)
-            Class<?> theClass = getClass();
+            Class<?> thisClass = getClass();
             do {
                 // search for GameObject fields.
-                for (Field field : theClass.getDeclaredFields()) {
+                for (Field field : thisClass.getDeclaredFields()) {
                     try {
                         if (GameObject.class.isAssignableFrom(field.getType())) {
                             // every GameObject found is restored recursively
                             GameObject fieldInstance = (GameObject) field.get(this);
-                            fieldInstance.restore(game);
                             Logger.DEBUG.print("init", fieldInstance);
+                            fieldInstance.restore(game);
                         }
                     } catch (ReflectiveOperationException e) {
                         Logger.ERROR.print(e);
                     }
                 }
-                theClass = (theClass.getSuperclass());
-            } while (!theClass.equals(Object.class));
+                thisClass = (thisClass.getSuperclass());
+            } while (!thisClass.equals(Object.class));
         }
     }
 }

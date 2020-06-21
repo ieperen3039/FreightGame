@@ -13,6 +13,7 @@ import NG.Tracks.TrackType;
 import org.joml.Quaternionfc;
 import org.joml.Vector3fc;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -41,15 +42,22 @@ public interface TrainElement {
 
     Map<CargoType, Integer> getCargoTypes();
 
+    CargoType getCurrentCargoType();
+
     Pair<CargoType, Integer> getContents();
+
+    Collection<Cargo> getContentElements();
+
+    Collection<Cargo> take(int amount);
+
+    Collection<Cargo> takeAll();
 
     /**
      * adds the given cargo to this train element
      * @param cargo the cargo to load
-     * @return the time it will take to load this cargo
      * @throws IllegalArgumentException if the cargo cannot be added to this element
      */
-    double addContents(Cargo cargo) throws IllegalArgumentException;
+    void addContents(Cargo cargo) throws IllegalArgumentException;
 
     default int getStorableAmount(CargoType type) {
         Pair<CargoType, Integer> contents = getContents();
@@ -67,6 +75,8 @@ public interface TrainElement {
             return capacity - contents.right;
         }
     }
+
+    double getLoadTime(Cargo cargo);
 
     class Properties {
         private final String name;

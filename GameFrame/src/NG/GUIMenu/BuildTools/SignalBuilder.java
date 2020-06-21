@@ -1,9 +1,11 @@
-package NG.Network;
+package NG.GUIMenu.BuildTools;
 
 import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
+import NG.Network.RailNode;
+import NG.Network.Signal;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Tracks.RailTools;
 import NG.Tracks.TrackPiece;

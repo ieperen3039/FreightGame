@@ -1,18 +1,20 @@
-package NG.Tracks;
+package NG.GUIMenu.BuildTools;
 
 import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.GUIMenu.Menu.EntityActionTool;
 import NG.Network.Signal;
+import NG.Tracks.RailTools;
+import NG.Tracks.TrackPiece;
 
 /**
  * @author Geert van Ieperen created on 29-4-2020.
  */
-public class Remover extends EntityActionTool {
+public class EntityRemover extends EntityActionTool {
     protected final Runnable deactivation;
 
-    public Remover(Game game, SToggleButton source) {
+    public EntityRemover(Game game, SToggleButton source) {
         super(game, e -> true, e -> removeEntity(e, game));
         this.deactivation = () -> source.setActive(false);
     }

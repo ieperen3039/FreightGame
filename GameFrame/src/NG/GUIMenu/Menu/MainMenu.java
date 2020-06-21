@@ -4,9 +4,6 @@ import NG.Content.Scenario;
 import NG.Content.TestScenario;
 import NG.Core.Game;
 import NG.Core.ModLoader;
-import NG.Entities.Locomotive;
-import NG.Entities.Train;
-import NG.Entities.Wagon;
 import NG.GUIMenu.Components.*;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
@@ -14,11 +11,9 @@ import NG.GUIMenu.SComponentProperties;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.Tools.Logger;
-import NG.Tools.Toolbox;
 import NG.Tracks.TrackPiece;
 import org.joml.Vector2i;
 
-import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -76,16 +71,8 @@ public class MainMenu extends SFrame {
         SToolBar toolBar = new SToolBar(game, true);
 
         toolBar.addButton(
-                "Build Track",
+                "Build Object",
                 () -> game.gui().addFrame(new BuildMenu(game))
-        );
-
-        toolBar.addButton( // TODO remove this debug option
-                "New Train",
-                () -> game.inputHandling().setMouseTool(new EntityActionTool(
-                        game, e -> e instanceof TrackPiece,
-                        entity -> buildMaxLengthTrain((TrackPiece) entity, game)
-                ))
         );
 
         toolBar.addButton("Dump Network", // find any networknode, and print getNetworkAsString
@@ -120,26 +107,6 @@ public class MainMenu extends SFrame {
         });
 
         return toolBar;
-    }
-
-    private static void buildMaxLengthTrain(TrackPiece trackPiece, Game game) {
-        trackPiece.setOccupied(true);
-
-        float trackLength = trackPiece.getLength();
-        double gameTime = game.timer().getGameTime();
-        Train construction = new Train(game, Toolbox.random.nextInt(100), gameTime, trackPiece);
-        game.state().addEntity(construction);
-
-        List<Locomotive.Properties> locomotiveTypes = game.objectTypes().locomotiveTypes;
-        List<Wagon.Properties> wagonTypes = game.objectTypes().wagonTypes;
-
-        construction.addElement(new Locomotive(locomotiveTypes.get(0)));
-        Wagon wagon = new Wagon(wagonTypes.get(0));
-
-        while (construction.getLength() + wagon.properties.length < trackLength) {
-            construction.addElement(wagon);
-            wagon = new Wagon(wagonTypes.get(0));
-        }
     }
 
     private void showNewGame() {

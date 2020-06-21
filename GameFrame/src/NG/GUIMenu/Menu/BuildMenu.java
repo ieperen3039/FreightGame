@@ -1,15 +1,13 @@
 package NG.GUIMenu.Menu;
 
 import NG.Core.Game;
-import NG.Entities.StationBuilder;
+import NG.Entities.Industry;
+import NG.GUIMenu.BuildTools.*;
 import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SDropDown;
 import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.GUIMenu.SComponentProperties;
-import NG.Network.SignalBuilder;
-import NG.Tracks.Remover;
-import NG.Tracks.TrackBuilder;
 import NG.Tracks.TrackType;
 
 import java.util.List;
@@ -21,7 +19,7 @@ public class BuildMenu extends SFrame {
     private static final SComponentProperties BUTTON_PROPERTIES = new SComponentProperties(250, 50);
 
     public BuildMenu(Game game) {
-        super("Track Build Menu");
+        super("Build Menu");
 
         List<TrackType> trackTypes = game.objectTypes().trackTypes;
         SDropDown typeChooser = new SDropDown(game.gui(), BUTTON_PROPERTIES, 0, trackTypes);
@@ -38,19 +36,37 @@ public class BuildMenu extends SFrame {
                         .setMouseTool(active ? new StationBuilder(game, buildStation, trackTypes.get(typeChooser.getSelectedIndex())) : null)
         );
 
-        SToggleButton buildSignal = new SToggleButton("Build signal", BUTTON_PROPERTIES);
+        SToggleButton buildSignal = new SToggleButton("Build Signal", BUTTON_PROPERTIES);
         buildSignal.addStateChangeListener(
                 (active) -> game.inputHandling()
                         .setMouseTool(active ? new SignalBuilder(game, buildSignal) : null)
         );
 
+        SToggleButton buildIndustryGive = new SToggleButton("Build Producer", BUTTON_PROPERTIES);
+        buildIndustryGive.addStateChangeListener(
+                (active) -> game.inputHandling()
+                        .setMouseTool(active ? new IndustryBuilder(game, buildIndustryGive, Industry.debugPropertiesGive()) : null)
+        );
+
+        SToggleButton buildIndustryTake = new SToggleButton("Build Consumer", BUTTON_PROPERTIES);
+        buildIndustryTake.addStateChangeListener(
+                (active) -> game.inputHandling()
+                        .setMouseTool(active ? new IndustryBuilder(game, buildIndustryTake, Industry.debugPropertiesTake()) : null)
+        );
+
+        SToggleButton buildTrain = new SToggleButton("Build Train", BUTTON_PROPERTIES);
+        buildTrain.addStateChangeListener((active) ->
+                game.inputHandling().setMouseTool(active ? new TrainBuilder(game, buildTrain) : null)
+        );
+
         SToggleButton removeElement = new SToggleButton("Remove", BUTTON_PROPERTIES);
         removeElement.addStateChangeListener(
-                (active) -> game.inputHandling().setMouseTool(active ? new Remover(game, removeElement) : null)
+                (active) -> game.inputHandling()
+                        .setMouseTool(active ? new EntityRemover(game, removeElement) : null)
         );
 
         setMainPanel(SContainer.column(
-                typeChooser, buildTrack, buildStation, buildSignal, removeElement
+                typeChooser, buildTrack, buildStation, buildSignal, buildIndustryGive, buildIndustryTake, buildTrain, removeElement
         ));
         setSize(200, 0);
     }

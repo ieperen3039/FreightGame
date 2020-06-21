@@ -40,7 +40,7 @@ public class Settings {
 
     // in-game functional settings
     public static final float TRACK_HEIGHT_ABOVE_GROUND = 0.2f;
-    public static int STATION_RANGE = 5;
+    public static int STATION_RANGE = 10;
 
     // in-game appearance settings
     public Color4f AMBIENT_LIGHT = new Color4f(1, 1, 1, 0.2f);

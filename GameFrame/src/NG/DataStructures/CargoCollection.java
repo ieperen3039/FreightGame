@@ -31,12 +31,24 @@ public class CargoCollection extends AbstractCollection<Cargo> {
         return sum;
     }
 
+    /**
+     * @return a mapping of type to the amount of units available
+     */
     public Map<CargoType, Integer> asMap() {
         Map<CargoType, Integer> contents = new HashMap<>();
+        this.addToMap(contents);
+        return contents;
+    }
+
+    /**
+     * adds the amounts of each cargo type of this collection to the types in the given map, creating new entries if
+     * necessary.
+     * @param contents the contents of this collection are added to this map
+     */
+    public void addToMap(Map<CargoType, Integer> contents) {
         for (Cargo cargo : storage) {
             contents.merge(cargo.type, cargo.quantity(), Integer::sum);
         }
-        return contents;
     }
 
     public boolean add(Cargo newGood) {
@@ -52,6 +64,17 @@ public class CargoCollection extends AbstractCollection<Cargo> {
      * desired type available in the storage.
      */
     public Collection<Cargo> take(CargoType type, int amount) {
+        return remove(type, amount, storage);
+    }
+
+    /**
+     * @param type    the type of cargo to remove
+     * @param amount  the total amount to remove
+     * @param storage where to take the cargo from
+     * @return a collection of cargo elements of the given type whose quantities together adds up to amount
+     * @throws IllegalArgumentException if amount > size() : when this happens, the state of storage is unchanged
+     */
+    public static Collection<Cargo> remove(CargoType type, int amount, Collection<Cargo> storage) {
         // TODO sort on ???
         Collection<Cargo> batch = new ArrayList<>();
         int remainder = amount;
@@ -61,11 +84,14 @@ public class CargoCollection extends AbstractCollection<Cargo> {
                 int elementQuantity = cargo.quantity();
                 if (elementQuantity > remainder) {
                     Cargo split = cargo.split(remainder);
+                    // the original cargo stays in storage
                     batch.add(split);
+                    remainder = 0;
                     break;
 
                 } else if (elementQuantity == remainder) {
                     batch.add(cargo);
+                    remainder = 0;
                     break;
 
                 } else {
@@ -73,6 +99,10 @@ public class CargoCollection extends AbstractCollection<Cargo> {
                     batch.add(cargo);
                 }
             }
+        }
+
+        if (remainder > 0) { // no cargo has been split
+            throw new IllegalArgumentException("Could not meet requested amount: " + amount);
         }
 
         storage.removeAll(batch);

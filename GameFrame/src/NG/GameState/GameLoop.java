@@ -14,11 +14,11 @@ import NG.Rendering.Shapes.Primitives.Collision;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * A collection of entities, which manages synchronous updating and drawing.
@@ -26,8 +26,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class GameLoop extends AbstractGameLoop implements GameState {
     private final List<Entity> entities;
-    private final Lock entityWriteLock;
-    private final Lock entityReadLock;
+    private final List<Entity> newEntities;
+
     private final Deque<Runnable> postUpdateActionQueue;
     private final ClickShader clickShader;
     private Game game;
@@ -36,11 +36,8 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         super("Gameloop", targetTps);
         this.clickShader = clickShader;
         this.entities = new ArrayList<>();
+        this.newEntities = new ArrayList<>();
         this.postUpdateActionQueue = new ConcurrentLinkedDeque<>();
-
-        ReadWriteLock rwl = new ReentrantReadWriteLock(false);
-        this.entityWriteLock = rwl.writeLock();
-        this.entityReadLock = rwl.readLock();
     }
 
     @Override
@@ -54,16 +51,8 @@ public class GameLoop extends AbstractGameLoop implements GameState {
      * @see #defer(Runnable)
      */
     @Override
-    public void addEntity(Entity entity) { // TODO group new entities like has been done in JetFighterGame
-        // Thanks to the reentrant mechanism, this may also be executed by a deferred action.
-        defer(() -> {
-            entityWriteLock.lock();
-            try {
-                entities.add(entity);
-            } finally {
-                entityWriteLock.unlock();
-            }
-        });
+    public synchronized void addEntity(Entity entity) { // TODO group new entities like has been done in JetFighterGame
+        newEntities.add(entity);
     }
 
     /**
@@ -76,27 +65,28 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         game.timer().updateGameTime();
         entities.forEach(Entity::update);
 
+        updateEntityList();
+
         runPostUpdateActions();
+    }
+
+    private synchronized void updateEntityList() {
+        entities.addAll(newEntities);
+        newEntities.clear();
     }
 
     @Override
     public void draw(SGL gl) {
-        entityReadLock.lock();
-        try {
-            MaterialShader matShader = (d, s, r) -> {};
+        MaterialShader matShader = (d, s, r) -> {};
 
-            ShaderProgram shader = gl.getShader();
-            if (shader instanceof MaterialShader) {
-                matShader = (MaterialShader) shader;
-            }
+        ShaderProgram shader = gl.getShader();
+        if (shader instanceof MaterialShader) {
+            matShader = (MaterialShader) shader;
+        }
 
-            for (Entity entity : entities) {
-                matShader.setMaterial(Material.ROUGH, Color4f.MAGENTA);
-                entity.draw(gl);
-            }
-
-        } finally {
-            entityReadLock.unlock();
+        for (Entity entity : entities()) {
+            matShader.setMaterial(Material.ROUGH, Color4f.MAGENTA);
+            entity.draw(gl);
         }
     }
 
@@ -119,12 +109,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
 
     /** remove all entities from the entity list that have their doRemove flag true */
     private void runCleaning() {
-        entityWriteLock.lock();
-        try {
-            entities.removeIf(entity -> entity.isDespawnedAt(game.timer().getRenderTime()));
-        } finally {
-            entityWriteLock.unlock();
-        }
+        entities.removeIf(entity -> entity.isDespawnedAt(game.timer().getRenderTime()));
     }
 
     @Override
@@ -137,15 +122,16 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     }
 
     @Override
-    public Collection<Entity> entities() {
-        return Collections.unmodifiableList(entities);
+    public synchronized Collection<Entity> entities() {
+        ArrayList<Entity> entities = new ArrayList<>(this.entities);
+        entities.addAll(newEntities);
+        return entities;
     }
 
     @Override
-    public void cleanup() {
-        entityWriteLock.lock();
+    public synchronized void cleanup() {
+        newEntities.clear();
         entities.clear();
         postUpdateActionQueue.clear();
-        entityWriteLock.unlock();
     }
 }
