@@ -16,6 +16,7 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
     private final Set<NetworkNode> targets;
     private final NetworkNode startPredecessor;
     private final NetworkNode startNode;
+    private Map<NetworkNode, Float> distanceMap;
 
     public NetworkPathFinder(TrackPiece currentTrack, NetworkNode position, NetworkPosition target) {
         assert position.isNetworkCritical();
@@ -50,7 +51,7 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
     @Override
     public Path call() {
         Map<NetworkNode, NetworkNode> predecessors = new HashMap<>();
-        Map<NetworkNode, Float> distanceMap = new HashMap<>();
+        distanceMap = new HashMap<>();
         PriorityQueue<NetworkNode> open = new PriorityQueue<>(Comparator.comparing(distanceMap::get));
 
         predecessors.put(startNode, startPredecessor);

@@ -189,6 +189,8 @@ public class Signal extends AbstractGameObject implements Entity {
             return paths[Toolbox.random.nextInt(paths.length)];
         }
 
+        // target != null
+
         TrackPath pathViaNodes = new TrackPath();
 
         do {
@@ -196,13 +198,13 @@ public class Signal extends AbstractGameObject implements Entity {
             TrackPath bestPath = null;
             float lengthOfBest = Float.POSITIVE_INFINITY;
 
-            // get best path to target node
+            // get best direct path to target node
             for (Pair<NetworkNode, Boolean> targetNode : target.getNodes()) {
                 TrackPath pathToNode = nodes.get(targetNode.left);
 
                 if (pathToNode != null) {
                     TrackPiece arrivalTrack = pathToNode.path.getLast();
-                    if (targetNode.left.isInDirectionOf(arrivalTrack) == targetNode.right) {
+                    if (targetNode.left.isInDirectionOf(arrivalTrack) != targetNode.right) {
                         float adjLength = pathToNode.adjLength();
                         if (adjLength < lengthOfBest) {
                             bestPath = pathToNode;
@@ -213,17 +215,17 @@ public class Signal extends AbstractGameObject implements Entity {
                 }
             }
 
-            if (bestPath == null) break;
+            if (bestPath == null) break; // no direct path exists
 //            assert targetOfBest != null;
 
+            assert !bestPath.path.isEmpty() : nodes; // usually caused by (targets.apply(depth) == targets.apply(depth + 1))
             pathViaNodes.append(bestPath);
 
-            assert !bestPath.path.isEmpty() : nodes; // usually caused by (targets.apply(depth) == targets.apply(depth + 1))
             TrackPiece last = bestPath.path.getLast();
             RailNode node = last.get(targetOfBest);
             if (node.hasSignal()) return pathViaNodes;
 
-            // re-source paths to this node
+            // recalculate paths as if starting from this node
             signals.clear();
             nodes.clear();
             collectPaths(node, last, signals, nodes, new TrackPath());
@@ -239,8 +241,7 @@ public class Signal extends AbstractGameObject implements Entity {
         for (Signal other : signals.keySet()) {
             TrackPath pathToSignal = signals.get(other);
 
-            float signalToTargetLength = getSignalToTargetLength(inSameDirection, target, other, pathToSignal);
-            float totalDist = pathToSignal.length + signalToTargetLength;
+            float totalDist = getPathToTargetLength(target, other, pathToSignal);
 
             if (totalDist < leastDistance) {
                 leastDistance = totalDist;
@@ -252,23 +253,22 @@ public class Signal extends AbstractGameObject implements Entity {
         return pathViaNodes.append(pathToBest);
     }
 
-    private float getSignalToTargetLength(
-            boolean inSameDirection, NetworkPosition target, Signal other, TrackPath pathToSignal
+    private float getPathToTargetLength(
+            NetworkPosition target, Signal other, TrackPath pathToSignal
     ) {
         TrackPiece lastTrack = pathToSignal.path.getLast();
         NetworkNode otherNetwork = other.hostNode.getNetworkNode();
+        boolean inDirection = !other.hostNode.isInDirectionOf(lastTrack);
 
         NetworkNode startNode;
         float signalToNetworkLength;
-        boolean inDirection;
 
         if (otherNetwork.isNetworkCritical()) {
             startNode = otherNetwork;
             signalToNetworkLength = 0;
-            inDirection = !other.hostNode.isInDirectionOf(lastTrack);
 
         } else {
-            List<NetworkNode.Direction> directions = !inSameDirection ? otherNetwork.getEntriesB() : otherNetwork.getEntriesA();
+            List<NetworkNode.Direction> directions = inDirection ? otherNetwork.getEntriesA() : otherNetwork.getEntriesB();
             assert directions.size() == 1; // !networkNode.isNetworkCritical() => !networkNode.isSwitch()
 
             NetworkNode.Direction direction = directions.get(0);
@@ -283,7 +283,8 @@ public class Signal extends AbstractGameObject implements Entity {
         if (pathNetworkToTarget == null) {
             return Float.POSITIVE_INFINITY; // no path exists
         }
-        return signalToNetworkLength + pathNetworkToTarget.getPathLength();
+
+        return pathToSignal.adjLength() + signalToNetworkLength + pathNetworkToTarget.getPathLength();
     }
 
     /**
