@@ -28,6 +28,7 @@ public class RailNode {
 
     /** position of this node */
     private final Vector3fc position;
+    /** direction of this node, normalized */
     private final Vector3fc direction;
 
     /** type of tracks that this node connects */
@@ -45,7 +46,7 @@ public class RailNode {
             Vector3fc nodePoint, TrackType type, Vector3fc direction, NetworkNode networkNode
     ) {
         this.position = new Vector3f(nodePoint);
-        this.direction = new Vector3f(direction).normalize();
+        this.direction = new Vector3f(direction.x(), direction.y(), 0).normalize();
         this.type = type;
         this.networkNode = networkNode;
     }
@@ -66,10 +67,16 @@ public class RailNode {
         return position;
     }
 
+    /**
+     * @return normalized direction. NetworkNode A-side is in this direction
+     */
     public Vector3fc getDirection() {
         return direction;
     }
 
+    /**
+     * @return normalized direction d of this node, such that {@code point.sub(getPosition()).dot(d) > 0}
+     */
     public Vector3fc getDirectionTo(Vector3fc point) {
         Vector3f thisToOther = new Vector3f(point).sub(position);
         boolean isSameDirection = thisToOther.dot(direction) > 0;

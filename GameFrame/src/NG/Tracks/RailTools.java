@@ -27,7 +27,7 @@ public final class RailTools {
     private static final float MIN_CONNECT_ANGLE_RAD = Math.toRadians(0.5f);
     private static final float MIN_CONNECT_DOT = Math.cos(MIN_CONNECT_ANGLE_RAD);
 
-    private static final float MIN_TRACK_LENGTH = 1 / 4f;
+    private static final float MIN_TRACK_LENGTH = 0.25f;
     private static final float MAX_TRACK_LENGTH = 5;
 
     /**
@@ -210,17 +210,26 @@ public final class RailTools {
 
         Vector3f direction = new Vector3f(nodeDirection);
 
-        int sectionsPerSignal = 1;
-        float sectionAngle = spacing / circle.radius;
-        if (sectionAngle >= (float) PI * 2f) {
+        int sectionsPerSignal;
+        float sectionAngle;
+
+        if (spacing / circle.radius >= (float) PI * 2f) {
             sectionAngle = MAX_CIRCLE_ANGLE_RAD;
             sectionsPerSignal = 0;
-        }
 
-        // sectionAngle is limited by MAX_CIRCLE_ANGLE_RAD, so we find a common divisor
-        while (sectionAngle > MAX_CIRCLE_ANGLE_RAD) {
-            sectionAngle /= 2;
-            sectionsPerSignal *= 2;
+        } else {
+            sectionsPerSignal = 1;
+            while (spacing > MAX_TRACK_LENGTH) {
+                spacing /= 2;
+                sectionsPerSignal *= 2;
+            }
+
+            sectionAngle = spacing / circle.radius;
+            // sectionAngle is also limited by MAX_CIRCLE_ANGLE_RAD, so we find a common divisor
+            while (sectionAngle > MAX_CIRCLE_ANGLE_RAD) {
+                sectionAngle /= 2;
+                sectionsPerSignal *= 2;
+            }
         }
 
         int offsetIndex = 0;
@@ -456,7 +465,7 @@ public final class RailTools {
         Vector3fc aDirection = aNode.getDirectionTo(bPos);
         Vector3fc bDirection = bNode.getDirectionTo(aPos);
 
-        if (aDirection.dot(bDirection) < -MIN_CONNECT_DOT) {
+        if (-aDirection.dot(bDirection) > MIN_CONNECT_DOT) { // minus as aDirection and bDirection are opposite
             Vector3f aToB = new Vector3f(bPos).sub(aPos);
             Vector3f middle = new Vector3f(aToB).mul(0.5f).add(aPos);
             float offset = getOffset(aNode, aDirection, signalDistance);

@@ -9,7 +9,6 @@ import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Settings.Settings;
 import NG.Tools.Logger;
-import NG.Tools.Vectors;
 import NG.Tracks.*;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -60,9 +59,6 @@ public class TrackBuilder extends AbstractMouseTool {
         switch (getMouseAction()) {
             case PRESS_ACTIVATE:
                 if (firstNode != null) {
-                    Logger.DEBUG.print("Placing track from " + Vectors.toString(firstNode.getPosition()) +
-                            " to " + Vectors.toString(liftedPosition));
-
                     List<TrackPiece> tracks = RailTools.createNew(game, firstNode, liftedPosition, signalDistance);
                     if (isValidTracks(tracks)) {
                         assert !tracks.isEmpty();
