@@ -51,7 +51,7 @@ public abstract class Scenario {
         // random map
         MapGeneratorMod mapGenerator = new DefaultMapGenerator(0);
         mapGenerator.setSize(X_SIZE, Y_SIZE);
-        mapGenerator.setProperty(DefaultMapGenerator.MAJOR_AMPLITUDE, 100);
+        mapGenerator.setProperty(DefaultMapGenerator.MAJOR_AMPLITUDE, 10);
         mapGenerator.setProperty(DefaultMapGenerator.MINOR_AMPLITUDE, 0);
         game.map().generateNew(game, mapGenerator);
     }

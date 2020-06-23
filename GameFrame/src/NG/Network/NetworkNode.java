@@ -396,7 +396,8 @@ public class NetworkNode {
                 .allMatch(a -> a.network.getAllEntries().stream()
                         .filter(b -> b.network == aNode)
                         .anyMatch(b -> Math.abs(a.distanceToNetworkNode - b.distanceToNetworkNode) < 0.001)
-                ) : entries;
+                ) :
+                entries;
         // if this is a network node, we find ourself on the side predicted by networkIsInDirection
         assert !aNode.isNetworkCritical() || entries.stream()
                 .filter(e -> e.network != null)

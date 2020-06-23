@@ -20,12 +20,15 @@ import static java.lang.StrictMath.PI;
  * @author Geert van Ieperen created on 1-5-2020.
  */
 public final class RailTools {
-    private static final float STRAIGHT_MAX_ANGLE_DEG = 2f;
-    private static final float STRAIGHT_DOT_LIMIT = Math.cos(Math.toRadians(STRAIGHT_MAX_ANGLE_DEG));
+    private static final float STRAIGHT_SNAP_ANGLE_RAD = Math.toRadians(2f);
+    private static final float STRAIGHT_DOT_LIMIT = Math.cos(STRAIGHT_SNAP_ANGLE_RAD);
 
     private static final float MAX_CIRCLE_ANGLE_RAD = Math.toRadians(90);
-    private static final float MINIMUM_CONNECT_ANGLE = 1 / 64f;
-    private static final float MINIMUM_TRACK_LENGTH = 1 / 4f;
+    private static final float MIN_CONNECT_ANGLE_RAD = Math.toRadians(0.5f);
+    private static final float MIN_CONNECT_DOT = Math.cos(MIN_CONNECT_ANGLE_RAD);
+
+    private static final float MIN_TRACK_LENGTH = 1 / 4f;
+    private static final float MAX_TRACK_LENGTH = 5;
 
     /**
      * creates two nodes that are only connected together with a straight piece of track.
@@ -40,9 +43,9 @@ public final class RailTools {
             Game game, TrackType type, Vector3fc aPosition, Vector3fc bPosition, float signalDistance
     ) {
         Vector3f sub = new Vector3f(bPosition).sub(aPosition);
-        if (sub.length() < MINIMUM_TRACK_LENGTH) return Collections.emptyList();
+        if (sub.length() < MIN_TRACK_LENGTH) return Collections.emptyList();
 
-        return getStraightPieces(game, new RailNode(aPosition, type, sub), bPosition, null, signalDistance, 0);
+        return getStraightPieces(game, new RailNode(aPosition, type, sub), bPosition, null, signalDistance, signalDistance);
     }
 
     /**
@@ -58,7 +61,7 @@ public final class RailTools {
         Vector3f toNew = new Vector3f(newPosition).sub(nodePosition);
 
         float length = toNew.length();
-        if (length < MINIMUM_TRACK_LENGTH) return Collections.emptyList();
+        if (length < MIN_TRACK_LENGTH) return Collections.emptyList();
         toNew.div(length); // normalize toNew
 
         NetworkNode networkNode = node.getNetworkNode();
@@ -85,7 +88,7 @@ public final class RailTools {
      * @param node        node A
      * @param endNode     node B, may be null
      * @param endPosition position of node B
-     * @param spacing     maximum length of the generated track pieces
+     * @param spacing     maximum length of the generated track pieces, larger than zero
      * @param offset      minimum length of the first track
      * @return an ordered list of tracks from A to B, where each track is at most {@code spacing} {@link
      * TrackPiece#getLength() length}. If {@code endNode} is not null, the last track has it as {@link
@@ -95,7 +98,8 @@ public final class RailTools {
             Game game, RailNode node, Vector3fc endPosition, RailNode endNode, float spacing, float offset
     ) {
         assert offset >= 0;
-        assert offset <= spacing; // spacing >= 0
+        assert spacing > 0;
+        assert offset <= spacing;
         if (offset == 0) {
             if (Float.isFinite(spacing)) {
                 node.addSignal(game);
@@ -109,18 +113,50 @@ public final class RailTools {
         float totalLength = AToB.length();
         assert totalLength > 0;
 
+        float sectionLength;
+        float sectionsPerSignal = 1;
+
+        if (Float.isInfinite(spacing)) {
+            sectionLength = MAX_TRACK_LENGTH;
+            sectionsPerSignal = 0;
+
+        } else {
+            sectionLength = spacing;
+            // sectionLength is limited by MAX_TRACK_LENGTH, so we find a common divisor
+            while (sectionLength > MAX_TRACK_LENGTH) {
+                sectionLength /= 2;
+                sectionsPerSignal *= 2;
+            }
+        }
+
+        int offsetIndex = 0;
+        float offsetDistance = offset;
+        if (Float.isInfinite(offsetDistance)) {
+            offsetDistance = sectionLength;
+
+        } else {
+            // offset may not be larger than a section
+            while (offsetDistance > sectionLength + MIN_TRACK_LENGTH) {
+                offsetIndex++;
+                offsetDistance -= sectionLength;
+            }
+        }
+
         if (offset < totalLength) {
             AToB.div(totalLength);
 
             // iterations except the last
-            int maxItr = (int) (((totalLength - offset) / spacing) - MINIMUM_TRACK_LENGTH);
+            int maxItr = (int) (((totalLength - offsetDistance) / sectionLength));
             for (int i = 0; i <= maxItr; i++) {
-                float distance = offset + i * spacing;
+                float distance = offsetDistance + i * sectionLength;
 
                 Vector3f localEndPos = new Vector3f(AToB).mul(distance).add(initialNodePos);
                 TrackPiece trackConnection = new StraightTrack(game, node.getType(), node, localEndPos, true);
                 node = trackConnection.getEndNode();
-                node.addSignal(game);
+
+                if (sectionsPerSignal > 0 && i % sectionsPerSignal == offsetIndex) {
+                    node.addSignal(game);
+                }
 
                 tracks.add(trackConnection);
             }
@@ -152,6 +188,7 @@ public final class RailTools {
             float spacing, float offset
     ) {
         assert offset >= 0;
+        assert spacing > 0;
         assert offset <= spacing;
         if (offset == 0) {
             if (Float.isFinite(spacing)) {
@@ -173,17 +210,17 @@ public final class RailTools {
 
         Vector3f direction = new Vector3f(nodeDirection);
 
-        int signalDistance = 1;
+        int sectionsPerSignal = 1;
         float sectionAngle = spacing / circle.radius;
         if (sectionAngle >= (float) PI * 2f) {
             sectionAngle = MAX_CIRCLE_ANGLE_RAD;
-            signalDistance = 0;
+            sectionsPerSignal = 0;
         }
 
         // sectionAngle is limited by MAX_CIRCLE_ANGLE_RAD, so we find a common divisor
         while (sectionAngle > MAX_CIRCLE_ANGLE_RAD) {
             sectionAngle /= 2;
-            signalDistance *= 2;
+            sectionsPerSignal *= 2;
         }
 
         int offsetIndex = 0;
@@ -193,7 +230,7 @@ public final class RailTools {
 
         } else {
             // offset may not be larger than a section
-            while (offsetAngle > sectionAngle + MINIMUM_CONNECT_ANGLE) {
+            while (offsetAngle > sectionAngle + 0.5f) {
                 offsetIndex++;
                 offsetAngle -= sectionAngle;
             }
@@ -229,7 +266,7 @@ public final class RailTools {
 
                 Vector3f localEndPos = new Vector3f(circle.center, baseHeight).add(vx, vy, vz);
                 // rather than computing how MINIMUM_TRACK_LENGTH translates to iterations, we do it this way
-                if (localEndPos.distance(endPosition) < MINIMUM_TRACK_LENGTH) {
+                if (localEndPos.distance(endPosition) < MIN_TRACK_LENGTH) {
                     nextAngle = currentAngle; // revert
                     break;
                 }
@@ -237,7 +274,7 @@ public final class RailTools {
                 TrackPiece trackConnection = new CircleTrack(game, node.getType(), node, direction, localEndPos);
                 node = trackConnection.getEndNode();
 
-                if (signalDistance > 0 && i % signalDistance == offsetIndex) {
+                if (sectionsPerSignal > 0 && i % sectionsPerSignal == offsetIndex) {
                     node.addSignal(game);
                 }
 
@@ -322,10 +359,10 @@ public final class RailTools {
 
         // if the new node is almost on the same position of an existing node, return that existing node.
         float trackLength = trackPiece.getLength();
-        if (trackLength * fraction < MINIMUM_TRACK_LENGTH) {
+        if (trackLength * fraction < MIN_TRACK_LENGTH) {
             return aNode;
         }
-        if (trackLength * (1 - fraction) < MINIMUM_TRACK_LENGTH) {
+        if (trackLength * (1 - fraction) < MIN_TRACK_LENGTH) {
             return bNode;
         }
 
@@ -419,16 +456,16 @@ public final class RailTools {
         Vector3fc aDirection = aNode.getDirectionTo(bPos);
         Vector3fc bDirection = bNode.getDirectionTo(aPos);
 
-        if (aDirection.angle(bDirection) < MINIMUM_CONNECT_ANGLE) {
+        if (aDirection.dot(bDirection) < -MIN_CONNECT_DOT) {
             Vector3f aToB = new Vector3f(bPos).sub(aPos);
             Vector3f middle = new Vector3f(aToB).mul(0.5f).add(aPos);
             float offset = getOffset(aNode, aDirection, signalDistance);
 
-            if (aToB.normalize().dot(aDirection) > (1 - MINIMUM_CONNECT_ANGLE)) {
+            if (aToB.normalize().dot(aDirection) > MIN_CONNECT_DOT) {
                 return getStraightPieces(game, aNode, bPos, bNode, signalDistance, offset);
 
             } else {
-                Vector3f middleDirection = new Vector3f(aDirection).reflect(aToB); // quick math
+                Vector3f middleDirection = new Vector3f(aDirection).negate().reflect(aToB); // quick math
                 RailNode middleNode = new RailNode(middle, aNode.getType(), middleDirection);
                 List<TrackPiece> circlePieces = getCirclePieces(game, aNode, aDirection, middle, middleNode, signalDistance, offset);
 
@@ -463,7 +500,7 @@ public final class RailTools {
         // get initial offset
         float offset = getOffset(aNode, aDirection, signalDistance);
 
-        if (!doesIntersect || Math.abs(aDistance - bDistance) < MINIMUM_TRACK_LENGTH) {
+        if (!doesIntersect || Math.abs(aDistance - bDistance) < MIN_TRACK_LENGTH) {
             return getCirclePieces(game, aNode, aDirection, bPos, bNode, signalDistance, offset);
 
         } else if (aDistance > bDistance) {
