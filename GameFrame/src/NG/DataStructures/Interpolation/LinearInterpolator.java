@@ -1,7 +1,6 @@
 package NG.DataStructures.Interpolation;
 
 import NG.DataStructures.Generic.BlockingTimedArrayQueue;
-import NG.Tools.AutoLock;
 
 import java.util.Iterator;
 
@@ -37,31 +36,29 @@ public abstract class LinearInterpolator<T> extends BlockingTimedArrayQueue<T> {
     /**
      * @return the interpolated object defined by implementation
      */
-    public T getInterpolated(double timeStamp) {
-        try (AutoLock.Section section = changeLock.open()) {
-            assert timeStamps.size() > 1 : timeStamps;
+    public synchronized T getInterpolated(double timeStamp) {
+        assert timeStamps.size() > 1 : timeStamps;
 
-            Iterator<Double> times = timeStamps.iterator();
-            Iterator<T> things = elements.iterator();
+        Iterator<Double> times = timeStamps.iterator();
+        Iterator<T> things = elements.iterator();
 
-            T firstElt;
-            double firstTime;
-            double secondTime = times.next();
+        T firstElt;
+        double firstTime;
+        double secondTime = times.next();
 
-            // consider the next time period, and check whether timeStamp falls in it
-            do {
-                firstElt = things.next();
-                firstTime = secondTime;
-                secondTime = times.next();
-            } while (secondTime < timeStamp && times.hasNext());
+        // consider the next time period, and check whether timeStamp falls in it
+        do {
+            firstElt = things.next();
+            firstTime = secondTime;
+            secondTime = times.next();
+        } while (secondTime < timeStamp && times.hasNext());
 
 
-            float fraction = (float) ((timeStamp - firstTime) / (secondTime - firstTime));
-            if (Float.isNaN(fraction)) return firstElt;
+        float fraction = (float) ((timeStamp - firstTime) / (secondTime - firstTime));
+        if (Float.isNaN(fraction)) return firstElt;
 
-            T secondElt = things.next();
-            return interpolate(firstElt, secondElt, fraction);
-        }
+        T secondElt = things.next();
+        return interpolate(firstElt, secondElt, fraction);
     }
 
     /**
@@ -75,27 +72,25 @@ public abstract class LinearInterpolator<T> extends BlockingTimedArrayQueue<T> {
      * @return the derivative of the value returned by getInterpolated(time)
      */
     public T getDerivative(double timeStamp) {
-        try (AutoLock.Section section = changeLock.open()) {
-            assert timeStamps.size() > 1 : timeStamps;
+        assert timeStamps.size() > 1 : timeStamps;
 
-            Iterator<Double> times = timeStamps.iterator();
-            Iterator<T> things = elements.iterator();
+        Iterator<Double> times = timeStamps.iterator();
+        Iterator<T> things = elements.iterator();
 
-            T firstElt = things.next();
-            double firstTime = times.next();
-            double secondTime = times.next();
+        T firstElt = things.next();
+        double firstTime = times.next();
+        double secondTime = times.next();
 
-            // consider the next time period, and check whether timeStamp falls in it
-            // we check from the 2nd time onwards to allow extrapolation
-            while (secondTime < timeStamp) {
-                firstElt = things.next();
-                firstTime = secondTime;
-                secondTime = times.next();
-            }
-
-            T secondElt = things.next();
-            return derivative(firstElt, secondElt, (float) (secondTime - firstTime));
+        // consider the next time period, and check whether timeStamp falls in it
+        // we check from the 2nd time onwards to allow extrapolation
+        while (secondTime < timeStamp) {
+            firstElt = things.next();
+            firstTime = secondTime;
+            secondTime = times.next();
         }
+
+        T secondElt = things.next();
+        return derivative(firstElt, secondElt, (float) (secondTime - firstTime));
     }
 
     protected abstract T derivative(T firstElt, T secondElt, float deltaTime);

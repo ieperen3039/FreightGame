@@ -1,7 +1,5 @@
 package NG.DataStructures.Generic;
 
-import NG.Tools.AutoLock;
-
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -13,9 +11,6 @@ import java.util.Iterator;
  * @author Geert van Ieperen created on 13-12-2017.
  */
 public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
-
-    /** prevents race-conditions upon adding and removing */
-    protected transient final AutoLock changeLock = new AutoLock.Instance();
 
     /** timestamps in seconds. Private, as semaphore must be handled */
     protected final Deque<Double> timeStamps;
@@ -30,107 +25,96 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
     }
 
     @Override
-    public void add(T element, double timeStamp) {
-        try (AutoLock.Section section = changeLock.open()) {
-            // act as refinement
-            while (!timeStamps.isEmpty() && timeStamps.peekLast() > timeStamp) {
-                timeStamps.removeLast();
-                elements.removeLast();
-            }
-
-            timeStamps.add(timeStamp);
-            elements.add(element);
+    public synchronized void add(T element, double timeStamp) {
+        // act as refinement
+        while (!timeStamps.isEmpty() && timeStamps.peekLast() > timeStamp) {
+            timeStamps.removeLast();
+            elements.removeLast();
         }
+
+        timeStamps.add(timeStamp);
+        elements.add(element);
+
     }
 
     @Override
-    public T getNext(double timeStamp) {
-        try (AutoLock.Section section = changeLock.open()) {
-            if (timeStamps.isEmpty()) return null;
+    public synchronized T getNext(double timeStamp) {
+        if (timeStamps.isEmpty()) return null;
 
-            Iterator<Double> times = timeStamps.iterator();
-            Iterator<T> things = elements.iterator();
+        Iterator<Double> times = timeStamps.iterator();
+        Iterator<T> things = elements.iterator();
 
-            T element = things.next();
-            double nextElementStart = times.next();
+        T element = things.next();
+        double nextElementStart = times.next();
 
-            while (nextElementStart <= timeStamp) {
-                if (!times.hasNext()) return things.next();
+        while (nextElementStart <= timeStamp) {
+            if (!times.hasNext()) return things.next();
 
-                element = things.next();
-                nextElementStart = times.next();
-            }
-
-            return element;
+            element = things.next();
+            nextElementStart = times.next();
         }
+
+        return element;
     }
 
     @Override
-    public T getPrevious(double timeStamp) {
-        try (AutoLock.Section section = changeLock.open()) {
-            if (timeStamps.isEmpty()) return null;
+    public synchronized T getPrevious(double timeStamp) {
+        if (timeStamps.isEmpty()) return null;
 
-            Iterator<Double> times = timeStamps.iterator();
-            Iterator<T> things = elements.iterator();
+        Iterator<Double> times = timeStamps.iterator();
+        Iterator<T> things = elements.iterator();
 
-            // there is no action until the first timestamp
-            T element = null;
-            double nextElementStart = times.next();
+        // there is no action until the first timestamp
+        T element = null;
+        double nextElementStart = times.next();
 
-            while (nextElementStart < timeStamp) {
-                if (!times.hasNext()) return things.next();
+        while (nextElementStart < timeStamp) {
+            if (!times.hasNext()) return things.next();
 
-                element = things.next();
-                nextElementStart = times.next();
-            }
-
-            return element;
+            element = things.next();
+            nextElementStart = times.next();
         }
+
+        return element;
     }
 
     @Override
-    public double timeOfNext(double timeStamp) {
-        try (AutoLock.Section section = changeLock.open()) {
-            if (timeStamps.isEmpty()) throw new IllegalStateException("empty");
+    public synchronized double timeOfNext(double timeStamp) {
+        if (timeStamps.isEmpty()) throw new IllegalStateException("empty");
 
-            Iterator<Double> times = timeStamps.iterator();
-            double nextActionStart = times.next();
+        Iterator<Double> times = timeStamps.iterator();
+        double nextActionStart = times.next();
 
-            while (nextActionStart < timeStamp && times.hasNext()) {
-                nextActionStart = times.next();
-            }
-
-            return nextActionStart;
+        while (nextActionStart < timeStamp && times.hasNext()) {
+            nextActionStart = times.next();
         }
+
+        return Math.max(nextActionStart, timeStamp);
     }
 
     @Override
-    public double timeOfPrevious(double timeStamp) {
-        try (AutoLock.Section section = changeLock.open()) {
-            if (timeStamps.isEmpty()) throw new IllegalStateException("empty");
+    public synchronized double timeOfPrevious(double timeStamp) {
+        if (timeStamps.isEmpty()) throw new IllegalStateException("empty");
 
-            Iterator<Double> times = timeStamps.iterator();
-            double previousActionStart = times.next();
+        Iterator<Double> times = timeStamps.iterator();
+        double previousActionStart = times.next();
 
-            if (!times.hasNext()) {
-                return timeStamp - previousActionStart;
-            }
-
-            double next = times.next();
-            while (times.hasNext() && next < timeStamp) {
-                previousActionStart = next;
-                next = times.next();
-            }
-            return previousActionStart;
+        if (!times.hasNext()) {
+            return Math.min(timeStamp, previousActionStart);
         }
+
+        double next = times.next();
+        while (times.hasNext() && next < timeStamp) {
+            previousActionStart = next;
+            next = times.next();
+        }
+        return previousActionStart;
     }
 
     @Override
-    public void removeUntil(double timeStamp) {
-        try (AutoLock.Section section = changeLock.open()) {
-            while ((timeStamps.size() > 1) && (timeStamp > nextTimeStamp())) {
-                progress();
-            }
+    public synchronized void removeUntil(double timeStamp) {
+        while ((timeStamps.size() > 1) && (timeStamp > nextTimeStamp())) {
+            progress();
         }
     }
 
