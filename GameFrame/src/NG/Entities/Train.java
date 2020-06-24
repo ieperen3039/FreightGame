@@ -59,6 +59,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
 
     @Override
     public void update() {
+        double gameTime = game.timer().getGameTime();
         positionEngine.update();
 
         Schedule.Node currentTarget = getCurrentTarget();
@@ -69,7 +70,6 @@ public class Train extends AbstractGameObject implements MovingEntity {
             if (target instanceof Station) {
                 Station station = (Station) target;
 
-                double gameTime = game.timer().getGameTime();
                 TrackPiece currentTrack = positionEngine.getTracksAt(gameTime).left;
                 RailNode endNodeR = currentTrack.getEndNode();
                 NetworkNode endNodeN = endNodeR.getNetworkNode();
@@ -95,6 +95,8 @@ public class Train extends AbstractGameObject implements MovingEntity {
                 }
             }
         }
+
+        positionEngine.discardUpTo(gameTime - 1.0);
     }
 
     /** station -> train */
@@ -284,6 +286,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
     @Override
     public void despawn(double gameTime) {
         despawnTime = gameTime;
+        positionEngine.removePath();
     }
 
     @Override

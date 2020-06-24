@@ -60,9 +60,9 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
 
     private float maxSpeed = 0;
 
-    private LongInterpolator totalMillimeters;
-    private FloatInterpolator totalToLocalDistance; // maps total distance to track distance
-    private BlockingTimedArrayQueue<Pair<TrackPiece, Boolean>> tracks; // maps total distance to track, includes currentTrack
+    private LongInterpolator totalMillimeters; // maps time to total distance millimeters
+    private FloatInterpolator totalToLocalDistance; // maps total distance millimeters to track local distance
+    private BlockingTimedArrayQueue<Pair<TrackPiece, Boolean>> tracks; // maps total distance millimeters to track, includes currentTrack
 
     private float r1 = 1;
     private float r2 = 0;
@@ -70,7 +70,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
     private float invMass = 1;
     private float breakForce = 1;
 
-    private float trainLengthMillis = 0;
+    private long trainLengthMillis = 0;
     private float trainMaxSpeed = 1;
 
     private AveragingQueue accelerationAverage = new AveragingQueue((int) (0.1f / DELTA_TIME));
@@ -91,7 +91,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
 
         this.totalToLocalDistance = new FloatInterpolator(0, 0f, trackStartDistanceMillis, startPiece.getLength(), trackEndDistanceMillis);
         this.tracks = new BlockingTimedArrayQueue<>(0);
-        tracks.add(new Pair<>(startPiece, isPositiveDirection), trackStartDistanceMillis - 1);
+        tracks.add(new Pair<>(startPiece, isPositiveDirection), trackStartDistanceMillis);
 
         this.updateTime = spawnTime;
         this.isPositiveDirection = isPositiveDirection;
@@ -118,7 +118,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         this.r1 = R1;
         this.r2 = R2;
         this.breakForce = breakForce;
-        this.trainLengthMillis = trainLength * METERS_TO_MILLIS;
+        this.trainLengthMillis = (long) (trainLength * METERS_TO_MILLIS);
         this.trainMaxSpeed = trainMaxSpeed;
     }
 
@@ -259,7 +259,8 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
 
             accelerationAverage.add(accelerationFraction);
 
-            TrackPiece prePiece = tracks.getPrevious(currentTotalMillis - trainLengthMillis).left;
+            // track our tail was on the previous tick (+1 to include equal)
+            TrackPiece prePiece = tracks.getPrevious(currentTotalMillis - trainLengthMillis + 1).left;
 
             // update position
             // s = vt + at^2 // movement in meters
@@ -268,8 +269,8 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
             totalMillimeters.add(currentTotalMillis, updateTime);
 
 
-            // if a track is left, free it
-            TrackPiece postPiece = tracks.getPrevious(currentTotalMillis - trainLengthMillis).left;
+            // track our tail is now. when leaving a track, free it
+            TrackPiece postPiece = tracks.getPrevious(currentTotalMillis - trainLengthMillis + 1).left;
             if (prePiece != postPiece) {
                 prePiece.setOccupied(false);
             }
@@ -347,9 +348,10 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
     private void executeReversal() {
         isPositiveDirection = !isPositiveDirection;
 
+        // distance from start of track to currentTotalMillis
         long passedDistance = (long) (currentTrack.getLength() * METERS_TO_MILLIS - (trackEndDistanceMillis - currentTotalMillis));
         trackEndDistanceMillis = currentTotalMillis + passedDistance;
-        double startDistanceMillis = tracks.timeOfNext(currentTotalMillis);
+        double startDistanceMillis = currentTotalMillis - passedDistance;
 
         float localDistance = totalToLocalDistance.getInterpolated(currentTotalMillis);
         totalToLocalDistance.add(localDistance, currentTotalMillis); // overrides later elements
@@ -357,14 +359,13 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
 
         tracks.add(new Pair<>(currentTrack, isPositiveDirection), currentTotalMillis);
 
+
         currentTotalMillis += trainLengthMillis;
         activeSpeedTargets.clear();
         clearPath();
 
+        Pair<TrackPiece, Boolean> previous = tracks.getPrevious(startDistanceMillis);
         while (currentTotalMillis > trackEndDistanceMillis) {
-            Pair<TrackPiece, Boolean> previous = tracks.getPrevious(startDistanceMillis);
-            startDistanceMillis = tracks.timeOfPrevious(startDistanceMillis);
-
             TrackPiece track = previous.left;
             commitTrack(track, !previous.right);
 
@@ -538,7 +539,9 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         update(time);
 
         double totalMillis = totalMillimeters.getInterpolated(time) + displacement * METERS_TO_MILLIS;
-        TrackPiece track = tracks.getPrevious(totalMillis).left;
+        Pair<TrackPiece, Boolean> previous = tracks.getPrevious(totalMillis);
+        if (previous == null) previous = tracks.getNext(totalMillis);
+        TrackPiece track = previous.left;
         float localDistance = totalToLocalDistance.getInterpolated(totalMillis);
 
         float fractionTravelled = localDistance / track.getLength();
@@ -583,15 +586,25 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         return Vectors.xTo(direction);
     }
 
-    public void discardUpTo(float time) {
-        float distance = totalMillimeters.getInterpolated(time);
+    public void discardUpTo(double time) {
+        long distance = totalMillimeters.getInterpolated(time);
+        double totalMillimetersMinimum = totalToLocalDistance.timeOfPrevious(distance - trainLengthMillis);
+        distance = (long) totalMillimetersMinimum;
+
         totalMillimeters.removeUntil(time);
         totalToLocalDistance.removeUntil(distance);
         tracks.removeUntil(distance);
     }
 
     public boolean hasPath() {
-        return scanTrackEndMillis > getBreakDistanceMillis(speed, 0);
+        return reservedPath.isEmpty();
+    }
+
+    public void removePath() {
+        for (TrackPiece trackPiece : reservedPath) {
+            trackPiece.setOccupied(false);
+        }
+        reservedPath.clear();
     }
 
     private class SpeedTarget implements Comparable<SpeedTarget> {

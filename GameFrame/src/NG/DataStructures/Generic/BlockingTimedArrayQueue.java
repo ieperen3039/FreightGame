@@ -11,8 +11,6 @@ import java.util.Iterator;
  * @author Geert van Ieperen created on 13-12-2017.
  */
 public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
-
-    /** timestamps in seconds. Private, as semaphore must be handled */
     protected final Deque<Double> timeStamps;
     protected final Deque<T> elements;
 

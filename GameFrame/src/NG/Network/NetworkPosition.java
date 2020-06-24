@@ -9,8 +9,17 @@ import java.util.List;
  * @author Geert van Ieperen created on 22-5-2020.
  */
 public interface NetworkPosition {
+    /**
+     * @return a list of (node, inDirection) pairs, where node is a node belonging to this NetworkPosition, and
+     * inDirection is true iff this this node accepts traffic coming from the bNodes side of node.
+     */
     List<Pair<NetworkNode, Boolean>> getNodes();
 
+    /**
+     * @param arrivalTrack the track adjacent to node, indicating direction (track -> node)
+     * @param node         the node to find
+     * @return true iff node is part of the nodes of this position, and the direction is correct.
+     */
     default boolean containsNode(TrackPiece arrivalTrack, NetworkNode node) {
         List<Pair<NetworkNode, Boolean>> targetNodes = getNodes();
 

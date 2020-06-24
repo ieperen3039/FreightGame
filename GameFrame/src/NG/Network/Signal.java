@@ -204,7 +204,7 @@ public class Signal extends AbstractGameObject implements Entity {
 
                 if (pathToNode != null) {
                     TrackPiece arrivalTrack = pathToNode.path.getLast();
-                    if (targetNode.left.isInDirectionOf(arrivalTrack) != targetNode.right) {
+                    if (targetNode.left.isInDirectionOf(arrivalTrack) == targetNode.right) {
                         float adjLength = pathToNode.adjLength();
                         if (adjLength < lengthOfBest) {
                             bestPath = pathToNode;
