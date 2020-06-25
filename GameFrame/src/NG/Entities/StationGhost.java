@@ -17,6 +17,7 @@ import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.GenericShapes;
 import NG.Tools.Vectors;
 import NG.Tracks.TrackType;
+import org.joml.AABBf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -25,7 +26,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static NG.Entities.StationImpl.HEIGHT_BELOW_STATION;
 import static NG.Entities.StationImpl.PLATFORM_SIZE;
+import static NG.Tools.Vectors.cos;
+import static NG.Tools.Vectors.sin;
 
 /**
  * A basic implementation of a station. There is likely no need for another station
@@ -148,4 +152,19 @@ public class StationGhost extends AbstractGameObject implements Station {
         );
     }
 
+    @Override
+    public AABBf getHitbox() {
+        Vector3fc forward = new Vector3f(cos(orientation), sin(orientation), 0).normalize(length / 2f);
+        Vector3fc toRight = new Vector3f(sin(orientation), -cos(orientation), 0).normalize(realWidth / 2f);
+
+        AABBf hitbox = new AABBf();
+        Vector3f point = new Vector3f();
+        hitbox.union(point.set(position).add(forward).add(toRight));
+        hitbox.union(point.set(position).add(forward).sub(toRight));
+        hitbox.union(point.set(position).sub(forward).add(toRight));
+        hitbox.union(point.set(position).sub(forward).sub(toRight));
+        hitbox.minZ = position.z() - HEIGHT_BELOW_STATION;
+        hitbox.maxZ = position.z() + HEIGHT;
+        return hitbox;
+    }
 }

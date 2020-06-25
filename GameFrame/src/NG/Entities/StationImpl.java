@@ -24,6 +24,7 @@ import NG.Tools.Vectors;
 import NG.Tracks.StraightTrack;
 import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
+import org.joml.AABBf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -39,6 +40,7 @@ import static NG.Tools.Vectors.sin;
 public class StationImpl extends Storage implements Station {
     public static final float PLATFORM_SIZE = 1.2f;
     public static final float HEIGHT = 0.1f;
+    public static final float HEIGHT_BELOW_STATION = 2f;
     private static int nr = 1;
 
     protected String stationName = "Station " + (nr++);
@@ -54,6 +56,7 @@ public class StationImpl extends Storage implements Station {
     private final List<Industry> industries = new ArrayList<>();
     // make sure only one of each type is added to this collection
     private final Set<CargoType> industryAcceptedCargo = new HashSet<>();
+    private final AABBf hitbox;
 
     public StationImpl(
             Game game, int numberOfPlatforms, int length, TrackType type, Vector3fc position, float orientation,
@@ -71,18 +74,18 @@ public class StationImpl extends Storage implements Station {
         float trackHeight = HEIGHT + 0.1f;
 
         Vector3fc forward = new Vector3f(cos(orientation), sin(orientation), 0).normalize(length / 2f);
-        Vector3f AToB = new Vector3f(forward).normalize();
-        Vector3f BToA = new Vector3f(AToB).negate();
+        Vector3fc toRight = new Vector3f(sin(orientation), -cos(orientation), 0).normalize(realWidth / 2f);
+        Vector3fc AToB = new Vector3f(forward).normalize();
+        Vector3fc BToA = new Vector3f(AToB).negate();
 
         forwardConnections = new RailNode[numberOfPlatforms];
         backwardConnections = new RailNode[numberOfPlatforms];
 
         // create nodes
         if (numberOfPlatforms > 1) {
-            Vector3fc toRight = new Vector3f(sin(orientation), -cos(orientation), 0).normalize(realWidth / 2f);
             Vector3fc rightSkip = new Vector3f(toRight).normalize(PLATFORM_SIZE);
 
-            Vector3f rightMiddle = new Vector3f(getPosition())
+            Vector3f rightMiddle = new Vector3f(position)
                     .sub(toRight)
                     .add(rightSkip.x() / 2, rightSkip.y() / 2, trackHeight);
 
@@ -97,8 +100,8 @@ public class StationImpl extends Storage implements Station {
             }
 
         } else { // simplified version of above
-            Vector3f frontPos = new Vector3f(getPosition()).add(forward).add(0, 0, trackHeight);
-            Vector3f backPos = new Vector3f(getPosition()).sub(forward).add(0, 0, trackHeight);
+            Vector3f frontPos = new Vector3f(position).add(forward).add(0, 0, trackHeight);
+            Vector3f backPos = new Vector3f(position).sub(forward).add(0, 0, trackHeight);
 
             createNodes(type, AToB, BToA, frontPos, backPos, 0);
         }
@@ -113,10 +116,19 @@ public class StationImpl extends Storage implements Station {
             game.state().addEntity(trackConnection);
         }
 
+        hitbox = new AABBf();
+        Vector3f point = new Vector3f();
+        hitbox.union(point.set(position).add(forward).add(toRight));
+        hitbox.union(point.set(position).add(forward).sub(toRight));
+        hitbox.union(point.set(position).sub(forward).add(toRight));
+        hitbox.union(point.set(position).sub(forward).sub(toRight));
+        hitbox.minZ = position.z() - HEIGHT_BELOW_STATION;
+        hitbox.maxZ = position.z() + HEIGHT;
+
         recalculateNearbyIndustries();
     }
 
-    private void createNodes(TrackType type, Vector3f AToB, Vector3f BToA, Vector3f aPos, Vector3f bPos, int index) {
+    private void createNodes(TrackType type, Vector3fc AToB, Vector3fc BToA, Vector3f aPos, Vector3f bPos, int index) {
         assert AToB.lengthSquared() > 0 : AToB;
         assert BToA.lengthSquared() > 0 : BToA;
 
@@ -156,9 +168,8 @@ public class StationImpl extends Storage implements Station {
 
             boolean isClickShader = gl.getShader() instanceof ClickShader;
             if (!isClickShader) {
-                float sink = 2f; // size below ground
                 gl.translate(0, 0, -1f);
-                gl.scale(1, 1, sink / HEIGHT);
+                gl.scale(1, 1, HEIGHT_BELOW_STATION / HEIGHT);
                 gl.translate(0, 0, -1f);
                 MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.BLACK));
                 gl.render(GenericShapes.CUBE, this);
@@ -251,6 +262,11 @@ public class StationImpl extends Storage implements Station {
     public Valuta sell(Cargo cargo) {
         // TODO
         return Valuta.ofUnitValue(100_000);
+    }
+
+    @Override
+    public AABBf getHitbox() {
+        return hitbox;
     }
 
     protected class StationUI extends SFrame {

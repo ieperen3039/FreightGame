@@ -2,6 +2,8 @@ package NG.GameState;
 
 import NG.Core.AbstractGameLoop;
 import NG.Core.Game;
+import NG.DataStructures.Collision.StaticCollisionDetection;
+import NG.DataStructures.Collision.StaticEntity;
 import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
 import NG.InputHandling.ClickShader;
@@ -10,9 +12,7 @@ import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
-import NG.Rendering.Shapes.Primitives.Collision;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
 public class GameLoop extends AbstractGameLoop implements GameState {
+    private final StaticCollisionDetection collider;
     private final List<Entity> entities;
     private final List<Entity> newEntities;
 
@@ -38,6 +39,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         this.entities = new ArrayList<>();
         this.newEntities = new ArrayList<>();
         this.postUpdateActionQueue = new ConcurrentLinkedDeque<>();
+        this.collider = new StaticCollisionDetection();
     }
 
     @Override
@@ -72,6 +74,15 @@ public class GameLoop extends AbstractGameLoop implements GameState {
 
     private synchronized void updateEntityList() {
         entities.addAll(newEntities);
+
+        List<StaticEntity> collect = new ArrayList<>();
+        for (Entity entity : newEntities) {
+            if (entity instanceof StaticEntity) {
+                collect.add((StaticEntity) entity);
+            }
+        }
+        collider.addAll(collect);
+
         newEntities.clear();
     }
 
@@ -90,11 +101,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         }
     }
 
-    @Override
-    public Collision getEntityCollision(Vector3fc from, Vector3fc to) {
-        return null;
-    }
-
     /** executes action after a gameloop completes */
     public void defer(Runnable action) {
         postUpdateActionQueue.offer(action);
@@ -110,6 +116,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     /** remove all entities from the entity list that have their doRemove flag true */
     private void runCleaning() {
         entities.removeIf(entity -> entity.isDespawnedAt(game.timer().getRenderTime()));
+        collider.removeIf(entity -> entity.isDespawnedAt(game.timer().getRenderTime()));
     }
 
     @Override
@@ -132,6 +139,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     public synchronized void cleanup() {
         newEntities.clear();
         entities.clear();
+        collider.cleanup();
         postUpdateActionQueue.clear();
     }
 }

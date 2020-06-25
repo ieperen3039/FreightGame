@@ -5,9 +5,7 @@ import NG.Core.GameAspect;
 import NG.Entities.Entity;
 import NG.InputHandling.MouseTools.MouseTool;
 import NG.Rendering.MatrixStack.SGL;
-import NG.Rendering.Shapes.Primitives.Collision;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 
 import java.util.Collection;
 
@@ -28,14 +26,6 @@ public interface GameState extends GameAspect {
      * @param gl the gl object to draw with
      */
     void draw(SGL gl);
-
-    /**
-     * cast a ray into the world, and returns the first entity hit by this ray
-     * @param from starting position
-     * @param to   end position, maximum how far the ray goes
-     * @return the entity that is hit, or null if no such entity exists.
-     */
-    Collision getEntityCollision(Vector3fc from, Vector3fc to);
 
     /**
      * checks whether an input click can be handled by this object
