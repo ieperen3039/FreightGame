@@ -73,9 +73,10 @@ public class MainMenu extends SFrame {
     public static SToolBar getToolBar(Game game, ModLoader modLoader) {
         SToolBar toolBar = new SToolBar(game, true);
 
+        BuildMenu frame = new BuildMenu(game);
         toolBar.addButton(
                 "Build Object",
-                () -> game.gui().addFrame(new BuildMenu(game))
+                () -> game.gui().addFrame(frame)
         );
 
         toolBar.addButton("Dump Network", // find any networknode, and print getNetworkAsString
@@ -102,6 +103,15 @@ public class MainMenu extends SFrame {
                         .distinct()
                         .map(RailNode::getNetworkNode)
                         .forEach(NetworkNode::check)
+        );
+
+        SFrame optionsFrame = new SFrame("Options", SContainer.column(
+                new SToggleButton("Show CollisionBox", BUTTON_PROPERTIES_STRETCH, game.settings().RENDER_COLLISION_BOX)
+                        .addStateChangeListener((active -> game.settings().RENDER_COLLISION_BOX = active))
+        ));
+
+        toolBar.addButton("Options",
+                () -> game.gui().addFrame(optionsFrame)
         );
 
         toolBar.addButton("Exit", () -> {

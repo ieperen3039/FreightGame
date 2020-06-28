@@ -2,7 +2,7 @@ package NG.Tracks;
 
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
-import NG.Entities.Entity;
+import NG.DataStructures.Collision.ColliderEntity;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Network.NetworkNode;
@@ -10,6 +10,10 @@ import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
+import NG.Rendering.Shapes.GenericShapes;
+import NG.Resources.GeneratorResource;
+import NG.Resources.Resource;
+import org.joml.AABBf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -19,15 +23,17 @@ import java.util.List;
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
  */
-public abstract class TrackPiece extends AbstractGameObject implements Entity {
+public abstract class TrackPiece extends AbstractGameObject implements ColliderEntity {
     protected final TrackType type;
     protected final boolean isModifiable;
+    private Resource<AABBf> hitbox;
 
     protected double spawnTime = Double.NEGATIVE_INFINITY;
     protected double despawnTime = Double.POSITIVE_INFINITY;
 
     private boolean doRenderClickBox = false;
     private boolean isOccupied = false;
+    private Marking marking = new Marking();
 
     // if any of these is occupied, this is occupied as well
     private List<TrackPiece> entangledTracks = new ArrayList<>();
@@ -36,6 +42,8 @@ public abstract class TrackPiece extends AbstractGameObject implements Entity {
         super(game);
         this.type = type;
         isModifiable = modifiable;
+
+        hitbox = new GeneratorResource<>(this::computeHitbox);
     }
 
     @Override
@@ -75,7 +83,7 @@ public abstract class TrackPiece extends AbstractGameObject implements Entity {
         ShaderProgram shader = gl.getShader();
 
         if (shader instanceof MaterialShader) {
-            type.setMaterial((MaterialShader) shader, this);
+            type.setMaterial((MaterialShader) shader, this, marking);
         }
 
         gl.pushMatrix();
@@ -84,13 +92,38 @@ public abstract class TrackPiece extends AbstractGameObject implements Entity {
             draw(gl, renderClickBox);
         }
         gl.popMatrix();
+
+        if (game.settings().RENDER_COLLISION_BOX) {
+            getConvexCollisionShapes().forEach((shape, transform) -> {
+                gl.pushMatrix();
+                gl.multiplyAffine(transform);
+                for (Vector3fc point : shape.getPoints()) {
+                    gl.pushMatrix();
+                    gl.translate(point);
+                    gl.scale(0.1f);
+                    gl.render(GenericShapes.ICOSAHEDRON, this);
+                    gl.popMatrix();
+                }
+                gl.popMatrix();
+            });
+        }
     }
 
     protected abstract void draw(SGL gl, boolean clickBox);
 
     @Override
+    public AABBf getHitbox() {
+        return hitbox.get();
+    }
+
+    @Override
     public void reactMouse(AbstractMouseTool.MouseAction action) {
 
+    }
+
+    @Override
+    public void setMarking(Marking marking) {
+        this.marking = marking;
     }
 
     @Override
@@ -149,6 +182,11 @@ public abstract class TrackPiece extends AbstractGameObject implements Entity {
         if (getStartNode().getNetworkNode().equals(targetNode)) return getStartNode();
         if (getEndNode().getNetworkNode().equals(targetNode)) return getEndNode();
         return null;
+    }
+
+    public boolean isConnectedTo(TrackPiece other) {
+        return getStartNode() == other.getStartNode() || getStartNode() == other.getEndNode() ||
+                getEndNode() == other.getStartNode() || getEndNode() == other.getEndNode();
     }
 
     public static void entangleTrackOccupation(TrackPiece track, TrackPiece trackPiece) {

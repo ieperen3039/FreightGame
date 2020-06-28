@@ -55,6 +55,11 @@ public class SToggleButton extends STextComponent implements MouseClickListener,
         this.isPressed = false;
     }
 
+    public SToggleButton(String text, SComponentProperties properties, boolean initial) {
+        this(text, properties);
+        this.state = initial;
+    }
+
     @Override
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
         if (getWidth() == 0 || getHeight() == 0) return;

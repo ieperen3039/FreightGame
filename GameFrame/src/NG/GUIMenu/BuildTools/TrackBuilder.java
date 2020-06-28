@@ -1,6 +1,7 @@
 package NG.GUIMenu.BuildTools;
 
 import NG.Core.Game;
+import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
@@ -14,6 +15,8 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -29,6 +32,7 @@ public class TrackBuilder extends AbstractMouseTool {
     private final TrackTypeGhost ghostType;
     private List<TrackPiece> ghostTracks = new CopyOnWriteArrayList<>();
     private float signalDistance = 10f;
+    private Entity.Marking mark = new Entity.Marking();
 
     /**
      * this mousetool lets the player place a track by clicking on the map
@@ -55,6 +59,8 @@ public class TrackBuilder extends AbstractMouseTool {
 
     @Override
     public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
+        mark.invalidate();
+
         Vector3f liftedPosition = new Vector3f(position).add(0, 0, Settings.TRACK_HEIGHT_ABOVE_GROUND);
         switch (getMouseAction()) {
             case PRESS_ACTIVATE:
@@ -69,13 +75,15 @@ public class TrackBuilder extends AbstractMouseTool {
 
                 } else if (firstPosition != null) {
                     List<TrackPiece> tracks = RailTools.createNew(game, type, firstPosition, liftedPosition, signalDistance);
-                    assert !tracks.isEmpty();
-                    // no validation, as this is a straight track piece
-                    TrackPiece lastTrack = processTracksReturnLast(game, tracks);
-                    assert lastTrack != null;
-                    firstNode = lastTrack.getEndNode();
+                    if (isValidTracks(tracks)) {
+                        assert !tracks.isEmpty();
+                        // no validation, as this is a straight track piece
+                        TrackPiece lastTrack = processTracksReturnLast(game, tracks);
+                        assert lastTrack != null;
+                        firstNode = lastTrack.getEndNode();
 
-                    firstPosition = null;
+                        firstPosition = null;
+                    }
 
                 } else {
                     firstPosition = new Vector3f(liftedPosition);
@@ -89,12 +97,17 @@ public class TrackBuilder extends AbstractMouseTool {
                 if (firstNode != null) {
                     RailNode ghostNode = new RailNode(firstNode, ghostType);
                     List<TrackPiece> tracks = RailTools.createNew(game, ghostNode, liftedPosition, Float.POSITIVE_INFINITY);
+                    checkCollisions(tracks);
+
                     ghostTracks.addAll(tracks);
 
                 } else if (firstPosition != null) {
                     Vector3f toNode = new Vector3f(liftedPosition).sub(firstPosition);
                     RailNode ghostNode = new RailNode(firstPosition, ghostType, toNode, null);
-                    ghostTracks.add(new StraightTrack(game, ghostType, ghostNode, liftedPosition, true));
+                    StraightTrack track = new StraightTrack(game, ghostType, ghostNode, liftedPosition, true);
+                    checkCollisions(Collections.singletonList(track));
+
+                    ghostTracks.add(track);
                 }
 
                 return;
@@ -104,6 +117,8 @@ public class TrackBuilder extends AbstractMouseTool {
 
     @Override
     public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
+        mark.invalidate();
+
         switch (getMouseAction()) {
             case PRESS_ACTIVATE:
                 Logger.DEBUG.print("Clicked on entity " + entity);
@@ -148,7 +163,19 @@ public class TrackBuilder extends AbstractMouseTool {
                     Vector3f closestPoint = trackPiece.getPositionFromFraction(fraction);
 
                     if (firstNode == null) {
-                        // mark
+                        mark = new Entity.Marking(Color4f.BLUE);
+
+                        if (fraction == 0 || fraction == 1) {
+                            RailNode node = (fraction == 0) ? trackPiece.getStartNode() : trackPiece.getEndNode();
+
+                            // TODO mark node itself
+                            for (NetworkNode.Direction entry : node.getNetworkNode().getAllEntries()) {
+                                entry.trackPiece.setMarking(mark);
+                            }
+
+                        } else {
+                            trackPiece.setMarking(mark);
+                        }
 
                     } else {
                         RailNode ghostNodeFirst = new RailNode(firstNode, ghostType);
@@ -167,6 +194,7 @@ public class TrackBuilder extends AbstractMouseTool {
 
                         List<TrackPiece> connection =
                                 RailTools.createConnection(game, ghostNodeFirst, ghostNodeTarget, Float.POSITIVE_INFINITY);
+                        checkCollisions(connection);
 
                         ghostTracks.addAll(connection);
                     }
@@ -177,16 +205,47 @@ public class TrackBuilder extends AbstractMouseTool {
         }
     }
 
-    private static boolean isValidTracks(List<TrackPiece> tracks) {
+    private boolean isValidTracks(List<TrackPiece> tracks) {
+        if (checkCollisions(tracks)) return false;
+
         for (TrackPiece track : tracks) {
             if (track instanceof CircleTrack) {
                 float radius = ((CircleTrack) track).getRadius();
-                if (radius < TrackType.MINIMUM_RADIUS) {
+                if (type.getMaximumSpeed(radius) == 0) {
                     return false;
                 }
             }
         }
         return true;
+    }
+
+    protected boolean checkCollisions(List<TrackPiece> tracks) {
+        mark = new Entity.Marking(Color4f.RED);
+        boolean hasCollisions = false;
+
+        for (TrackPiece track : tracks) {
+            Collection<Entity> collisions = game.state().getCollisions(track);
+            collisions.removeIf(other -> other instanceof TrackPiece && isAdjacent(track, (TrackPiece) other));
+
+            if (!collisions.isEmpty()) {
+                track.setMarking(mark);
+                hasCollisions = true;
+
+                for (Entity other : collisions) {
+                    other.setMarking(mark);
+                }
+            }
+        }
+
+        return hasCollisions;
+    }
+
+    private static boolean isAdjacent(TrackPiece a, TrackPiece b) {
+        Vector3fc aStart = a.getStartNode().getPosition();
+        Vector3fc aEnd = a.getEndNode().getPosition();
+        Vector3fc bStart = b.getStartNode().getPosition();
+        Vector3fc bEnd = b.getEndNode().getPosition();
+        return aStart.equals(bStart) || aStart.equals(bEnd) || aEnd.equals(bStart) || aEnd.equals(bEnd);
     }
 
     /**

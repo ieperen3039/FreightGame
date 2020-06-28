@@ -3,6 +3,7 @@ package NG.Entities;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Generic.Pair;
+import NG.DataStructures.Generic.PairList;
 import NG.DataStructures.Valuta;
 import NG.Freight.Cargo;
 import NG.GUIMenu.Components.SActiveTextArea;
@@ -19,19 +20,16 @@ import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shapes.GenericShapes;
+import NG.Rendering.Shapes.Shape;
 import NG.Settings.Settings;
 import NG.Tools.Vectors;
 import NG.Tracks.StraightTrack;
 import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
-import org.joml.AABBf;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
+import org.joml.Math;
+import org.joml.*;
 
 import java.util.*;
-
-import static NG.Tools.Vectors.cos;
-import static NG.Tools.Vectors.sin;
 
 /**
  * A basic implementation of a station. There is likely no need for another station
@@ -41,6 +39,7 @@ public class StationImpl extends Storage implements Station {
     public static final float PLATFORM_SIZE = 1.2f;
     public static final float HEIGHT = 0.1f;
     public static final float HEIGHT_BELOW_STATION = 2f;
+    public static final float FLYING_CUBE_SIZE = 0.4f;
     private static int nr = 1;
 
     protected String stationName = "Station " + (nr++);
@@ -57,6 +56,8 @@ public class StationImpl extends Storage implements Station {
     // make sure only one of each type is added to this collection
     private final Set<CargoType> industryAcceptedCargo = new HashSet<>();
     private final AABBf hitbox;
+    private Marking marking = new Marking();
+    private PairList<Shape, Matrix4fc> collisionShape = new PairList<>(1);
 
     public StationImpl(
             Game game, int numberOfPlatforms, int length, TrackType type, Vector3fc position, float orientation,
@@ -73,8 +74,8 @@ public class StationImpl extends Storage implements Station {
 
         float trackHeight = HEIGHT + 0.1f;
 
-        Vector3fc forward = new Vector3f(cos(orientation), sin(orientation), 0).normalize(length / 2f);
-        Vector3fc toRight = new Vector3f(sin(orientation), -cos(orientation), 0).normalize(realWidth / 2f);
+        Vector3fc forward = new Vector3f(Math.cos(orientation), Math.sin(orientation), 0).normalize(length / 2f);
+        Vector3fc toRight = new Vector3f(Math.sin(orientation), -Math.cos(orientation), 0).normalize(realWidth / 2f);
         Vector3fc AToB = new Vector3f(forward).normalize();
         Vector3fc BToA = new Vector3f(AToB).negate();
 
@@ -125,6 +126,13 @@ public class StationImpl extends Storage implements Station {
         hitbox.minZ = position.z() - HEIGHT_BELOW_STATION;
         hitbox.maxZ = position.z() + HEIGHT;
 
+        Matrix4f transformation = new Matrix4f();
+        transformation.translate(getPosition());
+        transformation.rotateZ(orientation);
+
+        transformation.scale(length / 2f, realWidth / 2, HEIGHT); // half below ground
+        collisionShape.add(GenericShapes.CUBE, transformation);
+
         recalculateNearbyIndustries();
     }
 
@@ -157,7 +165,7 @@ public class StationImpl extends Storage implements Station {
             gl.pushMatrix();
             {
                 gl.translate(0, 0, 2);
-                gl.scale(0.2f, 0.2f, 0.2f);
+                gl.scale(FLYING_CUBE_SIZE, FLYING_CUBE_SIZE, FLYING_CUBE_SIZE);
                 gl.render(GenericShapes.CUBE, this);
             }
             gl.popMatrix();
@@ -171,7 +179,8 @@ public class StationImpl extends Storage implements Station {
                 gl.translate(0, 0, -1f);
                 gl.scale(1, 1, HEIGHT_BELOW_STATION / HEIGHT);
                 gl.translate(0, 0, -1f);
-                MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.BLACK));
+                Color4f color = marking.isValid() ? marking.color : Color4f.BLACK;
+                MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, color));
                 gl.render(GenericShapes.CUBE, this);
             }
         }
@@ -195,6 +204,11 @@ public class StationImpl extends Storage implements Station {
         }
     }
 
+    @Override
+    public void setMarking(Marking marking) {
+        this.marking = marking;
+    }
+
     public float getLength() {
         return length;
     }
@@ -209,7 +223,7 @@ public class StationImpl extends Storage implements Station {
     }
 
     public List<RailNode> getNodesOfDirection(Vector3fc direction) {
-        Vector3f stationDirection = new Vector3f(cos(orientation), sin(orientation), 0);
+        Vector3f stationDirection = new Vector3f(Math.cos(orientation), Math.sin(orientation), 0);
         if (stationDirection.dot(direction) > 0) {
             return List.of(forwardConnections);
 
@@ -267,6 +281,12 @@ public class StationImpl extends Storage implements Station {
     @Override
     public AABBf getHitbox() {
         return hitbox;
+    }
+
+
+    @Override
+    public PairList<Shape, Matrix4fc> getConvexCollisionShapes() {
+        return collisionShape;
     }
 
     protected class StationUI extends SFrame {

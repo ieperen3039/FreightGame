@@ -6,11 +6,11 @@ import org.joml.AABBf;
  * @author Geert van Ieperen created on 21-2-2020.
  */
 public class CollisionEntity {
-    private final StaticEntity entity;
+    private final ColliderEntity entity;
     private int id;
     public AABBf hitbox; // combined of both states
 
-    public CollisionEntity(StaticEntity source) {
+    public CollisionEntity(ColliderEntity source) {
         this.entity = source;
         hitbox = entity.getHitbox();
     }
@@ -23,7 +23,7 @@ public class CollisionEntity {
         this.id = id;
     }
 
-    public StaticEntity entity() {
+    public ColliderEntity entity() {
         return entity;
     }
 

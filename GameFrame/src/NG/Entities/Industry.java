@@ -24,6 +24,7 @@ public class Industry extends Storage {
 
     private final Properties properties;
     private double nextCargoSpawn;
+    private Marking marking = null;
 
     public Industry(
             Game game, Vector3fc position, double spawnTime, Properties properties
@@ -84,6 +85,11 @@ public class Industry extends Storage {
     @Override
     public void reactMouse(AbstractMouseTool.MouseAction action) {
 
+    }
+
+    @Override
+    public void setMarking(Marking marking) {
+        this.marking = marking;
     }
 
     @Override

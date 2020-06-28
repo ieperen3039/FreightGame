@@ -28,6 +28,25 @@ public interface Shape {
     /** @return the points of this plane in no specific order */
     Collection<Vector3fc> getPoints();
 
+    /**
+     * @param direction an unnormalized, localized direction
+     * @return the point of this shape furthest in the given direction
+     */
+    default Vector3fc getSupportPoint(Vector3fc direction) {
+        Vector3fc bestElement = null;
+        float bestValue = Float.NEGATIVE_INFINITY;
+
+        for (Vector3fc p : getPoints()) {
+            float newValue = direction.dot(p);
+            if (newValue > bestValue) {
+                bestValue = newValue;
+                bestElement = p;
+            }
+        }
+
+        return bestElement;
+    }
+
     static Resource<Shape> createResource(String... path) {
         return Resource.derive(MeshFile.createResource(Directory.meshes, path), MeshFile::getShape);
     }

@@ -1,8 +1,10 @@
 package NG.Tracks;
 
+import NG.Entities.Entity;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shapes.CustomShape;
+import NG.Rendering.Shapes.Shape;
 import NG.Settings.Settings;
 import NG.Tools.Vectors;
 import org.joml.Math;
@@ -42,10 +44,11 @@ public interface TrackType {
     /**
      * sets the material properties of this track in the shader. for example: {@code shader.setMaterial(Material.ROUGH,
      * Color4f.WHITE);}
-     * @param shader the current shader
+     * @param shader  the current shader
      * @param track
+     * @param marking
      */
-    void setMaterial(MaterialShader shader, TrackPiece track);
+    void setMaterial(MaterialShader shader, TrackPiece track, Entity.Marking marking);
 
     /** @return the maximum speed of a straight track */
     float getMaximumSpeed();
@@ -67,7 +70,7 @@ public interface TrackType {
         return generateFunctional(
                 t -> new Vector3f(displacement).mul(t),
                 t -> new Vector3f(displacement).div(length),
-                Settings.CLICK_BOX_WIDTH / 2, Settings.CLICK_BOX_HEIGHT / 2, 2
+                Settings.CLICK_BOX_WIDTH, Settings.CLICK_BOX_HEIGHT, 2
         ).toFlatMesh();
     }
 
@@ -80,8 +83,18 @@ public interface TrackType {
         return generateFunctional(
                 t -> new Vector3f(radius * Math.cos(angle * t), radius * Math.sin(angle * t), endHeight * t),
                 t -> new Vector3f(-Math.sin(angle * t), Math.cos(angle * t), hDelta).normalize(),
-                Settings.CLICK_BOX_WIDTH / 2, Settings.CLICK_BOX_HEIGHT / 2, resolution
+                Settings.CLICK_BOX_WIDTH, Settings.CLICK_BOX_HEIGHT, resolution
         ).toFlatMesh();
+    }
+
+    static Shape collisionBox(Vector3fc direction) {
+        float length = direction.length();
+
+        return generateFunctional(
+                t -> new Vector3f(direction).mul(t),
+                t -> new Vector3f(direction).div(length),
+                Settings.TRACK_WIDTH / 2, -Settings.TRACK_HEIGHT_SPACE, 1
+        ).toShape();
     }
 
     static CustomShape generateFunctional(

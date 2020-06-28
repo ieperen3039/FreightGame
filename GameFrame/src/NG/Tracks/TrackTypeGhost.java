@@ -1,6 +1,7 @@
 package NG.Tracks;
 
 import NG.DataStructures.Generic.Color4f;
+import NG.Entities.Entity;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shapes.CustomShape;
@@ -50,12 +51,17 @@ public class TrackTypeGhost implements TrackType {
     }
 
     @Override
-    public void setMaterial(MaterialShader shader, TrackPiece track) {
+    public void setMaterial(
+            MaterialShader shader, TrackPiece track, Entity.Marking marking
+    ) {
         Color4f color = Color4f.BLACK;
 
-        if (track instanceof CircleTrack) {
+        if (marking.isValid()) {
+            color = marking.color;
+
+        } else if (track instanceof CircleTrack) {
             float radius = ((CircleTrack) track).getRadius();
-            if (radius < MINIMUM_RADIUS) {
+            if (getMaximumSpeed(radius) == 0) {
                 color = Color4f.RED;
             }
         }

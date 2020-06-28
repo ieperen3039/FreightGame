@@ -74,9 +74,9 @@ public final class Vectors {
         float theta = Math.acos(costheta);
         float r = (float) java.lang.Math.cbrt(Toolbox.random.nextFloat());
 
-        float x = (r * sin(theta) * cos(phi));
-        float y = (r * sin(theta) * sin(phi));
-        float z = (r * cos(theta));
+        float x = (r * Math.sin(theta) * Math.cos(phi));
+        float y = (r * Math.sin(theta) * Math.sin(phi));
+        float z = (r * Math.cos(theta));
         return new Vector3f(x, y, z);
     }
 
@@ -88,7 +88,7 @@ public final class Vectors {
      * @return dest
      */
     public static Vector2f rotate(Vector2fc target, float angle, Vector2f dest) {
-        float sin = sin(angle), cos = cos(angle);
+        float sin = Math.sin(angle), cos = Math.cos(angle);
         float tx = target.x();
         float ty = target.y();
         dest.x = tx * cos - ty * sin;
@@ -103,7 +103,7 @@ public final class Vectors {
      * @return the target vector holding the result
      */
     public static Vector2f rotate(Vector2f target, int angle) {
-        float sin = sin(angle), cos = cos(angle);
+        float sin = Math.sin((float) angle), cos = Math.cos((float) angle);
         float tx = target.x;
         float ty = target.y;
         target.x = tx * cos - ty * sin;
@@ -111,21 +111,12 @@ public final class Vectors {
         return target;
     }
 
-    // a few mathematical shortcuts
-    public static float cos(float theta) {
-        return Math.cos(theta);
-    }
-
-    public static float sin(float theta) {
-        return Math.sin(theta);
-    }
-
     /**
      * Returns the angle <i>theta</i> from the conversion of rectangular coordinates ({@code x},&nbsp;{@code y}) to
      * polar coordinates (r,&nbsp;<i>theta</i>). This method computes the phase <i>theta</i> by computing an arc tangent
      * of {@code y/x} in the range of -<i>pi</i> to <i>pi</i>.
      * @param vector any vector
-     * @return theta such that a vector with {@code x = {@link #cos(float)}} and {@code y = {@link #sin(float)}} gives
+     * @return theta such that a vector with {@code x = {@code cos(float)}} and {@code y = {@code sin(float)}} gives
      * {@code vector}, normalized.
      * @see java.lang.Math#atan2(double, double)
      */
@@ -368,6 +359,22 @@ public final class Vectors {
         return new Quaternionf()
                 .rotateY(-pitchAngle)
                 .rotateLocalZ(yawAngle);
+    }
+
+    public static boolean inSameDirection(Vector3fc a, Vector3fc b) {
+        return a.dot(b) > 0;
+    }
+
+    public static void unionBoxTransformed(AABBf box, AABBf other, Matrix4fc transformation) {
+        Vector3f point = new Vector3f();
+        box.union(point.set(other.minX, other.minY, other.minZ).mulPosition(transformation));
+        box.union(point.set(other.maxX, other.minY, other.minZ).mulPosition(transformation));
+        box.union(point.set(other.minX, other.maxY, other.minZ).mulPosition(transformation));
+        box.union(point.set(other.minX, other.minY, other.maxZ).mulPosition(transformation));
+        box.union(point.set(other.maxX, other.maxY, other.minZ).mulPosition(transformation));
+        box.union(point.set(other.maxX, other.minY, other.maxZ).mulPosition(transformation));
+        box.union(point.set(other.minX, other.maxY, other.maxZ).mulPosition(transformation));
+        box.union(point.set(other.maxX, other.maxY, other.maxZ).mulPosition(transformation));
     }
 
     public static final class Scaling {

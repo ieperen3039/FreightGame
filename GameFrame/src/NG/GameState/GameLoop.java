@@ -2,8 +2,8 @@ package NG.GameState;
 
 import NG.Core.AbstractGameLoop;
 import NG.Core.Game;
-import NG.DataStructures.Collision.StaticCollisionDetection;
-import NG.DataStructures.Collision.StaticEntity;
+import NG.DataStructures.Collision.ColliderEntity;
+import NG.DataStructures.Collision.GilbertJohnsonKeerthiCollision;
 import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
 import NG.InputHandling.ClickShader;
@@ -12,6 +12,7 @@ import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
+import org.joml.AABBf;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -19,27 +20,27 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A collection of entities, which manages synchronous updating and drawing.
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
 public class GameLoop extends AbstractGameLoop implements GameState {
-    private final StaticCollisionDetection collider;
     private final List<Entity> entities;
     private final List<Entity> newEntities;
 
     private final Deque<Runnable> postUpdateActionQueue;
     private final ClickShader clickShader;
     private Game game;
+    private Entity.Marking markBlue = new Entity.Marking();
 
     public GameLoop(int targetTps, ClickShader clickShader) {
         super("Gameloop", targetTps);
         this.clickShader = clickShader;
-        this.entities = new ArrayList<>();
+        this.entities = new CopyOnWriteArrayList<>();
         this.newEntities = new ArrayList<>();
         this.postUpdateActionQueue = new ConcurrentLinkedDeque<>();
-        this.collider = new StaticCollisionDetection();
     }
 
     @Override
@@ -53,8 +54,10 @@ public class GameLoop extends AbstractGameLoop implements GameState {
      * @see #defer(Runnable)
      */
     @Override
-    public synchronized void addEntity(Entity entity) { // TODO group new entities like has been done in JetFighterGame
-        newEntities.add(entity);
+    public void addEntity(Entity entity) {
+        synchronized (newEntities) {
+            newEntities.add(entity);
+        }
     }
 
     /**
@@ -73,17 +76,12 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     }
 
     private synchronized void updateEntityList() {
-        entities.addAll(newEntities);
-
-        List<StaticEntity> collect = new ArrayList<>();
-        for (Entity entity : newEntities) {
-            if (entity instanceof StaticEntity) {
-                collect.add((StaticEntity) entity);
+        synchronized (newEntities) {
+            if (!newEntities.isEmpty()) {
+                entities.addAll(newEntities);
+                newEntities.clear();
             }
         }
-        collider.addAll(collect);
-
-        newEntities.clear();
     }
 
     @Override
@@ -95,7 +93,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
             matShader = (MaterialShader) shader;
         }
 
-        for (Entity entity : entities()) {
+        for (Entity entity : entities) {
             matShader.setMaterial(Material.ROUGH, Color4f.MAGENTA);
             entity.draw(gl);
         }
@@ -108,15 +106,16 @@ public class GameLoop extends AbstractGameLoop implements GameState {
 
     /** execute all actions that have been deferred */
     private void runPostUpdateActions() {
-        while (!postUpdateActionQueue.isEmpty()) {
-            postUpdateActionQueue.remove().run();
+        Runnable runnable = postUpdateActionQueue.poll();
+        while (runnable != null) {
+            runnable.run();
+            runnable = postUpdateActionQueue.poll();
         }
     }
 
     /** remove all entities from the entity list that have their doRemove flag true */
     private void runCleaning() {
         entities.removeIf(entity -> entity.isDespawnedAt(game.timer().getRenderTime()));
-        collider.removeIf(entity -> entity.isDespawnedAt(game.timer().getRenderTime()));
     }
 
     @Override
@@ -131,15 +130,50 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     @Override
     public synchronized Collection<Entity> entities() {
         ArrayList<Entity> entities = new ArrayList<>(this.entities);
-        entities.addAll(newEntities);
+
+        synchronized (newEntities) {
+            entities.addAll(newEntities);
+        }
+
         return entities;
     }
 
     @Override
-    public synchronized void cleanup() {
-        newEntities.clear();
+    public Collection<Entity> getCollisions(ColliderEntity entity) {
+        AABBf hitbox = entity.getHitbox();
+        List<Entity> result = new ArrayList<>();
+
+        Entity.Marking oldMark = markBlue;
+        markBlue = new Entity.Marking(Color4f.BLUE);
+
+        for (Entity ety : entities) {
+            if (ety instanceof ColliderEntity) {
+                ColliderEntity colliderEntity = (ColliderEntity) ety;
+
+                boolean mayCollide = hitbox.testAABB(colliderEntity.getHitbox());
+                if (mayCollide) {
+                    entity.setMarking(markBlue);
+
+                    boolean doesCollide = GilbertJohnsonKeerthiCollision.checkCollision(entity, colliderEntity);
+
+                    if (doesCollide) {
+                        result.add(colliderEntity);
+                    }
+                }
+            }
+        }
+        oldMark.invalidate();
+
+        return result;
+    }
+
+    @Override
+    public void cleanup() {
+        synchronized (newEntities) {
+            newEntities.clear();
+        }
+
         entities.clear();
-        collider.cleanup();
         postUpdateActionQueue.clear();
     }
 }

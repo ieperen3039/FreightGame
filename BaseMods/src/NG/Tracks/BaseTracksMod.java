@@ -3,6 +3,7 @@ package NG.Tracks;
 import NG.Core.Game;
 import NG.Core.Version;
 import NG.DataStructures.Generic.Color4f;
+import NG.Entities.Entity;
 import NG.Mods.Mod;
 import NG.Rendering.Material;
 import NG.Rendering.MeshLoading.Mesh;
@@ -77,8 +78,21 @@ public class BaseTracksMod implements Mod {
         }
 
         @Override
-        public void setMaterial(MaterialShader shader, TrackPiece track) {
-            shader.setMaterial(Material.ROUGH, track.isOccupied() ? Color4f.GREY : Color4f.WHITE);
+        public void setMaterial(
+                MaterialShader shader, TrackPiece track, Entity.Marking marking
+        ) {
+            Color4f color;
+            if (marking.isValid()) {
+                color = marking.color;
+
+            } else if (track.isOccupied()) {
+                color = Color4f.GREY;
+
+            } else {
+                color = Color4f.WHITE;
+            }
+
+            shader.setMaterial(Material.ROUGH, color);
         }
 
         @Override

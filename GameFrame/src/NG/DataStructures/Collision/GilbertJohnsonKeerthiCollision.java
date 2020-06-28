@@ -18,7 +18,7 @@ import java.util.List;
  */
 public final class GilbertJohnsonKeerthiCollision {
 
-    public static boolean checkCollision(StaticEntity a, StaticEntity b) {
+    public static boolean checkCollision(ColliderEntity a, ColliderEntity b) {
         PairList<Shape, Matrix4fc> aShapes = a.getConvexCollisionShapes();
         PairList<Shape, Matrix4fc> bShapes = b.getConvexCollisionShapes();
 

@@ -4,6 +4,7 @@ import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Generic.Pair;
+import NG.DataStructures.Generic.PairList;
 import NG.DataStructures.Valuta;
 import NG.Freight.Cargo;
 import NG.InputHandling.ClickShader;
@@ -15,11 +16,10 @@ import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.GenericShapes;
+import NG.Rendering.Shapes.Shape;
 import NG.Tools.Vectors;
 import NG.Tracks.TrackType;
-import org.joml.AABBf;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
+import org.joml.*;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,8 +28,8 @@ import java.util.Map;
 
 import static NG.Entities.StationImpl.HEIGHT_BELOW_STATION;
 import static NG.Entities.StationImpl.PLATFORM_SIZE;
-import static NG.Tools.Vectors.cos;
-import static NG.Tools.Vectors.sin;
+import static org.joml.Math.cos;
+import static org.joml.Math.sin;
 
 /**
  * A basic implementation of a station. There is likely no need for another station
@@ -37,6 +37,8 @@ import static NG.Tools.Vectors.sin;
  */
 public class StationGhost extends AbstractGameObject implements Station {
     public static final float HEIGHT = 0.1f;
+    public static final Color4f STATION_COLOR = new Color4f(1.0f, 1.0f, 1.0f, 0.5f);
+
     private Vector3f position = new Vector3f();
     private float orientation = 0;
 
@@ -45,6 +47,7 @@ public class StationGhost extends AbstractGameObject implements Station {
     private int numberOfPlatforms;
     private float length;
     private float realWidth;
+    private Marking marking = null;
 
     public StationGhost(Game game, int nrOfPlatforms, int length) {
         super(game);
@@ -74,7 +77,8 @@ public class StationGhost extends AbstractGameObject implements Station {
             ShaderProgram shader = gl.getShader();
             if (shader instanceof MaterialShader) {
                 MaterialShader matShader = (MaterialShader) shader;
-                matShader.setMaterial(Material.ROUGH, new Color4f(1.0f, 1.0f, 1.0f, 0.5f));
+                Color4f color = marking.isValid() ? marking.color : STATION_COLOR;
+                matShader.setMaterial(Material.ROUGH, color);
             }
 
             if (!(shader instanceof ClickShader)) { // draw cube
@@ -101,6 +105,11 @@ public class StationGhost extends AbstractGameObject implements Station {
     @Override
     public void reactMouse(MouseAction action) {
         // handled by StationBuilder
+    }
+
+    @Override
+    public void setMarking(Marking marking) {
+        this.marking = marking;
     }
 
     @Override
@@ -166,5 +175,17 @@ public class StationGhost extends AbstractGameObject implements Station {
         hitbox.minZ = position.z() - HEIGHT_BELOW_STATION;
         hitbox.maxZ = position.z() + HEIGHT;
         return hitbox;
+    }
+
+    @Override
+    public PairList<Shape, Matrix4fc> getConvexCollisionShapes() {
+        Matrix4f transformation = new Matrix4f();
+        transformation.translate(position);
+        transformation.rotateZ(orientation);
+
+        transformation.scale(length / 2, realWidth / 2, HEIGHT); // half below ground
+        PairList<Shape, Matrix4fc> pairs = new PairList<>(1);
+        pairs.add(GenericShapes.CUBE, transformation);
+        return pairs;
     }
 }

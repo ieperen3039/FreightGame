@@ -1,11 +1,14 @@
 package NG.Tracks;
 
 import NG.Core.Game;
+import NG.DataStructures.Generic.PairList;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
+import NG.Rendering.Shapes.Shape;
 import NG.Resources.GeneratorResource;
 import NG.Resources.Resource;
+import NG.Settings.Settings;
 import NG.Tools.Vectors;
 import org.joml.Math;
 import org.joml.*;
@@ -31,6 +34,7 @@ public class CircleTrack extends TrackPiece {
 
     private final Resource<Mesh> mesh;
     private final Resource<Mesh> clickBox;
+    private final PairList<Shape, Matrix4fc> collisionShapes;
 
     /**
      * @param game           the current game instance
@@ -117,6 +121,26 @@ public class CircleTrack extends TrackPiece {
 
         assert !Float.isNaN(radius) : this;
         assert !Float.isNaN(angle) : this;
+
+        // calculate collision shapes
+        collisionShapes = new PairList<>();
+        int collisionResolution = (int) Math.max(getLength() / Settings.TRACK_COLLISION_BOX_SIZE, angle / Math.toRadians(45)) + 1;
+
+        Vector3fc oldPosition = startPosition;
+        Vector3fc newPosition;
+        Vector3f oldToNew = new Vector3f();
+
+
+        for (int i = 0; i < collisionResolution; i++) {
+            float fraction = (i + 1f) / collisionResolution;
+            newPosition = getPositionFromFraction(fraction);
+
+            oldToNew.set(newPosition).sub(oldPosition);
+            Shape shape = TrackType.collisionBox(oldToNew);
+            collisionShapes.add(shape, new Matrix4f().translate(oldPosition));
+
+            oldPosition = newPosition;
+        }
     }
 
     @Override
@@ -210,6 +234,11 @@ public class CircleTrack extends TrackPiece {
 
     public Mesh getClickBox() {
         return clickBox.get();
+    }
+
+    @Override
+    public PairList<Shape, Matrix4fc> getConvexCollisionShapes() {
+        return collisionShapes;
     }
 
     @Override

@@ -53,6 +53,7 @@ public class Signal extends AbstractGameObject implements Entity {
     private boolean inOppositeDirection;
 
     private double despawnTime = Double.POSITIVE_INFINITY;
+    private Marking marking = new Marking();
 
     /**
      * @param game                game instance
@@ -71,7 +72,11 @@ public class Signal extends AbstractGameObject implements Entity {
 
     @Override
     public void update() {
-        // TODO color
+        // TODO maybe color
+
+        if (hostNode.isUnconnected()) {
+            despawn(game.timer().getGameTime());
+        }
     }
 
     @Override
@@ -108,7 +113,7 @@ public class Signal extends AbstractGameObject implements Entity {
             return Color4f.CYAN;
         }
 
-        return Color4f.WHITE;
+        return marking.isValid() ? marking.color : Color4f.WHITE;
     }
 
     @Override
@@ -129,6 +134,11 @@ public class Signal extends AbstractGameObject implements Entity {
                 inSameDirection = true;
             }
         }
+    }
+
+    @Override
+    public void setMarking(Marking marking) {
+        this.marking = marking;
     }
 
     @Override

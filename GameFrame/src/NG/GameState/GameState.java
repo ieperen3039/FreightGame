@@ -2,6 +2,7 @@ package NG.GameState;
 
 import NG.Core.FreightGame;
 import NG.Core.GameAspect;
+import NG.DataStructures.Collision.ColliderEntity;
 import NG.Entities.Entity;
 import NG.InputHandling.MouseTools.MouseTool;
 import NG.Rendering.MatrixStack.SGL;
@@ -37,4 +38,6 @@ public interface GameState extends GameAspect {
     boolean checkMouseClick(MouseTool tool, int xSc, int ySc, Vector3f origin, Vector3f direction);
 
     Collection<Entity> entities();
+
+    Collection<Entity> getCollisions(ColliderEntity entity);
 }

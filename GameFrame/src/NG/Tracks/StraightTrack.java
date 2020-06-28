@@ -1,11 +1,15 @@
 package NG.Tracks;
 
 import NG.Core.Game;
+import NG.DataStructures.Generic.PairList;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
+import NG.Rendering.Shapes.Shape;
 import NG.Resources.GeneratorResource;
 import NG.Resources.Resource;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -21,6 +25,7 @@ public class StraightTrack extends TrackPiece {
 
     protected final Resource<Mesh> mesh;
     protected final Resource<Mesh> clickBox;
+    private PairList<Shape, Matrix4fc> collisionShapes;
 
     /**
      * create a straight piece of track based on an initial node and an endposition. A new node is generated, and is
@@ -79,12 +84,19 @@ public class StraightTrack extends TrackPiece {
             this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
         }
 
+        collisionShapes = new PairList<>();
+        collisionShapes.add(TrackType.collisionBox(displacement), new Matrix4f().translate(startNode.getPosition()));
         assert check(startNode, this.endNode, direction);
     }
 
     @Override
     public float getMaximumSpeed() {
         return type.getMaximumSpeed();
+    }
+
+    @Override
+    public PairList<Shape, Matrix4fc> getConvexCollisionShapes() {
+        return collisionShapes;
     }
 
     private static boolean check(RailNode startNode, RailNode endNode, Vector3fc direction) {

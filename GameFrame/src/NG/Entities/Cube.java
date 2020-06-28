@@ -23,6 +23,7 @@ public class Cube extends AbstractGameObject implements MovingEntity {
     private boolean isDisposed = false;
     private double despawnTime;
     private double spawnTime;
+    private Marking marking = null;
 
     public Cube(Game game, Vector3f position) {
         super(game);
@@ -60,6 +61,11 @@ public class Cube extends AbstractGameObject implements MovingEntity {
     @Override
     public void reactMouse(AbstractMouseTool.MouseAction action) {
         despawn(game.timer().getGameTime());
+    }
+
+    @Override
+    public void setMarking(Marking marking) {
+        this.marking = marking;
     }
 
 

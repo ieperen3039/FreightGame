@@ -7,7 +7,7 @@ import NG.DataStructures.Generic.Color4f;
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public class Settings {
-    public static final String GAME_NAME = "Overloaded"; // laaaaame
+    public static final String GAME_NAME = "Trains in SPAAAACE"; // laaaaame
     public boolean DEBUG = true;
 
     // game engine settings
@@ -41,9 +41,13 @@ public class Settings {
     // in-game functional settings
     public static final float TRACK_HEIGHT_ABOVE_GROUND = 0.2f;
     public static int STATION_RANGE = 10;
+    public static final float TRACK_WIDTH = CLICK_BOX_WIDTH;
+    public static final float TRACK_HEIGHT_SPACE = 1.0f;
+    public static final float TRACK_COLLISION_BOX_SIZE = 2.0f;
 
     // in-game appearance settings
     public Color4f AMBIENT_LIGHT = new Color4f(1, 1, 1, 0.2f);
     public Color4f SUNLIGHT_COLOR = Color4f.WHITE;
     public float SUNLIGHT_INTENSITY = 0.8f;
+    public boolean RENDER_COLLISION_BOX = false;
 }

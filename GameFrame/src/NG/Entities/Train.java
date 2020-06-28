@@ -48,6 +48,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
 
     protected double spawnTime;
     protected double despawnTime = Double.POSITIVE_INFINITY;
+    private Marking marking = null;
 
     public Train(Game game, int id, double spawnTime, TrackPiece startPiece) {
         super(game);
@@ -203,6 +204,11 @@ public class Train extends AbstractGameObject implements MovingEntity {
         if (action == MouseAction.PRESS_ACTIVATE) {
             game.gui().addFrame(new TrainUI());
         }
+    }
+
+    @Override
+    public void setMarking(Marking marking) {
+        this.marking = marking;
     }
 
     public float getLength() {

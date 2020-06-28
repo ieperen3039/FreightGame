@@ -2,6 +2,7 @@ package NG.Entities;
 
 import NG.Core.GameObject;
 import NG.Core.GameTimer;
+import NG.DataStructures.Generic.Color4f;
 import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Rendering.MatrixStack.SGL;
@@ -13,7 +14,29 @@ import NG.Rendering.MatrixStack.SGL;
  */
 public interface Entity extends GameObject {
     enum UpdateFrequency {
-        EVERY_FRAME, EVERY_TICK, ONCE_PER_SECOND, ONCE_UPON_A_TIME, NEVER
+        EVERY_TICK, ONCE_PER_SECOND, ONCE_UPON_A_TIME, NEVER
+    }
+
+    class Marking {
+        public final Color4f color;
+        private boolean isValid = true;
+
+        public Marking(Color4f color) {
+            this.color = color;
+        }
+
+        public Marking() {
+            color = Color4f.WHITE;
+            isValid = false;
+        }
+
+        public boolean isValid() {
+            return isValid;
+        }
+
+        public void invalidate() {
+            isValid = false;
+        }
     }
 
     /**
@@ -40,7 +63,10 @@ public interface Entity extends GameObject {
      */
     void reactMouse(AbstractMouseTool.MouseAction action);
 
+    void setMarking(Marking marking);
+
     /** @deprecated use {@link #despawn(double)} */
+    @Deprecated
     default void dispose() {
         despawn(Double.NEGATIVE_INFINITY);
     }

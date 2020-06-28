@@ -66,7 +66,7 @@ public abstract class Plane {
     /**
      * @return a stream of the vertices of this object in counterclockwise order
      */
-    public Iterable<Vector3fc> getBorder() {
+    public List<Vector3fc> getBorder() {
         return Arrays.asList(boundary);
     }
 

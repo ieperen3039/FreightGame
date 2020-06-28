@@ -1,7 +1,7 @@
 package NG.Entities;
 
 import NG.Core.GameObject;
-import NG.DataStructures.Collision.StaticEntity;
+import NG.DataStructures.Collision.ColliderEntity;
 import NG.DataStructures.Valuta;
 import NG.Freight.Cargo;
 import NG.Mods.CargoType;
@@ -16,7 +16,7 @@ import java.util.Map;
  * A station
  * @author Geert van Ieperen created on 29-4-2020.
  */
-public interface Station extends GameObject, StaticEntity, NetworkPosition {
+public interface Station extends GameObject, ColliderEntity, NetworkPosition {
     /**
      * @return the middle of this station
      */

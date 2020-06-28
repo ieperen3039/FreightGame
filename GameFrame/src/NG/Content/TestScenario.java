@@ -18,9 +18,6 @@ import org.joml.Vector3fc;
 
 import java.util.List;
 
-import static NG.Tools.Vectors.cos;
-import static NG.Tools.Vectors.sin;
-
 /**
  * @author Geert van Ieperen created on 19-6-2020.
  */
@@ -91,7 +88,7 @@ public class TestScenario extends Scenario {
 
     private RailNode getBypass(Game game, TrackType type, Vector2f center, Vector3f offset, float orientation) {
         Vector3f position = new Vector3f(offset).mul(0.7f);
-        Vector3f direction = new Vector3f(cos(orientation), sin(orientation), 0);
+        Vector3f direction = new Vector3f(org.joml.Math.cos(orientation), org.joml.Math.sin(orientation), 0);
 
         return new RailNode(getGroundPos(game, center, position), type, direction);
     }
