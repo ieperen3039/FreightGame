@@ -2,6 +2,7 @@ package NG.DataStructures.Collision;
 
 import NG.DataStructures.Generic.PairList;
 import NG.Rendering.Shapes.Shape;
+import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
@@ -93,13 +94,20 @@ public final class GilbertJohnsonKeerthiCollision {
         Vector3fc newPoint = support(direction, aShape, aTransform, aAntiTransform, bShape, bTransform, bAntiTransform);
         if (!Vectors.inSameDirection(newPoint, direction)) return false; // new point is not behind the origin
 
+        int i = 0;
+
         // case 4 : triangles and tetrahedrons
         Vector3fc[] points = {A, B, null, null};
         do {
+            i++;
             direction = simplex(points, newPoint);
             if (direction == null) return true;
 
             newPoint = support(direction, aShape, aTransform, aAntiTransform, bShape, bTransform, bAntiTransform);
+
+            if (i % 100_000 == 0) {
+                Logger.WARN.print(i);
+            }
         } while (Vectors.inSameDirection(newPoint, direction));
 
         // last iteration couldn't reach the origin
@@ -171,15 +179,12 @@ public final class GilbertJohnsonKeerthiCollision {
 
         Vector3f DA = new Vector3f(A).sub(D);
         Vector3f DB = new Vector3f(B).sub(D);
-        Vector3f DC = new Vector3f(C).sub(D);
-        Vector3f abdPerpendicular = new Vector3f(DB).cross(DA);
-        Vector3f bcdPerpendicular = new Vector3f(DC).cross(DB);
-        Vector3f acdPerpendicular = new Vector3f(DA).cross(DC);
         Vector3fc DO = new Vector3f(D).negate();
 
         // we know the origin is not behind ABC by construction
         assert !Vectors.inSameDirection(new Vector3f(B).sub(C).cross(new Vector3f(A).sub(C)), DO);
 
+        Vector3f abdPerpendicular = new Vector3f(DB).cross(DA);
         if (Vectors.inSameDirection(abdPerpendicular, DO)) {
             // origin is behind ABD
             // points = {A, B, D}
@@ -187,13 +192,18 @@ public final class GilbertJohnsonKeerthiCollision {
             return tetrahedronTriangle(DA, DB, DO, abdPerpendicular, points);
 
         } else {
+            Vector3f DC = new Vector3f(C).sub(D);
+            Vector3f acdPerpendicular = new Vector3f(DA).cross(DC);
             if (Vectors.inSameDirection(acdPerpendicular, DO)) {
                 // origin is behind ADC
-                // points = {A, D, C}
-                points[1] = D;
-                return tetrahedronTriangle(DA, DC, DO, acdPerpendicular, points);
+                // points = {C, A, D}
+                points[0] = C;
+                points[1] = A;
+                points[2] = D;
+                return tetrahedronTriangle(DC, DA, DO, acdPerpendicular, points);
 
             } else {
+                Vector3f bcdPerpendicular = new Vector3f(DC).cross(DB);
                 if (Vectors.inSameDirection(bcdPerpendicular, DO)) {
                     // origin is behind BCD
                     // points = {D, B, C}
