@@ -5,10 +5,17 @@ import NG.Core.Game;
 import NG.Core.ModLoader;
 import NG.GameMap.DefaultMapGenerator;
 import NG.GameMap.MapGeneratorMod;
+import NG.GameState.GameState;
 import NG.Mods.Mod;
+import NG.Network.NetworkNode;
+import NG.Network.RailNode;
 import NG.Settings.Settings;
+import NG.Tracks.RailTools;
+import NG.Tracks.TrackPiece;
 import org.joml.Vector2f;
+import org.joml.Vector2fc;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 import java.util.List;
 
@@ -16,8 +23,8 @@ import java.util.List;
  * @author Geert van Ieperen created on 19-6-2020.
  */
 public abstract class Scenario {
-    public static final int X_SIZE = 100;
-    public static final int Y_SIZE = 100;
+    public static final int X_SIZE = 200;
+    public static final int Y_SIZE = 200;
 
     private final ModLoader modLoader;
 
@@ -83,6 +90,34 @@ public abstract class Scenario {
         game.lights().addDirectionalLight(
                 new Vector3f(1, 1.5f, 0.5f), settings.SUNLIGHT_COLOR, settings.SUNLIGHT_INTENSITY
         );
+    }
+
+    protected static Vector3f getGroundPos(Game game, Vector2fc origin, Vector3fc offset) {
+        Vector3f stationPos = new Vector3f(origin, 0).add(offset);
+        stationPos.z = game.map().getHeightAt(stationPos.x, stationPos.y) + Settings.TRACK_HEIGHT_ABOVE_GROUND;
+        return stationPos;
+    }
+
+    protected static Vector3f getGroundPos(Game game, Vector3fc origin, Vector3fc offset) {
+        Vector3f stationPos = new Vector3f(origin).add(offset);
+        stationPos.z = game.map().getHeightAt(stationPos.x, stationPos.y) + Settings.TRACK_HEIGHT_ABOVE_GROUND;
+        return stationPos;
+    }
+
+    protected static void addConnections(Game game, RailNode targetNode, List<RailNode> stationNodes) {
+        for (RailNode stationNode : stationNodes) {
+            addConnections(game, stationNode, targetNode, Float.POSITIVE_INFINITY);
+        }
+    }
+
+    protected static void addConnections(Game game, RailNode aNode, RailNode bNode, float signalSpacing) {
+        GameState gameState = game.state();
+        List<TrackPiece> connection = RailTools.createConnection(game, aNode, bNode, signalSpacing);
+
+        for (TrackPiece trackPiece : connection) {
+            NetworkNode.addConnection(trackPiece);
+            gameState.addEntity(trackPiece);
+        }
     }
 
     public static class Empty extends Scenario {

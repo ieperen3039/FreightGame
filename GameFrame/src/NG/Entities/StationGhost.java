@@ -47,7 +47,7 @@ public class StationGhost extends AbstractGameObject implements Station {
     private int numberOfPlatforms;
     private float length;
     private float realWidth;
-    private Marking marking = null;
+    private Marking marking = new Marking();
 
     public StationGhost(Game game, int nrOfPlatforms, int length) {
         super(game);

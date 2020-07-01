@@ -3,21 +3,18 @@ package NG.Network;
 import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.*;
+import NG.GUIMenu.Menu.EntityActionTool;
 import NG.GUIMenu.Menu.MainMenu;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
 import org.joml.Vector2i;
-import org.joml.Vector3fc;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.AbstractCollection;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
 
 /**
  * @author Geert van Ieperen created on 22-5-2020.
  */
-public class Schedule extends AbstractCollection<NetworkPosition> {
+public class Schedule extends AbstractCollection<ScheduleElement> {
     private Node firstNode;
     private int size;
 
@@ -29,37 +26,28 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
         size = 0;
     }
 
-    /**
-     * Create a schedule consisting of the given network positions
-     * @param positions the positions to create a schedule of.
-     */
-    public Schedule(NetworkPosition... positions) {
-        this();
-        addAll(Arrays.asList(positions));
-    }
-
-    /**
-     * creates a schedule from the positions given by the iterator of other. If other is a Schedule, this creates an
-     * effective copy of that schedule.
-     */
-    public Schedule(Collection<NetworkPosition> other) {
+    public Schedule(Schedule other) {
         this();
         addAll(other);
     }
 
     /**
-     * appends the given element to the end of the schedule. This change is reflected in all ScheduleNodes and Iterators
+     * appends the given target to the end of the schedule. This change is reflected in all ScheduleNodes and Iterators
      * of this collection.
-     * @param element the position to add to the schedule
+     * @param target the position to add to the schedule
      * @return true
      */
-    public boolean add(NetworkPosition element) {
+    public boolean add(NetworkPosition target) {
+        return add(new ScheduleElement(target));
+    }
+
+    public boolean add(ScheduleElement newElement) {
         if (firstNode == null) {
-            firstNode = new Node(element);
+            firstNode = new Node(newElement);
             size = 1;
 
         } else {
-            addBetween(firstNode.prev, element, firstNode);
+            addBetween(firstNode.prev, newElement, firstNode);
         }
 
         return true;
@@ -82,7 +70,7 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
         return false;
     }
 
-    public void addAfter(Node node, NetworkPosition element) {
+    public void addAfter(Node node, ScheduleElement element) {
         if (node == null) {
             add(element);
 
@@ -91,7 +79,7 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
         }
     }
 
-    private void addBetween(Node before, NetworkPosition element, Node next) {
+    private void addBetween(Node before, ScheduleElement element, Node next) {
         Node newNode = new Node(before, element, next);
         before.next = newNode;
         next.prev = newNode;
@@ -131,7 +119,7 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
     }
 
     @Override
-    public Iterator<NetworkPosition> iterator() {
+    public Iterator<ScheduleElement> iterator() {
         return new Iterator<>() {
             int i = 0;
             Node node = firstNode;
@@ -142,8 +130,8 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
             }
 
             @Override
-            public NetworkPosition next() {
-                NetworkPosition result = node.element;
+            public ScheduleElement next() {
+                ScheduleElement result = node.element;
                 node = node.next;
                 i++;
                 return result;
@@ -173,17 +161,17 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
     }
 
     public static class Node {
-        public final NetworkPosition element;
+        public final ScheduleElement element;
         private Node next;
         private Node prev;
 
-        private Node(Node prev, NetworkPosition element, Node next) {
+        private Node(Node prev, ScheduleElement element, Node next) {
             this.element = element;
             this.next = next;
             this.prev = prev;
         }
 
-        private Node(NetworkPosition element) {
+        private Node(ScheduleElement element) {
             this.element = element;
             this.next = this;
             this.prev = this;
@@ -210,8 +198,8 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
             setMainPanel(SContainer.column(
                     body,
                     SContainer.row(
-                            new SButton("Add Station", this::setAdder),
-                            new SButton("Remove", () -> schedule.removeNode(selectedNode == null ? schedule.firstNode.prev : selectedNode))
+                            new SButton("Add Station", this::activateAddTool),
+                            new SButton("Remove", this::removeSelected)
                     )
             ));
             updateBody();
@@ -233,22 +221,22 @@ public class Schedule extends AbstractCollection<NetworkPosition> {
             body.add(panel, null);
         }
 
-        private void setAdder() {
-            game.inputHandling().setMouseTool(new AbstractMouseTool(game) {
-                @Override
-                public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
-                    if (getMouseAction() == MouseAction.PRESS_ACTIVATE) {
-                        if (entity instanceof NetworkPosition) {
-                            schedule.addAfter(selectedNode, (NetworkPosition) entity);
-                            updateBody();
-                        }
-                    }
-                }
+        protected void removeSelected() {
+            if (schedule.isEmpty()) return;
+            schedule.removeNode(selectedNode == null ? schedule.firstNode.prev : selectedNode);
+            updateBody();
+        }
 
-                @Override
-                public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
-                }
-            });
+        private void activateAddTool() {
+            EntityActionTool tool = new EntityActionTool(game, entity -> entity instanceof NetworkPosition, this::add);
+            game.inputHandling().setMouseTool(tool);
+        }
+
+        private void add(Entity entity) {
+            ScheduleElement newElement = new ScheduleElement((NetworkPosition) entity);
+
+            schedule.addAfter(selectedNode, newElement);
+            updateBody();
         }
     }
 

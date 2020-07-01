@@ -281,8 +281,8 @@ public class NetworkNode {
         NetworkNode oneNode = oneRailNode.getNetworkNode();
         NetworkNode twoNode = twoRailNode.getNetworkNode();
 
-        check(oneNode);
-        check(twoNode);
+        assert check(oneNode);
+        assert check(twoNode);
 
         List<Direction> oneToTwo;
         List<Direction> twoToOne;
@@ -317,8 +317,8 @@ public class NetworkNode {
         updateNetwork(oneNode, twoNode);
         updateNetwork(twoNode, oneNode);
 
-        check(oneNode);
-        check(twoNode);
+        assert check(oneNode);
+        assert check(twoNode);
     }
 
     private static void updateNetwork(NetworkNode thisNode, NetworkNode targetNode) {
@@ -370,8 +370,8 @@ public class NetworkNode {
         aNode.postRemoveCheck(aWasCritical, aToOther);
         bNode.postRemoveCheck(bWasCritical, bToOther);
 
-        check(aNode);
-        check(bNode);
+        assert check(aNode);
+        assert check(bNode);
 
         assert oldPiece == sameOldPiece :
                 "Nodes were mutually connected with a different track piece (" + oldPiece + " and " + sameOldPiece + ")";
@@ -380,30 +380,39 @@ public class NetworkNode {
         return oldPiece;
     }
 
-    public static void check(NetworkNode aNode) {
-        assert aNode.isNetworkCritical() || !aNode.isSwitch() : aNode;
+    // checks some assumptions about the given node, and eitehr throws or returns true
+    public static boolean check(NetworkNode aNode) {
+        if (!aNode.isNetworkCritical() && aNode.isSwitch()) {
+            throw new IllegalStateException("Switch node is not critical: " + aNode);
+        }
 
         Collection<Direction> entries = aNode.getAllEntries();
         // all network nodes are network critical
-        assert entries.stream()
+        if (!entries.stream()
                 .map(e -> e.network)
                 .filter(Objects::nonNull)
-                .allMatch(NetworkNode::isNetworkCritical)
-                : entries;
+                .allMatch(NetworkNode::isNetworkCritical)) {
+            throw new IllegalStateException("Network node is not critical: " + entries);
+        }
         // if this is a network node, all distances are reflective
-        assert !aNode.isNetworkCritical() || entries.stream()
+        if (aNode.isNetworkCritical() && !entries.stream()
                 .filter(e -> e.network != null)
                 .allMatch(a -> a.network.getAllEntries().stream()
                         .filter(b -> b.network == aNode)
                         .anyMatch(b -> Math.abs(a.distanceToNetworkNode - b.distanceToNetworkNode) < 0.001)
-                ) :
-                entries;
+                )) {
+            throw new IllegalStateException("Distance between network nodes are not reflective: " + entries);
+        }
         // if this is a network node, we find ourself on the side predicted by networkIsInDirection
-        assert !aNode.isNetworkCritical() || entries.stream()
+        if (aNode.isNetworkCritical() && !entries.stream()
                 .filter(e -> e.network != null)
                 .allMatch(a -> (a.networkIsInDirection ? a.network.bDirection : a.network.aDirection)
                         .stream().anyMatch(d -> d.network == aNode)
-                ) : entries;
+                )) {
+            throw new IllegalStateException("Incorrect network node direction: " + entries);
+        }
+
+        return true;
     }
 
     /**
@@ -421,15 +430,15 @@ public class NetworkNode {
     ) {
         assert newNode.aDirection.isEmpty() && newNode.bDirection.isEmpty() : "newNode should be empty | " + newNode;
 
-        check(oneNode);
-        check(twoNode);
+        assert check(oneNode);
+        assert check(twoNode);
 
         replaceEntry(oneNode, twoNode, newNode, oneTrack);
         replaceEntry(twoNode, oneNode, newNode, twoTrack);
 
-        check(oneNode);
-        check(twoNode);
-        check(newNode);
+        assert check(oneNode);
+        assert check(twoNode);
+        assert check(newNode);
     }
 
     public static void replaceEntry(
@@ -579,7 +588,7 @@ public class NetworkNode {
     }
 
     public boolean isInDirectionOf(TrackPiece currentTarget) {
-        int indexOf = getIndexOf(getEntriesA(), currentTarget, direction -> direction.trackPiece);
+        int indexOf = getIndexOf(aDirection, currentTarget, direction -> direction.trackPiece);
         return indexOf < 0;
     }
 

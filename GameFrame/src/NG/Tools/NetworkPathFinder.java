@@ -36,7 +36,13 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
         assert networkNode.isNetworkCritical();
 
         List<NetworkNode.Direction> otherDirections = inSameDirection ? networkNode.getEntriesB() : networkNode.getEntriesA();
-        assert !otherDirections.isEmpty();
+        if (otherDirections.isEmpty()) {
+            // edge case: end of line
+            startNode = null;
+            targets = null;
+            startPredecessor = null;
+            return;
+        }
 
         List<Pair<NetworkNode, Boolean>> nodes = target.getNodes();
         this.targets = new HashSet<>(nodes.size());
@@ -50,6 +56,9 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
 
     @Override
     public Path call() {
+        // edge case: end of line
+        if (startNode == null) return new Path();
+
         Map<NetworkNode, NetworkNode> predecessors = new HashMap<>();
         distanceMap = new HashMap<>();
         PriorityQueue<NetworkNode> open = new PriorityQueue<>(Comparator.comparing(distanceMap::get));
@@ -97,7 +106,7 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
                 NetworkNode nextNode = entry.network;
                 if (nextNode == null) continue; // empty dead end
                 if (nextNode == node) continue; // self-loop
-                NetworkNode.check(node);
+                assert NetworkNode.check(node);
 
                 float distance = nodeDistance + entry.distanceToNetworkNode;
                 Float knownDistance = distanceMap.getOrDefault(nextNode, Float.POSITIVE_INFINITY);
@@ -114,6 +123,10 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
 
     public static class Path extends ArrayDeque<NetworkNode> {
         private float pathLength;
+
+        public Path() {
+            this.pathLength = 0;
+        }
 
         public Path(
                 NetworkNode startNode, Map<NetworkNode, NetworkNode> predecessors, NetworkNode endNode, float pathLength

@@ -59,6 +59,16 @@ public class StationImpl extends Storage implements Station {
     private Marking marking = new Marking();
     private PairList<Shape, Matrix4fc> collisionShape = new PairList<>(1);
 
+    /**
+     * create a fixed station
+     * @param game              the game instance
+     * @param numberOfPlatforms the number of platforms of this station
+     * @param length            the length of each platform in meters
+     * @param type              the type of track on the station
+     * @param position          the position of the middle of the station
+     * @param orientation       the horizontal angle of placement in radians from (1, 0, 0) counterclockwise
+     * @param spawnTime         time where this entity spawns
+     */
     public StationImpl(
             Game game, int numberOfPlatforms, int length, TrackType type, Vector3fc position, float orientation,
             double spawnTime
@@ -90,21 +100,21 @@ public class StationImpl extends Storage implements Station {
                     .sub(toRight)
                     .add(rightSkip.x() / 2, rightSkip.y() / 2, trackHeight);
 
-            Vector3f backPos = new Vector3f(rightMiddle).sub(forward);
-            Vector3f frontPos = rightMiddle.add(forward);
+            Vector3f aPos = new Vector3f(rightMiddle).sub(forward);
+            Vector3f bPos = rightMiddle.add(forward);
 
             for (int i = 0; i < numberOfPlatforms; i++) {
-                createNodes(type, AToB, BToA, backPos, frontPos, i);
+                createNodes(type, AToB, BToA, aPos, bPos, i);
 
-                frontPos.add(rightSkip);
-                backPos.add(rightSkip);
+                bPos.add(rightSkip);
+                aPos.add(rightSkip);
             }
 
         } else { // simplified version of above
-            Vector3f frontPos = new Vector3f(position).add(forward).add(0, 0, trackHeight);
-            Vector3f backPos = new Vector3f(position).sub(forward).add(0, 0, trackHeight);
+            Vector3f bPos = new Vector3f(position).add(forward).add(0, 0, trackHeight);
+            Vector3f aPos = new Vector3f(position).sub(forward).add(0, 0, trackHeight);
 
-            createNodes(type, AToB, BToA, frontPos, backPos, 0);
+            createNodes(type, AToB, BToA, aPos, bPos, 0);
         }
 
         // create tracks

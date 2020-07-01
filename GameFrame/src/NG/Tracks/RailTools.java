@@ -458,7 +458,7 @@ public final class RailTools {
             Game game, RailNode aNode, RailNode bNode, float signalDistance
     ) {
         assert aNode.getType() == bNode.getType();
-        assert signalDistance >= 0;
+        assert signalDistance > 0;
 
         Vector3fc bPos = bNode.getPosition();
         Vector3fc aPos = aNode.getPosition();

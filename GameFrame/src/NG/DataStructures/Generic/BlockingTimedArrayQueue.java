@@ -1,9 +1,7 @@
 package NG.DataStructures.Generic;
 
 import java.io.Serializable;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * A {@link TimedQueue} that uses ArrayDeque for implementation. Includes synchronized adding and deletion. Items added
@@ -87,7 +85,12 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
             nextActionStart = times.next();
         }
 
-        return Math.max(nextActionStart, timeStamp);
+        if (nextActionStart > timeStamp) {
+            return nextActionStart;
+        }
+
+        return Double.POSITIVE_INFINITY;
+
     }
 
     @Override
@@ -98,7 +101,11 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
         double previousActionStart = times.next();
 
         if (!times.hasNext()) {
-            return Math.min(timeStamp, previousActionStart);
+            if (previousActionStart < timeStamp) {
+                return previousActionStart;
+            }
+
+            return Double.NEGATIVE_INFINITY;
         }
 
         double next = times.next();
@@ -114,6 +121,37 @@ public class BlockingTimedArrayQueue<T> implements TimedQueue<T>, Serializable {
         while ((timeStamps.size() > 1) && (timeStamp > nextTimeStamp())) {
             progress();
         }
+    }
+
+    @Override
+    public List<T> getRange(double start, double end) {
+        if (timeStamps.isEmpty()) return Collections.emptyList();
+
+        Iterator<Double> times = timeStamps.iterator();
+        Iterator<T> things = elements.iterator();
+
+        double nextElementStart = times.next();
+        T nextElement = null;
+        List<T> elements = new ArrayList<>();
+
+        while (nextElementStart < start && times.hasNext()) {
+            nextElement = things.next();
+            nextElementStart = times.next();
+        }
+
+        if (nextElement != null) {
+            // first element that ends in the range (or the last element)
+            elements.add(nextElement);
+        } // otherwise the first element starts later than 'start'
+
+
+        // add all elements that start in range (including at end)
+        while (nextElementStart <= end && times.hasNext()) {
+            nextElementStart = times.next();
+            elements.add(things.next());
+        }
+
+        return elements;
     }
 
     /**

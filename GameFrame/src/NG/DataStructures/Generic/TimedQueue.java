@@ -1,5 +1,7 @@
 package NG.DataStructures.Generic;
 
+import java.util.List;
+
 /**
  * A queue that allows a producer to queue timed objects (e.g. positions) while a consumer takes the next item from a
  * specified timestamp onwards.
@@ -17,7 +19,7 @@ public interface TimedQueue<T> {
 
     /**
      * @param timeStamp the timestamp to consider
-     * @return the earliest element with a timestamp equal or after the given timestamp.
+     * @return the earliest element with a timestamp strictly after the given timestamp.
      */
     T getNext(double timeStamp);
 
@@ -27,13 +29,23 @@ public interface TimedQueue<T> {
      */
     T getPrevious(double timeStamp);
 
+    /**
+     * @param timeStamp the timestamp to consider
+     * @return the lowest timestamp equal to or later than the given timestamp with an element, or {@link
+     * Double#POSITIVE_INFINITY} if no such element exists.
+     */
+    double timeOfNext(double timeStamp);
+
+    /**
+     * @param timeStamp the timestamp to consider
+     * @return the highest timestamp strictly less than the given timestamp, or {@link Double#NEGATIVE_INFINITY} if no
+     * such element exists.
+     */
+    double timeOfPrevious(double timeStamp);
+
     default double timeUntilNext(double timeStamp) {
         return timeOfNext(timeStamp) - timeStamp;
     }
-
-    double timeOfNext(double timeStamp);
-
-    double timeOfPrevious(double timeStamp);
 
     default double timeSincePrevious(double timeStamp) {
         return timeStamp - timeOfPrevious(timeStamp);
@@ -44,4 +56,11 @@ public interface TimedQueue<T> {
      * @param timeStamp the time until where the state of the queue should be updated.
      */
     void removeUntil(double timeStamp);
+
+    /**
+     * @param start a start time
+     * @param end   an end time
+     * @return all elements that end later than {@code start} and start earlier or at {@code end}, in order
+     */
+    List<T> getRange(double start, double end);
 }

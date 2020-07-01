@@ -165,12 +165,11 @@ public class Signal extends AbstractGameObject implements Entity {
      * @param targets         the target supplier, which should give a next target given a scheduling depth.
      * @param inSameDirection whether the path should be calculated in the direction of the railnode. false iff {@link
      *                        #getNode()}{@link RailNode#isInDirectionOf(TrackPiece) .isInDirectionOf(previousTrack)}
-     * @param targetStart     the initial scheduling depth
      * @return a path from hostNode, via any possible targets, to a signal. Returns null if no such path exists.
      * Guaranteed is {@code path == null || path.getLast().hasSignal()}
      */
-    private TrackPath getPath(
-            Function<Integer, NetworkPosition> targets, boolean inSameDirection, int targetStart
+    private Pair<TrackPath, Float> getPath(
+            Function<Integer, NetworkPosition> targets, boolean inSameDirection
     ) {
         HashMap<Signal, TrackPath> signals = new HashMap<>();
         HashMap<NetworkNode, TrackPath> nodes = new HashMap<>();
@@ -179,7 +178,7 @@ public class Signal extends AbstractGameObject implements Entity {
         List<NetworkNode.Direction> entries = inSameDirection ? networkNode.getEntriesA() : networkNode.getEntriesB();
 
         // TODO trivial section shortcut ?
-        int depth = targetStart;
+        int depth = 0;
 
         for (NetworkNode.Direction entry : entries) {
             TrackPiece trackPiece = entry.trackPiece;
@@ -196,7 +195,7 @@ public class Signal extends AbstractGameObject implements Entity {
                     .toArray(TrackPath[]::new);
 
             if (paths.length == 0) return null;
-            return paths[Toolbox.random.nextInt(paths.length)];
+            return new Pair<>(paths[Toolbox.random.nextInt(paths.length)], Float.POSITIVE_INFINITY);
         }
 
         // target != null
@@ -233,7 +232,7 @@ public class Signal extends AbstractGameObject implements Entity {
 
             TrackPiece last = bestPath.path.getLast();
             RailNode node = last.get(targetOfBest);
-            if (node.hasSignal()) return pathViaNodes;
+            if (node.hasSignal()) return new Pair<>(pathViaNodes, pathViaNodes.adjLength());
 
             // recalculate paths as if starting from this node
             signals.clear();
@@ -250,6 +249,7 @@ public class Signal extends AbstractGameObject implements Entity {
 
         for (Signal other : signals.keySet()) {
             TrackPath pathToSignal = signals.get(other);
+            if (pathToSignal.path.isEmpty()) continue;
 
             float totalDist = getPathToTargetLength(target, other, pathToSignal);
 
@@ -260,7 +260,7 @@ public class Signal extends AbstractGameObject implements Entity {
         }
 
         if (pathToBest == null) return null;
-        return pathViaNodes.append(pathToBest);
+        return new Pair<>(pathViaNodes.append(pathToBest), pathViaNodes.adjLength() + leastDistance);
     }
 
     private float getPathToTargetLength(
@@ -348,7 +348,10 @@ public class Signal extends AbstractGameObject implements Entity {
                 pathToNode.isOccupied = wasOccupied;
             }
         }
+    }
 
+    public enum Direction {
+        IN_DIRECTION, AGAINST_DIRECTION, BOTH_DIRECTIONS
     }
 
     /**
@@ -358,28 +361,55 @@ public class Signal extends AbstractGameObject implements Entity {
      * track.setOccupied(false)}.
      * <p>
      * If the path is not empty, then it starts and ends with a signal, with no signal inbetween.
-     * @param trackIsInDirection whether the starting direction is the same as the direction of {@link #getNode()}
+     * @param trackDirection indicates whether the starting direction is the same as the direction of {@link
+     *                       #getNode()}
      * @param targetFunction
      * @return a path from here to the next signal on the shortest available path toward target.
      */
     public Deque<TrackPiece> reservePath(
-            boolean trackIsInDirection, Function<Integer, NetworkPosition> targetFunction
+            Direction trackDirection, Function<Integer, NetworkPosition> targetFunction
     ) {
-        if (trackIsInDirection) {
+        Pair<TrackPath, Float> path;
+
+        if (trackDirection == Direction.IN_DIRECTION) {
             if (!inOppositeDirection) {
                 return getEmptyPath();
             }
 
-        } else {
+            path = getPath(targetFunction, true);
+
+        } else if (trackDirection == Direction.AGAINST_DIRECTION) {
             if (!inSameDirection) {
                 return getEmptyPath();
             }
+
+            path = getPath(targetFunction, false);
+
+        } else {
+            Pair<TrackPath, Float> pathInDirection =
+                    inSameDirection ? getPath(targetFunction, true) : null;
+
+            Pair<TrackPath, Float> pathAgainstDirection =
+                    inOppositeDirection ? getPath(targetFunction, false) : null;
+
+            if (pathInDirection == null) {
+                path = pathAgainstDirection;
+
+            } else if (pathAgainstDirection == null) {
+                path = pathInDirection;
+
+            } else {
+                if (pathInDirection.right < pathAgainstDirection.right) {
+                    path = pathInDirection;
+                } else {
+                    path = pathAgainstDirection;
+                }
+            }
         }
 
-        TrackPath path = getPath(targetFunction, trackIsInDirection, 0);
-        if (path == null || path.isOccupied) return getEmptyPath();
+        if (path == null || path.left.isOccupied) return getEmptyPath();
+        return reserve(path.left);
 
-        return reserve(path);
     }
 
     private Deque<TrackPiece> reserve(TrackPath pathToBest) {

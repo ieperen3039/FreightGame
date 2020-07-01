@@ -48,7 +48,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
 
     protected double spawnTime;
     protected double despawnTime = Double.POSITIVE_INFINITY;
-    private Marking marking = null;
+    private Marking marking = new Marking();
 
     public Train(Game game, int id, double spawnTime, TrackPiece startPiece) {
         super(game);
@@ -66,7 +66,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
         Schedule.Node currentTarget = getCurrentTarget();
         if (positionEngine.getSpeed() == 0 && !isLoading() && currentTarget != null) {
             // check whether we have loading to do
-            NetworkPosition target = currentTarget.element;
+            NetworkPosition target = currentTarget.element.target;
 
             if (target instanceof Station) {
                 Station station = (Station) target;
@@ -324,7 +324,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
             }
         }
 
-        return nextNode.element;
+        return nextNode.element.target;
     }
 
     public boolean isLoading() {
@@ -334,7 +334,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
     public void onArrival(TrackPiece next, RailNode newNode) {
         Schedule.Node currentTarget = getCurrentTarget();
         if (currentTarget != null) {
-            NetworkPosition target = currentTarget.element;
+            NetworkPosition target = currentTarget.element.target;
             NetworkNode networkNode = newNode.getNetworkNode();
 
             if (target.containsNode(next, networkNode) && !shouldWaitFor(target)) {
@@ -349,7 +349,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
         Schedule.Node currentTarget = getCurrentTarget();
         if (currentTarget == null) return false;
 
-        return target == currentTarget.element;
+        return target == currentTarget.element.target;
     }
 
     public void addScheduleListener(Schedule.UpdateListener listener) {
@@ -370,7 +370,8 @@ public class Train extends AbstractGameObject implements MovingEntity {
         }
 
         if (this.currentTarget != null) {
-            scheduleUpdateListeners.forEach(l -> l.onScheduleUpdate(this.currentTarget.element));
+            NetworkPosition target = this.currentTarget.element.target;
+            scheduleUpdateListeners.forEach(l -> l.onScheduleUpdate(target));
         }
     }
 
@@ -426,7 +427,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
             }
 
             if (!positionEngine.hasPath()) {
-                if (shouldWaitFor(target.element)) {
+                if (shouldWaitFor(target.element.target)) {
                     if (positionEngine.getSpeed() == 0) {
                         return "Stopped at station (not loading)";
                     }

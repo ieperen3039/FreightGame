@@ -1,7 +1,8 @@
 package NG.GUIMenu.Menu;
 
+import NG.Content.LinearConnectionSc;
 import NG.Content.Scenario;
-import NG.Content.TestScenario;
+import NG.Content.TriangleStationsSc;
 import NG.Core.Game;
 import NG.Core.ModLoader;
 import NG.GUIMenu.Components.*;
@@ -49,20 +50,23 @@ public class MainMenu extends SFrame {
         bottomButtonPos = new Vector2i(1, NUM_BUTTONS);
 
         newGameFrame = new NewGameFrame(game, modManager);
-        Scenario testScenario = new TestScenario(modManager);
         Scenario emptyScenario = new Scenario.Empty(modManager);
+        Scenario triangleScenario = new TriangleStationsSc(modManager);
+        Scenario linearScenario = new LinearConnectionSc(modManager);
 
         STextComponent newGame = new SButton("Start new game", this::showNewGame, MAIN_BUTTON_PROPERTIES);
-        STextComponent startEmpty = new SButton("Start empty world", () -> emptyScenario.apply(game), MAIN_BUTTON_PROPERTIES);
-        STextComponent justStart = new SButton("Start Testworld", () -> testScenario.apply(game), MAIN_BUTTON_PROPERTIES);
+        STextComponent startEmpty = new SButton("Start Empty", () -> emptyScenario.apply(game), MAIN_BUTTON_PROPERTIES);
+        STextComponent startTriangle = new SButton("Start Triangle", () -> triangleScenario.apply(game), MAIN_BUTTON_PROPERTIES);
+        STextComponent startLinear = new SButton("Start Linear", () -> linearScenario.apply(game), MAIN_BUTTON_PROPERTIES);
         STextComponent exitGame = new SButton("Exit game", terminateProgram, MAIN_BUTTON_PROPERTIES);
 
         setMainPanel(SContainer.row(
                 new SFiller(),
                 SContainer.column(
                         newGame,
-                        justStart,
                         startEmpty,
+                        startTriangle,
+                        startLinear,
                         new SFiller().setGrowthPolicy(false, true),
                         exitGame
                 ),
@@ -73,10 +77,9 @@ public class MainMenu extends SFrame {
     public static SToolBar getToolBar(Game game, ModLoader modLoader) {
         SToolBar toolBar = new SToolBar(game, true);
 
-        BuildMenu frame = new BuildMenu(game);
         toolBar.addButton(
                 "Build Object",
-                () -> game.gui().addFrame(frame)
+                () -> game.gui().addFrame(new BuildMenu(game))
         );
 
         toolBar.addButton("Dump Network", // find any networknode, and print getNetworkAsString
@@ -99,19 +102,18 @@ public class MainMenu extends SFrame {
                         .filter(e -> e instanceof TrackPiece)
                         .map(e -> (TrackPiece) e)
                         .filter(e -> !e.isDespawnedAt(game.timer().getGameTime()))
+                        .peek(t -> {assert t.isValid() : t;})
                         .flatMap(t -> Stream.of(t.getStartNode(), t.getEndNode()))
                         .distinct()
                         .map(RailNode::getNetworkNode)
                         .forEach(NetworkNode::check)
         );
 
-        SFrame optionsFrame = new SFrame("Options", SContainer.column(
-                new SToggleButton("Show CollisionBox", BUTTON_PROPERTIES_STRETCH, game.settings().RENDER_COLLISION_BOX)
-                        .addStateChangeListener((active -> game.settings().RENDER_COLLISION_BOX = active))
-        ));
-
         toolBar.addButton("Options",
-                () -> game.gui().addFrame(optionsFrame)
+                () -> game.gui().addFrame(new SFrame("Options", SContainer.column(
+                        new SToggleButton("Show CollisionBox", BUTTON_PROPERTIES_STRETCH, game.settings().RENDER_COLLISION_BOX)
+                                .addStateChangeListener((active -> game.settings().RENDER_COLLISION_BOX = active))
+                )))
         );
 
         toolBar.addButton("Exit", () -> {

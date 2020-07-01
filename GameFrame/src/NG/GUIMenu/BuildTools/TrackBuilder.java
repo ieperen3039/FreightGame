@@ -292,6 +292,7 @@ public class TrackBuilder extends AbstractMouseTool {
     public void dispose() {
         clearGhostTracks();
         deactivation.run();
+        mark.invalidate();
     }
 
     @Override

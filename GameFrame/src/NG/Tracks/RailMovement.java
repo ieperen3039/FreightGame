@@ -20,6 +20,9 @@ import org.joml.Vector3f;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
+import static NG.Network.Signal.Direction.AGAINST_DIRECTION;
+import static NG.Network.Signal.Direction.IN_DIRECTION;
+
 /**
  * A
  * @author Geert van Ieperen created on 6-5-2020.
@@ -60,9 +63,12 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
 
     private float maxSpeed = 0;
 
-    private LongInterpolator totalMillimeters; // maps time to total distance millimeters
-    private FloatInterpolator totalToLocalDistance; // maps total distance millimeters to track local distance
-    private BlockingTimedArrayQueue<Pair<TrackPiece, Boolean>> tracks; // maps total distance millimeters to track, includes currentTrack
+    /** maps time to total distance millimeters */
+    private LongInterpolator totalMillimeters;
+    /** maps total distance millimeters to track-local distance */
+    private FloatInterpolator totalToLocalDistance;
+    /** maps total distance millimeters to tracks, includes currentTrack */
+    private BlockingTimedArrayQueue<Pair<TrackPiece, Boolean>> tracks;
 
     private float r1 = 1;
     private float r2 = 0;
@@ -278,14 +284,18 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
             if (!doStop && updateTime > signalPathTimeout) {
                 if (scanTargetsAhead == 0) { // <- this line took longer than it should
                     // look ahead the projected best-effort stop distance
-                    long scanTargetMillis = currentTotalMillis + getBreakDistanceMillis(speed, 0) + movementMillis + SCAN_BUFFER_MILLIS;
+                    long scanTargetMillis =
+                            currentTotalMillis + getBreakDistanceMillis(speed, 0) + movementMillis + SCAN_BUFFER_MILLIS;
+
                     while (scanTargetMillis > scanTrackEndMillis) {
-                        // reserve the next part of the plan
+                        if (!scanEndNode.hasSignal()) initPath();
                         assert scanEndNode.hasSignal();
 
+                        // reserve the next part of the plan
                         Signal signal = scanEndNode.getSignal();
-                        Deque<TrackPiece> path = signal.reservePath(scanIsInPathDirection,
-                                depth -> controller.getTarget(depth + scanTargetsAhead)
+                        Deque<TrackPiece> path = signal.reservePath(
+                                scanIsInPathDirection ? IN_DIRECTION : AGAINST_DIRECTION,
+                                controller::getTarget
                         );
 
                         if (path.isEmpty()) {
@@ -293,17 +303,21 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
                             signalPathTimeout = updateTime + SIGNAL_PATHING_TIMEOUT;
 
                             if (endOfTrackBrakeTarget == null || endOfTrackBrakeTarget.isInvalid()) {
-                                endOfTrackBrakeTarget = new SpeedTarget(scanTrackEndMillis, scanTrackEndMillis, 0f, () -> scanTrackEndMillis < scanTargetMillis);
+                                endOfTrackBrakeTarget = new SpeedTarget(
+                                        scanTrackEndMillis, scanTrackEndMillis,
+                                        0f, () -> scanTrackEndMillis < scanTargetMillis
+                                );
                                 futureSpeedTargets.add(endOfTrackBrakeTarget);
                             }
-                            break;
-                        }
 
-                        for (TrackPiece track : path) {
-                            appendToPath(track);
-                        }
+                        } else {
 
-                        scanIsInPathDirection = !scanEndNode.isInDirectionOf(path.getLast());
+                            for (TrackPiece track : path) {
+                                appendToPath(track);
+                            }
+
+                            scanIsInPathDirection = !scanEndNode.isInDirectionOf(path.getLast());
+                        }
                     }
                 }
             }
@@ -318,8 +332,10 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
             // case: train leaves current track
             while (currentTotalMillis > trackEndDistanceMillis) {
                 TrackPiece trackPiece = reservedPath.remove();
+
                 RailNode node = isPositiveDirection ? currentTrack.getEndNode() : currentTrack.getStartNode();
                 boolean positiveDirection = node.equals(trackPiece.getStartNode());
+
                 commitTrack(trackPiece, positiveDirection);
             }
 
@@ -358,7 +374,6 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         totalToLocalDistance.add(isPositiveDirection ? currentTrack.getLength() : 0f, trackEndDistanceMillis);
 
         tracks.add(new Pair<>(currentTrack, isPositiveDirection), currentTotalMillis);
-
 
         currentTotalMillis += trainLengthMillis;
         activeSpeedTargets.clear();
@@ -474,6 +489,29 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
 
     @Override
     public void onScheduleUpdate(NetworkPosition element) {
+        if (speed == 0) {
+            NetworkPathFinder inDirection = new NetworkPathFinder(scanEndNode.getNetworkNode(), scanIsInPathDirection, element);
+            NetworkPathFinder.Path pathInDirection = inDirection.call();
+
+            NetworkPathFinder againstDirection = new NetworkPathFinder(scanEndNode.getNetworkNode(), !scanIsInPathDirection, element);
+            NetworkPathFinder.Path pathAgainstDirection = againstDirection.call();
+
+            boolean inSameDirection;
+            if (pathInDirection == null) {
+                assert pathAgainstDirection != null : "No path possible"; // TODO stop
+                inSameDirection = false;
+
+            } else if (pathAgainstDirection == null) {
+                inSameDirection = true;
+
+            } else {
+                Logger.WARN.print(pathInDirection.getPathLength(), pathAgainstDirection.getPathLength());
+                inSameDirection = pathInDirection.getPathLength() < pathAgainstDirection.getPathLength();
+            }
+
+            if (!inSameDirection) executeReversal();
+        }
+
         scanTargetsAhead--;
     }
 
