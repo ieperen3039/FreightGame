@@ -57,7 +57,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
     private RailNode scanEndNode; // track that is scanned latest
     private long scanTrackEndMillis; // total distance to the end of scanTrack
     private boolean scanIsInPathDirection; // TODO can we use NetworkPosition#getNodes()?
-    private int scanTargetsAhead = 0;
+    private boolean scanIsAhead = false;
     private double signalPathTimeout = Double.NEGATIVE_INFINITY;
     private SpeedTarget endOfTrackBrakeTarget;
 
@@ -153,7 +153,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
             float accelerationFraction;
 
             if (speed == 0) { // case: the train is stopped
-                if (doStop || doReverse) {
+                if (isStopping()) {
                     if (doReverse) {
                         executeReversal();
                         doReverse = false;
@@ -185,7 +185,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
                     }
                 }
 
-            } else if (doStop || doReverse) { // case: the train should stop
+            } else if (isStopping()) { // case: the train should stop
                 accelerationFraction = -1;
 
             } else { // search for the next speed target
@@ -282,13 +282,19 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
             }
 
             if (!doStop && updateTime > signalPathTimeout) {
-                if (scanTargetsAhead == 0) { // <- this line took longer than it should
+                if (!scanIsAhead) { // <- this line took longer than it should
                     // look ahead the projected best-effort stop distance
                     long scanTargetMillis =
                             currentTotalMillis + getBreakDistanceMillis(speed, 0) + movementMillis + SCAN_BUFFER_MILLIS;
 
                     while (scanTargetMillis > scanTrackEndMillis) {
-                        if (!scanEndNode.hasSignal()) initPath();
+                        if (!scanEndNode.hasSignal()) {
+                            initPath();
+                            if (!scanEndNode.hasSignal()) {
+                                if (speed == 0) executeReversal();
+                                break;
+                            }
+                        }
                         assert scanEndNode.hasSignal();
 
                         // reserve the next part of the plan
@@ -309,6 +315,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
                                 );
                                 futureSpeedTargets.add(endOfTrackBrakeTarget);
                             }
+                            break;
 
                         } else {
 
@@ -391,7 +398,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         initPath();
     }
 
-    // initializes the reservedPath towards the next signal
+    /** initializes the reservedPath towards the next signal */
     private void initPath() {
         scanEndNode = isPositiveDirection ? currentTrack.getEndNode() : currentTrack.getStartNode();
         TrackPiece nextTrack = currentTrack;
@@ -403,10 +410,8 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         while (!scanEndNode.hasSignal()) {
             NetworkNode networkNode = scanEndNode.getNetworkNode();
             List<NetworkNode.Direction> next = networkNode.getNext(nextTrack);
-            if (next.isEmpty()) return; // EOL
+            if (next.isEmpty()) break;
 
-            // we have to accept all network-critical nodes in path
-            // hence even if it is straight, we have to do path finding.
             if (!networkNode.isNetworkCritical()) { // straight w/o signal
                 assert next.size() == 1;
                 nextTrack = next.get(0).trackPiece;
@@ -417,6 +422,8 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
                     nextTrack = next.get(randIndex).trackPiece;
 
                 } else {
+                    // we have to accept all network-critical nodes in path
+                    // hence even if it is straight, we have to do path finding.
                     if (path == null) {
                         path = new NetworkPathFinder(nextTrack, networkNode, target).call();
                         if (path.isEmpty()) return;
@@ -440,6 +447,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         scanIsInPathDirection = !scanEndNode.isInDirectionOf(nextTrack);
     }
 
+    /** Adds the given track piece to the path that this movement is going to traverse. */
     private void appendToPath(TrackPiece nextTrack) {
         assert nextTrack != null;
         reservedPath.add(nextTrack);
@@ -451,9 +459,9 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         scanTrackEndMillis = newScanTrackEndMillis;
         NetworkNode scanNode = scanEndNode.getNetworkNode();
 
-        NetworkPosition target = controller.getTarget(scanTargetsAhead);
+        NetworkPosition target = controller.getTarget(scanIsAhead ? 1 : 0);
         if (target != null && target.containsNode(nextTrack, scanNode)) {
-            scanTargetsAhead++;
+            scanIsAhead = true;
 
             SpeedTarget speedTarget = new SpeedTarget(
                     scanTrackEndMillis, scanTrackEndMillis, 0,
@@ -463,6 +471,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         }
     }
 
+    /** Sets the given track piece as being traversed. assuming to be in the given direction */
     private void commitTrack(TrackPiece next, boolean positiveDirection) {
         this.isPositiveDirection = positiveDirection;
         this.currentTrack = next;
@@ -498,21 +507,20 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
 
             boolean inSameDirection;
             if (pathInDirection == null) {
-                assert pathAgainstDirection != null : "No path possible"; // TODO stop
+                assert pathAgainstDirection != null : "No path possible"; // TODO stop instead
                 inSameDirection = false;
 
             } else if (pathAgainstDirection == null) {
                 inSameDirection = true;
 
             } else {
-                Logger.WARN.print(pathInDirection.getPathLength(), pathAgainstDirection.getPathLength());
                 inSameDirection = pathInDirection.getPathLength() < pathAgainstDirection.getPathLength();
             }
 
             if (!inSameDirection) executeReversal();
         }
 
-        scanTargetsAhead--;
+        scanIsAhead = false;
     }
 
     private void clearPath() {
@@ -635,7 +643,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
     }
 
     public boolean hasPath() {
-        return reservedPath.isEmpty();
+        return reservedPath.isEmpty() && scanTrackEndMillis >= trackEndDistanceMillis;
     }
 
     public void removePath() {

@@ -5,14 +5,11 @@ import NG.GUIMenu.Components.SComponent;
 import NG.GUIMenu.FrameManagers.FrameGUIManager;
 import NG.InputHandling.MouseReleaseListener;
 import NG.InputHandling.MouseScrollListener;
-import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Settings.Settings;
 import NG.Tools.Vectors;
-import NG.Tracks.TrackPiece;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 import org.lwjgl.glfw.GLFW;
 
 import static NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction.*;
@@ -21,7 +18,6 @@ import static NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction.*;
  * @author Geert van Ieperen created on 24-4-2020.
  */
 public abstract class AbstractMouseTool implements MouseTool {
-    private static final float ENDNODE_SELECTION_MARGIN = 0.5f;
     protected Game game;
 
     private MouseReleaseListener releaseListener;
@@ -134,33 +130,4 @@ public abstract class AbstractMouseTool implements MouseTool {
         // TODO fancy cursor?
     }
 
-    protected static float getFraction(TrackPiece trackPiece, Vector3fc origin, Vector3fc direction) {
-        float fraction = trackPiece.getFractionOfClosest(origin, direction);
-        if (fraction < 0) {
-            fraction = 0;
-        } else if (fraction > 1) {
-            fraction = 1;
-        }
-        return fraction;
-    }
-
-    protected static RailNode getIfExisting(
-            Game game, TrackPiece trackPiece, float fraction
-    ) {
-        if (game.keyControl().isControlPressed() || trackPiece.isStatic()) {
-            if (fraction < 0.5f) {
-                return trackPiece.getStartNode();
-            } else {
-                return trackPiece.getEndNode();
-            }
-        } else if (fraction * trackPiece.getLength() < ENDNODE_SELECTION_MARGIN) {
-            return trackPiece.getStartNode();
-
-        } else if ((1 - fraction) * trackPiece.getLength() < ENDNODE_SELECTION_MARGIN) {
-            return trackPiece.getEndNode();
-
-        } else {
-            return null;
-        }
-    }
 }

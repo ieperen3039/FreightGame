@@ -8,6 +8,7 @@ import NG.DataStructures.Generic.PairList;
 import NG.DataStructures.Valuta;
 import NG.Freight.Cargo;
 import NG.InputHandling.ClickShader;
+import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Mods.CargoType;
 import NG.Network.NetworkNode;
@@ -103,7 +104,7 @@ public class StationGhost extends AbstractGameObject implements Station {
     }
 
     @Override
-    public void reactMouse(MouseAction action) {
+    public void reactMouse(MouseAction action, KeyControl keys) {
         // handled by StationBuilder
     }
 

@@ -23,8 +23,8 @@ import java.util.List;
  * @author Geert van Ieperen created on 19-6-2020.
  */
 public abstract class Scenario {
-    public static final int X_SIZE = 200;
-    public static final int Y_SIZE = 200;
+    public static final int X_SIZE = 100;
+    public static final int Y_SIZE = 100;
 
     private final ModLoader modLoader;
 

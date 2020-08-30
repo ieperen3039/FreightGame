@@ -3,6 +3,7 @@ package NG.Entities;
 import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
+import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
@@ -59,7 +60,7 @@ public class Cube extends AbstractGameObject implements MovingEntity {
     }
 
     @Override
-    public void reactMouse(AbstractMouseTool.MouseAction action) {
+    public void reactMouse(AbstractMouseTool.MouseAction action, KeyControl keys) {
         despawn(game.timer().getGameTime());
     }
 

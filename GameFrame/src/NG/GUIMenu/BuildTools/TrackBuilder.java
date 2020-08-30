@@ -24,6 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Geert van Ieperen created on 16-12-2018.
  */
 public class TrackBuilder extends AbstractMouseTool {
+    private static final float ENDNODE_SELECTION_MARGIN = 0.5f;
     protected final Runnable deactivation;
     private final TrackType type;
     private RailNode firstNode;
@@ -298,5 +299,35 @@ public class TrackBuilder extends AbstractMouseTool {
     @Override
     public String toString() {
         return "Track Builder (" + type + ")";
+    }
+
+    protected static float getFraction(TrackPiece trackPiece, Vector3fc origin, Vector3fc direction) {
+        float fraction = trackPiece.getFractionOfClosest(origin, direction);
+        if (fraction < 0) {
+            fraction = 0;
+        } else if (fraction > 1) {
+            fraction = 1;
+        }
+        return fraction;
+    }
+
+    protected static RailNode getIfExisting(
+            Game game, TrackPiece trackPiece, float fraction
+    ) {
+        if (game.keyControl().isControlPressed() || trackPiece.isStatic()) {
+            if (fraction < 0.5f) {
+                return trackPiece.getStartNode();
+            } else {
+                return trackPiece.getEndNode();
+            }
+        } else if (fraction * trackPiece.getLength() < ENDNODE_SELECTION_MARGIN) {
+            return trackPiece.getStartNode();
+
+        } else if ((1 - fraction) * trackPiece.getLength() < ENDNODE_SELECTION_MARGIN) {
+            return trackPiece.getEndNode();
+
+        } else {
+            return null;
+        }
     }
 }

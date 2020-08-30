@@ -5,7 +5,7 @@ import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Network.RailNode;
-import NG.Network.Signal;
+import NG.Network.SignalEntity;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Tracks.RailTools;
 import NG.Tracks.TrackPiece;
@@ -18,7 +18,7 @@ import org.joml.Vector3fc;
 public class SignalBuilder extends AbstractMouseTool {
 
     protected final Runnable deactivation;
-    private Signal ghostSignal;
+    private SignalEntity ghostSignal;
 
     public SignalBuilder(Game game, SToggleButton source) {
         super(game);
@@ -33,15 +33,15 @@ public class SignalBuilder extends AbstractMouseTool {
                     TrackPiece trackPiece = (TrackPiece) entity;
                     assert trackPiece.isValid();
 
-                    float fraction = getFraction(trackPiece, origin, direction);
-                    RailNode targetNode = getIfExisting(game, trackPiece, fraction);
+                    float fraction = TrackBuilder.getFraction(trackPiece, origin, direction);
+                    RailNode targetNode = TrackBuilder.getIfExisting(game, trackPiece, fraction);
 
                     if (targetNode == null) {
                         double gameTime = game.timer().getGameTime();
                         targetNode = RailTools.createSplit(game, trackPiece, fraction, gameTime);
                     }
 
-                    targetNode.addSignal(game);
+                    targetNode.addSignal(game, true);
                 }
                 break;
 
@@ -49,9 +49,9 @@ public class SignalBuilder extends AbstractMouseTool {
                 if (entity instanceof TrackPiece) {
                     TrackPiece trackPiece = (TrackPiece) entity;
 
-                    float fraction = getFraction(trackPiece, origin, direction);
+                    float fraction = TrackBuilder.getFraction(trackPiece, origin, direction);
                     Vector3f closestPoint = trackPiece.getPositionFromFraction(fraction);
-                    RailNode ghostNodeTarget = getIfExisting(game, trackPiece, fraction);
+                    RailNode ghostNodeTarget = TrackBuilder.getIfExisting(game, trackPiece, fraction);
 
                     if (ghostNodeTarget == null) {
                         Vector3f dir = trackPiece.getDirectionFromFraction(fraction);
@@ -63,7 +63,7 @@ public class SignalBuilder extends AbstractMouseTool {
                     }
 
                     if (ghostSignal == null || ghostSignal.getNode() != ghostNodeTarget) {
-                        ghostSignal = new Signal(game, ghostNodeTarget, true, true);
+                        ghostSignal = new SignalEntity(game, ghostNodeTarget, true, true);
                     }
 
                 } else {

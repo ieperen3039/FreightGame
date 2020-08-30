@@ -3,7 +3,6 @@ package NG.InputHandling.MouseTools;
 import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.Tools.Logger;
-import NG.Tools.Vectors;
 import org.joml.Vector3fc;
 
 /**
@@ -30,13 +29,10 @@ public class DefaultMouseTool extends AbstractMouseTool {
             Logger.DEBUG.print("Clicked on " + entity);
         }
 
-        entity.reactMouse(mouseAction);
+        entity.reactMouse(mouseAction, game.keyControl());
     }
 
     @Override
     public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
-        if (getMouseAction() == MouseAction.PRESS_ACTIVATE) {
-            Logger.DEBUG.print("Clicked at " + Vectors.toString(position));
-        }
     }
 }

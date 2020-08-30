@@ -1,159 +1,31 @@
 package NG.Network;
 
-import NG.Core.AbstractGameObject;
-import NG.Core.Game;
-import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Generic.Pair;
-import NG.Entities.Entity;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
-import NG.Rendering.Material;
-import NG.Rendering.MatrixStack.SGL;
-import NG.Rendering.MeshLoading.Mesh;
-import NG.Rendering.Shaders.MaterialShader;
-import NG.Rendering.Shapes.GenericShapes;
-import NG.Resources.GeneratorResource;
-import NG.Resources.Resource;
 import NG.Tools.NetworkPathFinder;
 import NG.Tools.Toolbox;
-import NG.Tools.Vectors;
 import NG.Tracks.TrackPiece;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
 
 import java.util.*;
 import java.util.function.Function;
 
-import static NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction.PRESS_ACTIVATE;
-
 /**
- * @author Geert van Ieperen created on 26-5-2020.
+ * @author Geert van Ieperen created on 1-7-2020.
  */
-public class Signal extends AbstractGameObject implements Entity {
-    /** number of vertices along the circle of the ring */
-    private static final int RING_RESOLUTION = 128;
-    /** height of middle above the floor of the track */
-    private static final float INNER_RADIUS = 0.6f;
-    /** size increase of the inner radius in each direction to avoid collision */
-    private static final float MARGIN = 0.1f;
-    /** how far each color ring is offset from the middle */
-    private static final float COLOR_OFFSET = 0.1f;
-
-    private final static Resource<Mesh> RING_MESH = new GeneratorResource<>(() ->
-            GenericShapes.createRing(INNER_RADIUS + MARGIN, RING_RESOLUTION, COLOR_OFFSET / 2f), Mesh::dispose
-    );
+public class Signal {
     private static final float TRACK_OCCUPATION_PENALTY = 10f;
-
     /** the node where this signals is placed on */
-    private final RailNode hostNode;
-    private final Vector3fc ringMiddle;
+    protected final RailNode hostNode;
+    protected boolean inNodeDirection;
+    protected boolean allowOppositeTraffic;
 
-    /** whether to allow traffic in the direction of targetNode */
-    private boolean inSameDirection;
-    /** whether to allow traffic in the opposite direction of targetNode */
-    private boolean inOppositeDirection;
+    public enum Direction {
+        IN_DIRECTION, AGAINST_DIRECTION, BOTH_DIRECTIONS
+    }
 
-    private double despawnTime = Double.POSITIVE_INFINITY;
-    private Marking marking = new Marking();
-
-    /**
-     * @param game                game instance
-     * @param targetNode          node to attach to
-     * @param inSameDirection     whether to allow traffic in the direction of targetNode
-     * @param inOppositeDirection whether to allow traffic in the opposite direction of targetNode
-     */
-    public Signal(Game game, RailNode targetNode, boolean inSameDirection, boolean inOppositeDirection) {
-        super(game);
-        assert inSameDirection || inOppositeDirection : "Signal is a block";
+    public Signal(RailNode targetNode, boolean inNodeDirection, boolean allowOppositeTraffic) {
         this.hostNode = targetNode;
-        this.inOppositeDirection = inOppositeDirection;
-        this.inSameDirection = inSameDirection;
-        this.ringMiddle = new Vector3f(targetNode.getPosition()).add(0, 0, INNER_RADIUS - MARGIN);
-    }
-
-    @Override
-    public void update() {
-        // TODO maybe color
-
-        if (hostNode.isUnconnected()) {
-            despawn(game.timer().getGameTime());
-        }
-    }
-
-    @Override
-    public void draw(SGL gl) {
-        gl.pushMatrix();
-        {
-            gl.translate(ringMiddle);
-
-            Vector3fc targetDirection = hostNode.getDirection();
-            Vector3f cross = Vectors.newZVector().cross(targetDirection);
-            gl.rotate(cross, Vectors.Z.angle(targetDirection));
-
-            MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, getColor()));
-            gl.render(RING_MESH.get(), this);
-
-            if (!inSameDirection) {
-                gl.translate(0, 0, COLOR_OFFSET);
-                MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.RED));
-                gl.render(RING_MESH.get(), this);
-                gl.translate(0, 0, -COLOR_OFFSET);
-
-            } else if (!inOppositeDirection) {
-                gl.translate(0, 0, -COLOR_OFFSET);
-                MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.RED));
-                gl.render(RING_MESH.get(), this);
-                gl.translate(0, 0, COLOR_OFFSET);
-            }
-        }
-        gl.popMatrix();
-    }
-
-    private Color4f getColor() {
-        if (hostNode.isUnconnected()) {
-            return Color4f.CYAN;
-        }
-
-        return marking.isValid() ? marking.color : Color4f.WHITE;
-    }
-
-    @Override
-    public void reactMouse(AbstractMouseTool.MouseAction action) {
-        if (action.equals(PRESS_ACTIVATE)) {
-            if (inSameDirection && inOppositeDirection) {
-                inOppositeDirection = false;
-
-            } else if (inSameDirection) {
-                inOppositeDirection = true;
-                inSameDirection = false;
-
-            } else if (inOppositeDirection) {
-                inSameDirection = true;
-
-            } else {
-                assert false : "Impassible signal " + this;
-                inSameDirection = true;
-            }
-        }
-    }
-
-    @Override
-    public void setMarking(Marking marking) {
-        this.marking = marking;
-    }
-
-    @Override
-    public double getDespawnTime() {
-        return despawnTime;
-    }
-
-    @Override
-    public void despawn(double gameTime) {
-        despawnTime = gameTime;
-    }
-
-    @Override
-    public UpdateFrequency getUpdateFrequency() {
-        return UpdateFrequency.NEVER;
+        this.inNodeDirection = inNodeDirection;
+        this.allowOppositeTraffic = allowOppositeTraffic;
     }
 
     public RailNode getNode() {
@@ -189,7 +61,8 @@ public class Signal extends AbstractGameObject implements Entity {
         if (signals.isEmpty()) {
             return null;
 
-        } else if (target == null) { // reserve random path
+        } else if (target == null) {
+            // reserve random path
             TrackPath[] paths = signals.values().stream()
                     .filter(path -> !path.isOccupied)
                     .toArray(TrackPath[]::new);
@@ -247,28 +120,42 @@ public class Signal extends AbstractGameObject implements Entity {
         TrackPath pathToBest = null;
         float leastDistance = Float.POSITIVE_INFINITY;
 
-        for (Signal other : signals.keySet()) {
-            TrackPath pathToSignal = signals.get(other);
+        for (Signal signal : signals.keySet()) {
+            TrackPath pathToSignal = signals.get(signal);
             if (pathToSignal.path.isEmpty()) continue;
 
-            float totalDist = getPathToTargetLength(target, other, pathToSignal);
+            TrackPiece lastTrack = pathToSignal.path.getLast();
+            if (signal.allowsPassingFrom(lastTrack)) {
+                float totalDist = getPathToTargetLength(target, signal, pathToSignal, false);
 
-            if (totalDist < leastDistance) {
-                leastDistance = totalDist;
-                pathToBest = pathToSignal;
+                if (totalDist < leastDistance) {
+                    leastDistance = totalDist;
+                    pathToBest = pathToSignal;
+                }
+            } else {
+                // if there is no place to go, stop at some impassible point
+                if (leastDistance == Float.POSITIVE_INFINITY) {
+                    pathToBest = pathToSignal;
+                }
             }
+            // else this is a track-end
         }
 
-        if (pathToBest == null) return null;
+        // either we found a path to a node, ending in an EOL
+        // or no path exists, and pathViaNodes is empty
+        if (pathToBest == null) {
+            return new Pair<>(pathViaNodes, Float.POSITIVE_INFINITY);
+        }
+
         return new Pair<>(pathViaNodes.append(pathToBest), pathViaNodes.adjLength() + leastDistance);
     }
 
     private float getPathToTargetLength(
-            NetworkPosition target, Signal other, TrackPath pathToSignal
+            NetworkPosition target, Signal other, TrackPath pathToSignal, boolean doRevert
     ) {
         TrackPiece lastTrack = pathToSignal.path.getLast();
         NetworkNode otherNetwork = other.hostNode.getNetworkNode();
-        boolean inDirection = !other.hostNode.isInDirectionOf(lastTrack);
+        boolean inDirection = other.hostNode.isInDirectionOf(lastTrack) == doRevert;
 
         NetworkNode startNode;
         float signalToNetworkLength;
@@ -301,7 +188,8 @@ public class Signal extends AbstractGameObject implements Entity {
      * collects the paths to all signals and nodes in the given direction
      * @param node        the node to analyse
      * @param sourceTrack the track where we are coming from, which is connected to node
-     * @param signals     the map [signals -> the shortest path to this signal]
+     * @param signals     the map [signals -> the shortest path to this signal], where signal is null for an
+     *                    end-of-the-line.
      * @param nodes       the map [nodes -> the shortest path to this node] for all nodes
      * @param pathToNode  path to node
      */
@@ -310,8 +198,8 @@ public class Signal extends AbstractGameObject implements Entity {
             Map<NetworkNode, TrackPath> nodes, TrackPath pathToNode
     ) {
         NetworkNode networkNode = node.getNetworkNode();
-
-        if (nodes != null && networkNode.isNetworkCritical()) {
+        // track all critical nodes
+        if (networkNode.isNetworkCritical()) {
             TrackPath original = nodes.get(networkNode);
             if (original == null || original.adjLength() > pathToNode.adjLength()) {
                 nodes.put(networkNode, new TrackPath(pathToNode));
@@ -320,38 +208,41 @@ public class Signal extends AbstractGameObject implements Entity {
 
         if (node.hasSignal()) {
             Signal sig = node.getSignal();
-            TrackPath original = signals.get(sig);
-            if (original == null || original.adjLength() > pathToNode.adjLength()) {
-                signals.put(sig, new TrackPath(pathToNode));
-            }
+            // only add it to the planning if we should recognize it
+            // if the signal is in opposite direction, we may recognize it as a place to stop
+            if (node.isInDirectionOf(sourceTrack) != sig.inNodeDirection || !sig.allowOppositeTraffic) {
+                TrackPath original = signals.get(sig);
+                if (original == null || original.adjLength() > pathToNode.adjLength()) {
+                    signals.put(sig, new TrackPath(pathToNode));
+                }
 
-        } else {
-            List<NetworkNode.Direction> directions = networkNode.getNext(sourceTrack);
-            boolean wasOccupied = pathToNode.isOccupied;
-
-            for (NetworkNode.Direction entry : directions) {
-                TrackPiece trackPiece = entry.trackPiece;
-
-
-                // loop without signals: prevent infinite loops
-                if (!pathToNode.path.isEmpty() && pathToNode.path.getFirst() == trackPiece) return;
-
-                float trackPieceLength = trackPiece.getLength();
-                pathToNode.path.addLast(trackPiece);
-                pathToNode.length += trackPieceLength;
-                if (trackPiece.isOccupied()) pathToNode.isOccupied = true;
-
-                collectPaths(trackPiece.getNot(node), trackPiece, signals, nodes, pathToNode);
-
-                pathToNode.path.removeLast();
-                pathToNode.length -= trackPieceLength;
-                pathToNode.isOccupied = wasOccupied;
+                return;
             }
         }
-    }
 
-    public enum Direction {
-        IN_DIRECTION, AGAINST_DIRECTION, BOTH_DIRECTIONS
+        assert !networkNode.isEnd() : "End of track has no EOL signal";
+
+        // we continue searching further
+        List<NetworkNode.Direction> directions = networkNode.getNext(sourceTrack);
+        boolean wasOccupied = pathToNode.isOccupied;
+
+        for (NetworkNode.Direction entry : directions) {
+            TrackPiece trackPiece = entry.trackPiece;
+
+            // loop without signals: prevent infinite loops
+            if (!pathToNode.path.isEmpty() && pathToNode.path.getFirst() == trackPiece) return;
+
+            float trackPieceLength = trackPiece.getLength();
+            pathToNode.path.addLast(trackPiece);
+            pathToNode.length += trackPieceLength;
+            if (trackPiece.isOccupied()) pathToNode.isOccupied = true;
+
+            collectPaths(trackPiece.getNot(node), trackPiece, signals, nodes, pathToNode);
+
+            pathToNode.path.removeLast();
+            pathToNode.length -= trackPieceLength;
+            pathToNode.isOccupied = wasOccupied;
+        }
     }
 
     /**
@@ -371,45 +262,49 @@ public class Signal extends AbstractGameObject implements Entity {
     ) {
         Pair<TrackPath, Float> path;
 
-        if (trackDirection == Direction.IN_DIRECTION) {
-            if (!inOppositeDirection) {
-                return getEmptyPath();
-            }
-
-            path = getPath(targetFunction, true);
-
-        } else if (trackDirection == Direction.AGAINST_DIRECTION) {
-            if (!inSameDirection) {
-                return getEmptyPath();
-            }
-
-            path = getPath(targetFunction, false);
-
-        } else {
-            Pair<TrackPath, Float> pathInDirection =
-                    inSameDirection ? getPath(targetFunction, true) : null;
-
-            Pair<TrackPath, Float> pathAgainstDirection =
-                    inOppositeDirection ? getPath(targetFunction, false) : null;
-
-            if (pathInDirection == null) {
-                path = pathAgainstDirection;
-
-            } else if (pathAgainstDirection == null) {
-                path = pathInDirection;
-
-            } else {
-                if (pathInDirection.right < pathAgainstDirection.right) {
-                    path = pathInDirection;
+        switch (trackDirection) {
+            case IN_DIRECTION:
+                if (inNodeDirection || allowOppositeTraffic) {
+                    path = getPath(targetFunction, true);
                 } else {
-                    path = pathAgainstDirection;
+                    path = null;
                 }
-            }
+
+                break;
+
+            case AGAINST_DIRECTION:
+                if (!inNodeDirection || allowOppositeTraffic) {
+                    path = getPath(targetFunction, false);
+                } else {
+                    path = null;
+                }
+
+                break;
+
+            case BOTH_DIRECTIONS:
+                Pair<TrackPath, Float> pathInDirection = getPath(targetFunction, true);
+                Pair<TrackPath, Float> pathAgainstDirection = allowOppositeTraffic ? getPath(targetFunction, false) : null;
+
+                if (pathInDirection == null) {
+                    path = pathAgainstDirection;
+
+                } else if (pathAgainstDirection == null) {
+                    path = pathInDirection;
+
+                } else {
+                    if (pathInDirection.right < pathAgainstDirection.right) {
+                        path = pathInDirection;
+                    } else {
+                        path = pathAgainstDirection;
+                    }
+                }
+                break;
+            default:
+                throw new IllegalStateException("unknown enum value " + trackDirection);
         }
 
-        if (path == null || path.left.isOccupied) return getEmptyPath();
+        if (path == null || path.left.isOccupied) return Signal.getEmptyPath();
         return reserve(path.left);
-
     }
 
     private Deque<TrackPiece> reserve(TrackPath pathToBest) {
@@ -457,8 +352,21 @@ public class Signal extends AbstractGameObject implements Entity {
         return pathToSignal;
     }
 
+    protected void revert() {
+        inNodeDirection = !inNodeDirection;
+    }
+
+    public void allowOppositeTraffic(boolean doAllow) {
+        this.allowOppositeTraffic = doAllow;
+    }
+
     private static ArrayDeque<TrackPiece> getEmptyPath() {
         return new ArrayDeque<>();
+    }
+
+    private boolean allowsPassingFrom(TrackPiece arrivalTrack) {
+        if (allowOppositeTraffic) return true;
+        return (inNodeDirection == !hostNode.isInDirectionOf(arrivalTrack));
     }
 
     private static class TrackPath implements java.io.Serializable {

@@ -4,6 +4,7 @@ import NG.Core.AbstractGameObject;
 import NG.Core.Game;
 import NG.DataStructures.Collision.ColliderEntity;
 import NG.InputHandling.ClickShader;
+import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
@@ -117,7 +118,7 @@ public abstract class TrackPiece extends AbstractGameObject implements ColliderE
     }
 
     @Override
-    public void reactMouse(AbstractMouseTool.MouseAction action) {
+    public void reactMouse(AbstractMouseTool.MouseAction action, KeyControl keys) {
 
     }
 

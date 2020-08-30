@@ -12,6 +12,7 @@ import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
+import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Mods.CargoType;
 import NG.Network.NetworkNode;
@@ -43,7 +44,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
     private final List<Schedule.UpdateListener> scheduleUpdateListeners = new ArrayList<>();
 
     private final Schedule schedule = new Schedule();
-    private Schedule.Node currentTarget = null;
+    private Schedule.Node currentScheduleNode = null;
     private double loadTimer = Double.NEGATIVE_INFINITY;
 
     protected double spawnTime;
@@ -60,13 +61,17 @@ public class Train extends AbstractGameObject implements MovingEntity {
 
     @Override
     public void update() {
+        if (currentScheduleNode == null && !schedule.isEmpty()) {
+            currentScheduleNode = schedule.getFirstNode();
+            positionEngine.onScheduleUpdate(currentScheduleNode.element.target);
+        }
+
         double gameTime = game.timer().getGameTime();
         positionEngine.update();
 
-        Schedule.Node currentTarget = getCurrentTarget();
-        if (positionEngine.getSpeed() == 0 && !isLoading() && currentTarget != null) {
+        if (currentScheduleNode != null && positionEngine.getSpeed() == 0 && !isLoading()) {
             // check whether we have loading to do
-            NetworkPosition target = currentTarget.element.target;
+            NetworkPosition target = currentScheduleNode.element.target;
 
             if (target instanceof Station) {
                 Station station = (Station) target;
@@ -84,9 +89,10 @@ public class Train extends AbstractGameObject implements MovingEntity {
                         Map<CargoType, Integer> transferableCargo = station.getTransferableCargo(this);
                         if (!transferableCargo.isEmpty()) {
                             CargoType anyType = transferableCargo.keySet().iterator().next();
-                            station.load(this, anyType, transferableCargo.get(anyType), true);
+                            int cargoAmount = transferableCargo.get(anyType);
+                            station.load(this, anyType, cargoAmount, true);
 
-                            Logger.DEBUG.printf("Loading %s for %4.01f seconds", this, loadTimer - gameTime);
+                            Logger.DEBUG.printf("Loading %d %s into %s for %4.01f seconds", cargoAmount, anyType, this, loadTimer - gameTime);
 
                         } else { // !canDeposit(station) && !canLoad(station)
                             // if there is nothing to transfer, then we are already done, and we should continue our journey
@@ -188,7 +194,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
             Vector3f position = positionEngine.getPosition(now, -displacement);
             Quaternionf rotation = positionEngine.getRotation(now, -displacement);
 
-            entity.draw(gl, position, rotation, this);
+            entity.draw(gl, position, rotation, this, marking);
             displacement += entity.getProperties().length;
         }
     }
@@ -200,9 +206,17 @@ public class Train extends AbstractGameObject implements MovingEntity {
     }
 
     @Override
-    public void reactMouse(MouseAction action) {
+    public void reactMouse(MouseAction action, KeyControl keys) {
         if (action == MouseAction.PRESS_ACTIVATE) {
-            game.gui().addFrame(new TrainUI());
+            if (keys.isControlPressed()) {
+                if (positionEngine.isStopping()) {
+                    positionEngine.start();
+                } else {
+                    positionEngine.stop();
+                }
+            } else {
+                game.gui().addFrame(new TrainUI());
+            }
         }
     }
 
@@ -310,7 +324,14 @@ public class Train extends AbstractGameObject implements MovingEntity {
      * @return the target on the given number of steps from the current target, or null if the schedule is empty
      */
     public NetworkPosition getTarget(int scheduleDepth) {
-        Schedule.Node nextNode = getCurrentTarget();
+        Schedule.Node nextNode = null;
+        if (!schedule.isEmpty()) {
+            if (currentScheduleNode == null) {
+                currentScheduleNode = schedule.getFirstNode();
+            }
+            nextNode = currentScheduleNode;
+        }
+
         if (nextNode == null) return null;
 
         if (scheduleDepth > 0) {
@@ -332,9 +353,8 @@ public class Train extends AbstractGameObject implements MovingEntity {
     }
 
     public void onArrival(TrackPiece next, RailNode newNode) {
-        Schedule.Node currentTarget = getCurrentTarget();
-        if (currentTarget != null) {
-            NetworkPosition target = currentTarget.element.target;
+        if (currentScheduleNode != null) {
+            NetworkPosition target = currentScheduleNode.element.target;
             NetworkNode networkNode = newNode.getNetworkNode();
 
             if (target.containsNode(next, networkNode) && !shouldWaitFor(target)) {
@@ -345,11 +365,8 @@ public class Train extends AbstractGameObject implements MovingEntity {
 
     public boolean shouldWaitFor(NetworkPosition target) {
         if (isLoading()) return true;
-
-        Schedule.Node currentTarget = getCurrentTarget();
-        if (currentTarget == null) return false;
-
-        return target == currentTarget.element.target;
+        if (currentScheduleNode == null) return false;
+        return target == currentScheduleNode.element.target;
     }
 
     public void addScheduleListener(Schedule.UpdateListener listener) {
@@ -361,28 +378,16 @@ public class Train extends AbstractGameObject implements MovingEntity {
     }
 
     private void goToNext() {
-        Schedule.Node currentTarget = getCurrentTarget();
-        if (currentTarget == null) {
-            this.currentTarget = schedule.getFirstNode();
+        if (schedule.size() < 2) return;
 
+        if (currentScheduleNode == null) {
+            currentScheduleNode = schedule.getFirstNode();
         } else {
-            this.currentTarget = schedule.getNextNode(currentTarget);
+            currentScheduleNode = schedule.getNextNode(currentScheduleNode);
         }
 
-        if (this.currentTarget != null) {
-            NetworkPosition target = this.currentTarget.element.target;
-            scheduleUpdateListeners.forEach(l -> l.onScheduleUpdate(target));
-        }
-    }
-
-    private Schedule.Node getCurrentTarget() {
-        if (schedule.isEmpty()) return null;
-
-        if (currentTarget == null) {
-            currentTarget = schedule.getFirstNode();
-        }
-
-        return currentTarget;
+        NetworkPosition target = currentScheduleNode.element.target;
+        scheduleUpdateListeners.forEach(l -> l.onScheduleUpdate(target));
     }
 
     @Override
@@ -420,14 +425,16 @@ public class Train extends AbstractGameObject implements MovingEntity {
                 return "Stopping...";
             }
 
-            Schedule.Node target = getCurrentTarget();
-
-            if (target == null) {
-                return "No schedule";
+            if (currentScheduleNode == null) {
+                if (schedule.isEmpty()) {
+                    return "No schedule";
+                } else {
+                    return "Waiting for schedule start";
+                }
             }
 
             if (!positionEngine.hasPath()) {
-                if (shouldWaitFor(target.element.target)) {
+                if (shouldWaitFor(currentScheduleNode.element.target)) {
                     if (positionEngine.getSpeed() == 0) {
                         return "Stopped at station (not loading)";
                     }
@@ -438,7 +445,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
                 return "Waiting for free path...";
             }
 
-            return "Now heading for " + target.element;
+            return "Now heading for " + currentScheduleNode.element;
         }
     }
 }

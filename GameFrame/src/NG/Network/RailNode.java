@@ -25,6 +25,7 @@ public class RailNode {
      *      (v dot this.direction) >= 0
      * }
      */
+    private final Signal eolSignal;
 
     /** position of this node */
     private final Vector3fc position;
@@ -36,7 +37,7 @@ public class RailNode {
     private final NetworkNode networkNode;
 
     /** optional signal on this node */
-    private Signal signal = null;
+    private SignalEntity signal = null;
 
     public RailNode(Vector3fc nodePoint, TrackType type, Vector3fc direction) {
         this(nodePoint, type, direction, new NetworkNode());
@@ -49,6 +50,7 @@ public class RailNode {
         this.direction = new Vector3f(direction.x(), direction.y(), 0).normalize();
         this.type = type;
         this.networkNode = networkNode;
+        this.eolSignal = new Signal(this, true, false);
     }
 
     public RailNode(RailNode source, TrackType newType) {
@@ -57,6 +59,7 @@ public class RailNode {
         this.type = newType;
         this.networkNode = source.networkNode;
         this.signal = null;
+        this.eolSignal = null;
     }
 
     public TrackType getType() {
@@ -102,16 +105,17 @@ public class RailNode {
     }
 
     public boolean hasSignal() {
-        return signal != null;
+        return networkNode.isEnd() || signal != null;
     }
 
     public Signal getSignal() {
-        return signal;
+        return networkNode.isEnd() ? eolSignal : signal;
     }
 
-    public void addSignal(Game game) {
-        this.signal = new Signal(game, this, true, true);
+    public Signal addSignal(Game game, boolean inNodeDirection) {
+        this.signal = new SignalEntity(game, this, inNodeDirection, true);
         game.state().addEntity(signal);
+        return signal;
     }
 
     public void removeSignal(Game game) {
@@ -128,6 +132,11 @@ public class RailNode {
         return networkNode.getEntriesA().isEmpty() && networkNode.getEntriesB().isEmpty();
     }
 
+    /**
+     * returns whether this node is in the direction of the given track. Note that if you are on {@code track} and
+     * approach this node in the direction of this node, {@code isInDirectionOf(track)} will return false.
+     * @return true iff this node points in the direction of {@code track}.
+     */
     public boolean isInDirectionOf(TrackPiece track) {
         assert track.getStartNode().equals(this) || track.getEndNode().equals(this);
 

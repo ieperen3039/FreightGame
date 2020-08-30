@@ -4,6 +4,7 @@ import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Generic.Pair;
 import NG.Freight.Cargo;
+import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Mods.CargoType;
 import NG.Rendering.Material;
@@ -83,7 +84,7 @@ public class Industry extends Storage {
     }
 
     @Override
-    public void reactMouse(AbstractMouseTool.MouseAction action) {
+    public void reactMouse(AbstractMouseTool.MouseAction action, KeyControl keys) {
 
     }
 

@@ -11,6 +11,7 @@ import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Menu.MainMenu;
 import NG.InputHandling.ClickShader;
+import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
 import NG.Mods.CargoType;
 import NG.Network.NetworkNode;
@@ -208,7 +209,7 @@ public class StationImpl extends Storage implements Station {
     }
 
     @Override
-    public void reactMouse(MouseAction action) {
+    public void reactMouse(MouseAction action, KeyControl keys) {
         if (action == MouseAction.PRESS_ACTIVATE) {
             game.gui().addFrame(new StationUI());
         }

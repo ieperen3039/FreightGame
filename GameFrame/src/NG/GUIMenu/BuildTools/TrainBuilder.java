@@ -43,7 +43,7 @@ public class TrainBuilder extends EntityActionTool {
         }
 
         // click on it
-        construction.reactMouse(AbstractMouseTool.MouseAction.PRESS_ACTIVATE);
+        construction.reactMouse(AbstractMouseTool.MouseAction.PRESS_ACTIVATE, game.keyControl());
     }
 
     @Override

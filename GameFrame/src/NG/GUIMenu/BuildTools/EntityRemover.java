@@ -5,6 +5,7 @@ import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
 import NG.GUIMenu.Menu.EntityActionTool;
 import NG.Network.Signal;
+import NG.Network.SignalEntity;
 import NG.Tracks.RailTools;
 import NG.Tracks.TrackPiece;
 
@@ -25,7 +26,7 @@ public class EntityRemover extends EntityActionTool {
         if (entity instanceof TrackPiece) {
             RailTools.removeTrackPiece((TrackPiece) entity, gameTime);
 
-        } else if (entity instanceof Signal) {
+        } else if (entity instanceof SignalEntity) {
             ((Signal) entity).getNode().removeSignal(game);
 
         } else {

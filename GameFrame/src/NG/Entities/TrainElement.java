@@ -7,7 +7,6 @@ import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Rendering.Shaders.MaterialShader;
-import NG.Rendering.Shaders.ShaderProgram;
 import NG.Resources.Resource;
 import NG.Tracks.TrackType;
 import org.joml.Quaternionfc;
@@ -21,12 +20,16 @@ import java.util.Map;
  * @author Geert van Ieperen created on 19-5-2020.
  */
 public interface TrainElement {
-    default void draw(SGL gl, Vector3fc position, Quaternionfc rotation, Entity sourceEntity) {
-        ShaderProgram shader = gl.getShader();
-
-        if (shader instanceof MaterialShader) {
-            ((MaterialShader) shader).setMaterial(Material.METAL);
-        }
+    default void draw(
+            SGL gl, Vector3fc position, Quaternionfc rotation, Entity sourceEntity, Entity.Marking marking
+    ) {
+        MaterialShader.ifPresent(gl, mat -> {
+            if (marking.isValid()) {
+                mat.setMaterial(Material.METAL, marking.color);
+            } else {
+                mat.setMaterial(Material.METAL);
+            }
+        });
 
         gl.pushMatrix();
         {

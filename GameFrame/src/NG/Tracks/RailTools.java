@@ -102,7 +102,7 @@ public final class RailTools {
         assert offset <= spacing;
         if (offset == 0) {
             if (Float.isFinite(spacing)) {
-                node.addSignal(game);
+                node.addSignal(game, true);
             }
             offset = spacing; // prevent zero-length tracks
         }
@@ -155,7 +155,7 @@ public final class RailTools {
                 node = trackConnection.getEndNode();
 
                 if (sectionsPerSignal > 0 && i % sectionsPerSignal == offsetIndex) {
-                    node.addSignal(game);
+                    node.addSignal(game, true);
                 }
 
                 tracks.add(trackConnection);
@@ -192,7 +192,7 @@ public final class RailTools {
         assert offset <= spacing;
         if (offset == 0) {
             if (Float.isFinite(spacing)) {
-                node.addSignal(game);
+                node.addSignal(game, true);
             }
             offset = spacing; // prevent zero-length tracks
         }
@@ -284,7 +284,7 @@ public final class RailTools {
                 node = trackConnection.getEndNode();
 
                 if (sectionsPerSignal > 0 && i % sectionsPerSignal == offsetIndex) {
-                    node.addSignal(game);
+                    node.addSignal(game, true);
                 }
 
                 tracks.add(trackConnection);
@@ -433,14 +433,6 @@ public final class RailTools {
                 "Nodes were connected with double tracks: " + oldPiece + " and " + trackPiece;
 
         trackPiece.despawn(gameTime);
-
-        if (aNode.isUnconnected() && aNode.hasSignal()) {
-            aNode.getSignal().despawn(gameTime);
-        }
-
-        if (bNode.isUnconnected() && bNode.hasSignal()) {
-            bNode.getSignal().despawn(gameTime);
-        }
     }
 
     /**

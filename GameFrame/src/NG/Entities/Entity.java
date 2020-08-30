@@ -3,6 +3,7 @@ package NG.Entities;
 import NG.Core.GameObject;
 import NG.Core.GameTimer;
 import NG.DataStructures.Generic.Color4f;
+import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
 import NG.Rendering.MatrixStack.SGL;
@@ -60,8 +61,9 @@ public interface Entity extends GameObject {
      * NG.GUIMenu.Components.SFrame} with information or settings of this Entity is usually opened, and when {@code
      * button == GLFW_RIGHT_MOUSE_BUTTON} is clicked, the 'active' state of this entity may toggle.
      * @param action the button that is clicked as defined in {@link MouseClickListener}
+     * @param keys
      */
-    void reactMouse(AbstractMouseTool.MouseAction action);
+    void reactMouse(AbstractMouseTool.MouseAction action, KeyControl keys);
 
     void setMarking(Marking marking);
 

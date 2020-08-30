@@ -21,7 +21,7 @@ import static org.joml.Math.toRadians;
  */
 public class LinearConnectionSc extends Scenario {
 
-    public static final int DISTANCE = 20;
+    public static final int DISTANCE = 10;
     public static final float SIGNAL_OFFSET = 0.5f;
 
     public LinearConnectionSc(ModLoader modLoader) {
@@ -38,8 +38,8 @@ public class LinearConnectionSc extends Scenario {
         // random map
         MapGeneratorMod mapGenerator = new DefaultMapGenerator(0);
         mapGenerator.setSize(X_SIZE, Y_SIZE);
-        mapGenerator.setProperty(DefaultMapGenerator.MAJOR_AMPLITUDE, 0);
-        mapGenerator.setProperty(DefaultMapGenerator.MINOR_AMPLITUDE, 1);
+        mapGenerator.setProperty(DefaultMapGenerator.MAJOR_AMPLITUDE, 2);
+        mapGenerator.setProperty(DefaultMapGenerator.MINOR_AMPLITUDE, 0);
         game.map().generateNew(game, mapGenerator);
     }
 
@@ -61,22 +61,22 @@ public class LinearConnectionSc extends Scenario {
         List<RailNode> aNodes = aStation.getNodesOfDirection(aSide);
         List<RailNode> bNodes = bStation.getNodesOfDirection(bSide);
 
-        aNodes.forEach(node -> node.addSignal(game));
-        bNodes.forEach(node -> node.addSignal(game));
+        aNodes.forEach(node -> node.addSignal(game, false));
+        bNodes.forEach(node -> node.addSignal(game, false));
 
-        RailNode aLeaveNode = new RailNode(getGroundPos(game, center, new Vector3f(aSide).mul(0.7f)
+        RailNode aLeaveNode = new RailNode(getGroundPos(game, center, new Vector3f(aSide).mul(0.5f)
                 .add(-SIGNAL_OFFSET, -SIGNAL_OFFSET, 0)), type, bSide);
-        aLeaveNode.addSignal(game);
-        RailNode aEnterNode = new RailNode(getGroundPos(game, center, new Vector3f(aSide).mul(0.7f)
+        aLeaveNode.addSignal(game, true);
+        RailNode aEnterNode = new RailNode(getGroundPos(game, center, new Vector3f(aSide).mul(0.5f)
                 .add(SIGNAL_OFFSET, SIGNAL_OFFSET, 0)), type, bSide);
-        aEnterNode.addSignal(game);
+        aEnterNode.addSignal(game, false).allowOppositeTraffic(false);
 
-        RailNode bLeaveNode = new RailNode(getGroundPos(game, center, new Vector3f(bSide).mul(0.7f)
+        RailNode bLeaveNode = new RailNode(getGroundPos(game, center, new Vector3f(bSide).mul(0.5f)
                 .add(SIGNAL_OFFSET, SIGNAL_OFFSET, 0)), type, aSide);
-        bLeaveNode.addSignal(game);
-        RailNode bEnterNode = new RailNode(getGroundPos(game, center, new Vector3f(bSide).mul(0.7f)
+        bLeaveNode.addSignal(game, true);
+        RailNode bEnterNode = new RailNode(getGroundPos(game, center, new Vector3f(bSide).mul(0.5f)
                 .add(-SIGNAL_OFFSET, -SIGNAL_OFFSET, 0)), type, aSide);
-        bEnterNode.addSignal(game);
+        bEnterNode.addSignal(game, false).allowOppositeTraffic(false);
 
         addConnections(game, aLeaveNode, aNodes);
         addConnections(game, aEnterNode, aNodes);

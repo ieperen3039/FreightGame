@@ -71,12 +71,12 @@ public class TriangleStationsSc extends Scenario {
         addConnections(game, bypass3, node31, Float.POSITIVE_INFINITY);
         addConnections(game, bypass3, node23, Float.POSITIVE_INFINITY);
 
-        node12.addSignal(game);
-        node23.addSignal(game);
-        node31.addSignal(game);
-        bypass1.addSignal(game);
-        bypass2.addSignal(game);
-        bypass3.addSignal(game);
+        node12.addSignal(game, true);
+        node23.addSignal(game, true);
+        node31.addSignal(game, true);
+        bypass1.addSignal(game, true);
+        bypass2.addSignal(game, true);
+        bypass3.addSignal(game, true);
 
         gameState.addEntity(station1);
         gameState.addEntity(station2);
@@ -84,7 +84,7 @@ public class TriangleStationsSc extends Scenario {
     }
 
     private RailNode getBypass(Game game, TrackType type, Vector2f center, Vector3f offset, float orientation) {
-        Vector3f position = new Vector3f(offset).mul(0.7f);
+        Vector3f position = new Vector3f(offset).mul(0.75f);
         Vector3f direction = new Vector3f(org.joml.Math.cos(orientation), org.joml.Math.sin(orientation), 0);
 
         return new RailNode(getGroundPos(game, center, position), type, direction);
@@ -102,7 +102,7 @@ public class TriangleStationsSc extends Scenario {
         addConnections(game, node, nodesStation21);
 
         for (RailNode stationNode : nodesStation12) {
-            stationNode.addSignal(game);
+            stationNode.addSignal(game, true);
         }
 
         return node;
