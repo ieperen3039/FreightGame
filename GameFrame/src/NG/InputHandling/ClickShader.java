@@ -192,7 +192,6 @@ public class ClickShader implements ShaderProgram {
 
     @Override
     public void cleanup() {
-        unbind();
         if (programId != 0) {
             glDeleteProgram(programId);
         }

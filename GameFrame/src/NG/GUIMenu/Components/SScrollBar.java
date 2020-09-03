@@ -5,6 +5,7 @@ import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
 import NG.InputHandling.MouseDragListener;
 import NG.InputHandling.MouseReleaseListener;
+import NG.InputHandling.MouseScrollListener;
 import NG.Tools.Toolbox;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
@@ -18,14 +19,14 @@ import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.SCROLL_BAR_DRAG
 /**
  * @author Geert van Ieperen created on 13-5-2019.
  */
-class SScrollBar extends SComponent {
+class SScrollBar extends SComponent implements MouseScrollListener {
+    public static final float SCROLL_SPEED = 0.05f;
     private static final int SCROLL_BAR_WIDTH = 50;
     private static final int SCROLL_BUTTON_SIZE = 50;
     private static final int DRAG_BAR_MIN_SIZE = 15;
     private static final SComponentProperties SCROLL_BUTTON_PROPS = new SComponentProperties(
             SCROLL_BAR_WIDTH, SCROLL_BUTTON_SIZE, true, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
     );
-
     private final List<SScrollBarListener> listeners = new ArrayList<>();
     private final SComponent[] elements;
 
@@ -96,24 +97,34 @@ class SScrollBar extends SComponent {
 
     @Override
     public void doValidateLayout() {
+        super.doValidateLayout();
+
+        scrollUp.setSize(scrollUp.getWidth(), scrollUp.getHeight());
         scrollUp.validateLayout();
 
         positionDragbar(dragBarOffsetFraction);
+        dragBar.setSize(dragBar.getWidth(), dragBar.getHeight());
         dragBar.validateLayout();
 
+        scrollDown.setSize(scrollDown.getWidth(), scrollDown.getHeight());
         scrollDown.setPosition(0, getHeight() - SCROLL_BUTTON_SIZE);
         scrollDown.validateLayout();
     }
 
     private void positionDragbar(float fraction) {
         int dragBarSpace = getDragBarSpace();
-        if (dragBarSpace > 0) {
-            int dragBarHeight = (int) (dragBarSpace * Math.min(1, barSizeFraction));
+        int dragBarHeight = Math.max((int) (dragBarSpace * Math.min(1, barSizeFraction)), dragBar.minHeight());
+
+        if (dragBarSpace > dragBarHeight) {
             dragBar.setSize(SCROLL_BAR_WIDTH, dragBarHeight);
 
             int dragMaxYPos = getHeight() - SCROLL_BUTTON_SIZE - dragBarHeight;
             int drabBarY = (int) Toolbox.interpolate(SCROLL_BUTTON_SIZE, dragMaxYPos, fraction);
             dragBar.setPosition(0, drabBarY);
+
+        } else if (dragBarSpace > 0) {
+            dragBar.setSize(SCROLL_BAR_WIDTH, dragBarSpace);
+            dragBar.setPosition(0, SCROLL_BUTTON_SIZE);
 
         } else {
             dragBar.setVisible(false);
@@ -146,7 +157,6 @@ class SScrollBar extends SComponent {
 
     @Override
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
-
         Vector2i pos = new Vector2i(screenPosition).add(0, SCROLL_BUTTON_SIZE);
         Vector2i size = new Vector2i(SCROLL_BAR_WIDTH, getDragBarSpace());
         design.draw(SCROLL_BAR_BACKGROUND, pos, size);
@@ -173,10 +183,44 @@ class SScrollBar extends SComponent {
         invalidateLayout();
     }
 
+    @Override
+    public void onScroll(float value) {
+        setDragbarFraction(dragBarOffsetFraction - value * 0.02f);
+    }
+
+    private void setDragbarFraction(float newFraction) {
+        dragBarOffsetFraction = newFraction;
+        dragBarOffsetFraction = Math.max(0, Math.min(1, dragBarOffsetFraction));
+        positionDragbar(dragBarOffsetFraction);
+
+        int newCurrent;
+        if (dragBarOffsetFraction == 1) {
+            newCurrent = maximumInd;
+        } else {
+            newCurrent = (int) (dragBarOffsetFraction * (maximumInd - minimumInd + 1)) + minimumInd;
+        }
+
+        if (newCurrent != currentInd) {
+            currentInd = newCurrent;
+            notifyListeners();
+        }
+    }
+
+    private void notifyListeners() {
+        listeners.forEach(l -> l.onChange(currentInd));
+    }
+
+    public interface SScrollBarListener {
+        /**
+         * @param newState the new number this scrollbar points at
+         */
+        void onChange(int newState);
+    }
+
     /**
      * @author Geert van Ieperen created on 13-5-2019.
      */
-    public class SDragBar extends SComponent implements MouseReleaseListener, MouseDragListener {
+    public class SDragBar extends SComponent implements MouseReleaseListener, MouseDragListener, MouseScrollListener {
         private SDragBar() {
             setGrowthPolicy(true, false);
             setSize(0, 0);
@@ -199,37 +243,17 @@ class SScrollBar extends SComponent {
 
         @Override
         public void mouseDragged(int xDelta, int yDelta, float xPos, float yPos) {
-            dragBarOffsetFraction += ((float) yDelta / getDragBarSpace());
-            dragBarOffsetFraction = Math.max(0, Math.min(1, dragBarOffsetFraction));
-            positionDragbar(dragBarOffsetFraction);
-
-            int newCurrent;
-            if (dragBarOffsetFraction == 1) {
-                newCurrent = maximumInd;
-            } else {
-                newCurrent = (int) (dragBarOffsetFraction * (maximumInd - minimumInd + 1)) + minimumInd;
-            }
-
-            if (newCurrent != currentInd) {
-                currentInd = newCurrent;
-                notifyListeners();
-            }
+            setDragbarFraction(dragBarOffsetFraction + ((float) yDelta / getDragBarSpace()));
         }
 
         @Override
         public void onRelease(int button, int xSc, int ySc) {
             alignDragBar();
         }
-    }
 
-    private void notifyListeners() {
-        listeners.forEach(l -> l.onChange(currentInd));
-    }
-
-    public interface SScrollBarListener {
-        /**
-         * @param newState the new number this scrollbar points at
-         */
-        void onChange(int newState);
+        @Override
+        public void onScroll(float value) {
+            SScrollBar.this.onScroll(value);
+        }
     }
 }

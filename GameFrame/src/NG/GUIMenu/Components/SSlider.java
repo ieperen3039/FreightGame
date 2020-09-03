@@ -4,6 +4,7 @@ import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
 import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseDragListener;
+import NG.InputHandling.MouseScrollListener;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
@@ -15,19 +16,16 @@ import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.*;
 /**
  * @author Geert van Ieperen created on 31-5-2020.
  */
-public class SSlider extends SComponent implements MouseDragListener, MouseClickListener {
+public class SSlider extends SComponent implements MouseDragListener, MouseClickListener, MouseScrollListener {
     private static final int BASE_DRAG_BAR_WIDTH = 50;
-
+    private static final float SCROLL_SPEED = 0.05f;
+    private final List<SSliderListener> changeListeners = new ArrayList<>();
     private float minimum;
     private float maximum;
     private float current;
-
     private int minWidth;
     private int minHeight;
-
     private int dragBarWidth;
-
-    private final List<SSliderListener> changeListeners = new ArrayList<>();
 
     public SSlider(SComponentProperties props) {
         this(0, 1, 0, props);
@@ -44,7 +42,7 @@ public class SSlider extends SComponent implements MouseDragListener, MouseClick
         dragBarWidth = (minWidth == 0) ? BASE_DRAG_BAR_WIDTH : minWidth / 10;
     }
 
-    public SSlider(int minimum, int maximum, int current, SComponentProperties props, SSliderListener listener) {
+    public SSlider(float minimum, float maximum, float current, SComponentProperties props, SSliderListener listener) {
         this(minimum, maximum, current, props);
         addChangeListener(listener);
     }
@@ -74,8 +72,8 @@ public class SSlider extends SComponent implements MouseDragListener, MouseClick
 
         int space = getWidth() - dragBarWidth;
         if (space > 0) {
-            float fraction = (current - minimum) / (maximum - minimum);
-            Vector2i dragBarPos = new Vector2i(screenPosition).add((int) (fraction * space), 0);
+            float shift = getFraction() * space;
+            Vector2i dragBarPos = new Vector2i(screenPosition).add((int) shift, 0);
             design.draw(SCROLL_BAR_DRAG_ELEMENT, dragBarPos, new Vector2i(dragBarWidth, getHeight()));
         }
     }
@@ -93,6 +91,10 @@ public class SSlider extends SComponent implements MouseDragListener, MouseClick
         int componentXSize = getWidth() - dragBarWidth;
         float fraction = (float) xRel / componentXSize;
         setFraction(fraction);
+    }
+
+    private float getFraction() {
+        return (current - minimum) / (maximum - minimum);
     }
 
     private void setFraction(float fraction) {
@@ -127,6 +129,11 @@ public class SSlider extends SComponent implements MouseDragListener, MouseClick
             current = newValue;
             changeListeners.forEach(l -> l.onChange(newValue));
         }
+    }
+
+    @Override
+    public void onScroll(float value) {
+        setFraction(getFraction() + value * SCROLL_SPEED);
     }
 
     public interface SSliderListener {

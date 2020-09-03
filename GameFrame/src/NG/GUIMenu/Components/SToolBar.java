@@ -1,7 +1,6 @@
 package NG.GUIMenu.Components;
 
 import NG.Core.Game;
-import NG.GUIMenu.FrameManagers.FrameGUIManager;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
 import NG.InputHandling.MouseClickListener;

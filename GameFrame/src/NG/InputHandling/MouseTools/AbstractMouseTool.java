@@ -2,7 +2,7 @@ package NG.InputHandling.MouseTools;
 
 import NG.Core.Game;
 import NG.GUIMenu.Components.SComponent;
-import NG.GUIMenu.FrameManagers.FrameGUIManager;
+import NG.GUIMenu.FrameManagers.UIFrameManager;
 import NG.InputHandling.MouseReleaseListener;
 import NG.InputHandling.MouseScrollListener;
 import NG.Rendering.MatrixStack.SGL;
@@ -75,7 +75,7 @@ public abstract class AbstractMouseTool implements MouseTool {
     @Override
     public void onScroll(float value) {
         Vector2i pos = game.window().getMousePosition();
-        FrameGUIManager gui = game.gui();
+        UIFrameManager gui = game.gui();
 
         SComponent component = gui.getComponentAt(pos.x, pos.y);
 

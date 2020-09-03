@@ -1,7 +1,7 @@
 package NG.Core;
 
 import NG.Camera.Camera;
-import NG.GUIMenu.FrameManagers.FrameGUIManager;
+import NG.GUIMenu.FrameManagers.UIFrameManager;
 import NG.GameMap.GameMap;
 import NG.GameState.GameState;
 import NG.InputHandling.KeyControl;
@@ -41,7 +41,7 @@ public interface Game {
 
     MouseToolCallbacks inputHandling();
 
-    FrameGUIManager gui();
+    UIFrameManager gui();
 
     KeyControl keyControl();
 
@@ -77,4 +77,6 @@ public interface Game {
         executeOnRenderThread(task);
         return task;
     }
+
+    ProgressTracker getProgress();
 }

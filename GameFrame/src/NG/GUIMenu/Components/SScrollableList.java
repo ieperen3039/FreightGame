@@ -8,7 +8,7 @@ import org.joml.Vector2ic;
 /**
  * @author Geert van Ieperen created on 13-5-2019.
  */
-public class SScrollableList extends SContainer {
+public class SScrollableList extends SContainer.GhostContainer {
     private final SScrollBar scroller;
     private final LimitedVisibilityLayout layout;
     private int nrOfShownElts;
@@ -25,7 +25,7 @@ public class SScrollableList extends SContainer {
         this.layout = layout;
 
         for (SComponent element : elements) {
-            add(element, null);
+            super.add(element, null);
         }
 
         scroller = new SScrollBar(elements.length, nrOfShownElts);
@@ -81,5 +81,4 @@ public class SScrollableList extends SContainer {
     public int minWidth() {
         return Math.max(super.minWidth(), scroller.minWidth());
     }
-
 }

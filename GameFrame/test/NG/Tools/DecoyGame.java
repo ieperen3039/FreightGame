@@ -3,8 +3,9 @@ package NG.Tools;
 import NG.Camera.Camera;
 import NG.Core.Game;
 import NG.Core.GameTimer;
+import NG.Core.ProgressTracker;
 import NG.Core.Version;
-import NG.GUIMenu.FrameManagers.FrameGUIManager;
+import NG.GUIMenu.FrameManagers.UIFrameManager;
 import NG.GameMap.GameMap;
 import NG.GameState.GameState;
 import NG.InputHandling.KeyControl;
@@ -65,7 +66,7 @@ public class DecoyGame implements Game {
     }
 
     @Override
-    public FrameGUIManager gui() {
+    public UIFrameManager gui() {
         return null;
     }
 
@@ -87,5 +88,10 @@ public class DecoyGame implements Game {
     @Override
     public void executeOnRenderThread(Runnable action) {
         action.run();
+    }
+
+    @Override
+    public ProgressTracker getProgress() {
+        return null;
     }
 }

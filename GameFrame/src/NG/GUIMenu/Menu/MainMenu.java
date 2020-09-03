@@ -5,17 +5,14 @@ import NG.Content.Scenario;
 import NG.Content.TriangleStationsSc;
 import NG.Core.Game;
 import NG.Core.ModLoader;
-import NG.GUIMenu.Components.*;
+import NG.GUIMenu.Components.SButton;
+import NG.GUIMenu.Components.SContainer;
+import NG.GUIMenu.Components.SFiller;
+import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
-import NG.Network.NetworkNode;
-import NG.Network.RailNode;
-import NG.Tools.Logger;
-import NG.Tracks.TrackPiece;
 import org.joml.Vector2i;
-
-import java.util.stream.Stream;
 
 /**
  * @author Geert van Ieperen. Created on 28-9-2018.
@@ -54,74 +51,18 @@ public class MainMenu extends SFrame {
         Scenario triangleScenario = new TriangleStationsSc(modManager);
         Scenario linearScenario = new LinearConnectionSc(modManager);
 
-        STextComponent newGame = new SButton("Start new game", this::showNewGame, MAIN_BUTTON_PROPERTIES);
-        STextComponent startEmpty = new SButton("Start Empty", () -> emptyScenario.apply(game), MAIN_BUTTON_PROPERTIES);
-        STextComponent startTriangle = new SButton("Start Triangle", () -> triangleScenario.apply(game), MAIN_BUTTON_PROPERTIES);
-        STextComponent startLinear = new SButton("Start Linear", () -> linearScenario.apply(game), MAIN_BUTTON_PROPERTIES);
-        STextComponent exitGame = new SButton("Exit game", terminateProgram, MAIN_BUTTON_PROPERTIES);
-
         setMainPanel(SContainer.row(
                 new SFiller(),
                 SContainer.column(
-                        newGame,
-                        startEmpty,
-                        startTriangle,
-                        startLinear,
+                        new SButton("Start new game", this::showNewGame, MAIN_BUTTON_PROPERTIES),
+                        new SButton("Start Empty", () -> emptyScenario.apply(game), MAIN_BUTTON_PROPERTIES),
+                        new SButton("Start Triangle", () -> triangleScenario.apply(game), MAIN_BUTTON_PROPERTIES),
+                        new SButton("Start Linear", () -> linearScenario.apply(game), MAIN_BUTTON_PROPERTIES),
                         new SFiller().setGrowthPolicy(false, true),
-                        exitGame
+                        new SButton("Exit game", terminateProgram, MAIN_BUTTON_PROPERTIES)
                 ),
                 new SFiller()
         ));
-    }
-
-    public static SToolBar getToolBar(Game game, ModLoader modLoader) {
-        SToolBar toolBar = new SToolBar(game, true);
-
-        toolBar.addButton(
-                "Build Object",
-                () -> game.gui().addFrame(new BuildMenu(game))
-        );
-
-        toolBar.addButton("Dump Network", // find any networknode, and print getNetworkAsString
-                () -> game.state().entities().stream()
-                        .filter(e -> e instanceof TrackPiece)
-                        .map(e -> (TrackPiece) e)
-                        .filter(e -> !e.isDespawnedAt(game.timer().getGameTime()))
-                        .map(TrackPiece::getStartNode)
-                        .map(RailNode::getNetworkNode)
-                        .filter(NetworkNode::isNetworkCritical)
-                        .findAny()
-                        .ifPresentOrElse(
-                                n -> Logger.WARN.print(NetworkNode.getNetworkAsString(n)),
-                                () -> Logger.WARN.print("No network present")
-                        )
-        );
-
-        toolBar.addButton("Check All", // checks the NetworkNodes of all track pieces
-                () -> game.state().entities().stream()
-                        .filter(e -> e instanceof TrackPiece)
-                        .map(e -> (TrackPiece) e)
-                        .filter(e -> !e.isDespawnedAt(game.timer().getGameTime()))
-                        .peek(t -> {assert t.isValid() : t;})
-                        .flatMap(t -> Stream.of(t.getStartNode(), t.getEndNode()))
-                        .distinct()
-                        .map(RailNode::getNetworkNode)
-                        .forEach(NetworkNode::check)
-        );
-
-        toolBar.addButton("Options",
-                () -> game.gui().addFrame(new SFrame("Options", SContainer.column(
-                        new SToggleButton("Show CollisionBox", BUTTON_PROPERTIES_STRETCH, game.settings().RENDER_COLLISION_BOX)
-                                .addStateChangeListener((active -> game.settings().RENDER_COLLISION_BOX = active))
-                )))
-        );
-
-        toolBar.addButton("Exit", () -> {
-            game.gui().clear();
-            modLoader.stopGame();
-        });
-
-        return toolBar;
     }
 
     private void showNewGame() {

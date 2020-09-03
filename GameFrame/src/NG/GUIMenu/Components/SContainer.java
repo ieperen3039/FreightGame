@@ -13,8 +13,8 @@ import java.util.Collection;
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
 public abstract class SContainer extends SComponent {
-    private final SLayoutManager layout;
     protected final ComponentBorder layoutBorder;
+    private final SLayoutManager layout;
 
     /**
      * a container that uses the given manager for its layout
@@ -38,41 +38,6 @@ public abstract class SContainer extends SComponent {
      */
     public SContainer(int xElts, int yElts) {
         this(new GridLayoutManager(xElts, yElts), new ComponentBorder(4));
-    }
-
-    /**
-     * a wrapper for a target component, to have it behave as a container with one value being itself
-     * @param target the component to wrap
-     * @return the target as a container object
-     */
-    public static SContainer singleton(SComponent target) {
-        SContainer c = new SGhostContainer(new SingleElementLayout());
-        c.add(target, null);
-        return c;
-    }
-
-    /** creates a new invisible container with the given components on a single column */
-    public static SContainer column(SComponent... components) {
-        SContainer column = new SGhostContainer(new GridLayoutManager(1, components.length));
-
-        for (int i = 0; i < components.length; i++) {
-            column.add(components[i], new Vector2i(0, i));
-        }
-
-        column.setSize(0, 0);
-        return column;
-    }
-
-    /** creates a new invisible container with the given components in a single row */
-    public static SContainer row(SComponent... components) {
-        SContainer row = new SGhostContainer(new GridLayoutManager(components.length, 1));
-
-        for (int i = 0; i < components.length; i++) {
-            row.add(components[i], new Vector2i(i, 0));
-        }
-
-        row.setSize(0, 0);
-        return row;
     }
 
     /**
@@ -142,8 +107,10 @@ public abstract class SContainer extends SComponent {
 
     @Override
     public void doValidateLayout() {
+        super.doValidateLayout();
+
         // ensure minimum width and height
-        Vector2i layoutPos = new Vector2i();
+        Vector2i layoutPos = new Vector2i(0, 0);
         Vector2i layoutDim = new Vector2i(getSize());
         layoutBorder.reduce(layoutPos, layoutDim);
 
@@ -172,10 +139,64 @@ public abstract class SContainer extends SComponent {
         return this;
     }
 
-    private static class SGhostContainer extends SContainer {
-        public SGhostContainer(SLayoutManager layout) {
-            super(layout, new ComponentBorder());
+    /**
+     * a wrapper for a target component, to have it behave as a container with one value being itself
+     * @param target the component to wrap
+     * @return the target as a container object
+     */
+    public static SContainer singleton(SComponent target) {
+        return new GhostContainer(target);
+    }
+
+    /** creates a new invisible container with the given components on a single column */
+    public static SContainer column(SComponent... components) {
+        SContainer column = new GhostContainer(new GridLayoutManager(1, components.length));
+
+        for (int i = 0; i < components.length; i++) {
+            column.add(components[i], new Vector2i(0, i));
+        }
+
+        column.setSize(0, 0);
+        return column;
+    }
+
+    /** creates a new invisible container with the given components in a single row */
+    public static SContainer row(SComponent... components) {
+        SContainer row = new GhostContainer(new GridLayoutManager(components.length, 1));
+
+        for (int i = 0; i < components.length; i++) {
+            row.add(components[i], new Vector2i(i, 0));
+        }
+
+        row.setSize(0, 0);
+        return row;
+    }
+
+    /** creates a new invisible container with the given components in a grid */
+    public static SComponent grid(SComponent[][] components) {
+        int xSize = components[0].length;
+        int ySize = components.length;
+        SContainer row = new GhostContainer(new GridLayoutManager(xSize, ySize));
+
+        for (int i = 0; i < xSize; i++) {
+            for (int j = 0; j < ySize; j++) {
+                row.add(components[j][i], new Vector2i(i, j));
+            }
+        }
+
+        row.setSize(0, 0);
+        return row;
+    }
+
+    public static class GhostContainer extends SContainer {
+        public GhostContainer(SLayoutManager layout) {
+            super(layout, new ComponentBorder(0));
             setGrowthPolicy(true, true);
+        }
+
+        public GhostContainer(SComponent target) {
+            this(new SingleElementLayout());
+            add(target, null);
         }
 
         @Override

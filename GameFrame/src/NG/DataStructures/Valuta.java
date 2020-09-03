@@ -15,12 +15,16 @@ public class Valuta {
         return quantity;
     }
 
-    public float getEuros() {
+    public float getDollars() {
         return 10f * quantity;
     }
 
     public void add(Valuta other) {
         quantity += other.quantity;
+    }
+
+    public void remove(Valuta other) {
+        quantity -= other.quantity;
     }
 
     public static Valuta ofUnitValue(int quantity) {

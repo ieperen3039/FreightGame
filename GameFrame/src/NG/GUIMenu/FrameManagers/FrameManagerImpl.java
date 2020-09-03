@@ -3,8 +3,8 @@ package NG.GUIMenu.FrameManagers;
 import NG.Core.Game;
 import NG.Core.Version;
 import NG.GUIMenu.Components.SComponent;
+import NG.GUIMenu.Components.SFiller;
 import NG.GUIMenu.Components.SFrame;
-import NG.GUIMenu.Components.SToolBar;
 import NG.GUIMenu.Rendering.BaseLF;
 import NG.GUIMenu.Rendering.NVGOverlay;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
@@ -12,6 +12,7 @@ import NG.InputHandling.KeyTypeListener;
 import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseDragListener;
 import NG.InputHandling.MouseReleaseListener;
+import NG.Rendering.GLFWWindow;
 import NG.Tools.Logger;
 import org.joml.Vector2i;
 
@@ -22,23 +23,23 @@ import java.util.*;
  * javax.swing} package. New {@link SFrame} objects can be added using {@link #addFrame(SFrame)}.
  * @author Geert van Ieperen. Created on 20-9-2018.
  */
-public class FrameManagerImpl implements FrameGUIManager {
+public class FrameManagerImpl implements UIFrameManager {
     protected Game game;
-
     protected MouseDragListener dragListener = null;
     protected MouseReleaseListener releaseListener = null;
     protected KeyTypeListener typeListener = null;
 
     private final Deque<SFrame> frames; // the first element in this list has focus
+    private SComponent mainPanel;
     private SComponent modalComponent;
     private SComponent hoveredComponent;
 
     private SFrameLookAndFeel lookAndFeel;
-    private SToolBar toolBar = null;
 
     public FrameManagerImpl() {
         this.frames = new ArrayDeque<>();
-        lookAndFeel = new BaseLF();
+        this.mainPanel = new SFiller();
+        this.lookAndFeel = new BaseLF();
     }
 
     @Override
@@ -52,8 +53,16 @@ public class FrameManagerImpl implements FrameGUIManager {
     public void draw(NVGOverlay.Painter painter) {
         assert hasLookAndFeel();
 
-        frames.removeIf(SFrame::isDisposed);
+        GLFWWindow window = game.window();
+        if (window.getWidth() != mainPanel.getWidth() || window.getHeight() != mainPanel.getHeight()) {
+            mainPanel.setSize(window.getWidth(), window.getHeight());
+        }
+
         lookAndFeel.setPainter(painter);
+        mainPanel.validateLayout();
+        mainPanel.draw(lookAndFeel, new Vector2i(0, 0));
+
+        frames.removeIf(SFrame::isDisposed);
 
         Iterator<SFrame> itr = frames.descendingIterator();
         while (itr.hasNext()) {
@@ -74,10 +83,6 @@ public class FrameManagerImpl implements FrameGUIManager {
         if (modalComponent != null) {
             modalComponent.validateLayout();
             modalComponent.draw(lookAndFeel, modalComponent.getScreenPosition());
-        }
-
-        if (toolBar != null) {
-            toolBar.draw(lookAndFeel, new Vector2i(0, 0));
         }
     }
 
@@ -155,35 +160,12 @@ public class FrameManagerImpl implements FrameGUIManager {
     }
 
     @Override
-    public void clear() {
-        for (SFrame frame : frames) {
-            frame.dispose();
-        }
-        frames.clear();
-    }
-
-    @Override
-    public void setToolBar(SToolBar toolBar) {
-        this.toolBar = toolBar;
-    }
-
-    @Override
-    public SToolBar getToolBar() {
-        return toolBar;
-    }
-
-    @Override
-    public void cleanup() {
-        frames.forEach(SFrame::dispose);
-        frames.clear();
+    public void setMainGUI(SComponent container) {
+        this.mainPanel = container;
     }
 
     @Override
     public boolean covers(int xSc, int ySc) {
-        if (toolBar != null && toolBar.contains(xSc, ySc)) {
-            return true;
-        }
-
         if (modalComponent != null && modalComponent.isVisible() && modalComponent.contains(xSc, ySc)) {
             return true;
         }
@@ -194,7 +176,8 @@ public class FrameManagerImpl implements FrameGUIManager {
             }
         }
 
-        return false;
+        SComponent c = mainPanel.getComponentAt(xSc, ySc);
+        return c != null && c.isVisible();
     }
 
     @Override
@@ -205,16 +188,8 @@ public class FrameManagerImpl implements FrameGUIManager {
                 processClick(button, modalComponent, xSc, ySc);
             }
             modalComponent = null;
-            return true;
 
         } else {
-            // check toolbar
-            if (toolBar != null && toolBar.contains(xSc, ySc)) {
-                SComponent component = toolBar.getComponentAt(xSc, ySc);
-                processClick(button, component, xSc, ySc);
-                return true;
-            }
-
             // check all frames, starting from the front-most frame
             SFrame frame = getFrame(xSc, ySc);
             if (frame != null) {
@@ -227,13 +202,17 @@ public class FrameManagerImpl implements FrameGUIManager {
                 return true;
             }
 
-            return false;
 
+            SComponent component = mainPanel.getComponentAt(xSc, ySc);
+            if (component == null) return false;
+
+            processClick(button, component, xSc, ySc);
         }
+        return true;
     }
 
     private void processClick(int button, SComponent component, int xSc, int ySc) {
-        Logger.DEBUG.print(component);
+//        Logger.DEBUG.print(component);
         if (component instanceof MouseClickListener) {
             MouseClickListener cl = (MouseClickListener) component;
             // by def. of MouseRelativeClickListener, give relative coordinates
@@ -252,20 +231,16 @@ public class FrameManagerImpl implements FrameGUIManager {
 
     @Override
     public SComponent getComponentAt(int xSc, int ySc) {
-        // check toolbar
-        if (toolBar != null) {
-            if (toolBar.contains(xSc, ySc)) {
-                return toolBar.getComponentAt(xSc, ySc);
-            }
-        }
-
         // check all frames, starting from the front-most frame
         SFrame frame = getFrame(xSc, ySc);
-        if (frame == null) return null;
+        if (frame != null) {
+            int xr = xSc - frame.getX();
+            int yr = ySc - frame.getY();
+            return frame.getComponentAt(xr, yr);
 
-        int xr = xSc - frame.getX();
-        int yr = ySc - frame.getY();
-        return frame.getComponentAt(xr, yr);
+        } else {
+            return mainPanel.getComponentAt(xSc, ySc);
+        }
 
     }
 
@@ -301,5 +276,17 @@ public class FrameManagerImpl implements FrameGUIManager {
         if (dragListener != null) {
             dragListener.mouseDragged(xDelta, yDelta, xPos, yPos);
         }
+    }
+
+    @Override
+    public void clear() {
+        frames.forEach(SFrame::dispose);
+        frames.clear();
+        mainPanel = new SFiller();
+    }
+
+    @Override
+    public void cleanup() {
+        clear();
     }
 }

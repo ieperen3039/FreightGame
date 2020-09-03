@@ -1,6 +1,6 @@
 package NG.GUIMenu.Components;
 
-import NG.GUIMenu.FrameManagers.FrameGUIManager;
+import NG.GUIMenu.FrameManagers.UIFrameManager;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
@@ -24,7 +24,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
     public static final NGFonts.TextType TEXT_TYPE = NGFonts.TextType.REGULAR;
     private final String[] values;
     private final DropDownOptions optionPane;
-    private final FrameGUIManager gui;
+    private final UIFrameManager gui;
     private List<Consumer<Integer>> stateChangeListeners = new ArrayList<>();
 
     private int current;
@@ -41,7 +41,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
      * @param initial the initial selected item, such that {@code values[initial]} is shown
      * @param values  a list of possible values for this dropdown menu
      */
-    public SDropDown(FrameGUIManager gui, int initial, String... values) {
+    public SDropDown(UIFrameManager gui, int initial, String... values) {
         assert values.length > 0;
         this.values = values;
         this.current = initial;
@@ -59,7 +59,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
      * @param initial the initial selected item, such that {@code values[initial]} is shown
      * @param values  a list of possible values for this dropdown menu
      */
-    public SDropDown(FrameGUIManager gui, SComponentProperties properties, int initial, String... values) {
+    public SDropDown(UIFrameManager gui, SComponentProperties properties, int initial, String... values) {
         assert values.length > 0;
         this.values = values;
         this.current = initial;
@@ -78,7 +78,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
      * @param initial the initial selected item, such that {@code values[initial]} is shown
      * @param values  a list of possible values for this dropdown menu
      */
-    public <T> SDropDown(FrameGUIManager gui, SComponentProperties properties, int initial, List<? extends T> values) {
+    public <T> SDropDown(UIFrameManager gui, SComponentProperties properties, int initial, List<? extends T> values) {
         this(gui, properties, initial, values, String::valueOf);
     }
 
@@ -91,7 +91,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
      * @param stringExtractor
      */
     public <T> SDropDown(
-            FrameGUIManager gui, SComponentProperties properties, int initial, List<? extends T> values,
+            UIFrameManager gui, SComponentProperties properties, int initial, List<? extends T> values,
             Function<T, String> stringExtractor
     ) {
         assert !values.isEmpty();

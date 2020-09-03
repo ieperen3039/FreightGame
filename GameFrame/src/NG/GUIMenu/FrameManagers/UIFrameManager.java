@@ -3,7 +3,6 @@ package NG.GUIMenu.FrameManagers;
 import NG.Core.GameAspect;
 import NG.GUIMenu.Components.SComponent;
 import NG.GUIMenu.Components.SFrame;
-import NG.GUIMenu.Components.SToolBar;
 import NG.GUIMenu.Rendering.NVGOverlay;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.InputHandling.KeyTypeListener;
@@ -16,8 +15,14 @@ import NG.Rendering.GLFWWindow;
  * A class that manages frames of a game. New {@link SFrame} objects can be added using {@link #addFrame(SFrame)}
  * @author Geert van Ieperen. Created on 29-9-2018.
  */
-public interface FrameGUIManager
+public interface UIFrameManager
         extends GameAspect, KeyTypeListener, MouseClickListener, MouseReleaseListener, MouseMoveListener {
+
+    /**
+     * sets the given component to cover the entire screen
+     * @param container
+     */
+    void setMainGUI(SComponent container);
 
     /**
      * draws the elements of this HUD
@@ -28,18 +33,15 @@ public interface FrameGUIManager
     default void addFrame(SFrame frame) {
         frame.validateLayout();
 
-        // TODO remove assumption that toolbar is on top
-        SToolBar toolBar = getToolBar();
-        int toolbarHeight = toolBar == null ? 0 : toolBar.getHeight();
         int x = 50;
-        int y = 50 + toolbarHeight;
+        int y = 50;
 
-        SComponent component = getComponentAt(x, y);
-        while (component != null) {
-            x += component.getWidth();
-
-            component = getComponentAt(x, y);
-        }
+//        SComponent component = getComponentAt(x, y);
+//        while (component != null) {
+//            x += component.getWidth();
+//
+//            component = getComponentAt(x, y);
+//        }
 
         addFrame(frame, x, y);
     }
@@ -65,15 +67,6 @@ public interface FrameGUIManager
      * @throws java.util.NoSuchElementException if the given frame has not been added or has been disposed.
      */
     void focus(SFrame frame);
-
-    /**
-     * sets the toolbar of the screen to the given object. Overwrites the current setting.
-     * @param toolBar any toolbar, or null to remove the toolbar
-     */
-    void setToolBar(SToolBar toolBar);
-
-    /** @return the toolbar set with {@link #setToolBar(SToolBar)}, or null if none has been set */
-    SToolBar getToolBar();
 
     /**
      * adds a component to the hud. The position of the component may be changed as a result of this call.

@@ -2,8 +2,9 @@ package NG.Core;
 
 import NG.Camera.Camera;
 import NG.Camera.TycoonFixedCamera;
-import NG.GUIMenu.FrameManagers.FrameGUIManager;
 import NG.GUIMenu.FrameManagers.FrameManagerImpl;
+import NG.GUIMenu.FrameManagers.UIFrameManager;
+import NG.GUIMenu.Menu.FreightGameUI;
 import NG.GUIMenu.Menu.MainMenu;
 import NG.GameMap.GameMap;
 import NG.GameMap.HeightMap;
@@ -56,9 +57,10 @@ public class FreightGame implements Game, ModLoader {
     private final Settings settings;
     private final GLFWWindow window;
     private final MouseToolCallbacks inputHandler;
-    private final FrameGUIManager frameManager;
+    private final UIFrameManager frameManager;
     private final KeyControl keyControl;
     private final ClickShader clickShader;
+    private final ProgressTracker progress;
 
     private TypeCollection typeCollection;
     private MainMenu mainMenu;
@@ -98,6 +100,7 @@ public class FreightGame implements Game, ModLoader {
         inputHandler = new MouseToolCallbacks();
         keyControl = inputHandler.getKeyControl();
         frameManager = new FrameManagerImpl();
+        progress = new ProgressTracker();
         mainThread = Thread.currentThread();
 
         // load mods
@@ -128,6 +131,7 @@ public class FreightGame implements Game, ModLoader {
         gameParticles.init(this);
         inputHandler.init(this);
         frameManager.init(this);
+        progress.init(this);
 
         permanentMods = JarModReader.filterInitialisationMods(allMods, this);
 
@@ -150,8 +154,10 @@ public class FreightGame implements Game, ModLoader {
         // GUIs
         renderer.addHudItem(frameManager::draw);
 
+        frameManager.setMainGUI(new FreightGameUI(this, this));
         mainMenu = new MainMenu(this, this, renderer::stopLoop);
         frameManager.addFrameCenter(mainMenu, window);
+
         gameState.start();
 
         Logger.printOnline(() -> String.format("%4d resources active", Resource.getNrOfActiveResources()));
@@ -196,7 +202,6 @@ public class FreightGame implements Game, ModLoader {
     public void startGame() {
         frameManager.removeElement(mainMenu);
         mainMenu = null;
-        frameManager.setToolBar(MainMenu.getToolBar(this, this));
 
         gameState.unPause();
     }
@@ -206,7 +211,6 @@ public class FreightGame implements Game, ModLoader {
         gameState.pause();
         gameState.cleanup();
         gameMap.cleanup();
-        frameManager.setToolBar(null);
         cleanMods();
 
         mainMenu = new MainMenu(this, this, renderer::stopLoop);
@@ -274,6 +278,11 @@ public class FreightGame implements Game, ModLoader {
     }
 
     @Override
+    public ProgressTracker getProgress() {
+        return progress;
+    }
+
+    @Override
     public void executeOnRenderThread(Runnable action) {
         if (Thread.currentThread() == mainThread) {
             action.run();
@@ -283,7 +292,7 @@ public class FreightGame implements Game, ModLoader {
     }
 
     @Override
-    public FrameGUIManager gui() {
+    public UIFrameManager gui() {
         return frameManager;
     }
 
@@ -310,11 +319,18 @@ public class FreightGame implements Game, ModLoader {
         gameState.stopLoop();
         permanentMods.forEach(Mod::cleanup);
 
-        window.cleanup();
-        renderer.cleanup();
         camera.cleanup();
         gameState.cleanup();
+        gameMap.cleanup();
+        gameLights.cleanup();
+        gameParticles.cleanup();
         inputHandler.cleanup();
+        frameManager.cleanup();
+        clickShader.cleanup();
+        progress.cleanup();
+
+        renderer.cleanup();
+        window.cleanup();
     }
 
     @Override
