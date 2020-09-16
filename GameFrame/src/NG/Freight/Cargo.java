@@ -1,7 +1,8 @@
 package NG.Freight;
 
 import NG.DataStructures.CargoCollection;
-import NG.Entities.Entity;
+import NG.DataStructures.Valuta;
+import NG.Entities.Storage;
 import NG.Mods.CargoType;
 
 /**
@@ -16,10 +17,10 @@ public class Cargo {
     public final CargoType type;
 
     private final double pickupTime;
-    private final Entity pickupPlace;
+    private final Storage pickupPlace;
     private int quantity;
 
-    public Cargo(CargoType type, int quantity, double pickupTime, Entity pickupPlace) {
+    public Cargo(CargoType type, int quantity, double pickupTime, Storage pickupPlace) {
         assert quantity > 0;
         this.type = type;
         this.quantity = quantity;
@@ -43,5 +44,11 @@ public class Cargo {
     @Override
     public String toString() {
         return "Cargo{" + type + ":" + quantity + '}';
+    }
+
+    public Valuta value(double time, Storage target) {
+        double secondsInTransit = time - pickupTime;
+        float distanceTravelled = pickupPlace.getPosition().distance(target.getPosition());
+        return type.value(secondsInTransit, distanceTravelled).multiply(quantity);
     }
 }

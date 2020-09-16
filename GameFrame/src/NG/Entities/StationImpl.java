@@ -1,15 +1,15 @@
 package NG.Entities;
 
+import NG.Core.Coloring;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Generic.Pair;
 import NG.DataStructures.Generic.PairList;
 import NG.DataStructures.Valuta;
 import NG.Freight.Cargo;
-import NG.GUIMenu.Components.SActiveTextArea;
-import NG.GUIMenu.Components.SContainer;
-import NG.GUIMenu.Components.SFrame;
+import NG.GUIMenu.Components.*;
 import NG.GUIMenu.Menu.MainMenu;
+import NG.GUIMenu.Menu.TrainConstructionMenu;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
@@ -52,13 +52,17 @@ public class StationImpl extends Storage implements Station {
 
     private final RailNode[] forwardConnections;
     private final RailNode[] backwardConnections;
+    private final TrackPiece[] tracks;
     private final List<Pair<NetworkNode, Boolean>> nodes;
     private final List<Industry> industries = new ArrayList<>();
     // make sure only one of each type is added to this collection
     private final Set<CargoType> industryAcceptedCargo = new HashSet<>();
     private final AABBf hitbox;
-    private Marking marking = new Marking();
-    private PairList<Shape, Matrix4fc> collisionShape = new PairList<>(1);
+    private final Coloring coloring = new Coloring(Color4f.WHITE);
+    private final PairList<Shape, Matrix4fc> collisionShape = new PairList<>(1);
+    private final List<Train> trains = new ArrayList<>();
+
+    private final List<Runnable> trainArrivalListeners = new ArrayList<>();
 
     /**
      * create a fixed station
@@ -92,6 +96,7 @@ public class StationImpl extends Storage implements Station {
 
         forwardConnections = new RailNode[numberOfPlatforms];
         backwardConnections = new RailNode[numberOfPlatforms];
+        tracks = new TrackPiece[numberOfPlatforms];
 
         // create nodes
         if (numberOfPlatforms > 1) {
@@ -126,6 +131,7 @@ public class StationImpl extends Storage implements Station {
             TrackPiece trackConnection = new StraightTrack(game, type, A, B, false);
             NetworkNode.addConnection(trackConnection);
             game.state().addEntity(trackConnection);
+            tracks[i] = trackConnection;
         }
 
         hitbox = new AABBf();
@@ -190,7 +196,7 @@ public class StationImpl extends Storage implements Station {
                 gl.translate(0, 0, -1f);
                 gl.scale(1, 1, HEIGHT_BELOW_STATION / HEIGHT);
                 gl.translate(0, 0, -1f);
-                Color4f color = marking.isValid() ? marking.color : Color4f.BLACK;
+                Color4f color = coloring.getColor();
                 MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, color));
                 gl.render(GenericShapes.CUBE, this);
             }
@@ -215,9 +221,8 @@ public class StationImpl extends Storage implements Station {
         }
     }
 
-    @Override
-    public void setMarking(Marking marking) {
-        this.marking = marking;
+    public void setMarking(Coloring.Marking mark) {
+        coloring.addMark(mark);
     }
 
     public float getLength() {
@@ -231,6 +236,11 @@ public class StationImpl extends Storage implements Station {
     @Override
     public List<Pair<NetworkNode, Boolean>> getNodes() {
         return nodes;
+    }
+
+    @Override
+    public List<TrackPiece> getTracks() {
+        return List.of(tracks);
     }
 
     public List<RailNode> getNodesOfDirection(Vector3fc direction) {
@@ -285,8 +295,24 @@ public class StationImpl extends Storage implements Station {
 
     @Override
     public Valuta sell(Cargo cargo) {
-        // TODO
-        return Valuta.ofUnitValue(100_000);
+        double now = game.timer().getGameTime();
+        Valuta sellValue = cargo.value(now, this);
+        // TODO effect of cargo on industries
+        return sellValue;
+    }
+
+    @Override
+    public void addTrain(Train train) {
+        this.trains.add(train);
+        trainArrivalListeners.forEach(Runnable::run);
+    }
+
+    public void addArrivalListener(Runnable onTrainArrival) {
+        trainArrivalListeners.add(onTrainArrival);
+    }
+
+    public void removeArrivalListener(Runnable onTrainArrival) {
+        trainArrivalListeners.remove(onTrainArrival);
     }
 
     @Override
@@ -294,25 +320,54 @@ public class StationImpl extends Storage implements Station {
         return hitbox;
     }
 
-
     @Override
     public PairList<Shape, Matrix4fc> getConvexCollisionShapes() {
         return collisionShape;
     }
 
     protected class StationUI extends SFrame {
+        private final SScrollableList trainList;
+        private final Runnable updateTrainList;
+
         StationUI() {
             super(stationName, 300, 0);
             setMainPanel(SContainer.column(
                     new SActiveTextArea(() -> "Industries: " + industries, MainMenu.TEXT_PROPERTIES),
-                    new SActiveTextArea(this::text, MainMenu.TEXT_PROPERTIES)
+                    new SActiveTextArea(this::text, MainMenu.TEXT_PROPERTIES),
+                    new SButton("Build Train", this::openTrainBuilder),
+                    trainList = new SScrollableList(4)
             ));
-            // add buttons etc.
+
+            updateTrainList = () -> {
+                trainList.clear();
+
+                for (Train train : trains) {
+                    SContainer trainComponent = SContainer.row(
+                            new SButton(train.toString(), train::openUI, MainMenu.BUTTON_PROPERTIES_STRETCH),
+                            new SButton(">", train::start, MainMenu.SQUARE_BUTTON_PROPS)
+                    );
+                    trainList.add(trainComponent, null);
+                }
+            };
+
+            addArrivalListener(updateTrainList);
+            updateTrainList.run();
         }
 
         private String text() {
             return "Cargo : " + getAvailableCargo();
         }
-    }
 
+        private void openTrainBuilder() {
+            Station place = StationImpl.this;
+            TrainConstructionMenu frame = new TrainConstructionMenu(game, place);
+            game.gui().addFrame(frame);
+        }
+
+        @Override
+        public void dispose() {
+            super.dispose();
+            removeArrivalListener(updateTrainList);
+        }
+    }
 }

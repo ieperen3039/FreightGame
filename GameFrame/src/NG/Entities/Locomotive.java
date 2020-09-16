@@ -77,9 +77,10 @@ public class Locomotive implements TrainElement {
 
         public Properties(
                 String name, float length, float mass, float linearResistance, float quadraticResistance,
-                Resource<Mesh> mesh, List<String> trackTypes, float tractiveEffort
+                Resource<Mesh> mesh, List<String> trackTypes, int buildCost, float maintenancePerSec,
+                float tractiveEffort
         ) {
-            super(name, length, mass, linearResistance, quadraticResistance, 100, mesh, trackTypes);
+            super(name, length, mass, linearResistance, quadraticResistance, 100, mesh, trackTypes, buildCost, maintenancePerSec);
             this.tractiveEffort = tractiveEffort;
         }
     }

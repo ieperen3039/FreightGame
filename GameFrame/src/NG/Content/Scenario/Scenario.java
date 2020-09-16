@@ -1,4 +1,4 @@
-package NG.Content;
+package NG.Content.Scenario;
 
 import NG.Camera.Camera;
 import NG.Core.Game;

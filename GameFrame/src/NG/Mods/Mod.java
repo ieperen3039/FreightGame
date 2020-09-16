@@ -5,6 +5,7 @@ import NG.Core.GameAspect;
 import NG.Core.Version;
 import NG.DataStructures.Generic.Pair;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -15,12 +16,13 @@ import java.util.List;
  */
 public interface Mod extends GameAspect {
     /**
-     * This method is called when the user creates a game with this mod installed. Any big initialisation should be handled here. The overriding class
-     * should always have a default constructor, which is called regardless of whether this mod is used.
+     * This method is called when the user creates a game with this mod installed. Any big initialisation should be
+     * handled here. The overriding class should always have a default constructor, which is called regardless of
+     * whether this mod is used.
      * @param game the game in which the mod is used
      * @throws Version.MisMatchException if the version of the game is incompatible with the mod
      */
-    void init(Game game) throws Version.MisMatchException;
+    void init(Game game) throws Version.MisMatchException, IOException;
 
     /** @return the name of this mod */
     default String getModName() {

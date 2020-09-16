@@ -8,9 +8,4 @@ import org.joml.Vector3fc;
  */
 public interface MovingEntity extends Entity {
     Vector3fc getPosition(double time);
-
-    @Override
-    default UpdateFrequency getUpdateFrequency() {
-        return UpdateFrequency.EVERY_TICK;
-    }
 }

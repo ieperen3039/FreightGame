@@ -1,5 +1,6 @@
 package NG.Network;
 
+import NG.Core.Coloring;
 import NG.Core.Game;
 import NG.Core.GameObject;
 import NG.DataStructures.Generic.Color4f;
@@ -40,7 +41,7 @@ public class SignalEntity extends Signal implements Entity, GameObject {
     protected transient Game game;
 
     private double despawnTime = Double.POSITIVE_INFINITY;
-    private Marking marking = new Marking();
+    private final Coloring coloring = new Coloring(Color4f.WHITE);
 
     /**
      * @param game                 game instance
@@ -98,7 +99,7 @@ public class SignalEntity extends Signal implements Entity, GameObject {
             return Color4f.CYAN;
         }
 
-        return marking.isValid() ? marking.color : Color4f.WHITE;
+        return coloring.getColor();
     }
 
     @Override
@@ -112,9 +113,8 @@ public class SignalEntity extends Signal implements Entity, GameObject {
         }
     }
 
-    @Override
-    public void setMarking(Marking marking) {
-        this.marking = marking;
+    public void setMarking(Coloring.Marking mark) {
+        coloring.addMark(mark);
     }
 
     @Override

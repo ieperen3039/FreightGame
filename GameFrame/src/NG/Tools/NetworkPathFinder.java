@@ -121,6 +121,11 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
         return null;
     }
 
+    public float getDistanceTo(NetworkNode node) {
+        if (distanceMap == null) throw new IllegalStateException("call to getDistanceTo(NetworkNode) before call()");
+        return distanceMap.get(node);
+    }
+
     public static class Path extends ArrayDeque<NetworkNode> {
         private float pathLength;
 
@@ -141,6 +146,10 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
                 currentNode = predecessors.get(currentNode);
                 assert currentNode != null : predecessors;
             }
+        }
+
+        public static Path infinite() {
+            return new Path(null, null, null, Float.POSITIVE_INFINITY);
         }
 
         public float getPathLength() {

@@ -1,5 +1,6 @@
 package NG.Entities;
 
+import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Generic.Pair;
 import NG.Freight.Cargo;
 import NG.Mods.CargoType;
@@ -21,14 +22,10 @@ import java.util.Map;
  */
 public interface TrainElement {
     default void draw(
-            SGL gl, Vector3fc position, Quaternionfc rotation, Entity sourceEntity, Entity.Marking marking
+            SGL gl, Vector3fc position, Quaternionfc rotation, Entity sourceEntity, Color4f color
     ) {
         MaterialShader.ifPresent(gl, mat -> {
-            if (marking.isValid()) {
-                mat.setMaterial(Material.METAL, marking.color);
-            } else {
-                mat.setMaterial(Material.METAL);
-            }
+            mat.setMaterial(Material.METAL, color);
         });
 
         gl.pushMatrix();
@@ -91,10 +88,12 @@ public interface TrainElement {
 
         private final Resource<Mesh> mesh;
         private final List<String> trackTypes;
+        public int buildCost;
+        public float maintenancePerSecond;
 
         public Properties(
                 String name, float length, float mass, float linearResistance, float quadraticResistance,
-                float maxSpeed, Resource<Mesh> mesh, List<String> trackTypes
+                float maxSpeed, Resource<Mesh> mesh, List<String> trackTypes, int buildCost, float maintenancePerSecond
         ) {
             this.name = name;
             this.length = length;
@@ -104,6 +103,8 @@ public interface TrainElement {
             this.maxSpeed = maxSpeed;
             this.mesh = mesh;
             this.trackTypes = trackTypes;
+            this.buildCost = buildCost;
+            this.maintenancePerSecond = maintenancePerSecond;
         }
 
         @Override

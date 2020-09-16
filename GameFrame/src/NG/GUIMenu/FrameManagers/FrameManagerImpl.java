@@ -16,6 +16,7 @@ import NG.Rendering.GLFWWindow;
 import NG.Tools.Logger;
 import org.joml.Vector2i;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -43,7 +44,7 @@ public class FrameManagerImpl implements UIFrameManager {
     }
 
     @Override
-    public void init(Game game) throws Version.MisMatchException {
+    public void init(Game game) throws Version.MisMatchException, IOException {
         if (this.game != null) return;
         this.game = game;
         lookAndFeel.init(game);

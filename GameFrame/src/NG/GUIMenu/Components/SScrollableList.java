@@ -44,6 +44,11 @@ public class SScrollableList extends SContainer.GhostContainer {
         scroller.resize(children().size(), nrOfShownElts);
     }
 
+    public void remove(SComponent comp) {
+        layout.remove(comp);
+        scroller.resize(children().size(), nrOfShownElts);
+    }
+
     @Override
     public SComponent getComponentAt(int xRel, int yRel) {
         validateLayout();
@@ -80,5 +85,10 @@ public class SScrollableList extends SContainer.GhostContainer {
     @Override
     public int minWidth() {
         return Math.max(super.minWidth(), scroller.minWidth());
+    }
+
+    public void clear() {
+        layout.clear();
+        scroller.resize(0, nrOfShownElts);
     }
 }

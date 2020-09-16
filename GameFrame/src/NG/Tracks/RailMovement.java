@@ -64,23 +64,27 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
     private float maxSpeed = 0;
 
     /** maps time to total distance millimeters */
-    private LongInterpolator totalMillimeters;
+    private final LongInterpolator totalMillimeters;
     /** maps total distance millimeters to track-local distance */
-    private FloatInterpolator totalToLocalDistance;
+    private final FloatInterpolator totalToLocalDistance;
     /** maps total distance millimeters to tracks, includes currentTrack */
-    private BlockingTimedArrayQueue<Pair<TrackPiece, Boolean>> tracks;
+    private final BlockingTimedArrayQueue<Pair<TrackPiece, Boolean>> tracks;
 
     private float r1 = 1;
-    private float r2 = 0;
+    private float r2 = 1;
     private float maxForce = 1;
     private float invMass = 1;
     private float breakForce = 1;
 
     private long trainLengthMillis = 0;
-    private float trainMaxSpeed = 1;
+    private float trainMaxSpeed = 0;
 
     private AveragingQueue accelerationAverage = new AveragingQueue((int) (0.1f / DELTA_TIME));
 
+    /**
+     * Creates a rail movement system starting at the given startpiece, owned by the given controller. If {@code
+     * isPositiveDirection}, the movement is initially towards the endNode of the startpiece
+     */
     public RailMovement(
             Game game, Train controller, double spawnTime, TrackPiece startPiece, boolean isPositiveDirection
     ) {
@@ -116,7 +120,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
      * @param trainLength   length of the train in units
      * @param trainMaxSpeed
      */
-    public void setProperties(
+    public synchronized void setProperties(
             float TE, float mass, float R1, float R2, float breakForce, float trainLength, float trainMaxSpeed
     ) {
         this.maxForce = TE;
@@ -146,7 +150,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         doReverse = false;
     }
 
-    public void update(double gameTime) {
+    public synchronized void update(double gameTime) {
         float speed = this.speed;
 
         while (updateTime < gameTime) {
@@ -350,6 +354,8 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
             updateTime += DELTA_TIME;
             this.speed = speed;
         }
+
+        discardUpTo(gameTime - 10, 10_000);
     }
 
     /** returns true iff we should stop, and we are within snapping distance of this target */
@@ -368,7 +374,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         return (speedTargetSpaceNext < speedTargetDistance);
     }
 
-    private void executeReversal() {
+    private synchronized void executeReversal() {
         isPositiveDirection = !isPositiveDirection;
 
         // distance from start of track to currentTotalMillis
@@ -499,10 +505,24 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
     @Override
     public void onScheduleUpdate(NetworkPosition element) {
         if (speed == 0) {
-            NetworkPathFinder inDirection = new NetworkPathFinder(scanEndNode.getNetworkNode(), scanIsInPathDirection, element);
+            NetworkNode scanEndNodeNetworkNode = scanEndNode.getNetworkNode();
+
+            // if the train is halfway an empty track (e.g. upon spawning),
+            // extend path to next switch like the pathfinder requires
+            if (!scanEndNodeNetworkNode.isNetworkCritical()) {
+                TrackPiece nextTrack = reservedPath.getLast();
+                do {
+                    nextTrack = scanEndNodeNetworkNode.getNext(nextTrack).get(0).trackPiece;
+                    appendToPath(nextTrack);
+                    scanEndNodeNetworkNode = scanEndNode.getNetworkNode();
+                } while (!scanEndNodeNetworkNode.isNetworkCritical());
+            }
+
+            // compute both directions to find the direction to start
+            NetworkPathFinder inDirection = new NetworkPathFinder(scanEndNodeNetworkNode, scanIsInPathDirection, element);
             NetworkPathFinder.Path pathInDirection = inDirection.call();
 
-            NetworkPathFinder againstDirection = new NetworkPathFinder(scanEndNode.getNetworkNode(), !scanIsInPathDirection, element);
+            NetworkPathFinder againstDirection = new NetworkPathFinder(scanEndNodeNetworkNode, !scanIsInPathDirection, element);
             NetworkPathFinder.Path pathAgainstDirection = againstDirection.call();
 
             boolean inSameDirection;
@@ -521,6 +541,22 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         }
 
         scanIsAhead = false;
+    }
+
+    public synchronized void setPosition(double time, TrackPiece startPiece, boolean inPositiveDirection) {
+        // distance from start of track to currentTotalMillis
+        trackEndDistanceMillis = currentTotalMillis;
+
+        float localDistance = totalToLocalDistance.getInterpolated(currentTotalMillis);
+        totalToLocalDistance.add(localDistance, currentTotalMillis); // overrides later elements
+
+        activeSpeedTargets.clear();
+        clearPath();
+        commitTrack(startPiece, inPositiveDirection);
+
+        currentTotalMillis += trainLengthMillis;
+        updateTime = time;
+        initPath();
     }
 
     private void clearPath() {
@@ -590,7 +626,9 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         TrackPiece track = previous.left;
         float localDistance = totalToLocalDistance.getInterpolated(totalMillis);
 
-        float fractionTravelled = localDistance / track.getLength();
+        float trackLength = track.getLength();
+        assert trackLength > 0;
+        float fractionTravelled = localDistance / trackLength;
         return track.getPositionFromFraction(fractionTravelled);
     }
 
@@ -610,6 +648,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         float distanceMillis = totalMillimeters.getInterpolated(time) + displacement * METERS_TO_MILLIS;
         float localDistance = totalToLocalDistance.getInterpolated(distanceMillis);
         Pair<TrackPiece, Boolean> activeTrack = tracks.getPrevious(distanceMillis);
+        if (activeTrack == null) activeTrack = tracks.getNext(distanceMillis);
         TrackPiece track = activeTrack.left;
 
         float fractionTravelled = localDistance / track.getLength();
@@ -627,13 +666,15 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
     }
 
     public Quaternionf getRotation(double time, float displacement) {
-//        update(time); // included in getDirection(time)
+        //  update(time); // included in getDirection(time)
         Vector3f direction = getDirection(time, displacement);
         return Vectors.xTo(direction);
     }
 
-    public void discardUpTo(double time) {
-        long distance = totalMillimeters.getInterpolated(time);
+    public void discardUpTo(double time, float maxOffset) {
+        long interpolated = totalMillimeters.getInterpolated(time);
+        long minimumMillis = (currentTotalMillis - (long) (maxOffset / METERS_TO_MILLIS));
+        long distance = java.lang.Math.min(interpolated, minimumMillis);
         double totalMillimetersMinimum = totalToLocalDistance.timeOfPrevious(distance - trainLengthMillis);
         distance = (long) totalMillimetersMinimum;
 

@@ -1,8 +1,8 @@
 package NG.Entities;
 
+import NG.Core.Coloring;
 import NG.Core.GameObject;
 import NG.Core.GameTimer;
-import NG.DataStructures.Generic.Color4f;
 import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
@@ -16,28 +16,6 @@ import NG.Rendering.MatrixStack.SGL;
 public interface Entity extends GameObject {
     enum UpdateFrequency {
         EVERY_TICK, ONCE_PER_SECOND, ONCE_UPON_A_TIME, NEVER
-    }
-
-    class Marking {
-        public final Color4f color;
-        private boolean isValid = true;
-
-        public Marking(Color4f color) {
-            this.color = color;
-        }
-
-        public Marking() {
-            color = Color4f.WHITE;
-            isValid = false;
-        }
-
-        public boolean isValid() {
-            return isValid;
-        }
-
-        public void invalidate() {
-            isValid = false;
-        }
     }
 
     /**
@@ -65,7 +43,7 @@ public interface Entity extends GameObject {
      */
     void reactMouse(AbstractMouseTool.MouseAction action, KeyControl keys);
 
-    void setMarking(Marking marking);
+    void setMarking(Coloring.Marking mark);
 
     /** @deprecated use {@link #despawn(double)} */
     @Deprecated
@@ -96,5 +74,7 @@ public interface Entity extends GameObject {
      * the {@link #update()} method of this entity will be called according to the given update frequency
      * @return a constant value indicating how often to update this entity
      */
-    UpdateFrequency getUpdateFrequency();
+    default UpdateFrequency getUpdateFrequency() {
+        return UpdateFrequency.EVERY_TICK;
+    }
 }

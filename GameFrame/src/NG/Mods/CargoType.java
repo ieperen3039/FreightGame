@@ -15,15 +15,17 @@ public class CargoType {
     private static final float MINIMUM_PAYMENT_DISTANCE = 10;
     private final String name;
     private final float[] pricePerDay;
+    private float minimumPayment;
 
-    public CargoType(String name, float[] pricePerDay) {
+    public CargoType(String name, float[] pricePerDay, float minimumPayment) {
         assert pricePerDay.length > 1;
         this.name = name;
         this.pricePerDay = pricePerDay;
+        this.minimumPayment = minimumPayment;
     }
 
-    public CargoType(String name, float initialValue, float priceDecreasePerDay) {
-        this(name, new float[]{initialValue, initialValue - priceDecreasePerDay});
+    public CargoType(String name, float initialValue, float priceDecreasePerSecond) {
+        this(name, new float[]{initialValue, initialValue - priceDecreasePerSecond}, initialValue / 100f);
     }
 
     /** @return a user-friendly canonical name */
@@ -32,38 +34,38 @@ public class CargoType {
     }
 
     /**
-     * @param daysInTransit the number of time units this good is in transit
+     * @param secondsInTransit the number of seconds this cargo was in transit
      * @return the amount of currency that the good is worth (rounded down)
      */
-    public Valuta value(double daysInTransit, float distanceTravelled) {
-        int fullDaysInTransit = (int) daysInTransit;
+    public Valuta value(double secondsInTransit, float distanceTravelled) {
+        int completedSecondsInTransit = (int) secondsInTransit;
         float unitPricePerMeter;
 
-        if (fullDaysInTransit == daysInTransit) { // edge case
-            if (fullDaysInTransit < pricePerDay.length) {
-                unitPricePerMeter = pricePerDay[fullDaysInTransit];
+        if (completedSecondsInTransit == secondsInTransit) { // edge case
+            if (completedSecondsInTransit < pricePerDay.length) {
+                unitPricePerMeter = pricePerDay[completedSecondsInTransit];
 
             } else {
                 unitPricePerMeter = pricePerDay[pricePerDay.length - 1];
             }
 
-        } else if (fullDaysInTransit < pricePerDay.length - 1) {
-            float lower = pricePerDay[fullDaysInTransit];
-            float upper = pricePerDay[fullDaysInTransit + 1];
+        } else if (completedSecondsInTransit < pricePerDay.length - 1) {
+            float lower = pricePerDay[completedSecondsInTransit];
+            float upper = pricePerDay[completedSecondsInTransit + 1];
 
-            float fraction = (float) (daysInTransit - fullDaysInTransit);
+            float fraction = (float) (secondsInTransit - completedSecondsInTransit);
             unitPricePerMeter = Toolbox.interpolate(lower, upper, fraction);
 
         } else { // extrapolate using the last two entries
             float lower = pricePerDay[pricePerDay.length - 2];
             float upper = pricePerDay[pricePerDay.length - 1];
 
-            float fraction = (float) (daysInTransit - pricePerDay.length - 2);
+            float fraction = (float) (secondsInTransit - pricePerDay.length - 2);
             unitPricePerMeter = Toolbox.interpolate(lower, upper, fraction);
         }
 
         float correctedDistance = distanceTravelled - MINIMUM_PAYMENT_DISTANCE;
-        float unitValue = unitPricePerMeter * correctedDistance;
+        float unitValue = Math.max(unitPricePerMeter * correctedDistance, minimumPayment);
         return Valuta.ofUnitValue((int) unitValue);
     }
 

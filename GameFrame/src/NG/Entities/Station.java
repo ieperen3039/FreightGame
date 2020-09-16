@@ -46,5 +46,11 @@ public interface Station extends GameObject, ColliderEntity, NetworkPosition {
      */
     Collection<CargoType> getAcceptedCargo();
 
+    /**
+     * @param cargo
+     * @return
+     */
     Valuta sell(Cargo cargo);
+
+    void addTrain(Train train);
 }

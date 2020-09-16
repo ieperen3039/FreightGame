@@ -16,6 +16,11 @@ public interface NetworkPosition {
     List<Pair<NetworkNode, Boolean>> getNodes();
 
     /**
+     * @return a list of all track pieces that are part of this NetworkPosition
+     */
+    List<TrackPiece> getTracks();
+
+    /**
      * @param arrivalTrack the track adjacent to node, indicating direction (track -> node)
      * @param node         the node to find
      * @return true iff node is part of the nodes of this position, and the direction is correct.

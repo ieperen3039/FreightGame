@@ -1,6 +1,7 @@
 package NG.Entities;
 
 import NG.Core.AbstractGameObject;
+import NG.Core.Coloring;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.InputHandling.KeyControl;
@@ -24,7 +25,7 @@ public class Cube extends AbstractGameObject implements MovingEntity {
     private boolean isDisposed = false;
     private double despawnTime;
     private double spawnTime;
-    private Marking marking = null;
+    private final Coloring coloring = new Coloring(Color4f.WHITE);
 
     public Cube(Game game, Vector3f position) {
         super(game);
@@ -48,7 +49,7 @@ public class Cube extends AbstractGameObject implements MovingEntity {
 
         if (shader instanceof MaterialShader) {
             MaterialShader materialShader = (MaterialShader) shader;
-            materialShader.setMaterial(Material.ROUGH, Color4f.GREY);
+            materialShader.setMaterial(Material.ROUGH, coloring.getColor());
         }
 
         gl.pushMatrix();
@@ -65,10 +66,9 @@ public class Cube extends AbstractGameObject implements MovingEntity {
     }
 
     @Override
-    public void setMarking(Marking marking) {
-        this.marking = marking;
+    public void setMarking(Coloring.Marking mark) {
+        coloring.addMark(mark);
     }
-
 
     @Override
     public void despawn(double gameTime) {

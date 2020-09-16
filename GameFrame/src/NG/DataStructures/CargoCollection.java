@@ -40,6 +40,16 @@ public class CargoCollection extends AbstractCollection<Cargo> {
         return contents;
     }
 
+    public int getAmountOf(CargoType type) {
+        for (Cargo cargo : storage) {
+            if (cargo.type.equals(type)) {
+                return cargo.quantity();
+            }
+        }
+
+        return 0;
+    }
+
     /**
      * adds the amounts of each cargo type of this collection to the types in the given map, creating new entries if
      * necessary.

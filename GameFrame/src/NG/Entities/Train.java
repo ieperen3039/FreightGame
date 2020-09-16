@@ -1,7 +1,9 @@
 package NG.Entities;
 
 import NG.Core.AbstractGameObject;
+import NG.Core.Coloring;
 import NG.Core.Game;
+import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Generic.Pair;
 import NG.DataStructures.Valuta;
 import NG.Freight.Cargo;
@@ -21,6 +23,8 @@ import NG.Network.RailNode;
 import NG.Network.Schedule;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Tools.Logger;
+import NG.Tools.NetworkPathFinder;
+import NG.Tools.Toolbox;
 import NG.Tracks.RailMovement;
 import NG.Tracks.TrackPiece;
 import org.joml.Quaternionf;
@@ -38,36 +42,80 @@ public class Train extends AbstractGameObject implements MovingEntity {
             300, 50, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
     );
 
+    private static final boolean CHOOSE_RANDOM_SPAWN_TRACK = true;
+    private static final double TRAIN_PLACEMENT_STUN_TIME = 1;
+
+    protected final List<TrainElement> entities = new CopyOnWriteArrayList<>();
+
     private final int id;
     private final RailMovement positionEngine;
-    private final List<TrainElement> entities = new CopyOnWriteArrayList<>();
+    private final Coloring coloring = new Coloring(Color4f.WHITE);
+
+    private NetworkPosition storagePosition;
+    private double timeOfStore = Double.POSITIVE_INFINITY;
+    private double timeOfUnstore = Double.POSITIVE_INFINITY;
+
+    private NetworkPosition temporaryTarget = null;
+    private Schedule.Node currentScheduleNode = null;
+    protected final Schedule schedule = new Schedule();
     private final List<Schedule.UpdateListener> scheduleUpdateListeners = new ArrayList<>();
 
-    private final Schedule schedule = new Schedule();
-    private Schedule.Node currentScheduleNode = null;
     private double loadTimer = Double.NEGATIVE_INFINITY;
 
-    protected double spawnTime;
-    protected double despawnTime = Double.POSITIVE_INFINITY;
-    private Marking marking = new Marking();
+    private int maintenancePerSecond = 0;
+    private double nextMaintenanceTick;
+
+    private double spawnTime;
+    private double despawnTime = Double.POSITIVE_INFINITY;
 
     public Train(Game game, int id, double spawnTime, TrackPiece startPiece) {
         super(game);
         this.id = id;
-        this.positionEngine = new RailMovement(game, this, spawnTime, startPiece, true);
-        addScheduleListener(positionEngine);
         this.spawnTime = spawnTime;
+        storagePosition = null;
+        positionEngine = new RailMovement(game, this, spawnTime, startPiece, true);
+        nextMaintenanceTick = spawnTime;
+        addScheduleListener(positionEngine);
+    }
+
+    public Train(Game game, int id, double spawnTime, NetworkPosition storagePosition) {
+        super(game);
+        this.id = id;
+        this.spawnTime = spawnTime;
+        this.storagePosition = storagePosition;
+        TrackPiece anyTrack = storagePosition.getTracks().get(0);
+        this.positionEngine = new RailMovement(game, this, spawnTime, anyTrack, true);
+        addScheduleListener(positionEngine);
+        positionEngine.stop();
+        timeOfStore = Double.NEGATIVE_INFINITY;
     }
 
     @Override
     public void update() {
+        double gameTime = game.timer().getGameTime();
+
+        if (storagePosition != null) {
+            if (!positionEngine.isStopping()) {
+                NetworkPosition currentTarget = getTarget(0);
+                autoSpawn(currentTarget);
+                nextMaintenanceTick = gameTime;
+            }
+
+            return;
+        }
+
         if (currentScheduleNode == null && !schedule.isEmpty()) {
             currentScheduleNode = schedule.getFirstNode();
+
             positionEngine.onScheduleUpdate(currentScheduleNode.element.target);
         }
 
-        double gameTime = game.timer().getGameTime();
         positionEngine.update();
+
+        if (gameTime > nextMaintenanceTick) {
+            game.getProgress().money.removeUnits(maintenancePerSecond);
+            nextMaintenanceTick += 1;
+        }
 
         if (currentScheduleNode != null && positionEngine.getSpeed() == 0 && !isLoading()) {
             // check whether we have loading to do
@@ -102,8 +150,70 @@ public class Train extends AbstractGameObject implements MovingEntity {
                 }
             }
         }
+    }
 
-        positionEngine.discardUpTo(gameTime - 1.0);
+    private void autoSpawn(NetworkPosition currentTarget) {
+        assert (storagePosition instanceof Station);
+
+        // autospawn on the best place available
+        List<TrackPiece> tracks = storagePosition.getTracks();
+        NetworkPathFinder.Path bestPath = NetworkPathFinder.Path.infinite();
+
+        if (currentTarget == null) {
+            TrackPiece track = Toolbox.getRandomConditional(tracks, t -> !t.isOccupied());
+            if (track == null) return;
+
+            placeTrain(track, true);
+            return;
+        }
+
+        // TODO path finding cooldown?
+        if (CHOOSE_RANDOM_SPAWN_TRACK) {
+            TrackPiece track = Toolbox.getRandomConditional(tracks, t -> !t.isOccupied());
+            if (track == null) return;
+
+
+            NetworkPathFinder.Path pathViaStart = new NetworkPathFinder(
+                    track, track.getStartNode().getNetworkNode(), currentTarget
+            ).call();
+
+            NetworkPathFinder.Path pathViaEnd = new NetworkPathFinder(
+                    track, track.getEndNode().getNetworkNode(), currentTarget
+            ).call();
+
+            bestPath = pathViaStart.getPathLength() < pathViaEnd.getPathLength() ? pathViaStart : pathViaEnd;
+
+        } else {
+            for (TrackPiece track : tracks) {
+                if (track.isOccupied()) continue;
+
+                NetworkPathFinder.Path pathViaStart = new NetworkPathFinder(
+                        track, track.getStartNode().getNetworkNode(), currentTarget
+                ).call();
+
+                if (pathViaStart.getPathLength() < bestPath.getPathLength()) {
+                    bestPath = pathViaStart;
+                }
+
+                NetworkPathFinder.Path pathViaEnd = new NetworkPathFinder(
+                        track, track.getEndNode().getNetworkNode(), currentTarget
+                ).call();
+
+                if (pathViaEnd.getPathLength() < bestPath.getPathLength()) {
+                    bestPath = pathViaEnd;
+                }
+            }
+        }
+
+        // no available track
+        if (bestPath.isEmpty()) return;
+        assert bestPath.size() > 1 : "train is already at destination";
+
+        NetworkNode first = bestPath.removeFirst();
+        NetworkNode second = bestPath.removeFirst();
+        TrackPiece spawnTrack = first.getEntryOf(second).trackPiece;
+        NetworkNode trackEndNode = spawnTrack.getEndNode().getNetworkNode();
+        placeTrain(spawnTrack, trackEndNode.equals(second));
     }
 
     /** station -> train */
@@ -141,7 +251,25 @@ public class Train extends AbstractGameObject implements MovingEntity {
             }
         }
 
-        // TODO add income to player pocket
+        game.getProgress().money.add(income);
+    }
+
+    public void placeTrain(TrackPiece startPiece, boolean inPositiveDirection) {
+        double timeOfPlacement = game.timer().getGameTime();
+        positionEngine.setPosition(timeOfPlacement, startPiece, inPositiveDirection);
+        addScheduleListener(positionEngine);
+        storagePosition = null;
+        timeOfUnstore = game.timer().getGameTime();
+        addLoadTime(TRAIN_PLACEMENT_STUN_TIME);
+    }
+
+    public void storeTrain(Station target) {
+        removeScheduleListener(positionEngine);
+        positionEngine.stop();
+        storagePosition = target;
+        target.addTrain(this);
+        timeOfStore = game.timer().getGameTime();
+        timeOfUnstore = Double.POSITIVE_INFINITY;
     }
 
     public void addElement(TrainElement e) {
@@ -149,9 +277,10 @@ public class Train extends AbstractGameObject implements MovingEntity {
         updateProperties();
     }
 
-    public void removeLastElement() {
-        entities.remove(entities.size() - 1);
+    public TrainElement removeLastElement() {
+        TrainElement elt = entities.remove(entities.size() - 1);
         updateProperties();
+        return elt;
     }
 
     private void updateProperties() {
@@ -161,6 +290,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
         float totalR2 = 0;
         float totalLength = 0;
         float maxSpeed = Float.POSITIVE_INFINITY;
+        float maintenance = 0;
 
         for (TrainElement entity : entities) {
             TrainElement.Properties props = entity.getProperties();
@@ -169,6 +299,7 @@ public class Train extends AbstractGameObject implements MovingEntity {
             totalR2 += props.quadraticResistance;
             totalLength += props.length;
             maxSpeed = Math.min(maxSpeed, props.maxSpeed);
+            maintenance += props.maintenancePerSecond;
 
             if (props instanceof Locomotive.Properties) {
                 Locomotive.Properties lProps = (Locomotive.Properties) props;
@@ -180,33 +311,37 @@ public class Train extends AbstractGameObject implements MovingEntity {
         }
 
         positionEngine.setProperties(totalTractiveEffort, totalMass, totalR1, totalR2, 5, totalLength, maxSpeed);
+        this.maintenancePerSecond = (int) maintenance + 1;
     }
 
     @Override
     public void draw(SGL gl) {
         if (entities.isEmpty()) return;
+        double now = game.timer().getRenderTime();
+        if (now > timeOfStore && now < timeOfUnstore) return;
         // position 0 is on the very front of the first wagon, hence the middle of first wagon is displaced
         float displacement = entities.get(0).getProperties().length / 2;
-        double now = game.timer().getRenderTime();
 
         for (TrainElement entity : entities) {
             // -displacement because we place front to back
             Vector3f position = positionEngine.getPosition(now, -displacement);
             Quaternionf rotation = positionEngine.getRotation(now, -displacement);
 
-            entity.draw(gl, position, rotation, this, marking);
+            entity.draw(gl, position, rotation, this, coloring.getColor());
             displacement += entity.getProperties().length;
         }
     }
 
     @Override
     public Vector3fc getPosition(double time) {
-        if (spawnTime > time || despawnTime < time) return null;
+        if (spawnTime > time || despawnTime < time || time > timeOfStore && time < timeOfUnstore) return null;
         return positionEngine.getPosition(time);
     }
 
     @Override
     public void reactMouse(MouseAction action, KeyControl keys) {
+        assert positionEngine != null : "visible but without position";
+
         if (action == MouseAction.PRESS_ACTIVATE) {
             if (keys.isControlPressed()) {
                 if (positionEngine.isStopping()) {
@@ -215,14 +350,20 @@ public class Train extends AbstractGameObject implements MovingEntity {
                     positionEngine.stop();
                 }
             } else {
-                game.gui().addFrame(new TrainUI());
+                openUI();
             }
         }
     }
 
-    @Override
-    public void setMarking(Marking marking) {
-        this.marking = marking;
+    /**
+     * opens the ui of this train
+     */
+    public void openUI() {
+        game.gui().addFrame(new TrainUI());
+    }
+
+    public void setMarking(Coloring.Marking mark) {
+        coloring.addMark(mark);
     }
 
     public float getLength() {
@@ -324,6 +465,11 @@ public class Train extends AbstractGameObject implements MovingEntity {
      * @return the target on the given number of steps from the current target, or null if the schedule is empty
      */
     public NetworkPosition getTarget(int scheduleDepth) {
+        if (temporaryTarget != null) {
+            if (scheduleDepth == 0) return temporaryTarget;
+            scheduleDepth--;
+        }
+
         Schedule.Node nextNode = null;
         if (!schedule.isEmpty()) {
             if (currentScheduleNode == null) {
@@ -395,6 +541,14 @@ public class Train extends AbstractGameObject implements MovingEntity {
         return "Train " + id;
     }
 
+    public List<TrainElement> getElements() {
+        return entities;
+    }
+
+    public void start() {
+        positionEngine.start();
+    }
+
     private class TrainUI extends SFrame {
 
         public TrainUI() {
@@ -416,6 +570,10 @@ public class Train extends AbstractGameObject implements MovingEntity {
             if (isLoading()) {
                 double time = loadTimer - game.timer().getGameTime();
                 return String.format("Loading / Unloading (%4.01f sec left)", time);
+            }
+
+            if (storagePosition != null) {
+                return "Stowed away";
             }
 
             if (positionEngine.isStopping()) {

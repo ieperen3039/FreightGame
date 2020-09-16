@@ -1,6 +1,7 @@
 package NG.GameState;
 
 import NG.Core.AbstractGameLoop;
+import NG.Core.Coloring;
 import NG.Core.Game;
 import NG.DataStructures.Collision.ColliderEntity;
 import NG.DataStructures.Collision.GilbertJohnsonKeerthiCollision;
@@ -33,7 +34,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     private final Deque<Runnable> postUpdateActionQueue;
     private final ClickShader clickShader;
     private Game game;
-    private Entity.Marking markBlue = new Entity.Marking();
+    private Coloring.Marking markBlue = new Coloring.Marking();
 
     public GameLoop(int targetTps, ClickShader clickShader) {
         super("Gameloop", targetTps);
@@ -143,8 +144,8 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         AABBf hitbox = entity.getHitbox();
         List<Entity> result = new ArrayList<>();
 
-        Entity.Marking oldMark = markBlue;
-        markBlue = new Entity.Marking(Color4f.BLUE);
+        Coloring.Marking oldMark = markBlue;
+        markBlue = new Coloring.Marking(Color4f.BLUE, Coloring.Priority.MAXIMUM);
 
         for (Entity ety : entities) {
             if (ety instanceof ColliderEntity) {

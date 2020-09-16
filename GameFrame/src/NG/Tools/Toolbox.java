@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import static org.lwjgl.openal.AL10.*;
@@ -464,5 +465,17 @@ public final class Toolbox {
             }
         }
         return intersection;
+    }
+
+    public static <T> T getRandomConditional(Collection<T> values, Predicate<T> condition) {
+        List<T> list = new ArrayList<>();
+        for (T value : values) {
+            if (condition.test(value)) {
+                list.add(value);
+            }
+        }
+
+        if (list.isEmpty()) return null;
+        return list.get(random.nextInt(list.size()));
     }
 }

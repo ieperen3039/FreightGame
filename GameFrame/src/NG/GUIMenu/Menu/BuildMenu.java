@@ -1,7 +1,6 @@
 package NG.GUIMenu.Menu;
 
 import NG.Core.Game;
-import NG.Entities.Industry;
 import NG.GUIMenu.BuildTools.*;
 import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SDropDown;
@@ -42,18 +41,6 @@ public class BuildMenu extends SFrame {
                         .setMouseTool(active ? new SignalBuilder(game, buildSignal) : null)
         );
 
-        SToggleButton buildIndustryGive = new SToggleButton("Build Producer", BUTTON_PROPERTIES);
-        buildIndustryGive.addStateChangeListener(
-                (active) -> game.inputHandling()
-                        .setMouseTool(active ? new IndustryBuilder(game, buildIndustryGive, Industry.debugPropertiesGive()) : null)
-        );
-
-        SToggleButton buildIndustryTake = new SToggleButton("Build Consumer", BUTTON_PROPERTIES);
-        buildIndustryTake.addStateChangeListener(
-                (active) -> game.inputHandling()
-                        .setMouseTool(active ? new IndustryBuilder(game, buildIndustryTake, Industry.debugPropertiesTake()) : null)
-        );
-
         SToggleButton buildTrain = new SToggleButton("Build Train", BUTTON_PROPERTIES);
         buildTrain.addStateChangeListener((active) ->
                 game.inputHandling().setMouseTool(active ? new TrainBuilder(game, buildTrain) : null)
@@ -66,7 +53,7 @@ public class BuildMenu extends SFrame {
         );
 
         setMainPanel(SContainer.column(
-                typeChooser, buildTrack, buildStation, buildSignal, buildIndustryGive, buildIndustryTake, buildTrain, removeElement
+                typeChooser, buildTrack, buildStation, buildSignal, buildTrain, removeElement
         ));
         setSize(200, 0);
     }

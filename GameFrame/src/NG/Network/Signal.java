@@ -8,6 +8,8 @@ import NG.Tracks.TrackPiece;
 import java.util.*;
 import java.util.function.Function;
 
+import static java.lang.Float.POSITIVE_INFINITY;
+
 /**
  * @author Geert van Ieperen created on 1-7-2020.
  */
@@ -63,12 +65,9 @@ public class Signal {
 
         } else if (target == null) {
             // reserve random path
-            TrackPath[] paths = signals.values().stream()
-                    .filter(path -> !path.isOccupied)
-                    .toArray(TrackPath[]::new);
-
-            if (paths.length == 0) return null;
-            return new Pair<>(paths[Toolbox.random.nextInt(paths.length)], Float.POSITIVE_INFINITY);
+            TrackPath randomPath = Toolbox.getRandomConditional(signals.values(), path -> !path.isOccupied);
+            if (randomPath == null) return null;
+            return new Pair<>(randomPath, POSITIVE_INFINITY);
         }
 
         // target != null
@@ -78,7 +77,7 @@ public class Signal {
         do {
             NetworkNode targetOfBest = null;
             TrackPath bestPath = null;
-            float lengthOfBest = Float.POSITIVE_INFINITY;
+            float lengthOfBest = POSITIVE_INFINITY;
 
             // get best direct path to target node
             for (Pair<NetworkNode, Boolean> targetNode : target.getNodes()) {
@@ -118,7 +117,7 @@ public class Signal {
         } while (true);
 
         TrackPath pathToBest = null;
-        float leastDistance = Float.POSITIVE_INFINITY;
+        float leastDistance = POSITIVE_INFINITY;
 
         for (Signal signal : signals.keySet()) {
             TrackPath pathToSignal = signals.get(signal);
@@ -134,7 +133,7 @@ public class Signal {
                 }
             } else {
                 // if there is no place to go, stop at some impassible point
-                if (leastDistance == Float.POSITIVE_INFINITY) {
+                if (leastDistance == POSITIVE_INFINITY) {
                     pathToBest = pathToSignal;
                 }
             }
@@ -144,7 +143,7 @@ public class Signal {
         // either we found a path to a node, ending in an EOL
         // or no path exists, and pathViaNodes is empty
         if (pathToBest == null) {
-            return new Pair<>(pathViaNodes, Float.POSITIVE_INFINITY);
+            return new Pair<>(pathViaNodes, POSITIVE_INFINITY);
         }
 
         return new Pair<>(pathViaNodes.append(pathToBest), pathViaNodes.adjLength() + leastDistance);
@@ -178,7 +177,7 @@ public class Signal {
         NetworkPathFinder.Path pathNetworkToTarget = pathFinder.call();
 
         if (pathNetworkToTarget == null) {
-            return Float.POSITIVE_INFINITY; // no path exists
+            return POSITIVE_INFINITY; // no path exists
         }
 
         return pathToSignal.adjLength() + signalToNetworkLength + pathNetworkToTarget.getPathLength();
@@ -230,7 +229,7 @@ public class Signal {
             TrackPiece trackPiece = entry.trackPiece;
 
             // loop without signals: prevent infinite loops
-            if (!pathToNode.path.isEmpty() && pathToNode.path.getFirst() == trackPiece) return;
+            if (pathToNode.path.contains(trackPiece)) return;
 
             float trackPieceLength = trackPiece.getLength();
             pathToNode.path.addLast(trackPiece);

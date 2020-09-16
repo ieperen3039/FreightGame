@@ -1,5 +1,6 @@
 package NG.GUIMenu.BuildTools;
 
+import NG.Core.Coloring;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
@@ -33,7 +34,7 @@ public class TrackBuilder extends AbstractMouseTool {
     private final TrackTypeGhost ghostType;
     private List<TrackPiece> ghostTracks = new CopyOnWriteArrayList<>();
     private float signalDistance = 10f;
-    private Entity.Marking mark = new Entity.Marking();
+    private Coloring.Marking mark = new Coloring.Marking();
 
     /**
      * this mousetool lets the player place a track by clicking on the map
@@ -164,7 +165,7 @@ public class TrackBuilder extends AbstractMouseTool {
                     Vector3f closestPoint = trackPiece.getPositionFromFraction(fraction);
 
                     if (firstNode == null) {
-                        mark = new Entity.Marking(Color4f.BLUE);
+                        mark = new Coloring.Marking(Color4f.BLUE, Coloring.Priority.MOUSE_HOVER);
 
                         if (fraction == 0 || fraction == 1) {
                             RailNode node = (fraction == 0) ? trackPiece.getStartNode() : trackPiece.getEndNode();
@@ -221,7 +222,7 @@ public class TrackBuilder extends AbstractMouseTool {
     }
 
     protected boolean checkCollisions(List<TrackPiece> tracks) {
-        mark = new Entity.Marking(Color4f.RED);
+        mark = new Coloring.Marking(Color4f.RED, Coloring.Priority.MAXIMUM);
         boolean hasCollisions = false;
 
         for (TrackPiece track : tracks) {

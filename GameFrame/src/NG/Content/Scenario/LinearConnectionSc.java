@@ -1,11 +1,13 @@
-package NG.Content;
+package NG.Content.Scenario;
 
 import NG.Core.Game;
 import NG.Core.ModLoader;
+import NG.Entities.Industry;
 import NG.Entities.StationImpl;
 import NG.GameMap.DefaultMapGenerator;
 import NG.GameMap.MapGeneratorMod;
 import NG.Mods.Mod;
+import NG.Mods.TypeCollection;
 import NG.Network.RailNode;
 import NG.Settings.Settings;
 import NG.Tracks.TrackType;
@@ -23,6 +25,7 @@ public class LinearConnectionSc extends Scenario {
 
     public static final int DISTANCE = 10;
     public static final float SIGNAL_OFFSET = 0.5f;
+    public static final int INDUSTRY_DIST = 3;
 
     public LinearConnectionSc(ModLoader modLoader) {
         super(modLoader);
@@ -45,12 +48,20 @@ public class LinearConnectionSc extends Scenario {
 
     @Override
     protected void setEntities(Game game, Settings settings) {
-        TrackType type = game.objectTypes().trackTypes.get(0);
+        TypeCollection allTypes = game.objectTypes();
+        TrackType type = allTypes.trackTypes.get(0);
 
         Vector3f aSide = new Vector3f(-DISTANCE, DISTANCE, 0);
         Vector3f bSide = new Vector3f(DISTANCE, -DISTANCE, 0);
 
         Vector2f center = new Vector2f(game.map().getSize()).mul(0.5f);
+
+        Industry aIndustry = new Industry(game, getGroundPos(game, center, aSide).add(INDUSTRY_DIST, INDUSTRY_DIST, 0), 0, allTypes
+                .getIndustryByName("oil well"));
+        game.state().addEntity(aIndustry);
+        Industry bIndustry = new Industry(game, getGroundPos(game, center, bSide).add(-INDUSTRY_DIST, -INDUSTRY_DIST, 0), 0, allTypes
+                .getIndustryByName("refinery"));
+        game.state().addEntity(bIndustry);
 
         StationImpl aStation = new StationImpl(game, 2, 6, type, getGroundPos(game, center, aSide), toRadians(-45), 0);
         game.state().addEntity(aStation);

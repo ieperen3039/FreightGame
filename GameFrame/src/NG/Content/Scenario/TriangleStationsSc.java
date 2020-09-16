@@ -1,8 +1,11 @@
-package NG.Content;
+package NG.Content.Scenario;
 
 import NG.Core.Game;
 import NG.Core.ModLoader;
+import NG.Entities.Locomotive;
 import NG.Entities.StationImpl;
+import NG.Entities.Train;
+import NG.Entities.Wagon;
 import NG.GameState.GameState;
 import NG.Mods.Mod;
 import NG.Network.RailNode;
@@ -77,6 +80,13 @@ public class TriangleStationsSc extends Scenario {
         bypass1.addSignal(game, true);
         bypass2.addSignal(game, true);
         bypass3.addSignal(game, true);
+
+        Train initialTrain = new Train(game, 0, now, station1);
+        initialTrain.addElement(new Locomotive(game.objectTypes().locomotiveTypes.get(0)));
+        initialTrain.addElement(new Wagon(game.objectTypes().wagonTypes.get(0)));
+        initialTrain.addElement(new Wagon(game.objectTypes().wagonTypes.get(0)));
+        game.state().addEntity(initialTrain);
+        station1.addTrain(initialTrain);
 
         gameState.addEntity(station1);
         gameState.addEntity(station2);

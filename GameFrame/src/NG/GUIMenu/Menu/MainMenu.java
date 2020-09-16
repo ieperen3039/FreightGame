@@ -1,8 +1,8 @@
 package NG.GUIMenu.Menu;
 
-import NG.Content.LinearConnectionSc;
-import NG.Content.Scenario;
-import NG.Content.TriangleStationsSc;
+import NG.Content.Scenario.LinearConnectionSc;
+import NG.Content.Scenario.Scenario;
+import NG.Content.Scenario.TriangleStationsSc;
 import NG.Core.Game;
 import NG.Core.ModLoader;
 import NG.GUIMenu.Components.SButton;
@@ -22,17 +22,23 @@ public class MainMenu extends SFrame {
     private static final int NUM_TOP_BUTTONS = 10;
     private static final int NUM_BOT_BUTTONS = 10;
     public static final int NUM_BUTTONS = NUM_TOP_BUTTONS + NUM_BOT_BUTTONS + 1;
+    public static final int STANDARD_BUTTON_WIDTH = 200;
+    public static final int STANDARD_BUTTON_HEIGHT = 60;
     public static final SComponentProperties BUTTON_PROPERTIES_STATIC = new SComponentProperties(
-            200, 60, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
+            STANDARD_BUTTON_WIDTH, STANDARD_BUTTON_HEIGHT, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
     );
     public static final SComponentProperties BUTTON_PROPERTIES_STRETCH = new SComponentProperties(
-            200, 60, true, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
+            STANDARD_BUTTON_WIDTH, STANDARD_BUTTON_HEIGHT, true, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
     );
     public static final SComponentProperties MAIN_BUTTON_PROPERTIES = new SComponentProperties(
-            300, 100, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
+            (int) (STANDARD_BUTTON_WIDTH * 1.5f), (int) (STANDARD_BUTTON_HEIGHT * 1.5f), false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
     );
     public static final SComponentProperties TEXT_PROPERTIES = new SComponentProperties(
             0, 50, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT
+    );
+    @SuppressWarnings("SuspiciousNameCombination")
+    public static final SComponentProperties SQUARE_BUTTON_PROPS = new SComponentProperties(
+            STANDARD_BUTTON_HEIGHT, STANDARD_BUTTON_HEIGHT, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
     );
 
     private final Vector2i topButtonPos;

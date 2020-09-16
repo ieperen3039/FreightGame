@@ -1,8 +1,10 @@
 package NG.Tracks;
 
 import NG.Core.AbstractGameObject;
+import NG.Core.Coloring;
 import NG.Core.Game;
 import NG.DataStructures.Collision.ColliderEntity;
+import NG.DataStructures.Generic.Color4f;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseTools.AbstractMouseTool;
@@ -25,6 +27,7 @@ import java.util.List;
  * @author Geert van Ieperen. Created on 18-9-2018.
  */
 public abstract class TrackPiece extends AbstractGameObject implements ColliderEntity {
+    private static final Color4f OCCUPIED_COLOR = Color4f.GREY;
     protected final TrackType type;
     protected final boolean isModifiable;
     private Resource<AABBf> hitbox;
@@ -34,7 +37,7 @@ public abstract class TrackPiece extends AbstractGameObject implements ColliderE
 
     private boolean doRenderClickBox = false;
     private boolean isOccupied = false;
-    private Marking marking = new Marking();
+    private final Coloring coloring = new Coloring(Color4f.WHITE);
 
     // if any of these is occupied, this is occupied as well
     private List<TrackPiece> entangledTracks = new ArrayList<>();
@@ -84,7 +87,7 @@ public abstract class TrackPiece extends AbstractGameObject implements ColliderE
         ShaderProgram shader = gl.getShader();
 
         if (shader instanceof MaterialShader) {
-            type.setMaterial((MaterialShader) shader, this, marking);
+            type.setMaterial((MaterialShader) shader, this, coloring.getColor());
         }
 
         gl.pushMatrix();
@@ -122,9 +125,8 @@ public abstract class TrackPiece extends AbstractGameObject implements ColliderE
 
     }
 
-    @Override
-    public void setMarking(Marking marking) {
-        this.marking = marking;
+    public void setMarking(Coloring.Marking marking) {
+        this.coloring.addMark(marking);
     }
 
     @Override
@@ -165,6 +167,11 @@ public abstract class TrackPiece extends AbstractGameObject implements ColliderE
 
     public void setOccupied(boolean occupied) {
         this.isOccupied = occupied;
+        if (occupied) {
+            coloring.addMark(OCCUPIED_COLOR, Coloring.Priority.OCCUPIED_TRACK);
+        } else {
+            coloring.removeMark(Coloring.Priority.OCCUPIED_TRACK);
+        }
     }
 
     public boolean isOccupied() {

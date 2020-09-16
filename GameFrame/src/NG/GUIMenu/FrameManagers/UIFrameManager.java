@@ -34,14 +34,14 @@ public interface UIFrameManager
         frame.validateLayout();
 
         int x = 50;
-        int y = 50;
+        int y = 200;
 
-//        SComponent component = getComponentAt(x, y);
-//        while (component != null) {
-//            x += component.getWidth();
-//
-//            component = getComponentAt(x, y);
-//        }
+        SComponent component = getComponentAt(x, y);
+        while (component != null) {
+            x += component.getWidth();
+
+            component = getComponentAt(x, y);
+        }
 
         addFrame(frame, x, y);
     }

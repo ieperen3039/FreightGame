@@ -174,7 +174,7 @@ public final class JarModReader {
                     mod.init(game);
                     permanents.add(mod);
 
-                } catch (Version.MisMatchException e) {
+                } catch (Version.MisMatchException | IOException e) {
                     Logger.ERROR.print(e);
                     modList.remove(mod);
                 }

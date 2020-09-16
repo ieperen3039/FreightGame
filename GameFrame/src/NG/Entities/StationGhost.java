@@ -1,6 +1,7 @@
 package NG.Entities;
 
 import NG.Core.AbstractGameObject;
+import NG.Core.Coloring;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Generic.Pair;
@@ -19,6 +20,7 @@ import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.GenericShapes;
 import NG.Rendering.Shapes.Shape;
 import NG.Tools.Vectors;
+import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
 import org.joml.*;
 
@@ -48,7 +50,7 @@ public class StationGhost extends AbstractGameObject implements Station {
     private int numberOfPlatforms;
     private float length;
     private float realWidth;
-    private Marking marking = new Marking();
+    private final Coloring coloring = new Coloring(STATION_COLOR);
 
     public StationGhost(Game game, int nrOfPlatforms, int length) {
         super(game);
@@ -78,7 +80,7 @@ public class StationGhost extends AbstractGameObject implements Station {
             ShaderProgram shader = gl.getShader();
             if (shader instanceof MaterialShader) {
                 MaterialShader matShader = (MaterialShader) shader;
-                Color4f color = marking.isValid() ? marking.color : STATION_COLOR;
+                Color4f color = coloring.getColor();
                 matShader.setMaterial(Material.ROUGH, color);
             }
 
@@ -108,9 +110,8 @@ public class StationGhost extends AbstractGameObject implements Station {
         // handled by StationBuilder
     }
 
-    @Override
-    public void setMarking(Marking marking) {
-        this.marking = marking;
+    public void setMarking(Coloring.Marking mark) {
+        coloring.addMark(mark);
     }
 
     @Override
@@ -132,6 +133,11 @@ public class StationGhost extends AbstractGameObject implements Station {
     }
 
     @Override
+    public List<TrackPiece> getTracks() {
+        return Collections.emptyList();
+    }
+
+    @Override
     public boolean load(Train train, CargoType cargo, int amount, boolean oldFirst) {
         return false;
     }
@@ -143,7 +149,12 @@ public class StationGhost extends AbstractGameObject implements Station {
 
     @Override
     public Valuta sell(Cargo cargo) {
-        throw new IllegalStateException();
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addTrain(Train train) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

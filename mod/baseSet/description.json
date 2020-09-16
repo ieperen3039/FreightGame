@@ -14,7 +14,11 @@
       // in N/(m/s)^2
       "r2": 0.1,
       // in N
-      "tractiveEffort": 5.0
+      "tractive_effort": 5.0,
+      // in units (1/10th of a dollar)
+      "build_cost": 100,
+      // in units per second (1/10th of a dollar)
+      "maintenance_ps": 0.1
     }
   },
   "wagons": {
@@ -31,7 +35,85 @@
       // in N/(m/s)
       "r1": 0.02,
       // in seconds
-      "load_time": 1
+      "load_time": 1,
+      // in units (1/10th of a dollar)
+      "build_cost": 10,
+      // in units per second (1/10th of a dollar)
+      "maintenance_ps": 0,
+      "cargo_types": {
+        "oil": 10,
+        "fuel": 10
+      }
+    }
+  },
+  "cargo": {
+    "oil": {
+      // unit sell price per day in transit
+      "price": [1.0, 0.95],
+      // in units valuta per unit of cargo
+      "minimum_price": 1
+    },
+    "fuel": {
+      // unit sell price per day in transit
+      "price": [1.0, 0.95],
+      // in units valuta per unit of cargo
+      "minimum_price": 2
+    },
+    "goods": {
+      // unit sell price per day in transit
+      "price": [2.0, 1.8],
+      // in units valuta per unit of cargo
+      "minimum_price": 0.1
+    }
+  },
+  "industries": {
+    "oil well": {
+      // relative path
+      "mesh": "Industry.ply",
+      // the rule determines accepted and produced cargo
+      "rule": {
+        "out": {
+          // in units per rule
+          "oil": 3
+        },
+        // in rules per second
+        "rate": 1
+      },
+      // in total units per type
+      "max_cargo": 100
+    },
+    "refinery": {
+      // relative path
+      "mesh": "Industry.ply",
+      "rule": {
+        "in": {
+          // in units per rule
+          "oil": 3
+        },
+        "out": {
+          // in units per rule
+          "fuel": 1
+        },
+        // in rules per second
+        "rate": 1
+      },
+      // in total units per type
+      "max_cargo": 100
+    },
+    "export hub": {
+      // relative path
+      "mesh": "Industry.ply",
+      "rule": {
+        "out": {
+          // in units per rule
+          "fuel": 1,
+          "oil": 1
+        },
+        // in rules per second
+        "rate": 100
+      },
+      // in total units per type
+      "max_cargo": 1000
     }
   }
 }

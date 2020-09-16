@@ -64,6 +64,7 @@ public class FreightGameUI extends SContainer.GhostContainer {
 
         toolBar.addButton("Exit", () -> {
             game.gui().clear();
+            game.gui().setMainGUI(this);
             modLoader.stopGame();
         });
 

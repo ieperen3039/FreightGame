@@ -1,6 +1,7 @@
 package NG.Tracks;
 
-import NG.Entities.Entity;
+import NG.DataStructures.Generic.Color4f;
+import NG.DataStructures.Valuta;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shapes.CustomShape;
@@ -44,11 +45,11 @@ public interface TrackType {
     /**
      * sets the material properties of this track in the shader. for example: {@code shader.setMaterial(Material.ROUGH,
      * Color4f.WHITE);}
-     * @param shader  the current shader
+     * @param shader the current shader
      * @param track
-     * @param marking
+     * @param color
      */
-    void setMaterial(MaterialShader shader, TrackPiece track, Entity.Marking marking);
+    void setMaterial(MaterialShader shader, TrackPiece track, Color4f color);
 
     /** @return the maximum speed of a straight track */
     float getMaximumSpeed();
@@ -63,6 +64,8 @@ public interface TrackType {
 
         return Math.min(getMaximumSpeed(), radius * RADIUS_SPEED_RATIO);
     }
+
+    Valuta getCostPerMeter();
 
     static Mesh clickBoxStraight(Vector3fc displacement) {
         float length = displacement.length();
