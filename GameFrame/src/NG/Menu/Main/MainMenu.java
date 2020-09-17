@@ -1,4 +1,4 @@
-package NG.GUIMenu.Menu;
+package NG.Menu.Main;
 
 import NG.Content.Scenario.LinearConnectionSc;
 import NG.Content.Scenario.Scenario;

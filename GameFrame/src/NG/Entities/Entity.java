@@ -5,7 +5,7 @@ import NG.Core.GameObject;
 import NG.Core.GameTimer;
 import NG.InputHandling.KeyControl;
 import NG.InputHandling.MouseClickListener;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
+import NG.InputHandling.MouseTool.AbstractMouseTool;
 import NG.Rendering.MatrixStack.SGL;
 
 /**

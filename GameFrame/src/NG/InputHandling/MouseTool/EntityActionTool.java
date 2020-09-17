@@ -1,8 +1,7 @@
-package NG.GUIMenu.Menu;
+package NG.InputHandling.MouseTool;
 
 import NG.Core.Game;
 import NG.Entities.Entity;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
 import org.joml.Vector3fc;
 
 import java.util.function.Consumer;

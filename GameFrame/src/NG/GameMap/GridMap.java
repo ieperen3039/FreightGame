@@ -1,6 +1,6 @@
 package NG.GameMap;
 
-import NG.InputHandling.MouseTools.MouseTool;
+import NG.InputHandling.MouseTool.MouseTool;
 import NG.Tools.Logger;
 import org.joml.Math;
 import org.joml.*;

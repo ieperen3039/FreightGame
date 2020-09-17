@@ -1,4 +1,4 @@
-package NG.InputHandling.MouseTools;
+package NG.InputHandling.MouseTool;
 
 import NG.Core.Game;
 import NG.Core.GameAspect;

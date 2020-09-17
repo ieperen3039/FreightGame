@@ -1,12 +1,12 @@
-package NG.GUIMenu.BuildTools;
+package NG.Menu.InGame.Build;
 
 import NG.Core.Game;
 import NG.Entities.Locomotive;
 import NG.Entities.Train;
 import NG.Entities.Wagon;
 import NG.GUIMenu.Components.SToggleButton;
-import NG.GUIMenu.Menu.EntityActionTool;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
+import NG.InputHandling.MouseTool.AbstractMouseTool;
+import NG.InputHandling.MouseTool.EntityActionTool;
 import NG.Tools.Toolbox;
 import NG.Tracks.TrackPiece;
 

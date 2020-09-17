@@ -6,7 +6,7 @@ import NG.Core.GameObject;
 import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
 import NG.InputHandling.KeyControl;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
+import NG.InputHandling.MouseTool.AbstractMouseTool;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
@@ -18,7 +18,7 @@ import NG.Tools.Vectors;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import static NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction.PRESS_ACTIVATE;
+import static NG.InputHandling.MouseTool.AbstractMouseTool.MouseAction.PRESS_ACTIVATE;
 
 /**
  * @author Geert van Ieperen created on 26-5-2020.

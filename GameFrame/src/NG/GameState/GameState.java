@@ -4,7 +4,7 @@ import NG.Core.FreightGame;
 import NG.Core.GameAspect;
 import NG.DataStructures.Collision.ColliderEntity;
 import NG.Entities.Entity;
-import NG.InputHandling.MouseTools.MouseTool;
+import NG.InputHandling.MouseTool.MouseTool;
 import NG.Rendering.MatrixStack.SGL;
 import org.joml.Vector3f;
 

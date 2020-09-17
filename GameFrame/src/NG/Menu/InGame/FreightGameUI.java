@@ -1,9 +1,10 @@
-package NG.GUIMenu.Menu;
+package NG.Menu.InGame;
 
 import NG.Core.Game;
 import NG.Core.ModLoader;
 import NG.GUIMenu.Components.*;
 import NG.GUIMenu.LayoutManagers.GridLayoutManager;
+import NG.Menu.InGame.Build.BuildMenu;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.Tools.Logger;
@@ -12,8 +13,8 @@ import org.joml.Vector2i;
 
 import java.util.stream.Stream;
 
-import static NG.GUIMenu.Menu.MainMenu.BUTTON_PROPERTIES_STATIC;
-import static NG.GUIMenu.Menu.MainMenu.BUTTON_PROPERTIES_STRETCH;
+import static NG.Menu.Main.MainMenu.BUTTON_PROPERTIES_STATIC;
+import static NG.Menu.Main.MainMenu.BUTTON_PROPERTIES_STRETCH;
 
 /**
  * @author Geert van Ieperen created on 2-9-2020.

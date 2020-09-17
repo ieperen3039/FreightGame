@@ -1,11 +1,11 @@
-package NG.GUIMenu.BuildTools;
+package NG.Menu.InGame.Build;
 
 import NG.Core.Coloring;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
+import NG.InputHandling.MouseTool.AbstractMouseTool;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;

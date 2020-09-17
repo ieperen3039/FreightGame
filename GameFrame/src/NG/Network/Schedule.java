@@ -3,8 +3,8 @@ package NG.Network;
 import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.*;
-import NG.GUIMenu.Menu.EntityActionTool;
-import NG.GUIMenu.Menu.MainMenu;
+import NG.InputHandling.MouseTool.EntityActionTool;
+import NG.Menu.Main.MainMenu;
 import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 

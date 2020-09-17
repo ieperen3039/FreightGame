@@ -1,11 +1,11 @@
-package NG.GUIMenu.BuildTools;
+package NG.Menu.InGame.Build;
 
 import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.Entities.Industry;
 import NG.Entities.StationImpl;
 import NG.GUIMenu.Components.SToggleButton;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
+import NG.InputHandling.MouseTool.AbstractMouseTool;
 import org.joml.Vector3fc;
 
 /**

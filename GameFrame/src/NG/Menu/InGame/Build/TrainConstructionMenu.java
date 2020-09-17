@@ -1,4 +1,4 @@
-package NG.GUIMenu.Menu;
+package NG.Menu.InGame.Build;
 
 import NG.Core.Game;
 import NG.DataStructures.Valuta;
@@ -8,6 +8,7 @@ import NG.GUIMenu.Components.SButton;
 import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.LayoutManagers.GridLayoutManager;
+import NG.Menu.Main.MainMenu;
 import org.joml.Vector2i;
 
 import java.util.List;

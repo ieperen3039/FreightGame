@@ -7,7 +7,7 @@ import NG.DataStructures.Collision.ColliderEntity;
 import NG.DataStructures.Generic.Color4f;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.KeyControl;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
+import NG.InputHandling.MouseTool.AbstractMouseTool;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;

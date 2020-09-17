@@ -1,9 +1,9 @@
-package NG.GUIMenu.BuildTools;
+package NG.Menu.InGame.Build;
 
 import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
-import NG.GUIMenu.Menu.EntityActionTool;
+import NG.InputHandling.MouseTool.EntityActionTool;
 import NG.Network.Signal;
 import NG.Network.SignalEntity;
 import NG.Tracks.RailTools;

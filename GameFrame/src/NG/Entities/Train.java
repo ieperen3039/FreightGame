@@ -15,7 +15,7 @@ import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
 import NG.InputHandling.KeyControl;
-import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
+import NG.InputHandling.MouseTool.AbstractMouseTool.MouseAction;
 import NG.Mods.CargoType;
 import NG.Network.NetworkNode;
 import NG.Network.NetworkPosition;

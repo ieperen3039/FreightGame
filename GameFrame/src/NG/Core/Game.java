@@ -5,7 +5,7 @@ import NG.GUIMenu.FrameManagers.UIFrameManager;
 import NG.GameMap.GameMap;
 import NG.GameState.GameState;
 import NG.InputHandling.KeyControl;
-import NG.InputHandling.MouseTools.MouseToolCallbacks;
+import NG.InputHandling.MouseTool.MouseToolCallbacks;
 import NG.Mods.TypeCollection;
 import NG.Particles.GameParticles;
 import NG.Rendering.GLFWWindow;

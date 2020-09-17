@@ -1,9 +1,9 @@
-package NG.GUIMenu.BuildTools;
+package NG.Menu.InGame.Build;
 
 import NG.Core.Game;
 import NG.Entities.Entity;
 import NG.GUIMenu.Components.SToggleButton;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
+import NG.InputHandling.MouseTool.AbstractMouseTool;
 import NG.Network.RailNode;
 import NG.Network.SignalEntity;
 import NG.Rendering.MatrixStack.SGL;

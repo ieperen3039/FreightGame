@@ -5,7 +5,7 @@ import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.Freight.Cargo;
 import NG.InputHandling.KeyControl;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
+import NG.InputHandling.MouseTool.AbstractMouseTool;
 import NG.Mods.CargoType;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;

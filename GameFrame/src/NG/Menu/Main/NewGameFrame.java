@@ -1,4 +1,4 @@
-package NG.GUIMenu.Menu;
+package NG.Menu.Main;
 
 
 import NG.Camera.Camera;
@@ -44,8 +44,8 @@ public class NewGameFrame extends SFrame {
         Vector2i mpos = new Vector2i(1, 0);
 
         SPanel mainPanel = new SPanel(COLS, ROWS);
-        mainPanel.add(new SFiller(100, 100), new Vector2i(0, 0));
-        mainPanel.add(new SFiller(100, 100), new Vector2i(COLS - 1, ROWS - 1));
+        mainPanel.add(new SFiller(10, 10), new Vector2i(0, 0));
+        mainPanel.add(new SFiller(10, 10), new Vector2i(COLS - 1, ROWS - 1));
 
         // message
         notice = new STextArea("Select which mods to load", MainMenu.TEXT_PROPERTIES);

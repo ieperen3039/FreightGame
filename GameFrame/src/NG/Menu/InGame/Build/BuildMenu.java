@@ -1,7 +1,6 @@
-package NG.GUIMenu.Menu;
+package NG.Menu.InGame.Build;
 
 import NG.Core.Game;
-import NG.GUIMenu.BuildTools.*;
 import NG.GUIMenu.Components.SContainer;
 import NG.GUIMenu.Components.SDropDown;
 import NG.GUIMenu.Components.SFrame;

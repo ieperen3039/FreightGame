@@ -8,7 +8,7 @@ import NG.DataStructures.Collision.GilbertJohnsonKeerthiCollision;
 import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
 import NG.InputHandling.ClickShader;
-import NG.InputHandling.MouseTools.MouseTool;
+import NG.InputHandling.MouseTool.MouseTool;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;

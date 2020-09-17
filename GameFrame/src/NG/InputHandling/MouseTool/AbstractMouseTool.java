@@ -1,4 +1,4 @@
-package NG.InputHandling.MouseTools;
+package NG.InputHandling.MouseTool;
 
 import NG.Core.Game;
 import NG.GUIMenu.Components.SComponent;
@@ -12,7 +12,7 @@ import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
-import static NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction.*;
+import static NG.InputHandling.MouseTool.AbstractMouseTool.MouseAction.*;
 
 /**
  * @author Geert van Ieperen created on 24-4-2020.

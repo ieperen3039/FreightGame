@@ -1,4 +1,4 @@
-package NG.InputHandling.MouseTools;
+package NG.InputHandling.MouseTool;
 
 /**
  * @author Geert van Ieperen. Created on 27-11-2018.

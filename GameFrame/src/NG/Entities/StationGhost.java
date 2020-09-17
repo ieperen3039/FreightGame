@@ -10,7 +10,7 @@ import NG.DataStructures.Valuta;
 import NG.Freight.Cargo;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.KeyControl;
-import NG.InputHandling.MouseTools.AbstractMouseTool.MouseAction;
+import NG.InputHandling.MouseTool.AbstractMouseTool.MouseAction;
 import NG.Mods.CargoType;
 import NG.Network.NetworkNode;
 import NG.Rendering.Material;

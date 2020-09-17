@@ -1,4 +1,4 @@
-package NG.GUIMenu.BuildTools;
+package NG.Menu.InGame.Build;
 
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
@@ -6,8 +6,8 @@ import NG.Entities.Entity;
 import NG.Entities.Station;
 import NG.Entities.StationGhost;
 import NG.GUIMenu.Components.*;
-import NG.GUIMenu.Menu.MainMenu;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
+import NG.InputHandling.MouseTool.AbstractMouseTool;
+import NG.Menu.Main.MainMenu;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;

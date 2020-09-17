@@ -5,7 +5,7 @@ import NG.Core.Coloring;
 import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.InputHandling.KeyControl;
-import NG.InputHandling.MouseTools.AbstractMouseTool;
+import NG.InputHandling.MouseTool.AbstractMouseTool;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
