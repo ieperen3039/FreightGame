@@ -163,7 +163,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
 
         design.draw(isOpened ? DROP_DOWN_HEAD_OPEN : DROP_DOWN_HEAD_CLOSED, screenPosition, getSize());
         Vector2i textPosition = new Vector2i(screenPosition).add(4, 0); // 4 is the virtual component border
-        design.drawText(textPosition, getSize(), text, TEXT_TYPE, SFrameLookAndFeel.Alignment.LEFT);
+        design.drawText(textPosition, getSize(), text, TEXT_TYPE, SFrameLookAndFeel.Alignment.LEFT_MIDDLE);
         // modal dialogs are drawn separately
     }
 
@@ -199,7 +199,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
             for (int i = 0; i < values.length; i++) {
                 final int index = i;
                 SExtendedTextArea option = new SExtendedTextArea(
-                        values[index], minWidth, dropOptionHeight, true, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT
+                        values[index], minWidth, dropOptionHeight, true, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT_MIDDLE
                 );
 
                 option.setClickListener((b, x, y) -> {

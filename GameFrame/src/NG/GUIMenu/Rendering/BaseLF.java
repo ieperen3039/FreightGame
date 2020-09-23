@@ -20,8 +20,6 @@ public class BaseLF implements SFrameLookAndFeel {
     private static final int INDENT = 5;
     private static final int BUTTON_INDENT = 8;
     private static final int STROKE_WIDTH = 2;
-    private static final int TEXT_SIZE_REGULAR = 18;
-    private static final int TEXT_SIZE_LARGE = 24;
 
     private static final NGFonts FONT = ORBITRON_MEDIUM;
 
@@ -55,13 +53,14 @@ public class BaseLF implements SFrameLookAndFeel {
 
     @Override
     public int getTextWidth(String text, NGFonts.TextType textType) {
-        int actualSize = TEXT_SIZE_REGULAR;
-
-        if (textType == NGFonts.TextType.TITLE || textType == NGFonts.TextType.ACCENT) {
-            actualSize = TEXT_SIZE_LARGE;
+        int textWidth = 0;
+        String[] lines = text.split("\n");
+        for (String line : lines) {
+            int lineWidth = hud.getTextWidth(line, textType.size(), FONT);
+            textWidth = Math.max(textWidth, lineWidth);
         }
 
-        return hud.getTextWidth(text, actualSize, FONT);
+        return textWidth;
     }
 
     @Override
@@ -151,14 +150,12 @@ public class BaseLF implements SFrameLookAndFeel {
         int y = pos.y();
         int width = dim.x();
         int height = dim.y();
-        int actualSize = TEXT_SIZE_REGULAR;
         Color4f textColor = TEXT_COLOR;
         NGFonts font = FONT;
 
         switch (type) {
             case TITLE:
             case ACCENT:
-                actualSize = TEXT_SIZE_LARGE;
                 break;
             case RED:
                 textColor = new Color4f(0.8f, 0.1f, 0.1f);
@@ -166,23 +163,33 @@ public class BaseLF implements SFrameLookAndFeel {
         }
 
         switch (align) {
-            case LEFT:
-                hud.text(x, y + (height / 2), actualSize,
-                        font, EnumSet.of(ALIGN_LEFT), textColor, text, width
-                );
-                break;
-            case CENTER:
-                hud.text(x, y + (height / 2), actualSize,
-                        font, EnumSet.noneOf(NVGOverlay.Alignment.class), textColor, text, width
+            case LEFT_TOP:
+                hud.text(x, y, type.size(),
+                        font, EnumSet.of(ALIGN_LEFT, ALIGN_TOP), textColor, text, width
                 );
                 break;
             case CENTER_TOP:
-                hud.text(x, y, actualSize,
+                hud.text(x, y, type.size(),
                         font, EnumSet.of(ALIGN_TOP), textColor, text, width
                 );
                 break;
-            case RIGHT:
-                hud.text(x, y + (height / 2), actualSize,
+            case RIGHT_TOP:
+                hud.text(x, y, type.size(),
+                        font, EnumSet.of(ALIGN_RIGHT, ALIGN_TOP), textColor, text, width
+                );
+                break;
+            case LEFT_MIDDLE:
+                hud.text(x, y + (height / 2), type.size(),
+                        font, EnumSet.of(ALIGN_LEFT), textColor, text, width
+                );
+                break;
+            case CENTER_MIDDLE:
+                hud.text(x, y + (height / 2), type.size(),
+                        font, EnumSet.noneOf(NVGOverlay.Alignment.class), textColor, text, width
+                );
+                break;
+            case RIGHT_MIDDLE:
+                hud.text(x, y + (height / 2), type.size(),
                         font, EnumSet.of(ALIGN_RIGHT), textColor, text, width
                 );
                 break;

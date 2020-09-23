@@ -81,7 +81,7 @@ public class SFrame extends SDecorator {
     private SPanel makeUpperBar(String frameTitle) {
         SExtendedTextArea title = new SExtendedTextArea(
                 frameTitle, 0, FRAME_TITLE_BAR_SIZE, true,
-                NGFonts.TextType.TITLE, SFrameLookAndFeel.Alignment.CENTER
+                NGFonts.TextType.TITLE, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
         );
         titleComponent = title;
         title.setDragListener((dx, dy, x, y) -> addToPosition(dx, dy));

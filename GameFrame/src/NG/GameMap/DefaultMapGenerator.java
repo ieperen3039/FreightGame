@@ -89,11 +89,6 @@ public class DefaultMapGenerator implements MapGeneratorMod {
     }
 
     @Override
-    public int getMapSeed() {
-        return seed;
-    }
-
-    @Override
     public Version getVersionNumber() {
         return VERSION;
     }

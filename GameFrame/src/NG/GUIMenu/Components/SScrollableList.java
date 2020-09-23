@@ -5,6 +5,9 @@ import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author Geert van Ieperen created on 13-5-2019.
  */
@@ -14,12 +17,16 @@ public class SScrollableList extends SContainer.GhostContainer {
     private int nrOfShownElts;
 
     public SScrollableList(int nrOfShownElts, SComponent... elements) {
+        this(nrOfShownElts, Arrays.asList(elements));
+    }
+
+    public SScrollableList(int nrOfShownElts, List<? extends SComponent> elements) {
         this(nrOfShownElts, new LimitedVisibilityLayout(nrOfShownElts, 0, true), elements);
         this.nrOfShownElts = nrOfShownElts;
     }
 
     private SScrollableList(
-            int nrOfShownElts, LimitedVisibilityLayout layout, SComponent... elements
+            int nrOfShownElts, LimitedVisibilityLayout layout, List<? extends SComponent> elements
     ) {
         super(layout);
         this.layout = layout;
@@ -28,7 +35,7 @@ public class SScrollableList extends SContainer.GhostContainer {
             super.add(element, null);
         }
 
-        scroller = new SScrollBar(elements.length, nrOfShownElts);
+        scroller = new SScrollBar(elements.size(), nrOfShownElts);
         scroller.setParent(this);
         scroller.addListener(value -> {
             this.layout.setAsFirstVisible(value);

@@ -61,11 +61,6 @@ public abstract class STextComponent extends SComponent {
     }
 
     @Override
-    protected void doValidateLayout() {
-        super.doValidateLayout();
-    }
-
-    @Override
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
         String text = getText();
 

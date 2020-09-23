@@ -22,6 +22,9 @@ public enum NGFonts {
     ORBITRON_BLACK(fonts, "Orbitron", "Orbitron-Black.ttf"),
     LUCIDA_CONSOLE(fonts, "LucidaConsole", "lucon.ttf");
 
+    public static final int SIZE_LARGE = 20;
+    public static final int SIZE_REGULAR = 16;
+
     public final String name;
     public final String source;
     private ByteBuffer byteFormat;
@@ -51,6 +54,22 @@ public enum NGFonts {
     }
 
     public enum TextType {
-        TITLE, ACCENT, REGULAR, FANCY, TOOLTIP, RED, FLOATING
+        TITLE(SIZE_LARGE),
+        ACCENT(SIZE_LARGE),
+        REGULAR(SIZE_REGULAR),
+        FANCY(SIZE_REGULAR),
+        TOOLTIP(SIZE_REGULAR),
+        RED(SIZE_REGULAR),
+        FLOATING(SIZE_REGULAR);
+
+        private final int size;
+
+        TextType(int size) {
+            this.size = size;
+        }
+
+        public int size() {
+            return size;
+        }
     }
 }

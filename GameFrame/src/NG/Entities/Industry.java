@@ -82,7 +82,6 @@ public class Industry extends Storage {
         gl.pushMatrix();
         {
             gl.translate(getPosition());
-            gl.translate(0, 0, 1);
             gl.render(properties.mesh.get(), this);
         }
 

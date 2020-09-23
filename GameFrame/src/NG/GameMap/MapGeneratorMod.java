@@ -18,7 +18,6 @@ public interface MapGeneratorMod extends Mod {
      * get a list of properties of this generator which can be changed. Units and range should be given in the name. The
      * properties do NOT include the seed of the generator.
      * @return a list of properties and their current value.
-     * @see #getMapSeed()
      */
     Collection<Property> getProperties();
 
@@ -29,11 +28,6 @@ public interface MapGeneratorMod extends Mod {
      * @return the new heightmap, of size (xSize x ySize)
      */
     float[][] generateHeightMap();
-
-    /**
-     * @return the seed used to create the map
-     */
-    int getMapSeed();
 
     /**
      * gives an indication of how far {@link #generateHeightMap()} is progressed.

@@ -70,6 +70,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
 
         game.timer().updateGameTime();
         entities.forEach(Entity::update);
+        game.getProgress().update();
 
         updateEntityList();
 
@@ -95,7 +96,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         }
 
         for (Entity entity : entities) {
-            matShader.setMaterial(Material.ROUGH, Color4f.MAGENTA);
+            matShader.setMaterial(Material.PLASTIC, Color4f.MAGENTA);
             entity.draw(gl);
         }
     }

@@ -35,7 +35,7 @@ public class SButton extends STextComponent implements MouseReleaseListener, Mou
      * @see #addLeftClickListener(Runnable)
      */
     public SButton(String text) {
-        super(text, DEFAULT_TEXT_TYPE, SFrameLookAndFeel.Alignment.CENTER, DEFAULT_MIN_WIDTH, DEFAULT_MIN_HEIGHT);
+        super(text, DEFAULT_TEXT_TYPE, SFrameLookAndFeel.Alignment.CENTER_MIDDLE, DEFAULT_MIN_WIDTH, DEFAULT_MIN_HEIGHT);
     }
 
     /**

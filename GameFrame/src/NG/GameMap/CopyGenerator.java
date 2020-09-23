@@ -50,11 +50,6 @@ public class CopyGenerator implements MapGeneratorMod {
     }
 
     @Override
-    public int getMapSeed() {
-        return -1;
-    }
-
-    @Override
     public float heightmapProgress() {
         return (float) progress / (xSize * ySize); // either progress is 0 or xSize and ySize are positive
     }

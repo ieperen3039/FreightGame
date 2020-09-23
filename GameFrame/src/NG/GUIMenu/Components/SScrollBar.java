@@ -25,7 +25,7 @@ class SScrollBar extends SComponent implements MouseScrollListener {
     private static final int SCROLL_BUTTON_SIZE = 50;
     private static final int DRAG_BAR_MIN_SIZE = 15;
     private static final SComponentProperties SCROLL_BUTTON_PROPS = new SComponentProperties(
-            SCROLL_BAR_WIDTH, SCROLL_BUTTON_SIZE, true, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
+            SCROLL_BAR_WIDTH, SCROLL_BUTTON_SIZE, true, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
     private final List<SScrollBarListener> listeners = new ArrayList<>();
     private final SComponent[] elements;

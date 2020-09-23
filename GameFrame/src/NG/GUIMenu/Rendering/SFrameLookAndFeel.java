@@ -21,6 +21,13 @@ public interface SFrameLookAndFeel extends InitialisationMod {
     );
 
     /**
+     * @param text     any string
+     * @param textType the type displayed
+     * @return the width of the text displayed in pixels
+     */
+    int getTextWidth(String text, NGFonts.TextType textType);
+
+    /**
      * sets the LF to draw with the specified painter
      * @param painter a new, fresh Painter instance
      */
@@ -32,8 +39,8 @@ public interface SFrameLookAndFeel extends InitialisationMod {
     NVGOverlay.Painter getPainter();
 
     enum Alignment {
-        LEFT, CENTER, RIGHT,
-        CENTER_TOP,
+        LEFT_TOP, CENTER_TOP, RIGHT_TOP,
+        LEFT_MIDDLE, CENTER_MIDDLE, RIGHT_MIDDLE
     }
 
     enum UIComponent {
@@ -56,11 +63,4 @@ public interface SFrameLookAndFeel extends InitialisationMod {
         /** the drag bar element of a scrollbar */
         SCROLL_BAR_DRAG_ELEMENT,
     }
-
-    /**
-     * @param text     any string
-     * @param textType the type displayed
-     * @return the width of the text displayed in pixels
-     */
-    int getTextWidth(String text, NGFonts.TextType textType);
 }

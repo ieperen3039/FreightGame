@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -141,7 +142,6 @@ public final class FileLoaders {
             }
         }
 
-        List<Vector2fc> textureCoords = new ArrayList<>();
         List<Vector3fc> vertices = new ArrayList<>();
         List<Vector3fc> normals = new ArrayList<>();
         List<Mesh.Face> faces = new ArrayList<>();
@@ -149,7 +149,7 @@ public final class FileLoaders {
 
         // TODO allow variable properties
         if (numberOfProperties < 10) {
-            throw new IOException("Wrong number of properties " + numberOfProperties);
+            throw new IOException("Wrong number of properties: " + numberOfProperties + " where 10 were expected (3 position, 3 normal, 4 color)");
         }
 
         // Parse all vertices
@@ -187,6 +187,6 @@ public final class FileLoaders {
             faces.add(Mesh.Face.parsePLY(s));
         }
 
-        return new MeshFile(name, vertices, normals, faces, textureCoords, colors);
+        return new MeshFile(name, vertices, normals, faces, Collections.emptyList(), colors);
     }
 }

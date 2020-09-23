@@ -31,11 +31,6 @@ public class FixedMapGenerator implements MapGeneratorMod {
     }
 
     @Override
-    public int getMapSeed() {
-        return 0;
-    }
-
-    @Override
     public float heightmapProgress() {
         return 1;
     }

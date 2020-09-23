@@ -38,9 +38,8 @@ public interface GameMap extends Externalizable {
     void draw(SGL gl);
 
     /**
-     * allows objects to listen for when this map is changed, as a result of {@link #generateNew(Game, MapGeneratorMod)}
-     * or possibly an internal reason. Any call to {@link #draw(SGL)}, {@link #getHeightAt(float, float)} etc. will
-     * represent the new values as soon as this callback is activated.
+     * allows objects to listen for when this map is changed. Any call to {@link #draw(SGL)}, {@link #getHeightAt(float,
+     * float)} etc. will represent the new values when this callback is activated.
      * @param listener the object to notify
      */
     void addChangeListener(ChangeListener listener);

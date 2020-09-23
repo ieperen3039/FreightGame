@@ -86,10 +86,11 @@ public interface TrainElement {
         public final float quadraticResistance;
         public final float maxSpeed;
 
-        private final Resource<Mesh> mesh;
-        private final List<String> trackTypes;
+        public final Resource<Mesh> mesh;
         public int buildCost;
         public float maintenancePerSecond;
+
+        private final List<String> trackTypes;
 
         public Properties(
                 String name, float length, float mass, float linearResistance, float quadraticResistance,
@@ -112,7 +113,7 @@ public interface TrainElement {
             return name;
         }
 
-        boolean isCompatibleWith(TrackType type) {
+        public boolean isCompatibleWith(TrackType type) {
             return trackTypes.contains(type.toString());
         }
     }

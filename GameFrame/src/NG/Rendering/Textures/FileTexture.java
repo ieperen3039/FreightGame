@@ -30,7 +30,8 @@ public class FileTexture implements Texture {
         // Load texture contents into a byte buffer
         int byteSize = 4;
         ByteBuffer buf = ByteBuffer.allocateDirect(byteSize * width * height);
-        image.decode(buf, width * byteSize, PNGDecoder.Format.RGBA);
+        PNGDecoder.Format format = image.decideTextureFormat(PNGDecoder.Format.RGBA);
+        image.decode(buf, width * byteSize, format);
         buf.flip();
 
         // Create a new OpenGL texture

@@ -30,7 +30,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Geert van Ieperen created on 10-5-2020.
  */
 public class HeightMap extends GridMap {
-    private static final int MESH_SIZE_UPPER_BOUND = 100;
+    private static final int MESH_SIZE_UPPER_BOUND = 25;
     private final Collection<Resource<Mesh>> meshOfTheWorld = new CopyOnWriteArrayList<>();
     private float meshProgress;
 
@@ -105,19 +105,23 @@ public class HeightMap extends GridMap {
             float meshPStep = 1f / (xSize * ySize);
 
             int adaptedMeshSize = MESH_SIZE_UPPER_BOUND;
+            List<Resource<Mesh>> worldMeshes = new ArrayList<>();
 
             for (int xStart = 0; xStart < xSize; xStart += adaptedMeshSize) {
                 for (int yStart = 0; yStart < ySize; yStart += adaptedMeshSize) {
                     int xEnd = Math.min(xStart + adaptedMeshSize, xSize - 1);
                     int yEnd = Math.min(yStart + adaptedMeshSize, xSize - 1);
 
-                    meshOfTheWorld.add(
+                    worldMeshes.add(
                             FlatMesh.meshFromHeightmap(heightmap, xStart, xEnd, yStart, yEnd, edgeLength)
                     );
 
                     meshProgress += meshPStep;
                 }
             }
+
+            meshOfTheWorld.clear();
+            meshOfTheWorld.addAll(worldMeshes);
             game.lights().addDirectionalLight(new Vector3f(1, 1, 2), Color4f.WHITE, 0.5f);
 
             listeners.forEach(ChangeListener::onMapChange);

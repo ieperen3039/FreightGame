@@ -39,7 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class Train extends AbstractGameObject implements MovingEntity {
     private static final SComponentProperties BUTTON_PROPERTIES = new SComponentProperties(
-            300, 50, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER
+            300, 50, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
 
     private static final boolean CHOOSE_RANDOM_SPAWN_TRACK = true;
