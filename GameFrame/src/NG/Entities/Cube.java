@@ -12,12 +12,11 @@ import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shapes.GenericShapes;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 
 /**
  * @author Geert van Ieperen created on 9-1-2019.
  */
-public class Cube extends AbstractGameObject implements MovingEntity {
+public class Cube extends AbstractGameObject implements Entity {
     private static int nr = 0;
     private final int id;
     private Vector3f position;
@@ -31,11 +30,6 @@ public class Cube extends AbstractGameObject implements MovingEntity {
         super(game);
         this.position = position;
         id = nr++;
-    }
-
-    @Override
-    public Vector3fc getPosition(double time) {
-        return position;
     }
 
     @Override

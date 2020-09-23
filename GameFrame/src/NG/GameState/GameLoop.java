@@ -1,7 +1,6 @@
 package NG.GameState;
 
 import NG.Core.AbstractGameLoop;
-import NG.Core.Coloring;
 import NG.Core.Game;
 import NG.DataStructures.Collision.ColliderEntity;
 import NG.DataStructures.Collision.GilbertJohnsonKeerthiCollision;
@@ -14,6 +13,8 @@ import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
 import org.joml.AABBf;
+import org.joml.FrustumIntersection;
+import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -34,7 +35,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     private final Deque<Runnable> postUpdateActionQueue;
     private final ClickShader clickShader;
     private Game game;
-    private Coloring.Marking markBlue = new Coloring.Marking();
 
     public GameLoop(int targetTps, ClickShader clickShader) {
         super("Gameloop", targetTps);
@@ -95,8 +95,18 @@ public class GameLoop extends AbstractGameLoop implements GameState {
             matShader = (MaterialShader) shader;
         }
 
+        Matrix4fc viewProjection = gl.getViewProjectionMatrix();
+        FrustumIntersection fic = new FrustumIntersection(viewProjection, false);
+
         for (Entity entity : entities) {
             matShader.setMaterial(Material.PLASTIC, Color4f.MAGENTA);
+
+            if (entity instanceof ColliderEntity) { // cull if possible
+                AABBf hitbox = ((ColliderEntity) entity).getHitbox();
+                boolean isVisible = fic.testAab(hitbox.minX, hitbox.minY, hitbox.minZ, hitbox.maxX, hitbox.maxY, hitbox.maxZ);
+                if (!isVisible) continue;
+            }
+
             entity.draw(gl);
         }
     }
@@ -145,17 +155,12 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         AABBf hitbox = entity.getHitbox();
         List<Entity> result = new ArrayList<>();
 
-        Coloring.Marking oldMark = markBlue;
-        markBlue = new Coloring.Marking(Color4f.BLUE, Coloring.Priority.MAXIMUM);
-
         for (Entity ety : entities) {
             if (ety instanceof ColliderEntity) {
                 ColliderEntity colliderEntity = (ColliderEntity) ety;
 
                 boolean mayCollide = hitbox.testAABB(colliderEntity.getHitbox());
                 if (mayCollide) {
-                    entity.setMarking(markBlue);
-
                     boolean doesCollide = GilbertJohnsonKeerthiCollision.checkCollision(entity, colliderEntity);
 
                     if (doesCollide) {
@@ -164,7 +169,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
                 }
             }
         }
-        oldMark.invalidate();
 
         return result;
     }

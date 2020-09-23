@@ -1,6 +1,7 @@
 package NG.GameMap;
 
 import NG.Core.Game;
+import NG.DataStructures.Generic.AveragingQueue;
 import NG.DataStructures.Generic.Color4f;
 import NG.GUIMenu.Components.SFiller;
 import NG.GUIMenu.Components.SFrame;
@@ -11,17 +12,16 @@ import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.FlatMesh;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Rendering.Shaders.MaterialShader;
-import NG.Rendering.Shaders.ShaderProgram;
 import NG.Resources.Resource;
+import NG.Tools.Logger;
 import NG.Tools.Toolbox;
+import org.joml.Math;
 import org.joml.*;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.lang.Math;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -30,8 +30,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Geert van Ieperen created on 10-5-2020.
  */
 public class HeightMap extends GridMap {
-    private static final int MESH_SIZE_UPPER_BOUND = 25;
-    private final Collection<Resource<Mesh>> meshOfTheWorld = new CopyOnWriteArrayList<>();
+    /// the number of heightmap indices in each dimension that are used to create one chunk
+    private static final int INDICES_PER_CHUNK = 100;
+
+    private final List<Resource<Mesh>> chunkMeshes = new CopyOnWriteArrayList<>();
     private float meshProgress;
 
     private float[][] heightmap;
@@ -39,7 +41,10 @@ public class HeightMap extends GridMap {
     private int xSize;
     private int ySize;
 
+    private AveragingQueue culledChunks = new AveragingQueue(4);
+
     private final List<ChangeListener> listeners = new ArrayList<>();
+    private float maxHeight = Float.POSITIVE_INFINITY;
 
     @Override
     Float getTileIntersect(Vector3fc origin, Vector3fc direction, int xCoord, int yCoord) {
@@ -91,6 +96,8 @@ public class HeightMap extends GridMap {
         generate(mapGenerator, game);
 
         frame.dispose();
+
+        Logger.printOnline(() -> "Culled chenks :" + culledChunks.average() + "/" + chunkMeshes.size());
     }
 
     private void generate(MapGeneratorMod mapGenerator, Game game) {
@@ -104,13 +111,13 @@ public class HeightMap extends GridMap {
             ySize = heightmap[0].length;
             float meshPStep = 1f / (xSize * ySize);
 
-            int adaptedMeshSize = MESH_SIZE_UPPER_BOUND;
             List<Resource<Mesh>> worldMeshes = new ArrayList<>();
 
-            for (int xStart = 0; xStart < xSize; xStart += adaptedMeshSize) {
-                for (int yStart = 0; yStart < ySize; yStart += adaptedMeshSize) {
-                    int xEnd = Math.min(xStart + adaptedMeshSize, xSize - 1);
-                    int yEnd = Math.min(yStart + adaptedMeshSize, xSize - 1);
+            // note, y in outer loop: creating rows of x
+            for (int yStart = 0; yStart < ySize; yStart += INDICES_PER_CHUNK) {
+                for (int xStart = 0; xStart < xSize; xStart += INDICES_PER_CHUNK) {
+                    int xEnd = Math.min(xStart + INDICES_PER_CHUNK, xSize - 1);
+                    int yEnd = Math.min(yStart + INDICES_PER_CHUNK, xSize - 1);
 
                     worldMeshes.add(
                             FlatMesh.meshFromHeightmap(heightmap, xStart, xEnd, yStart, yEnd, edgeLength)
@@ -120,8 +127,15 @@ public class HeightMap extends GridMap {
                 }
             }
 
-            meshOfTheWorld.clear();
-            meshOfTheWorld.addAll(worldMeshes);
+            for (int x = 0; x < xSize; x++) {
+                for (int y = 0; y < ySize; y++) {
+                    float h = heightmap[x][y];
+                    if (h > maxHeight) maxHeight = h;
+                }
+            }
+
+            chunkMeshes.clear();
+            chunkMeshes.addAll(worldMeshes);
             game.lights().addDirectionalLight(new Vector3f(1, 1, 2), Color4f.WHITE, 0.5f);
 
             listeners.forEach(ChangeListener::onMapChange);
@@ -185,13 +199,33 @@ public class HeightMap extends GridMap {
 
     @Override
     public void draw(SGL gl) {
-        ShaderProgram shader = gl.getShader();
-        if (shader instanceof MaterialShader) {
-            MaterialShader matShader = (MaterialShader) shader;
-            matShader.setMaterial(Material.ROUGH, new Color4f(0, 0.5f, 0));
+        MaterialShader.ifPresent(gl, mat -> mat.setMaterial(Material.ROUGH, new Color4f(0, 0.5f, 0)));
+
+        Matrix4fc viewProjection = gl.getViewProjectionMatrix();
+        FrustumIntersection fic = new FrustumIntersection(viewProjection, false);
+
+        float meshSize = INDICES_PER_CHUNK * edgeLength;
+        int numXChunks = (int) Math.ceil((float) xSize / INDICES_PER_CHUNK);
+        int numChunksCulled = 0;
+
+        for (int i = 0; i < chunkMeshes.size(); i++) {
+            Resource<Mesh> object = chunkMeshes.get(i);
+            int xInd = i % numXChunks;
+            int yInd = i / numXChunks;
+
+            boolean isVisible = fic.testAab(
+                    xInd * meshSize, yInd * meshSize, 0,
+                    (xInd + 1) * meshSize, (yInd + 1) * meshSize, maxHeight
+            );
+
+            if (isVisible) {
+                gl.render(object.get(), null);
+            } else {
+                numChunksCulled++;
+            }
         }
 
-        meshOfTheWorld.forEach(object -> gl.render(object.get(), null));
+        culledChunks.add(numChunksCulled);
     }
 
     @Override
@@ -216,7 +250,7 @@ public class HeightMap extends GridMap {
             xSize = 0;
             ySize = 0;
 
-            meshOfTheWorld.clear();
+            chunkMeshes.clear();
             listeners.clear();
         }
     }

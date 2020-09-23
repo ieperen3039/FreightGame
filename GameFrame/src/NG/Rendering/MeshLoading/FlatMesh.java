@@ -128,8 +128,7 @@ public class FlatMesh extends AbstractMesh {
 
     /**
      * creates a Mesh of a section of the given heightmap. Note that the xEnd value should not be larger than
-     * (heightmap.length - 1), same for yEnd. The returned supplier must be activated on the current GL context, this
-     * function does not have to be called there.
+     * (heightmap.length - 1), same for yEnd.
      * @param heightmap the heightmap, giving the height of a virtual (x, y) coordinate
      * @param xStart    the lowest x index to consider, inclusive
      * @param xEnd      the the highest x index to consider, inclusive.

@@ -37,7 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author Geert van Ieperen created on 19-5-2020.
  */
-public class Train extends AbstractGameObject implements MovingEntity {
+public class Train extends AbstractGameObject implements Entity {
     private static final SComponentProperties BUTTON_PROPERTIES = new SComponentProperties(
             300, 50, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
@@ -332,7 +332,6 @@ public class Train extends AbstractGameObject implements MovingEntity {
         }
     }
 
-    @Override
     public Vector3fc getPosition(double time) {
         if (spawnTime > time || despawnTime < time || time > timeOfStore && time < timeOfUnstore) return null;
         return positionEngine.getPosition(time);
