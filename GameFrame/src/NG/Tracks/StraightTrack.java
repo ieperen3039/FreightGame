@@ -5,13 +5,15 @@ import NG.DataStructures.Generic.PairList;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
+import NG.Rendering.Shapes.GenericShapes;
 import NG.Rendering.Shapes.Shape;
 import NG.Resources.GeneratorResource;
 import NG.Resources.Resource;
-import org.joml.Matrix4f;
-import org.joml.Matrix4fc;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
+import NG.Settings.Settings;
+import NG.Tools.Vectors;
+import org.joml.*;
+
+import java.lang.Math;
 
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
@@ -69,7 +71,8 @@ public class StraightTrack extends TrackPiece {
         super(game, type, modifiable);
 
         this.startNode = startNode;
-        Vector3fc displacement = new Vector3f(endNodePosition).sub(startNode.getPosition());
+        Vector3fc startNodePosition = startNode.getPosition();
+        Vector3fc displacement = new Vector3f(endNodePosition).sub(startNodePosition);
         this.length = displacement.length();
         this.direction = new Vector3f(displacement).div(length);
         this.endNode = endNode != null ? endNode : new RailNode(endNodePosition, type, direction);
@@ -85,7 +88,17 @@ public class StraightTrack extends TrackPiece {
         }
 
         collisionShapes = new PairList<>();
-        collisionShapes.add(TrackType.collisionBox(displacement), new Matrix4f().translate(startNode.getPosition()));
+
+        Shape shape = GenericShapes.CUBE;
+        Quaternionf rotation = Vectors.xTo(displacement);
+        Matrix4f transformation = new Matrix4f()
+                .translate(startNodePosition)
+                .rotate(rotation)
+                .scale(length, Settings.TRACK_WIDTH, Settings.TRACK_HEIGHT_SPACE)
+                .scale(0.5f) // as we transform a 2x2x2 cube
+                .translate(1, 0, 1);
+        collisionShapes.add(shape, transformation);
+
         assert check(startNode, this.endNode, direction);
     }
 
@@ -117,8 +130,12 @@ public class StraightTrack extends TrackPiece {
 
     @Override
     protected void draw(SGL gl, boolean renderClickBox) {
-        gl.translate(startNode.getPosition());
-        gl.render(renderClickBox ? clickBox.get() : mesh.get(), this);
+        gl.pushMatrix();
+        {
+            gl.translate(startNode.getPosition());
+            gl.render(renderClickBox ? clickBox.get() : mesh.get(), this);
+        }
+        gl.popMatrix();
     }
 
     @Override

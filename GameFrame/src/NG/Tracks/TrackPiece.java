@@ -23,6 +23,8 @@ import org.joml.Vector3fc;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.lwjgl.opengl.GL11.glDepthMask;
+
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
  */
@@ -90,23 +92,19 @@ public abstract class TrackPiece extends AbstractGameObject implements ColliderE
             type.setMaterial((MaterialShader) shader, this, coloring.getColor());
         }
 
-        gl.pushMatrix();
-        {
-            boolean renderClickBox = doRenderClickBox || shader instanceof ClickShader;
-            draw(gl, renderClickBox);
-        }
-        gl.popMatrix();
+        boolean renderClickBox = doRenderClickBox || shader instanceof ClickShader;
+        draw(gl, renderClickBox);
 
         if (game.settings().RENDER_COLLISION_BOX) {
-            getConvexCollisionShapes().forEach((shape, transform) -> {
+            getConvexCollisionShapes().forEach((s, m) -> {
                 gl.pushMatrix();
-                gl.multiplyAffine(transform);
-                for (Vector3fc point : shape.getPoints()) {
-                    gl.pushMatrix();
-                    gl.translate(point);
-                    gl.scale(0.1f);
-                    gl.render(GenericShapes.ICOSAHEDRON, this);
-                    gl.popMatrix();
+                {
+                    glDepthMask(false); // read but not write
+                    Color4f reddish = new Color4f(0.5f, 0, 0, 0.2f);
+                    MaterialShader.ifPresent(gl, mat -> mat.setMaterial(reddish, Color4f.BLACK, 1));
+                    gl.multiply(m);
+                    gl.render(GenericShapes.CUBE, this);
+                    glDepthMask(true);
                 }
                 gl.popMatrix();
             });

@@ -209,7 +209,7 @@ public class HeightMap extends GridMap {
         int numChunksCulled = 0;
 
         for (int i = 0; i < chunkMeshes.size(); i++) {
-            Resource<Mesh> object = chunkMeshes.get(i);
+            Resource<Mesh> mesh = chunkMeshes.get(i);
             int xInd = i % numXChunks;
             int yInd = i / numXChunks;
 
@@ -219,7 +219,7 @@ public class HeightMap extends GridMap {
             );
 
             if (isVisible) {
-                gl.render(object.get(), null);
+                gl.render(mesh.get(), null);
             } else {
                 numChunksCulled++;
             }

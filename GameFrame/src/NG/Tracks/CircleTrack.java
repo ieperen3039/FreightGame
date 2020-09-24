@@ -5,6 +5,7 @@ import NG.DataStructures.Generic.PairList;
 import NG.Network.RailNode;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.Mesh;
+import NG.Rendering.Shapes.GenericShapes;
 import NG.Rendering.Shapes.Shape;
 import NG.Resources.GeneratorResource;
 import NG.Resources.Resource;
@@ -124,20 +125,27 @@ public class CircleTrack extends TrackPiece {
 
         // calculate collision shapes
         collisionShapes = new PairList<>();
-        int collisionResolution = (int) Math.max(getLength() / Settings.TRACK_COLLISION_BOX_SIZE, angle / Math.toRadians(45)) + 1;
+        int collisionResolution = (int) Math.max(getLength() / Settings.TRACK_COLLISION_BOX_LENGTH, angle / Math.toRadians(45)) + 1;
 
         Vector3fc oldPosition = startPosition;
         Vector3fc newPosition;
         Vector3f oldToNew = new Vector3f();
 
-
         for (int i = 0; i < collisionResolution; i++) {
             float fraction = (i + 1f) / collisionResolution;
             newPosition = getPositionFromFraction(fraction);
-
             oldToNew.set(newPosition).sub(oldPosition);
-            Shape shape = TrackType.collisionBox(oldToNew);
-            collisionShapes.add(shape, new Matrix4f().translate(oldPosition));
+
+            Shape shape = GenericShapes.CUBE;
+            Quaternionf rotation = Vectors.xTo(oldToNew);
+            Matrix4f transformation = new Matrix4f()
+                    .translate(oldPosition)
+                    .rotate(rotation)
+                    .scale(oldToNew.length(), Settings.TRACK_WIDTH, Settings.TRACK_HEIGHT_SPACE)
+                    .scale(0.5f) // as we transform a 2x2x2 cube
+                    .translate(1, 0, 1);
+
+            collisionShapes.add(shape, transformation);
 
             oldPosition = newPosition;
         }
@@ -145,9 +153,13 @@ public class CircleTrack extends TrackPiece {
 
     @Override
     protected void draw(SGL gl, boolean renderClickBox) {
-        gl.translate(center);
-        gl.rotate(startTheta, 0, 0, 1);
-        gl.render(renderClickBox ? clickBox.get() : mesh.get(), this);
+        gl.pushMatrix();
+        {
+            gl.translate(center);
+            gl.rotate(startTheta, 0, 0, 1);
+            gl.render(renderClickBox ? clickBox.get() : mesh.get(), this);
+        }
+        gl.popMatrix();
     }
 
     @Override

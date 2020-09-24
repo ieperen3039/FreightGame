@@ -99,8 +99,8 @@ public abstract class AbstractSGL implements SGL {
     }
 
     @Override
-    public void multiplyAffine(Matrix4fc postTransformation) {
-        modelMatrix.mulAffine(postTransformation);
+    public void multiply(Matrix4fc postTransformation) {
+        modelMatrix.mul(postTransformation);
     }
 
     @Override

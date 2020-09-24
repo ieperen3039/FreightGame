@@ -104,7 +104,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
             if (entity instanceof ColliderEntity) { // cull if possible
                 AABBf hitbox = ((ColliderEntity) entity).getHitbox();
                 boolean isVisible = fic.testAab(hitbox.minX, hitbox.minY, hitbox.minZ, hitbox.maxX, hitbox.maxY, hitbox.maxZ);
-                if (!isVisible) continue;
+//                if (!isVisible) continue;
             }
 
             entity.draw(gl);
