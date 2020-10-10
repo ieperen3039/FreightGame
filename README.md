@@ -3,9 +3,9 @@ TrainsInSpace (name pending) is a train management sim set on other planets.
 The game revolves around maintaining a high-performance cargo distribution network and reaching preset goals.
 
 # Core game mechanics
-Track are constructed as a concatenation of circle sections and straight pieces.
+Tracks are constructed as a concatenation of circle sections and straight pieces.
 Tracks are not limited nor snapped to a grid, and can be built high above ground.
-Initially, the game will \textit{not} support tunnels.
+Initially, the game will _not_ support tunnels.
 Tracks exist in various track types. Some trains require specific types of track, and track types may provide bonuses.
 Building track cost funds, and destroying tracks refunds most of the build price. 
 Each track type has a unique price and may use a different price calculation.
