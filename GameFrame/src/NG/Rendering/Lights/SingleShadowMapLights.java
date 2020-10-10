@@ -7,10 +7,16 @@ import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.DepthShader;
 import NG.Rendering.Shaders.LightShader;
 import NG.Rendering.Shaders.ShaderProgram;
+import NG.Rendering.Shaders.ShadowMap;
+import NG.Tools.Directory;
 import NG.Tools.Toolbox;
+import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -24,7 +30,7 @@ import static org.lwjgl.opengl.GL11.*;
  * @author Geert van Ieperen created on 3-2-2019.
  */
 public class SingleShadowMapLights implements GameLights {
-    private static final int UPDATE_MARGIN = 10;
+    private static final float UPDATE_MARGIN = 0.5f;
 
     private final Lock pointLightEditLock;
     private final Lock pointLightReadLock;
@@ -36,7 +42,6 @@ public class SingleShadowMapLights implements GameLights {
     private DepthShader shadowShader;
 
     private float lightDist = 1;
-    private boolean staticMapIsDirty = false;
 
     public SingleShadowMapLights() {
         ReadWriteLock rwl = new ReentrantReadWriteLock(false);
@@ -44,6 +49,7 @@ public class SingleShadowMapLights implements GameLights {
         this.pointLightReadLock = rwl.readLock();
 
         this.lights = new ArrayList<>();
+        // these are overridden by #addDirectionalLight
         this.sunLight = new DirectionalLight(Color4f.WHITE, new Vector3f(1, -1, 1), 0.5f);
     }
 
@@ -53,7 +59,6 @@ public class SingleShadowMapLights implements GameLights {
         Future<DepthShader> shader = game.computeOnRenderThread(DepthShader::new);
 
         this.sunLight.init(game);
-        game.map().addChangeListener(() -> staticMapIsDirty = true);
 
         this.shadowShader = shader.get();
     }
@@ -76,48 +81,33 @@ public class SingleShadowMapLights implements GameLights {
     }
 
     @Override
-    public void renderShadowMaps() {
+    public void update() {
         Camera camera = game.camera();
         Vector3fc playerFocus = camera.getFocus();
         float viewDist = camera.vectorToFocus().length();
-        Vector3fc lightFocus = sunLight.getLightFocus();
+        Vector3fc lightFocus = sunLight.getLightCenter();
 
         if (playerFocus.distanceSquared(lightFocus) > UPDATE_MARGIN * UPDATE_MARGIN) {
-            sunLight.setLightFocus(playerFocus);
-
-            staticMapIsDirty = true;
+            sunLight.setLightCenter(playerFocus);
 
         } else if (Math.abs(viewDist - lightDist) > UPDATE_MARGIN) {
-            float lightCubeSize = 10 + 8 * viewDist + UPDATE_MARGIN;
-            sunLight.setLightSize(lightCubeSize);
-
-            staticMapIsDirty = true;
+            sunLight.setLightSize(viewDist + UPDATE_MARGIN);
             lightDist = viewDist;
         }
 
-        if (sunLight.doStaticShadows() || sunLight.doDynamicShadows()) {
+        if (sunLight.doDynamicShadows()) {
             // shadow render
             shadowShader.bind();
             {
                 glClear(GL_DEPTH_BUFFER_BIT);
                 shadowShader.initialize(game);
 
-                if (staticMapIsDirty && sunLight.doStaticShadows()) {
-                    shadowShader.setDynamic(false);
-                    DepthShader.DepthGL gl = shadowShader.getGL(game);
-                    shadowShader.setDirectionalLight(sunLight);
-                    game.map().draw(gl);
-
-                    gl.cleanup();
-                }
-
                 if (sunLight.doDynamicShadows()) {
-                    glCullFace(GL_FRONT);
-                    shadowShader.setDynamic(true);
                     DepthShader.DepthGL gl = shadowShader.getGL(game);
                     shadowShader.setDirectionalLight(sunLight);
+
+                    game.map().draw(gl);
                     game.state().draw(gl);
-                    glCullFace(GL_BACK);
 
                     gl.cleanup();
                 }
@@ -126,6 +116,31 @@ public class SingleShadowMapLights implements GameLights {
 
             Toolbox.checkGLError(toString());
         }
+    }
+
+    public void print(String name, int res) {
+        glReadBuffer(GL_BACK);
+        int bpp = 4; // Assuming a 32-bit display with a byte each for red, green, blue, and alpha.
+        ByteBuffer buffer = BufferUtils.createByteBuffer(res * res * bpp);
+        GL11.glReadPixels(0, 0, res, res, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
+
+        new Thread(() ->
+                Toolbox.writePNG(Directory.screenshots, name, buffer, bpp, res, res),
+                "Writing frame to disc"
+        ).start();
+    }
+
+    @Override
+    public void dumpShadowMap(Directory dir) {
+        if (sunLight.doDynamicShadows()) {
+            ShadowMap dsm = sunLight.getDynamicShadowMap();
+            dsm.dump("dynamic");
+        }
+    }
+
+    @Override
+    public Matrix4fc getLightMatrix() {
+        return sunLight.getLightSpaceMatrix();
     }
 
     @Override

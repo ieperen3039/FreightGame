@@ -115,20 +115,17 @@ public class ParticleShader implements ShaderProgram {
     public ParticleGL getGL(Game game) {
         GLFWWindow window = game.window();
         Camera camera = game.camera();
-        Settings settings = game.settings();
-        int windowWidth = window.getWidth();
-        int windowHeight = window.getHeight();
 
-        return new ParticleGL(camera, windowWidth, windowHeight, settings.ISOMETRIC_VIEW);
+        return new ParticleGL(camera, window);
     }
 
     public class ParticleGL extends AbstractSGL {
         private final Matrix4f viewProjectionMatrix;
 
         public ParticleGL(
-                Camera camera, float windowWidth, float windowHeight, boolean iso
+                Camera camera, GLFWWindow window
         ) {
-            viewProjectionMatrix = camera.getViewProjection((float) windowWidth / windowHeight);
+            viewProjectionMatrix = camera.getViewProjection(window);
         }
 
         @Override

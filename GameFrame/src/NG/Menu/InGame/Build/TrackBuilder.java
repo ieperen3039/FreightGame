@@ -127,14 +127,20 @@ public class TrackBuilder extends AbstractMouseTool {
                 if (entity instanceof TrackPiece) {
                     TrackPiece trackPiece = (TrackPiece) entity;
                     assert trackPiece.isValid() : trackPiece;
+                    boolean doContinueBuilding = true;
 
-                    RailNode targetNode;
                     float fraction = getFraction(trackPiece, origin, direction);
-                    targetNode = getRailNode(origin, direction, trackPiece, fraction);
+                    RailNode targetNode = getIfParallel(origin, direction, trackPiece, fraction);
+
+                    if (targetNode == null) {
+                        doContinueBuilding = false;
+                        targetNode = getIfExisting(game, trackPiece, fraction);
+                    }
 
                     if (targetNode == null) {
                         double gameTime = game.timer().getGameTime();
                         targetNode = RailTools.createSplit(game, trackPiece, fraction, gameTime);
+
                     }
 
                     if (firstNode == null) {
@@ -149,9 +155,9 @@ public class TrackBuilder extends AbstractMouseTool {
 
                         if (isValidTracks(connection)) {
                             processTracksReturnLast(game, connection);
-                            firstNode = null;
                         }
 
+                        firstNode = doContinueBuilding ? targetNode : null;
                     }
                 }
                 return;
@@ -179,9 +185,12 @@ public class TrackBuilder extends AbstractMouseTool {
                         }
 
                     } else {
-                        RailNode ghostNodeTarget = getRailNode(origin, direction, trackPiece, fraction);
+                        RailNode ghostNodeTarget = getIfParallel(origin, direction, trackPiece, fraction);
 
-                        if (ghostNodeTarget == firstNode) return;
+                        if (ghostNodeTarget == null) {
+                            ghostNodeTarget = getIfExisting(game, trackPiece, fraction);
+                            if (ghostNodeTarget == firstNode) return;
+                        }
 
                         if (ghostNodeTarget == null) {
                             Vector3f pos = trackPiece.getPositionFromFraction(fraction);
@@ -208,32 +217,8 @@ public class TrackBuilder extends AbstractMouseTool {
         }
     }
 
-    public RailNode getRailNode(Vector3fc origin, Vector3fc direction, TrackPiece trackPiece, float fraction) {
-        Vector3f trackPoint = trackPiece.getPositionFromFraction(fraction);
-        float t = (trackPoint.z - origin.z()) / direction.z();
-        Vector3f rayPoint = new Vector3f(direction).mul(t).add(origin);
-        float xyDistance = rayPoint.distance(trackPoint);
-
-        if (xyDistance > Settings.CLICK_BOX_WIDTH / 4) {
-            Vector3f vecOut = new Vector3f(rayPoint).sub(trackPoint).normalize(Settings.CLICK_BOX_WIDTH / 2);
-            Vector3f nodePoint = vecOut.add(trackPoint);
-            Vector3f trackDirection = trackPiece.getDirectionFromFraction(fraction);
-
-            return new RailNode(nodePoint, type, trackDirection);
-
-        } else {
-            return getIfExisting(game, trackPiece, fraction);
-        }
-    }
-
-    public static float rayPointZDistance(Vector3fc origin, Vector3fc direction, Vector3f closestPoint) {
-        float t = (closestPoint.z - origin.z()) / direction.z();
-        Vector3f rayPoint = new Vector3f(direction).mul(t).add(origin);
-        return rayPoint.distance(closestPoint);
-    }
-
     private boolean isValidTracks(List<TrackPiece> tracks) {
-        if (checkCollisions(tracks)) return false;
+//        if (checkCollisions(tracks)) return false;
 
         for (TrackPiece track : tracks) {
             if (track instanceof CircleTrack) {
@@ -337,9 +322,24 @@ public class TrackBuilder extends AbstractMouseTool {
         return fraction;
     }
 
-    protected static RailNode getIfExisting(
-            Game game, TrackPiece trackPiece, float fraction
+    protected static RailNode getIfParallel(
+            Vector3fc origin, Vector3fc direction, TrackPiece trackPiece, float fraction
     ) {
+        Vector3f trackPoint = trackPiece.getPositionFromFraction(fraction);
+        float t = (trackPoint.z - origin.z()) / direction.z();
+        Vector3f rayPoint = new Vector3f(direction).mul(t).add(origin);
+        float xyDistance = rayPoint.distance(trackPoint);
+
+        if (xyDistance < Settings.CLICK_BOX_WIDTH / 4) return null;
+
+        Vector3f vecOut = new Vector3f(rayPoint).sub(trackPoint).normalize(Settings.CLICK_BOX_WIDTH / 2);
+        Vector3f nodePoint = vecOut.add(trackPoint);
+        Vector3f trackDirection = trackPiece.getDirectionFromFraction(fraction);
+
+        return new RailNode(nodePoint, trackPiece.getType(), trackDirection);
+    }
+
+    protected static RailNode getIfExisting(Game game, TrackPiece trackPiece, float fraction) {
         if (game.keyControl().isControlPressed() || trackPiece.isStatic()) {
             if (fraction < 0.5f) {
                 return trackPiece.getStartNode();

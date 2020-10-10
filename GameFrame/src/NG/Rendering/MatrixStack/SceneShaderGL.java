@@ -2,6 +2,7 @@ package NG.Rendering.MatrixStack;
 
 import NG.Camera.Camera;
 import NG.Entities.Entity;
+import NG.Rendering.GLFWWindow;
 import NG.Rendering.MeshLoading.Mesh;
 import NG.Rendering.Shaders.SceneShader;
 import NG.Rendering.Shaders.ShaderProgram;
@@ -17,15 +18,19 @@ public class SceneShaderGL extends AbstractSGL {
     private SceneShader shader;
 
     /**
-     * @param shader       the shader to use for rendering
-     * @param windowWidth  the width of the viewport in pixels
-     * @param windowHeight the height of the viewport in pixels
-     * @param viewpoint    the camera that defines eye position, focus and up vector
+     * @param shader    the shader to use for rendering
+     * @param viewpoint the camera that defines eye position, focus and up vector
+     * @param window
      */
-    public SceneShaderGL(SceneShader shader, int windowWidth, int windowHeight, Camera viewpoint) {
+    public SceneShaderGL(SceneShader shader, Camera viewpoint, GLFWWindow window) {
         super();
         this.shader = shader;
-        viewProjectionMatrix = viewpoint.getViewProjection((float) windowWidth / windowHeight);
+        viewProjectionMatrix = viewpoint.getViewProjection(window);
+    }
+
+    public SceneShaderGL(Matrix4f viewProjectionMatrix, SceneShader shader) {
+        this.viewProjectionMatrix = viewProjectionMatrix;
+        this.shader = shader;
     }
 
     @Override
@@ -51,17 +56,12 @@ public class SceneShaderGL extends AbstractSGL {
 
     public Vector2f getPositionOnScreen(Vector3fc vertex) {
         Vector4f pos = new Vector4f(vertex, 1.0f);
-        getProjection().transformProject(pos);
+        getViewProjectionMatrix().transformProject(pos);
         if (pos.z() > 1) {
             return null;
         } else {
             return new Vector2f(pos.x(), pos.y());
         }
-    }
-
-    /** @return the view-projection matrix */
-    public Matrix4fc getProjection() {
-        return viewProjectionMatrix;
     }
 
     @Override

@@ -184,10 +184,8 @@ public class ClickShader implements ShaderProgram {
     public SGL getGL(Game game) {
         GLFWWindow window = game.window();
         Camera camera = game.camera();
-        int windowWidth = window.getWidth();
-        int windowHeight = window.getHeight();
 
-        return new ClickShaderGL(windowWidth, windowHeight, camera);
+        return new ClickShaderGL(camera, window);
     }
 
     @Override
@@ -331,8 +329,8 @@ public class ClickShader implements ShaderProgram {
     public class ClickShaderGL extends AbstractSGL {
         private final Matrix4f viewProjectionMatrix;
 
-        ClickShaderGL(int windowWidth, int windowHeight, Camera viewpoint) {
-            viewProjectionMatrix = viewpoint.getViewProjection((float) windowWidth / windowHeight);
+        ClickShaderGL(Camera viewpoint, GLFWWindow window) {
+            viewProjectionMatrix = viewpoint.getViewProjection(window);
         }
 
         @Override

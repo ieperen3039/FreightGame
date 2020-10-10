@@ -46,17 +46,17 @@ public class BlinnPhongShader extends SceneShader implements TextureShader {
         createUniform("directionalLight.direction");
         createUniform("directionalLight.intensity");
         createUniform("directionalLight.lightSpaceMatrix");
-        createUniform("directionalLight.shadowEnable");
+        createUniform("directionalLight.doShadows");
 
         createPointLightsUniform("pointLights", MAX_POINT_LIGHTS);
 
         createUniform("texture_sampler");
-        createUniform("staticShadowMap");
         createUniform("dynamicShadowMap");
 
         createUniform("ambientLight");
         createUniform("specularPower");
         createUniform("cameraPosition");
+        createUniform("drawHeightLines");
 
         createUniform("hasTexture");
     }
@@ -70,14 +70,12 @@ public class BlinnPhongShader extends SceneShader implements TextureShader {
         setUniform("ambientLight", settings.AMBIENT_LIGHT.toVector3f());
         setUniform("cameraPosition", eye);
         setUniform("specularPower", SPECULAR_POWER);
-        boolean doShadows = settings.STATIC_SHADOW_RESOLUTION > 0 || settings.DYNAMIC_SHADOW_RESOLUTION > 0;
-        setUniform("directionalLight.shadowEnable", doShadows);
 
         setUniform("hasTexture", false);
+        setUniform("drawHeightLines", false);
 
         // Texture for the model
         setUniform("texture_sampler", 0);
-        setUniform("staticShadowMap", 1);
         setUniform("dynamicShadowMap", 2);
 
         GenericTextures.CHECKER.bind(GL_TEXTURE0);
@@ -101,21 +99,19 @@ public class BlinnPhongShader extends SceneShader implements TextureShader {
     public void setDirectionalLight(DirectionalLight light) {
         Color4f color = light.getColor();
         setUniform("directionalLight.color", color.rawVector3f());
-        setUniform("directionalLight.direction", light.getDirection());
+        setUniform("directionalLight.direction", light.getDirectionToLight());
         setUniform("directionalLight.intensity", color.alpha * light.getIntensity());
         setUniform("directionalLight.lightSpaceMatrix", light.getLightSpaceMatrix());
 
-        // Static Shadows
-        if (light.doStaticShadows()) {
-            ShadowMap staticShadowMap = light.getStaticShadowMap();
-            staticShadowMap.bind(GL_TEXTURE1);
-        }
+        // Shadows
+        boolean doShadows = light.doDynamicShadows();
+        setUniform("directionalLight.doShadows", doShadows);
 
-        // Dynamic Shadows
-        if (light.doDynamicShadows()) {
+        if (doShadows) {
             ShadowMap dynamicShadowMap = light.getDynamicShadowMap();
             dynamicShadowMap.bind(GL_TEXTURE2);
         }
+
     }
 
     @Override
@@ -147,5 +143,9 @@ public class BlinnPhongShader extends SceneShader implements TextureShader {
         while (nextLightIndex < MAX_POINT_LIGHTS) {
             setPointLight(new Vector3f(), Color4f.INVISIBLE, 0);
         }
+    }
+
+    public void setHeightLines(boolean enable) {
+        setUniform("drawHeightLines", enable);
     }
 }

@@ -7,11 +7,14 @@ import NG.GUIMenu.Components.SFiller;
 import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Components.SPanel;
 import NG.GUIMenu.Components.SProgressBar;
+import NG.Rendering.IntersectionTester;
 import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.MeshLoading.FlatMesh;
 import NG.Rendering.MeshLoading.Mesh;
+import NG.Rendering.Shaders.BlinnPhongShader;
 import NG.Rendering.Shaders.MaterialShader;
+import NG.Rendering.Shaders.ShaderProgram;
 import NG.Resources.Resource;
 import NG.Tools.Logger;
 import NG.Tools.Toolbox;
@@ -136,7 +139,6 @@ public class HeightMap extends GridMap {
 
             chunkMeshes.clear();
             chunkMeshes.addAll(worldMeshes);
-            game.lights().addDirectionalLight(new Vector3f(1, 1, 2), Color4f.WHITE, 0.5f);
 
             listeners.forEach(ChangeListener::onMapChange);
             meshProgress = 1f;
@@ -199,10 +201,27 @@ public class HeightMap extends GridMap {
 
     @Override
     public void draw(SGL gl) {
-        MaterialShader.ifPresent(gl, mat -> mat.setMaterial(Material.ROUGH, new Color4f(0, 0.5f, 0)));
+        ShaderProgram shader = gl.getShader();
+
+        if (shader instanceof MaterialShader) {
+            MaterialShader mat = (MaterialShader) shader;
+            mat.setMaterial(Material.ROUGH, new Color4f(0, 0.8f, 0));
+        }
+        if (shader instanceof BlinnPhongShader) {
+            BlinnPhongShader bps = (BlinnPhongShader) shader;
+            bps.setHeightLines(true);
+        }
 
         Matrix4fc viewProjection = gl.getViewProjectionMatrix();
-        FrustumIntersection fic = new FrustumIntersection(viewProjection, false);
+        IntersectionTester viewBoxTester;
+
+        if (viewProjection.isAffine()) {
+            viewBoxTester = (minX, minY, minZ, maxX, maxY, maxZ) -> true;
+
+        } else {
+            FrustumIntersection fi = new FrustumIntersection(viewProjection, false);
+            viewBoxTester = fi::testAab;
+        }
 
         float meshSize = INDICES_PER_CHUNK * edgeLength;
         int numXChunks = (int) Math.ceil((float) xSize / INDICES_PER_CHUNK);
@@ -213,7 +232,7 @@ public class HeightMap extends GridMap {
             int xInd = i % numXChunks;
             int yInd = i / numXChunks;
 
-            boolean isVisible = fic.testAab(
+            boolean isVisible = viewBoxTester.testAab(
                     xInd * meshSize, yInd * meshSize, 0,
                     (xInd + 1) * meshSize, (yInd + 1) * meshSize, maxHeight
             );
@@ -226,6 +245,11 @@ public class HeightMap extends GridMap {
         }
 
         culledChunks.add(numChunksCulled);
+
+        if (shader instanceof BlinnPhongShader) {
+            BlinnPhongShader bps = (BlinnPhongShader) shader;
+            bps.setHeightLines(false);
+        }
     }
 
     @Override

@@ -101,11 +101,11 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         for (Entity entity : entities) {
             matShader.setMaterial(Material.PLASTIC, Color4f.MAGENTA);
 
-            if (entity instanceof ColliderEntity) { // cull if possible
-                AABBf hitbox = ((ColliderEntity) entity).getHitbox();
-                boolean isVisible = fic.testAab(hitbox.minX, hitbox.minY, hitbox.minZ, hitbox.maxX, hitbox.maxY, hitbox.maxZ);
+//            if (entity instanceof ColliderEntity) { // cull if possible
+//                AABBf hitbox = ((ColliderEntity) entity).getHitbox();
+//                boolean isVisible = fic.testAab(hitbox.minX, hitbox.minY, hitbox.minZ, hitbox.maxX, hitbox.maxY, hitbox.maxZ);
 //                if (!isVisible) continue;
-            }
+//            }
 
             entity.draw(gl);
         }

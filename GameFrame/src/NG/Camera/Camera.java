@@ -2,6 +2,7 @@ package NG.Camera;
 
 import NG.Core.GameAspect;
 import NG.InputHandling.MouseListener;
+import NG.Rendering.GLFWWindow;
 import NG.Settings.Settings;
 import org.joml.Matrix4f;
 import org.joml.Vector3fc;
@@ -38,28 +39,33 @@ public interface Camera extends GameAspect, MouseListener {
 
     /**
      * Calculates a projection matrix based on a camera position and the given parameters of the viewport
-     * @param aspectRatio the ratio between width and height of the projection. For screen this is width / height, both
-     *                    in pixels.
+     * @param window the window used to visualise the current space
      * @return a projection matrix, such that modelspace vectors multiplied with this matrix will be transformed to
      * viewspace.
      */
-    default Matrix4f getViewProjection(float aspectRatio) {
-        Matrix4f vpMatrix = new Matrix4f();
+    default Matrix4f getViewProjection(GLFWWindow window) {
+        float ratio = (float) window.getWidth() / window.getHeight();
+        Matrix4f vpMatrix = getProjectionMatrix(ratio);
+        return getViewMatrix(vpMatrix);
+    }
 
-        if (isIsometric()) {
-            float visionSize = vectorToFocus().length() - Settings.Z_NEAR;
-            vpMatrix.setOrthoSymmetric(aspectRatio * visionSize, visionSize, Settings.Z_NEAR, Settings.Z_FAR);
-        } else {
-            vpMatrix.setPerspective(Settings.FOV, aspectRatio, Settings.Z_NEAR, Settings.Z_FAR);
-        }
-
-        // set the view
-        vpMatrix.lookAt(
+    default Matrix4f getViewMatrix(Matrix4f baseMatrix) {
+        return baseMatrix.lookAt(
                 getEye(),
                 getFocus(),
                 getUpVector()
         );
+    }
 
+    default Matrix4f getProjectionMatrix(float aspectRatio) {
+        Matrix4f vpMatrix = new Matrix4f();
+
+        if (isIsometric()) {
+            float visionSize = (vectorToFocus().length() - Settings.Z_NEAR) / 4;
+            vpMatrix.setOrthoSymmetric(aspectRatio * visionSize, visionSize, Settings.Z_NEAR, Settings.Z_FAR);
+        } else {
+            vpMatrix.setPerspective(Settings.FOV, aspectRatio, Settings.Z_NEAR, Settings.Z_FAR);
+        }
         return vpMatrix;
     }
 

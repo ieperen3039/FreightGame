@@ -10,7 +10,10 @@ import org.joml.AABBf;
 import org.joml.Quaternionf;
 import org.lwjgl.BufferUtils;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
@@ -477,5 +480,39 @@ public final class Toolbox {
 
         if (list.isEmpty()) return null;
         return list.get(random.nextInt(list.size()));
+    }
+
+    public static void writePNG(
+            Directory dir, String filename, ByteBuffer buffer, int bpp, int width, int height
+    ) {
+        String format = "png";
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                int i = (x + (width * y)) * bpp;
+                int r = buffer.get(i) & 0xFF;
+                int g = buffer.get(i + 1) & 0xFF;
+                int b = buffer.get(i + 2) & 0xFF;
+                image.setRGB(x, height - (y + 1), (0xFF << 24) | (r << 16) | (g << 8) | b);
+            }
+        }
+
+        try {
+            File file = dir.getFile(filename + "." + format); // The file to save to.
+            if (file.exists()) {
+                Files.delete(file.toPath());
+            } else {
+                boolean success = file.mkdirs();
+                if (!success) {
+                    Logger.ERROR.print("Could not create directories", file);
+                    return;
+                }
+            }
+            ImageIO.write(image, format, file);
+
+        } catch (IOException e) {
+            Logger.ERROR.print(e);
+        }
     }
 }

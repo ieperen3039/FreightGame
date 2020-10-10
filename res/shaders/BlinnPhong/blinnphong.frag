@@ -24,8 +24,7 @@ struct DirectionalLight
     vec3 direction;
     float intensity;
     mat4 lightSpaceMatrix;
-// Shadow Maps
-    bool shadowEnable;
+    bool doShadows;
 };
 
 struct Material
@@ -35,10 +34,17 @@ struct Material
     float reflectance;
 };
 
-const int MAX_POINT_LIGHTS = 10;
+const int MAX_POINT_LIGHTS = 16;
+const float SHADOW_BIAS = 1.0/(1 << 10);
 
-const float ATT_LIN = 0.1f;
-const float ATT_EXP = 0.01f;
+const float ATT_LIN = 0.1;
+const float ATT_EXP = 0.01;
+
+const float LINE_SIZE = 0.0004;
+const float LINE_DENSITY = 80;// 500 seems to be the max
+const float LINE_ALPHA = 0.3;
+const float LINE_COLOR_SENSITIVITY = 2;
+const float MINIMUM_LINE_DIST = 0.1;
 
 uniform Material material;
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
@@ -46,11 +52,11 @@ uniform DirectionalLight directionalLight;
 
 uniform sampler2D texture_sampler;
 uniform bool hasTexture;
+uniform bool drawHeightLines;
 
 uniform vec3 ambientLight;
 uniform float specularPower;
 
-uniform sampler2D staticShadowMap;
 uniform sampler2D dynamicShadowMap;
 
 uniform vec3 cameraPosition;
@@ -80,31 +86,38 @@ vec3 calcBlinnPhong(vec3 light_color, vec3 position, vec3 light_direction, vec3 
 // calculates the falloff of light on a given distance vector
 float calcAttenuation(vec3 light_direction) {
     float distance = length(light_direction);
-    return (1.0f / (1.0f + ATT_LIN * distance + ATT_EXP * distance * distance));
+    return (1.0 / (1.0 + ATT_LIN * distance + ATT_EXP * distance * distance));
 }
 
-// calculates the shadow value caused by a lightsource given as a matrix.
+// calculates how much light should remain due to shadow
 float calcShadow2D(mat4 lsMatrix, vec3 vPosition, vec3 vNormal, sampler2D shadowMap) {
     vec4 coord = lsMatrix * vec4(vPosition, 1.0);
+    if (coord.z < -1 || coord.z > 1) return 1.0;
+
     vec3 projCoords = coord.xyz / coord.w;
     projCoords = projCoords * 0.5 + 0.5;
 
-    vec3 lightDir = normalize((lsMatrix * vec4(0, 0, -1, 0)).xyz);
+    if (projCoords.x < 0 || projCoords.x > 1) return 1.0;
+    if (projCoords.y < 0 || projCoords.y > 1) return 1.0;
+
+    vec2 realPixCoordinates = projCoords.xy * textureSize(shadowMap, 0);
+    ivec2 irpc = ivec2(realPixCoordinates);// projCoords is positive
+    vec2 fractions = (realPixCoordinates - irpc);
+
+    float aa = texelFetch(shadowMap, ivec2(irpc.x + 0, irpc.y + 0), 0).r;
+    float ab = texelFetch(shadowMap, ivec2(irpc.x + 0, irpc.y + 1), 0).r;
+    float ba = texelFetch(shadowMap, ivec2(irpc.x + 1, irpc.y + 0), 0).r;
+    float bb = texelFetch(shadowMap, ivec2(irpc.x + 1, irpc.y + 1), 0).r;
 
     float currentDepth = projCoords.z;
-    if (currentDepth > 1.0f) return 0.0f;
+    float aas = currentDepth - SHADOW_BIAS < aa ? 1.0 : 0.0;
+    float abs = currentDepth - SHADOW_BIAS < ab ? 1.0 : 0.0;
+    float bas = currentDepth - SHADOW_BIAS < ba ? 1.0 : 0.0;
+    float bbs = currentDepth - SHADOW_BIAS < bb ? 1.0 : 0.0;
 
-    float bias = max(0.05 * (1.0 - dot(vNormal, lightDir)), 0.001);
-
-    float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-    for (int x = -1; x <= 1; x++) {
-        for (int y = -1; y <= 1; y++) {
-            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
-            shadow += currentDepth - bias < pcfDepth ? 1.0 : 0.0;
-        }
-    }
-    shadow = min(1.0, shadow / 9.0);
+    float a = fractions.y * abs + (1 - fractions.y) * aas;
+    float b = fractions.y * bbs + (1 - fractions.y) * bas;
+    float shadow = fractions.x * b + (1 - fractions.x) * a;
 
     return shadow;
 }
@@ -126,24 +139,16 @@ vec3 calcPointLightComponents(PointLight light) {
 
 // caluclates the color addition caused by an infinitely far away light, including shadows.
 vec3 calcDirectionalLightComponents(DirectionalLight light) {
-    if (light.intensity == 0.0){
+    if (!light.doShadows || light.intensity == 0.0){
         return vec3(0, 0, 0);
 
-    } else if (light.shadowEnable) {
-        vec3 component = vec3(0.0, 0.0, 0.0);
-
-        float staticShadow = 1.0, dynamicShadow = 1.0;
-        staticShadow = calcShadow2D(light.lightSpaceMatrix, mVertexPosition, mVertexNormal, staticShadowMap);
-        dynamicShadow = calcShadow2D(light.lightSpaceMatrix, mVertexPosition, mVertexNormal, dynamicShadowMap);
-
-        if (staticShadow > 0 && dynamicShadow > 0) {
-            component = calcBlinnPhong(light.color, mVertexPosition, normalize(light.direction), mVertexNormal, light.intensity);
-        }
-
-        return component * staticShadow * dynamicShadow;
-
     } else {
-        return calcBlinnPhong(light.color, mVertexPosition, normalize(light.direction), mVertexNormal, light.intensity);
+        float dynamicShadow = calcShadow2D(light.lightSpaceMatrix, mVertexPosition, mVertexNormal, dynamicShadowMap);
+        if (dynamicShadow == 0) return vec3(0, 0, 0);
+
+        vec3 component = calcBlinnPhong(light.color, mVertexPosition, normalize(light.direction), mVertexNormal, light.intensity);
+        return component * dynamicShadow;
+        //        return vec3(component.xy, dynamicShadow);
     }
 }
 
@@ -152,7 +157,6 @@ float sigm(float x){
 }
 
 void main() {
-    // Setup Material
     if (hasTexture){
         diffuse_color = texture(texture_sampler, mTexCoord);
 
@@ -179,8 +183,51 @@ void main() {
     diffuseSpecular += calcPointLightComponents(pointLights[7]);
     diffuseSpecular += calcPointLightComponents(pointLights[8]);
     diffuseSpecular += calcPointLightComponents(pointLights[9]);
+    diffuseSpecular += calcPointLightComponents(pointLights[10]);
+    diffuseSpecular += calcPointLightComponents(pointLights[11]);
+    diffuseSpecular += calcPointLightComponents(pointLights[12]);
+    diffuseSpecular += calcPointLightComponents(pointLights[13]);
+    diffuseSpecular += calcPointLightComponents(pointLights[14]);
+    diffuseSpecular += calcPointLightComponents(pointLights[15]);
 
     vec4 col = diffuse_color * vec4(ambientLight, 1.0) + vec4(diffuseSpecular, 0.0);
+    vec4 col_component = vec4(sigm(col.x), sigm(col.y), sigm(col.z), col.w);
 
-    fragColor = vec4(sigm(col.x), sigm(col.y), sigm(col.z), col.w);
+    if (drawHeightLines){
+        float line_visibility = 0;
+
+        float camera_dist = length(cameraPosition - mVertexPosition);
+        float target_line_dist = (camera_dist) / LINE_DENSITY;
+        float target_level_dist = target_line_dist / MINIMUM_LINE_DIST;
+
+        // calculate distance between markers
+        int marker_shift = max(0, int(floor(log2(target_level_dist))));
+        int marker_level_dist = 1 << min(marker_shift, 31);
+
+        // calculate distance to nearest marker
+        float fragment_level = mVertexPosition.z / MINIMUM_LINE_DIST;
+        float distance_from_level = mod(fragment_level, marker_level_dist);
+        float distance_from_height_line = distance_from_level * MINIMUM_LINE_DIST;
+
+        if (abs(distance_from_height_line) < LINE_SIZE * camera_dist){
+            // if the next marker_level_dist doesn't activate this, fade out
+            if (distance_from_level != mod(fragment_level, marker_level_dist << 1)){
+                // foo slightly above 0 means that the camera is almost close enough for solid
+                float foo = ((target_level_dist - marker_level_dist) / marker_level_dist);
+                line_visibility = max(0, 1 - foo);
+
+            } else {
+                line_visibility = 1;
+            }
+            line_visibility *= LINE_ALPHA;
+        }
+
+        float x_component = min(1, max(0, (LINE_COLOR_SENSITIVITY * mVertexNormal.x) + 0.5));
+        float y_component = min(1, max(0, (LINE_COLOR_SENSITIVITY * mVertexNormal.y) + 0.5));
+        vec4 line_component = vec4(max(y_component, 0), abs(x_component), max(-y_component, 0), 1.0);
+        col_component = (1 - line_visibility) * col_component + line_visibility * line_component;
+
+    }
+
+    fragColor = col_component;
 }

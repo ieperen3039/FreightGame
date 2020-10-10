@@ -62,7 +62,7 @@ public class PhongShader extends SceneShader {
 
     @Override
     public void setDirectionalLight(DirectionalLight light) {
-        Vector4fc mPosition = new Vector4f(light.getDirection(), 0.0f);
+        Vector4fc mPosition = new Vector4f(light.getDirectionToLight(), 0.0f);
         Color4f color = light.getColor();
         setLight(color, mPosition, color.alpha * light.getIntensity());
     }

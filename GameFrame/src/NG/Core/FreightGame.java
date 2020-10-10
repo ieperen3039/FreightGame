@@ -24,7 +24,6 @@ import NG.Rendering.Lights.GameLights;
 import NG.Rendering.Lights.SingleShadowMapLights;
 import NG.Rendering.RenderLoop;
 import NG.Rendering.Shaders.BlinnPhongShader;
-import NG.Rendering.Shaders.WorldBPShader;
 import NG.Resources.Resource;
 import NG.Settings.Settings;
 import NG.Tools.Directory;
@@ -51,7 +50,7 @@ public class FreightGame implements Game, ModLoader {
     private final Camera camera;
     private final GameLoop gameState;
     private final GameMap gameMap;
-    private final RenderLoop renderer;
+    public final RenderLoop renderer;
     private final GameLights gameLights;
     private final GameParticles gameParticles;
     private final Settings settings;
@@ -135,13 +134,9 @@ public class FreightGame implements Game, ModLoader {
 
         permanentMods = JarModReader.filterInitialisationMods(allMods, this);
 
-        // world
-        renderer.renderSequence(new WorldBPShader())
-                .add((gl, game) -> game.lights().draw(gl))
-                .add((gl, game) -> game.map().draw(gl));
-        // entities
         renderer.renderSequence(new BlinnPhongShader())
                 .add((gl, game) -> game.lights().draw(gl))
+                .add((gl, game) -> game.map().draw(gl))
                 .add((gl, game) -> game.state().draw(gl))
                 .add((gl, game) -> game.inputHandling().getMouseTool().draw(gl))
                 .add((gl, game) -> Resource.cycle());

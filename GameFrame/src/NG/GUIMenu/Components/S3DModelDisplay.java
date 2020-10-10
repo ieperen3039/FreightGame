@@ -78,13 +78,13 @@ public class S3DModelDisplay extends SComponent {
                 shader.initialize(game);
 
                 GLFWWindow window = game.window();
-                int windowWidth = window.getWidth();
-                int windowHeight = window.getHeight();
 
-                SGL gl = new SceneShaderGL(shader, windowWidth, windowHeight, view);
+                SGL gl = new SceneShaderGL(shader, view, window);
                 shader.setPointLight(EYE, Color4f.WHITE, 1f);
 
                 // set relative to pixels
+                int windowWidth = window.getWidth();
+                int windowHeight = window.getHeight();
                 gl.scale(1f / Math.max(windowWidth, windowHeight));
 
                 // get vec to middle

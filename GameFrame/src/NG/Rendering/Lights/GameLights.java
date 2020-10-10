@@ -3,6 +3,8 @@ package NG.Rendering.Lights;
 import NG.Core.GameAspect;
 import NG.DataStructures.Generic.Color4f;
 import NG.Rendering.MatrixStack.SGL;
+import NG.Tools.Directory;
+import org.joml.Matrix4fc;
 import org.joml.Vector3fc;
 
 /**
@@ -30,7 +32,11 @@ public interface GameLights extends GameAspect {
     void addDirectionalLight(Vector3fc origin, Color4f color, float intensity);
 
     /**
-     * check which shadow maps require updates, and update accordingly
+     * update the lights after entity position updates
      */
-    void renderShadowMaps();
+    void update();
+
+    void dumpShadowMap(Directory dir);
+
+    Matrix4fc getLightMatrix();
 }

@@ -29,15 +29,14 @@ import static org.lwjgl.opengl.GL30.glBindFramebuffer;
  */
 @SuppressWarnings("Duplicates")
 public class DepthShader implements ShaderProgram, LightShader {
-    private static final Path VERTEX_PATH = Directory.shaders.getPath("BlinnPhong", "depth_vertex.vert");
-    private static final Path FRAGMENT_PATH = Directory.shaders.getPath("BlinnPhong", "depth_fragment.frag");
+    private static final Path VERTEX_PATH = Directory.shaders.getPath("Shadow", "depth_vertex.vert");
+    private static final Path FRAGMENT_PATH = Directory.shaders.getPath("Shadow", "depth_fragment.frag");
     private final Map<String, Integer> uniforms;
 
     private int programId;
     private int vertexShaderID;
     private int fragmentShaderID;
 
-    private boolean isDynamic;
     private DirectionalLight directionalLight;
 
     public DepthShader() throws ShaderException, IOException {
@@ -61,7 +60,7 @@ public class DepthShader implements ShaderProgram, LightShader {
 
     @Override
     public void initialize(Game game) {
-
+        glClear(GL_DEPTH_BUFFER_BIT);
     }
 
     @Override
@@ -119,7 +118,7 @@ public class DepthShader implements ShaderProgram, LightShader {
      * @param uniformName The name of the uniform.
      * @param value       The new value of the uniform.
      */
-    private void setUniform(String uniformName, Matrix4f value) {
+    private void setUniform(String uniformName, Matrix4fc value) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             // Dump the matrix into a float buffer
             FloatBuffer fb = stack.mallocFloat(16);
@@ -128,7 +127,7 @@ public class DepthShader implements ShaderProgram, LightShader {
         }
     }
 
-    public void setLightSpaceMatrix(Matrix4f lightSpaceMatrix) {
+    public void setLightSpaceMatrix(Matrix4fc lightSpaceMatrix) {
         setUniform("lightSpaceMatrix", lightSpaceMatrix);
     }
 
@@ -137,19 +136,11 @@ public class DepthShader implements ShaderProgram, LightShader {
         // ignore
     }
 
-    /**
-     * @param dynamic if true, the dynamic map of the light will be used. If false, the static map of the light will be
-     *                used
-     */
-    public void setDynamic(boolean dynamic) {
-        isDynamic = dynamic;
-    }
-
     @Override
     public void setDirectionalLight(DirectionalLight light) {
         directionalLight = light;
-        ShadowMap shadowMap = isDynamic ? light.getDynamicShadowMap() : light.getStaticShadowMap();
-        shadowMap.bindFrameBuffer();
+        ShadowMap shadowMap = light.getDynamicShadowMap();
+        shadowMap.setToFrameBuffer();
     }
 
     @Override

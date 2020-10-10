@@ -1,6 +1,8 @@
 package NG.Settings;
 
 import NG.DataStructures.Generic.Color4f;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 /**
  * A class that collects a number of settings. It is the only class whose fields are always initialized upon creation.
@@ -19,8 +21,7 @@ public class Settings {
     public int WINDOW_WIDTH = 1200;
     public int WINDOW_HEIGHT = 800;
     public int ANTIALIAS_LEVEL = 1;
-    public int STATIC_SHADOW_RESOLUTION = 1024;
-    public int DYNAMIC_SHADOW_RESOLUTION = 0;
+    public int SHADOW_RESOLUTION = 2048;
     public float PARTICLE_SIZE = 1;
 
     // camera settings
@@ -46,8 +47,9 @@ public class Settings {
     public static final float TRACK_COLLISION_BOX_LENGTH = 2.0f;
 
     // in-game appearance settings
-    public Color4f AMBIENT_LIGHT = new Color4f(1, 1, 1, 0.2f);
-    public Color4f SUNLIGHT_COLOR = Color4f.WHITE;
-    public float SUNLIGHT_INTENSITY = 0.8f;
-    public boolean RENDER_COLLISION_BOX = true;
+    public Color4f AMBIENT_LIGHT = Color4f.rgb(201, 226, 255, 0.0f);
+    public Color4f SUNLIGHT_COLOR = Color4f.rgb(255, 255, 251);
+    public float SUNLIGHT_INTENSITY = 0.4f;
+    public Vector3fc SUNLIGHT_POSITION = new Vector3f(-1, 1, 1.5f);
+    public boolean RENDER_COLLISION_BOX = false;
 }

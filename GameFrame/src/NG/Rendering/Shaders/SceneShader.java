@@ -136,7 +136,7 @@ public abstract class SceneShader implements ShaderProgram, MaterialShader, Ligh
      * @param uniformName The name of the uniform.
      * @param value       The new value of the uniform.
      */
-    protected void setUniform(String uniformName, Matrix4f value) {
+    protected void setUniform(String uniformName, Matrix4fc value) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             // Dump the matrix into a float buffer
             FloatBuffer fb = stack.mallocFloat(16);
@@ -264,8 +264,7 @@ public abstract class SceneShader implements ShaderProgram, MaterialShader, Ligh
     public SGL getGL(Game game) {
         GLFWWindow window = game.window();
         Camera camera = game.camera();
-        int windowWidth = window.getWidth();
-        int windowHeight = window.getHeight();
-        return new SceneShaderGL(this, windowWidth, windowHeight, camera);
+        return new SceneShaderGL(this, camera, window);
+//        return new SceneShaderGL(new Matrix4f(game.lights().getLightMatrix()), this); // sun perspective
     }
 }

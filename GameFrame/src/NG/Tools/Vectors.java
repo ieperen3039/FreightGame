@@ -300,7 +300,7 @@ public final class Vectors {
 
         int windowWidth = window.getWidth();
         int windowHeight = window.getHeight();
-        Matrix4f projection = camera.getViewProjection((float) windowWidth / windowHeight);
+        Matrix4f projection = camera.getViewProjection(window);
 
         Vector2f winCoords = new Vector2f(xSc, windowHeight - ySc);
         int[] viewport = {0, 0, windowWidth, windowHeight};

@@ -88,7 +88,7 @@ public abstract class Scenario {
     protected void setLight(Game game, Settings settings) {
         // add light
         game.lights().addDirectionalLight(
-                new Vector3f(1, 1.5f, 0.5f), settings.SUNLIGHT_COLOR, settings.SUNLIGHT_INTENSITY
+                settings.SUNLIGHT_POSITION, settings.SUNLIGHT_COLOR, settings.SUNLIGHT_INTENSITY
         );
     }
 

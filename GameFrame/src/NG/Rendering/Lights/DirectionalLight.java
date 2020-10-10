@@ -10,9 +10,12 @@ import NG.Core.Game;
 import NG.DataStructures.Generic.Color4f;
 import NG.Rendering.Shaders.ShaderException;
 import NG.Rendering.Shaders.ShadowMap;
+import NG.Resources.GeneratorResource;
+import NG.Resources.Resource;
 import NG.Settings.Settings;
 import NG.Tools.Vectors;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -23,17 +26,20 @@ import org.joml.Vector3fc;
  */
 public class DirectionalLight {
     private static final float LIGHT_Z_NEAR = 0.5f;
+    public static final int LIGHT_Z_FAR_MULTIPLIER = 2;
+    public static final int LIGHT_CUBE_SIZE_MULTIPLIER = 2;
     private Color4f color;
-    private Vector3fc direction;
+    private final Vector3f direction;
     private float intensity;
 
-    // Shadows related
-    private ShadowMap staticShadowMap, dynamicShadowMap;
+    private Resource<ShadowMap> dynamicShadowMap;
+
     private Matrix4f ortho = new Matrix4f();
     private Matrix4f lightSpaceMatrix = new Matrix4f();
 
     private float lightCubeSize;
-    private Vector3fc lightFocus = new Vector3f();
+    private final Vector3f lightCenter = new Vector3f();
+    private boolean doDynamicShadow;
 
     public DirectionalLight(Color4f color, Vector3fc direction, float intensity) {
         this.color = color;
@@ -48,53 +54,33 @@ public class DirectionalLight {
      */
     public void init(Game game) throws ShaderException {
         Settings settings = game.settings();
-        int stRes = settings.STATIC_SHADOW_RESOLUTION;
-        int dyRes = settings.DYNAMIC_SHADOW_RESOLUTION;
+        int dyRes = settings.SHADOW_RESOLUTION;
 
-        game.executeOnRenderThread(() -> {
-            if (stRes > 0) {
-                staticShadowMap = new ShadowMap(stRes);
-                staticShadowMap.init();
-            }
-            if (dyRes > 0) {
-                dynamicShadowMap = new ShadowMap(dyRes);
-                dynamicShadowMap.init();
-            }
-        });
+        doDynamicShadow = dyRes > 0;
+        dynamicShadowMap = new GeneratorResource<>(() -> new ShadowMap(dyRes), ShadowMap::cleanup);
     }
 
-    public void setLightSize(float lightSize) {
-        lightCubeSize = lightSize;
-
-        float zFar = LIGHT_Z_NEAR + lightSize * 8;
-        ortho.setOrtho(-lightSize, lightSize, -lightSize, lightSize, LIGHT_Z_NEAR, zFar);
-
-        lightSpaceMatrix = recalculateLightSpace();
-    }
-
-    public Vector3fc getDirection() {
+    public Vector3fc getDirectionToLight() {
         return direction;
     }
 
     public void setDirection(Vector3fc direction) {
-        this.direction = new Vector3f(direction);
+        this.direction.set(direction).normalize();
 
         lightSpaceMatrix = recalculateLightSpace();
     }
 
     private Matrix4f recalculateLightSpace() {
-        if (staticShadowMap == null && dynamicShadowMap == null) {
+        if (!doDynamicShadow) {
             return lightSpaceMatrix;
         }
 
-        Vector3f vecToLight = new Vector3f(direction);
-        vecToLight.normalize(lightCubeSize + LIGHT_Z_NEAR);
+        Vector3f lightPos = new Vector3f(direction)
+                .mul(lightCubeSize + LIGHT_Z_NEAR)
+                .add(lightCenter);
 
-        vecToLight.add(lightFocus);
-
-        Matrix4f lightView = new Matrix4f().setLookAt(vecToLight, lightFocus, Vectors.Z);
-
-        return new Matrix4f(ortho).mul(lightView);
+        return new Matrix4f(ortho)
+                .lookAt(lightPos, lightCenter, Vectors.Z);
     }
 
     public float getIntensity() {
@@ -105,16 +91,12 @@ public class DirectionalLight {
         this.intensity = intensity;
     }
 
-    public Matrix4f getLightSpaceMatrix() {
+    public Matrix4fc getLightSpaceMatrix() {
         return lightSpaceMatrix;
     }
 
-    public ShadowMap getStaticShadowMap() {
-        return staticShadowMap;
-    }
-
     public ShadowMap getDynamicShadowMap() {
-        return dynamicShadowMap;
+        return dynamicShadowMap.get();
     }
 
     public Color4f getColor() {
@@ -125,28 +107,36 @@ public class DirectionalLight {
         this.color = color;
     }
 
+    public void setLightSize(float lightSize) {
+        lightCubeSize = lightSize * LIGHT_CUBE_SIZE_MULTIPLIER;
+
+        float zFar = lightCubeSize * LIGHT_Z_FAR_MULTIPLIER + LIGHT_Z_NEAR;
+        ortho.setOrthoSymmetric(lightCubeSize, lightCubeSize, LIGHT_Z_NEAR, zFar);
+
+        lightSpaceMatrix = recalculateLightSpace();
+    }
+
+    public Vector3fc getLightCenter() {
+        return lightCenter;
+    }
+
+    public void setLightCenter(Vector3fc newFocus) {
+        lightCenter.set(newFocus);
+        lightSpaceMatrix = recalculateLightSpace();
+    }
+
+    public boolean doStaticShadows() {
+        return false;
+    }
+
+    public boolean doDynamicShadows() {
+        return doDynamicShadow;
+    }
+
     /**
      * Cleanup memory
      */
     public void cleanup() {
-        if (staticShadowMap != null) staticShadowMap.cleanup();
-        if (dynamicShadowMap != null) dynamicShadowMap.cleanup();
-    }
-
-    public boolean doStaticShadows() {
-        return staticShadowMap != null;
-    }
-
-    public boolean doDynamicShadows() {
-        return dynamicShadowMap != null;
-    }
-
-    public Vector3fc getLightFocus() {
-        return lightFocus;
-    }
-
-    public void setLightFocus(Vector3fc lightFocus) {
-        this.lightFocus = lightFocus;
-        lightSpaceMatrix = recalculateLightSpace();
+        dynamicShadowMap.drop();
     }
 }

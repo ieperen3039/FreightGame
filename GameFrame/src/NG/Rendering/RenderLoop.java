@@ -1,22 +1,17 @@
 package NG.Rendering;
 
-import NG.Camera.Camera;
-import NG.Camera.StaticCamera;
 import NG.Core.AbstractGameLoop;
 import NG.Core.Game;
 import NG.Core.GameAspect;
-import NG.DataStructures.Generic.Color4f;
 import NG.GUIMenu.Rendering.NVGOverlay;
 import NG.Rendering.MatrixStack.SGL;
-import NG.Rendering.MatrixStack.SceneShaderGL;
-import NG.Rendering.Shaders.PhongShader;
+import NG.Rendering.Shaders.BlinnPhongShader;
 import NG.Rendering.Shaders.SceneShader;
 import NG.Rendering.Shaders.ShaderProgram;
-import NG.Rendering.Shaders.TextureShader;
-import NG.Rendering.Shapes.GenericShapes;
-import NG.Rendering.Textures.Texture;
 import NG.Settings.Settings;
-import NG.Tools.*;
+import NG.Tools.Logger;
+import NG.Tools.TimeObserver;
+import NG.Tools.Toolbox;
 import org.joml.Vector3f;
 
 import java.io.IOException;
@@ -37,7 +32,7 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
     private final NVGOverlay overlay;
     private Game game;
     private Map<ShaderProgram, RenderBundle> renders;
-    private SceneShader uiShader;
+    private SceneShader defaultShader;
 
     private TimeObserver timeObserver;
     private boolean accurateTiming = false;
@@ -68,7 +63,7 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
             }
         });
 
-        uiShader = new PhongShader();
+        defaultShader = new BlinnPhongShader();
     }
 
     /**
@@ -78,7 +73,7 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
      * @return a bundle that allows adding rendering options.
      */
     public RenderBundle renderSequence(ShaderProgram shader) {
-        return renders.computeIfAbsent(shader == null ? uiShader : shader, RenderBundle::new);
+        return renders.computeIfAbsent(shader == null ? defaultShader : shader, RenderBundle::new);
     }
 
     @Override
@@ -98,43 +93,30 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
         // camera
         game.camera().updatePosition(deltaTime); // real-time deltatime
 
-        if (accurateTiming) timeObserver.startTiming("ShadowMaps");
-        game.lights().renderShadowMaps();
-
-        if (accurateTiming) {
-            glFinish();
-            timeObserver.endTiming("ShadowMaps");
-        }
+        doTimed("Lights Update", () -> game.lights().update());
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, window.getWidth(), window.getHeight());
         glEnable(GL_LINE_SMOOTH);
+        glDisable(GL_CULL_FACE);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         Toolbox.checkGLError(window.toString());
 
         for (RenderBundle renderBundle : renders.values()) {
             String identifier = renderBundle.shader.getClass().getSimpleName();
-            if (accurateTiming) timeObserver.startTiming(identifier);
 
-            renderBundle.draw();
+            doTimed(identifier, renderBundle::draw);
 
-            if (accurateTiming) {
-                glFinish();
-                timeObserver.endTiming(identifier);
-            }
             Toolbox.checkGLError(identifier);
         }
 
         int windowWidth = window.getWidth();
         int windowHeight = window.getHeight();
-        if (accurateTiming) timeObserver.startTiming("GUI");
-        game.settings();
-        overlay.draw(windowWidth, windowHeight, 10, Settings.TOOL_BAR_HEIGHT + 10, 12);
 
-        if (accurateTiming) {
-            glFinish();
-            timeObserver.endTiming("GUI");
-        }
+        doTimed("GUI", () ->
+                overlay.draw(windowWidth, windowHeight, 10, Settings.TOOL_BAR_HEIGHT + 10, 12)
+        );
+
         Toolbox.checkGLError(overlay.toString());
 
         // update window
@@ -147,40 +129,31 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
         timeObserver.startTiming("Loop Overhead");
     }
 
+    private void doTimed(String identifier, Runnable action) {
+        if (accurateTiming) {
+            timeObserver.startTiming(identifier);
+        }
+
+        action.run();
+
+        if (accurateTiming) {
+            glFinish();
+            timeObserver.endTiming(identifier);
+        }
+    }
+
     public void addHudItem(Consumer<NVGOverlay.Painter> draw) {
         overlay.addHudItem(draw);
     }
 
     @Override
     public void cleanup() {
-        uiShader.cleanup();
+        defaultShader.cleanup();
         overlay.cleanup();
     }
 
-    private void dumpTexture(Texture texture, String fileName) {
-        assert (uiShader instanceof TextureShader);
-        GLFWWindow window = game.window();
-
-        uiShader.bind();
-        {
-            uiShader.initialize(game);
-            Camera viewpoint = new StaticCamera(new Vector3f(0, 0, 3), Vectors.newZeroVector(), Vectors.newXVector());
-
-            SGL tgl = new SceneShaderGL(uiShader, texture.getWidth(), texture.getHeight(), viewpoint);
-
-            uiShader.setPointLight(Vectors.Z, Color4f.WHITE, 0.8f);
-            ((TextureShader) uiShader).setTexture(texture);
-            tgl.render(GenericShapes.TEXTURED_QUAD, null);
-            ((TextureShader) uiShader).unsetTexture();
-
-        }
-        uiShader.unbind();
-        window.printScreen(Directory.screenshots, fileName, GL_BACK);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    }
-
     public SceneShader getUIShader() {
-        return uiShader;
+        return defaultShader;
     }
 
     public class RenderBundle {
