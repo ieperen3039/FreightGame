@@ -9,6 +9,7 @@ import NG.Rendering.Shaders.LightShader;
 import NG.Rendering.Shaders.ShaderProgram;
 import NG.Rendering.Shaders.ShadowMap;
 import NG.Tools.Directory;
+import NG.Tools.Logger;
 import NG.Tools.Toolbox;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
@@ -95,14 +96,14 @@ public class SingleShadowMapLights implements GameLights {
             lightDist = viewDist;
         }
 
-        if (sunLight.doDynamicShadows()) {
+        if (sunLight.doShadows()) {
             // shadow render
             shadowShader.bind();
             {
                 glClear(GL_DEPTH_BUFFER_BIT);
                 shadowShader.initialize(game);
 
-                if (sunLight.doDynamicShadows()) {
+                if (sunLight.doShadows()) {
                     DepthShader.DepthGL gl = shadowShader.getGL(game);
                     shadowShader.setDirectionalLight(sunLight);
 
@@ -132,9 +133,11 @@ public class SingleShadowMapLights implements GameLights {
 
     @Override
     public void dumpShadowMap(Directory dir) {
-        if (sunLight.doDynamicShadows()) {
-            ShadowMap dsm = sunLight.getDynamicShadowMap();
+        if (sunLight.doShadows()) {
+            ShadowMap dsm = sunLight.getShadowMap();
             dsm.dump("dynamic");
+        } else {
+            Logger.WARN.print("No shadow map is active");
         }
     }
 

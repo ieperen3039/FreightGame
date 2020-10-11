@@ -150,8 +150,12 @@ vec3 calcPointLightComponents(PointLight light) {
 
 // caluclates the color addition caused by an infinitely far away light, including shadows.
 vec3 calcDirectionalLightComponents(DirectionalLight light) {
-    if (!light.doShadows || light.intensity == 0.0){
+    if (light.intensity == 0.0){
         return vec3(0, 0, 0);
+
+    } else if (!light.doShadows){
+        vec3 nLightDir = normalize(light.direction);
+        return calcBlinnPhong(light.color, mVertexPosition, nLightDir, mVertexNormal, light.intensity);
 
     } else {
         vec3 nLightDir = normalize(light.direction);
@@ -160,7 +164,6 @@ vec3 calcDirectionalLightComponents(DirectionalLight light) {
 
         vec3 component = calcBlinnPhong(light.color, mVertexPosition, nLightDir, mVertexNormal, light.intensity);
         return component * dynamicShadow;
-        //        return vec3(component.xy, dynamicShadow);
     }
 }
 

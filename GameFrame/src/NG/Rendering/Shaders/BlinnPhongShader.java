@@ -104,11 +104,11 @@ public class BlinnPhongShader extends SceneShader implements TextureShader {
         setUniform("directionalLight.lightSpaceMatrix", light.getLightSpaceMatrix());
 
         // Shadows
-        boolean doShadows = light.doDynamicShadows();
+        boolean doShadows = light.doShadows();
         setUniform("directionalLight.doShadows", doShadows);
 
         if (doShadows) {
-            ShadowMap dynamicShadowMap = light.getDynamicShadowMap();
+            ShadowMap dynamicShadowMap = light.getShadowMap();
             dynamicShadowMap.bind(GL_TEXTURE2);
         }
 

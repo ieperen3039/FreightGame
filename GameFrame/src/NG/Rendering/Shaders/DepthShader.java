@@ -139,7 +139,7 @@ public class DepthShader implements ShaderProgram, LightShader {
     @Override
     public void setDirectionalLight(DirectionalLight light) {
         directionalLight = light;
-        ShadowMap shadowMap = light.getDynamicShadowMap();
+        ShadowMap shadowMap = light.getShadowMap();
         shadowMap.setToFrameBuffer();
     }
 

@@ -21,7 +21,7 @@ public class Settings {
     public int WINDOW_WIDTH = 1200;
     public int WINDOW_HEIGHT = 800;
     public int ANTIALIAS_LEVEL = 1;
-    public int SHADOW_RESOLUTION = 256;//2096
+    public int SHADOW_RESOLUTION = 0;//256;
     public float PARTICLE_SIZE = 1;
 
     // camera settings
@@ -47,8 +47,8 @@ public class Settings {
     public static final float TRACK_COLLISION_BOX_LENGTH = 2.0f;
 
     // in-game appearance settings
-    public Color4f AMBIENT_LIGHT = Color4f.rgb(201, 226, 255, 0.0f);
-    public Color4f SUNLIGHT_COLOR = Color4f.rgb(255, 255, 251);
+    public Color4f AMBIENT_LIGHT = Color4f.rgb(200, 200, 255, 0.1f);
+    public Color4f SUNLIGHT_COLOR = Color4f.rgb(255, 255, 200);
     public float SUNLIGHT_INTENSITY = 0.4f;
     public Vector3fc SUNLIGHT_POSITION = new Vector3f(-1, 1, 1.5f);
     public boolean RENDER_COLLISION_BOX = false;

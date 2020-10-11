@@ -32,14 +32,14 @@ public class DirectionalLight {
     private final Vector3f direction;
     private float intensity;
 
-    private Resource<ShadowMap> dynamicShadowMap;
+    private Resource<ShadowMap> shadowMap;
 
     private Matrix4f ortho = new Matrix4f();
     private Matrix4f lightSpaceMatrix = new Matrix4f();
 
     private float lightCubeSize;
     private final Vector3f lightCenter = new Vector3f();
-    private boolean doDynamicShadow;
+    private boolean doShadow;
 
     public DirectionalLight(Color4f color, Vector3fc direction, float intensity) {
         this.color = color;
@@ -56,8 +56,8 @@ public class DirectionalLight {
         Settings settings = game.settings();
         int dyRes = settings.SHADOW_RESOLUTION;
 
-        doDynamicShadow = dyRes > 0;
-        dynamicShadowMap = new GeneratorResource<>(() -> new ShadowMap(dyRes), ShadowMap::cleanup);
+        doShadow = dyRes > 0;
+        shadowMap = new GeneratorResource<>(() -> new ShadowMap(dyRes), ShadowMap::cleanup);
     }
 
     public Vector3fc getDirectionToLight() {
@@ -71,7 +71,7 @@ public class DirectionalLight {
     }
 
     private Matrix4f recalculateLightSpace() {
-        if (!doDynamicShadow) {
+        if (!doShadow) {
             return lightSpaceMatrix;
         }
 
@@ -95,8 +95,8 @@ public class DirectionalLight {
         return lightSpaceMatrix;
     }
 
-    public ShadowMap getDynamicShadowMap() {
-        return dynamicShadowMap.get();
+    public ShadowMap getShadowMap() {
+        return shadowMap.get();
     }
 
     public Color4f getColor() {
@@ -125,18 +125,14 @@ public class DirectionalLight {
         lightSpaceMatrix = recalculateLightSpace();
     }
 
-    public boolean doStaticShadows() {
-        return false;
-    }
-
-    public boolean doDynamicShadows() {
-        return doDynamicShadow;
+    public boolean doShadows() {
+        return doShadow;
     }
 
     /**
      * Cleanup memory
      */
     public void cleanup() {
-        dynamicShadowMap.drop();
+        shadowMap.drop();
     }
 }
