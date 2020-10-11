@@ -115,7 +115,7 @@ public abstract class AbstractMouseTool implements MouseTool {
      * @param xSc
      * @param ySc
      */
-    private void checkMapAndEntities(int xSc, int ySc) {
+    protected void checkMapAndEntities(int xSc, int ySc) {
         Vector3f origin = new Vector3f();
         Vector3f direction = new Vector3f();
         Vectors.windowCoordToRay(game, xSc, ySc, origin, direction);

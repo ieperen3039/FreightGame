@@ -79,7 +79,7 @@ public abstract class TrackPiece extends AbstractGameObject implements ColliderE
     @Override
     public void update() {
         double gameTime = game.timer().getGameTime();
-        this.doRenderClickBox = game.keyControl().isShiftPressed();
+        this.doRenderClickBox = game.keyControl().isAltPressed();
 
         entangledTracks.removeIf(t -> t.isDespawnedAt(gameTime));
     }

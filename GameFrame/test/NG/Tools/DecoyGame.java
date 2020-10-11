@@ -3,7 +3,7 @@ package NG.Tools;
 import NG.Camera.Camera;
 import NG.Core.Game;
 import NG.Core.GameTimer;
-import NG.Core.ProgressTracker;
+import NG.Core.PlayerStatus;
 import NG.Core.Version;
 import NG.GUIMenu.FrameManagers.UIFrameManager;
 import NG.GameMap.GameMap;
@@ -91,7 +91,7 @@ public class DecoyGame implements Game {
     }
 
     @Override
-    public ProgressTracker getProgress() {
+    public PlayerStatus playerStatus() {
         return null;
     }
 }

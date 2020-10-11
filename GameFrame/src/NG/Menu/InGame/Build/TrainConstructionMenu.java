@@ -1,7 +1,7 @@
 package NG.Menu.InGame.Build;
 
 import NG.Core.Game;
-import NG.Core.ProgressTracker;
+import NG.Core.PlayerStatus;
 import NG.DataStructures.Valuta;
 import NG.Entities.*;
 import NG.GUIMenu.Components.*;
@@ -140,7 +140,7 @@ public class TrainConstructionMenu extends SFrame {
     }
 
     private void confirmAndClose() {
-        ProgressTracker player = game.getProgress();
+        PlayerStatus player = game.playerStatus();
         player.money.subtract(costs);
         player.trains.add(construction);
         game.state().addEntity(construction);

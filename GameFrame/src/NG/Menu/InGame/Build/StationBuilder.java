@@ -148,6 +148,7 @@ public class StationBuilder extends AbstractMouseTool {
 
         Station newStation = station.solidify(game, trackType, gameTime);
         game.state().addEntity(newStation);
+        game.playerStatus().stations.add(station);
 
         station.despawn(gameTime);
         game.inputHandling().setMouseTool(null);

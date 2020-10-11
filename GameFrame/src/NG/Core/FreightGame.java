@@ -59,7 +59,7 @@ public class FreightGame implements Game, ModLoader {
     private final UIFrameManager frameManager;
     private final KeyControl keyControl;
     private final ClickShader clickShader;
-    private final ProgressTracker progress;
+    private final PlayerStatus progress;
 
     private TypeCollection typeCollection;
     private MainMenu mainMenu;
@@ -99,7 +99,7 @@ public class FreightGame implements Game, ModLoader {
         inputHandler = new MouseToolCallbacks();
         keyControl = inputHandler.getKeyControl();
         frameManager = new FrameManagerImpl();
-        progress = new ProgressTracker();
+        progress = new PlayerStatus();
         mainThread = Thread.currentThread();
 
         // load mods
@@ -273,7 +273,7 @@ public class FreightGame implements Game, ModLoader {
     }
 
     @Override
-    public ProgressTracker getProgress() {
+    public PlayerStatus playerStatus() {
         return progress;
     }
 

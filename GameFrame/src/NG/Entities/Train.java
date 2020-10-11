@@ -113,7 +113,7 @@ public class Train extends AbstractGameObject implements Entity {
         positionEngine.update();
 
         if (gameTime > nextMaintenanceTick) {
-            game.getProgress().money.removeUnits(maintenancePerSecond);
+            game.playerStatus().money.removeUnits(maintenancePerSecond);
             nextMaintenanceTick += 1;
         }
 
@@ -251,7 +251,7 @@ public class Train extends AbstractGameObject implements Entity {
             }
         }
 
-        game.getProgress().money.add(income);
+        game.playerStatus().money.add(income);
     }
 
     public void placeTrain(TrackPiece startPiece, boolean inPositiveDirection) {

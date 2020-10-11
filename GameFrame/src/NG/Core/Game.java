@@ -29,6 +29,8 @@ public interface Game {
 
     GameState state();
 
+    PlayerStatus playerStatus();
+
     GameMap map();
 
     GameLights lights();
@@ -77,6 +79,4 @@ public interface Game {
         executeOnRenderThread(task);
         return task;
     }
-
-    ProgressTracker getProgress();
 }

@@ -82,7 +82,7 @@ public class FreightGameUI extends SContainer.GhostContainer {
         add(new SFiller(), new Vector2i(0, 1));
         add(new SPanel(SContainer.row(
                 new SComponentArea(BUTTON_PROPERTIES_STRETCH),
-                new SActiveTextArea(() -> "$" + game.getProgress().money.getDollars(), BUTTON_PROPERTIES_STATIC)
+                new SActiveTextArea(() -> "$" + game.playerStatus().money.getDollars(), BUTTON_PROPERTIES_STATIC)
         )), new Vector2i(0, 2));
     }
 }

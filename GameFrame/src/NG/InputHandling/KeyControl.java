@@ -25,12 +25,17 @@ public class KeyControl implements KeyPressListener, KeyReleaseListener {
             case GLFW_KEY_LEFT_SHIFT:
             case GLFW_KEY_RIGHT_SHIFT:
                 isShiftPressed = pressed;
+                break;
+
             case GLFW_KEY_LEFT_CONTROL:
             case GLFW_KEY_RIGHT_CONTROL:
                 isControlPressed = pressed;
+                break;
+
             case GLFW_KEY_LEFT_ALT:
             case GLFW_KEY_RIGHT_ALT:
                 isAltPressed = pressed;
+                break;
         }
     }
 

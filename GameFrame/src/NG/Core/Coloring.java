@@ -20,7 +20,7 @@ public class Coloring {
         markings.add(new Marking(baseColor, Priority.MINIMUM));
     }
 
-    public void addMark(Marking mark) {
+    public synchronized void addMark(Marking mark) {
         markings.add(mark);
         markings.sort(Comparator.comparing(m -> m.priority));
     }
@@ -31,7 +31,7 @@ public class Coloring {
         return newMark;
     }
 
-    public void removeMark(Priority priority) {
+    public synchronized void removeMark(Priority priority) {
         if (priority == Priority.MINIMUM) {
             throw new IllegalArgumentException("Priority to remove can not be " + Priority.MINIMUM);
         }
@@ -39,7 +39,7 @@ public class Coloring {
         markings.removeIf(c -> c.priority == priority);
     }
 
-    public Color4f getColor() {
+    public synchronized Color4f getColor() {
         markings.removeIf(c -> !c.isValid());
         return markings.get(0).color;
     }

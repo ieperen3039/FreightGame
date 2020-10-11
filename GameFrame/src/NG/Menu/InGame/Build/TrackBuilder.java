@@ -12,6 +12,7 @@ import NG.Rendering.MatrixStack.SGL;
 import NG.Settings.Settings;
 import NG.Tools.Logger;
 import NG.Tracks.*;
+import org.joml.Intersectionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.lwjgl.glfw.GLFW;
@@ -35,6 +36,8 @@ public class TrackBuilder extends AbstractMouseTool {
     private List<TrackPiece> ghostTracks = new CopyOnWriteArrayList<>();
     private float signalDistance = 10f;
     private Coloring.Marking mark = new Coloring.Marking();
+    private Vector3f cursorPosition;
+    private float cursorBaseHaight;
 
     /**
      * this mousetool lets the player place a track by clicking on the map
@@ -63,11 +66,31 @@ public class TrackBuilder extends AbstractMouseTool {
     public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
         mark.invalidate();
 
-        Vector3f liftedPosition = new Vector3f(position).add(0, 0, Settings.TRACK_HEIGHT_ABOVE_GROUND);
+        if (game.keyControl().isShiftPressed()) {
+            // find the elevation of the new point
+            Vector3f endPoint = new Vector3f(direction).mul(Settings.Z_FAR - Settings.Z_NEAR).add(origin);
+            Vector3f result = new Vector3f();
+
+            Intersectionf.findClosestPointsLineSegments(
+                    cursorPosition.x, cursorPosition.y, cursorBaseHaight,
+                    cursorPosition.x, cursorPosition.y, cursorBaseHaight + 100,
+                    origin.x(), origin.y(), origin.z(),
+                    endPoint.x, endPoint.y, endPoint.z,
+                    result, new Vector3f()
+            );
+
+//            Logger.WARN.print(cursorPosition, result);
+            cursorPosition = result;
+
+        } else {
+            cursorPosition = new Vector3f(position).add(0, 0, Settings.TRACK_HEIGHT_ABOVE_GROUND);
+            cursorBaseHaight = cursorPosition.z;
+        }
+
         switch (getMouseAction()) {
             case PRESS_ACTIVATE:
                 if (firstNode != null) {
-                    List<TrackPiece> tracks = RailTools.createNew(game, firstNode, liftedPosition, signalDistance);
+                    List<TrackPiece> tracks = RailTools.createNew(game, firstNode, cursorPosition, signalDistance);
                     if (isValidTracks(tracks)) {
                         assert !tracks.isEmpty();
                         TrackPiece lastTrack = processTracksReturnLast(game, tracks);
@@ -76,7 +99,7 @@ public class TrackBuilder extends AbstractMouseTool {
                     }
 
                 } else if (firstPosition != null) {
-                    List<TrackPiece> tracks = RailTools.createNew(game, type, firstPosition, liftedPosition, signalDistance);
+                    List<TrackPiece> tracks = RailTools.createNew(game, type, firstPosition, cursorPosition, signalDistance);
                     if (isValidTracks(tracks)) {
                         assert !tracks.isEmpty();
                         // no validation, as this is a straight track piece
@@ -88,7 +111,7 @@ public class TrackBuilder extends AbstractMouseTool {
                     }
 
                 } else {
-                    firstPosition = new Vector3f(liftedPosition);
+                    firstPosition = new Vector3f(cursorPosition);
                 }
 
                 return;
@@ -98,15 +121,15 @@ public class TrackBuilder extends AbstractMouseTool {
 
                 if (firstNode != null) {
                     RailNode ghostNode = new RailNode(firstNode, ghostType);
-                    List<TrackPiece> tracks = RailTools.createNew(game, ghostNode, liftedPosition, Float.POSITIVE_INFINITY);
+                    List<TrackPiece> tracks = RailTools.createNew(game, ghostNode, cursorPosition, Float.POSITIVE_INFINITY);
                     checkCollisions(tracks);
 
                     ghostTracks.addAll(tracks);
 
                 } else if (firstPosition != null) {
-                    Vector3f toNode = new Vector3f(liftedPosition).sub(firstPosition);
+                    Vector3f toNode = new Vector3f(cursorPosition).sub(firstPosition);
                     RailNode ghostNode = new RailNode(firstPosition, ghostType, toNode, null);
-                    StraightTrack track = new StraightTrack(game, ghostType, ghostNode, liftedPosition, true);
+                    StraightTrack track = new StraightTrack(game, ghostType, ghostNode, cursorPosition, true);
                     checkCollisions(Collections.singletonList(track));
 
                     ghostTracks.add(track);

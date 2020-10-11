@@ -70,7 +70,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
 
         game.timer().updateGameTime();
         entities.forEach(Entity::update);
-        game.getProgress().update();
+        game.playerStatus().update();
 
         updateEntityList();
 
