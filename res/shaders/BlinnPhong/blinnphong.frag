@@ -35,7 +35,7 @@ struct Material
 };
 
 const int MAX_POINT_LIGHTS = 16;
-const float SHADOW_BIAS = 1.0/(1 << 10);
+const float SHADOW_BIAS = 1.0/(1 << 12);
 
 const float ATT_LIN = 0.1;
 const float ATT_EXP = 0.01;
@@ -90,7 +90,7 @@ float calcAttenuation(vec3 light_direction) {
 }
 
 // calculates how much light should remain due to shadow
-float calcShadow2D(mat4 lsMatrix, vec3 vPosition, vec3 vNormal, sampler2D shadowMap) {
+float calcShadow2D(mat4 lsMatrix, vec3 vPosition, vec3 vNormal, vec3 nLightDir, sampler2D shadowMap) {
     vec4 coord = lsMatrix * vec4(vPosition, 1.0);
     if (coord.z < -1 || coord.z > 1) return 1.0;
 
@@ -100,26 +100,37 @@ float calcShadow2D(mat4 lsMatrix, vec3 vPosition, vec3 vNormal, sampler2D shadow
     if (projCoords.x < 0 || projCoords.x > 1) return 1.0;
     if (projCoords.y < 0 || projCoords.y > 1) return 1.0;
 
-    vec2 realPixCoordinates = projCoords.xy * textureSize(shadowMap, 0);
-    ivec2 irpc = ivec2(realPixCoordinates);// projCoords is positive
-    vec2 fractions = (realPixCoordinates - irpc);
-
-    float aa = texelFetch(shadowMap, ivec2(irpc.x + 0, irpc.y + 0), 0).r;
-    float ab = texelFetch(shadowMap, ivec2(irpc.x + 0, irpc.y + 1), 0).r;
-    float ba = texelFetch(shadowMap, ivec2(irpc.x + 1, irpc.y + 0), 0).r;
-    float bb = texelFetch(shadowMap, ivec2(irpc.x + 1, irpc.y + 1), 0).r;
-
+    float bias = max(0.01 * (1.0 - dot(vNormal, nLightDir)), SHADOW_BIAS);
     float currentDepth = projCoords.z;
-    float aas = currentDepth - SHADOW_BIAS < aa ? 1.0 : 0.0;
-    float abs = currentDepth - SHADOW_BIAS < ab ? 1.0 : 0.0;
-    float bas = currentDepth - SHADOW_BIAS < ba ? 1.0 : 0.0;
-    float bbs = currentDepth - SHADOW_BIAS < bb ? 1.0 : 0.0;
+    ivec2 resolution = textureSize(shadowMap, 0);
+    ivec2 pixCoord = ivec2(round(projCoords.xy * resolution));
 
-    float a = fractions.y * abs + (1 - fractions.y) * aas;
-    float b = fractions.y * bbs + (1 - fractions.y) * bas;
-    float shadow = fractions.x * b + (1 - fractions.x) * a;
+    float light = 1.0;
+    {
+        float pcfDepth = texelFetch(shadowMap, pixCoord, 0).r;
+        float addition = currentDepth - bias < pcfDepth ? 1.0 : 0.0;
+        light += addition;
+    }{
+        float pcfDepth = texelFetch(shadowMap, pixCoord + ivec2(0, -1), 0).r;
+        float addition = currentDepth - bias < pcfDepth ? 1.0 : 0.0;
+        light += addition;
+    }{
+        float pcfDepth = texelFetch(shadowMap, pixCoord + ivec2(-1, 0), 0).r;
+        float addition = currentDepth - bias < pcfDepth ? 1.0 : 0.0;
+        light += addition;
+    }{
+        float pcfDepth = texelFetch(shadowMap, pixCoord + ivec2(0, 1), 0).r;
+        float addition = currentDepth - bias < pcfDepth ? 1.0 : 0.0;
+        light += addition;
+    }{
+        float pcfDepth = texelFetch(shadowMap, pixCoord + ivec2(1, 0), 0).r;
+        float addition = currentDepth - bias < pcfDepth ? 1.0 : 0.0;
+        light += addition;
+    }
 
-    return shadow;
+    light = min(1.0, light / 5.0);
+
+    return light;
 }
 
 // caluclates the color addition caused by a point-light
@@ -143,10 +154,11 @@ vec3 calcDirectionalLightComponents(DirectionalLight light) {
         return vec3(0, 0, 0);
 
     } else {
-        float dynamicShadow = calcShadow2D(light.lightSpaceMatrix, mVertexPosition, mVertexNormal, dynamicShadowMap);
+        vec3 nLightDir = normalize(light.direction);
+        float dynamicShadow = calcShadow2D(light.lightSpaceMatrix, mVertexPosition, mVertexNormal, nLightDir, dynamicShadowMap);
         if (dynamicShadow == 0) return vec3(0, 0, 0);
 
-        vec3 component = calcBlinnPhong(light.color, mVertexPosition, normalize(light.direction), mVertexNormal, light.intensity);
+        vec3 component = calcBlinnPhong(light.color, mVertexPosition, nLightDir, mVertexNormal, light.intensity);
         return component * dynamicShadow;
         //        return vec3(component.xy, dynamicShadow);
     }

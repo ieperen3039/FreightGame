@@ -21,7 +21,7 @@ public class Settings {
     public int WINDOW_WIDTH = 1200;
     public int WINDOW_HEIGHT = 800;
     public int ANTIALIAS_LEVEL = 1;
-    public int SHADOW_RESOLUTION = 2048;
+    public int SHADOW_RESOLUTION = 256;//2096
     public float PARTICLE_SIZE = 1;
 
     // camera settings

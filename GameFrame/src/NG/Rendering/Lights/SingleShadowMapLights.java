@@ -30,7 +30,7 @@ import static org.lwjgl.opengl.GL11.*;
  * @author Geert van Ieperen created on 3-2-2019.
  */
 public class SingleShadowMapLights implements GameLights {
-    private static final float UPDATE_MARGIN = 0.5f;
+    private static final float UPDATE_MARGIN = 5f;
 
     private final Lock pointLightEditLock;
     private final Lock pointLightReadLock;
