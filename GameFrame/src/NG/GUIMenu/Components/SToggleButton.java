@@ -73,7 +73,7 @@ public class SToggleButton extends STextComponent implements MouseClickListener,
     }
 
     @Override
-    public void onRelease(int button, int xSc, int ySc) {
+    public void onRelease(int button) {
         setActive(!state);
     }
 

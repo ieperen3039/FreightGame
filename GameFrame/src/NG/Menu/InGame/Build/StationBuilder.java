@@ -141,8 +141,8 @@ public class StationBuilder extends AbstractMouseTool {
     }
 
     @Override
-    public void onRelease(int button, int xSc, int ySc) {
-        super.onRelease(button, xSc, ySc);
+    public void onRelease(int button) {
+        super.onRelease(button);
         if (!isPositioned) return;
         double gameTime = game.timer().getGameTime();
 

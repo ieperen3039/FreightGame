@@ -101,7 +101,7 @@ public class SButton extends STextComponent implements MouseReleaseListener, Mou
     }
 
     @Override
-    public void onRelease(int button, int xSc, int ySc) {
+    public void onRelease(int button) {
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
             leftClickListeners.forEach(Runnable::run);
 

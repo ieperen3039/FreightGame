@@ -90,7 +90,7 @@ public class MouseToolCallbacks implements GameAspect {
                 execute(() -> currentTool.onClick(button, pos.x, pos.y));
 
             } else if (action == GLFW_RELEASE) {
-                execute(() -> currentTool.onRelease(button, pos.x, pos.y));
+                execute(() -> currentTool.onRelease(button));
             }
         }
     }
@@ -116,7 +116,7 @@ public class MouseToolCallbacks implements GameAspect {
                 xGiven += xDiff;
                 yGiven += yDiff;
             }
-            execute(() -> currentTool.mouseMoved(xDiff, yDiff, xFloat, yFloat));
+            execute(() -> currentTool.onMouseMove(xDiff, yDiff, xFloat, yFloat));
         }
     }
 

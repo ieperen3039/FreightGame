@@ -242,12 +242,12 @@ class SScrollBar extends SComponent implements MouseScrollListener {
         }
 
         @Override
-        public void mouseDragged(int xDelta, int yDelta, float xPos, float yPos) {
+        public void onMouseDrag(int xDelta, int yDelta, float xPos, float yPos) {
             setDragbarFraction(dragBarOffsetFraction + ((float) yDelta / getDragBarSpace()));
         }
 
         @Override
-        public void onRelease(int button, int xSc, int ySc) {
+        public void onRelease(int button) {
             alignDragBar();
         }
 

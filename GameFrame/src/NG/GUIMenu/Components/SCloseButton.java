@@ -59,7 +59,7 @@ public class SCloseButton extends SComponent implements MouseReleaseListener, Mo
     }
 
     @Override
-    public void onRelease(int button, int x, int y) {
+    public void onRelease(int button) {
         if (state && button == GLFW_MOUSE_BUTTON_LEFT) {
             closeAction.run();
         }

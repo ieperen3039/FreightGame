@@ -57,8 +57,8 @@ public class SExclusiveButtonRow extends SDecorator {
                 }
 
                 @Override // override to ignore deselection by click
-                public void onRelease(int button, int xSc, int ySc) {
-                    if (!isActive()) super.onRelease(button, xSc, ySc);
+                public void onRelease(int button) {
+                    if (!isActive()) super.onRelease(button);
                 }
             };
             int index = i;

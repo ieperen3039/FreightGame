@@ -1,10 +1,8 @@
 package NG.InputHandling.MouseTool;
 
 import NG.Core.Game;
-import NG.GUIMenu.Components.SComponent;
 import NG.GUIMenu.FrameManagers.UIFrameManager;
 import NG.InputHandling.MouseReleaseListener;
-import NG.InputHandling.MouseScrollListener;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Settings.Settings;
 import NG.Tools.Vectors;
@@ -50,7 +48,8 @@ public abstract class AbstractMouseTool implements MouseTool {
                 return;
         }
 
-        if (game.gui().checkMouseClick(button, x, y)) {
+        boolean guiWasClicked = game.gui().checkMouseClick(button, x, y);
+        if (guiWasClicked) {
             releaseListener = game.gui();
             return;
         }
@@ -62,12 +61,12 @@ public abstract class AbstractMouseTool implements MouseTool {
     }
 
     @Override
-    public void onRelease(int button, int xSc, int ySc) {
+    public void onRelease(int button) {
         mouseAction = HOVER;
 
         // this is the case when a mouse-down caused a mouse tool switch
         if (releaseListener != null) {
-            releaseListener.onRelease(button, xSc, ySc);
+            releaseListener.onRelease(button);
             releaseListener = null;
         }
     }
@@ -77,14 +76,8 @@ public abstract class AbstractMouseTool implements MouseTool {
         Vector2i pos = game.window().getMousePosition();
         UIFrameManager gui = game.gui();
 
-        SComponent component = gui.getComponentAt(pos.x, pos.y);
-
-        if (component != null) {
-            if (component instanceof MouseScrollListener) {
-                MouseScrollListener listener = (MouseScrollListener) component;
-                listener.onScroll(value);
-            }
-
+        if (gui.covers(pos.x, pos.y)) {
+            gui.onScroll(value);
             return;
         }
 
@@ -98,12 +91,12 @@ public abstract class AbstractMouseTool implements MouseTool {
     }
 
     @Override
-    public final void mouseMoved(int xDelta, int yDelta, float xPos, float yPos) {
+    public final void onMouseMove(int xDelta, int yDelta, float xPos, float yPos) {
         if (mouseAction == PRESS_ACTIVATE) mouseAction = DRAG_ACTIVATE;
         if (mouseAction == PRESS_DEACTIVATE) mouseAction = DRAG_DEACTIVATE;
 
-        game.gui().mouseMoved(xDelta, yDelta, xPos, yPos);
-        game.camera().mouseMoved(xDelta, yDelta, xPos, yPos);
+        game.gui().onMouseMove(xDelta, yDelta, xPos, yPos);
+        game.camera().onMouseMove(xDelta, yDelta, xPos, yPos);
 
         // TODO don't check if the result is unused
 

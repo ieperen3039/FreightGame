@@ -13,48 +13,52 @@ import NG.GUIMenu.Components.SFrame;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
-import org.joml.Vector2i;
 
 /**
  * @author Geert van Ieperen. Created on 28-9-2018.
  */
 public class MainMenu extends SFrame {
-    // these are upper bounds
-    private static final int NUM_TOP_BUTTONS = 10;
-    private static final int NUM_BOT_BUTTONS = 10;
-    public static final int NUM_BUTTONS = NUM_TOP_BUTTONS + NUM_BOT_BUTTONS + 1;
     public static final int STANDARD_BUTTON_WIDTH = 200;
-    public static final int STANDARD_BUTTON_HEIGHT = 60;
+    public static final int STANDARD_BUTTON_HEIGHT = 50;
+
     public static final SComponentProperties BUTTON_PROPERTIES_STATIC = new SComponentProperties(
-            STANDARD_BUTTON_WIDTH, STANDARD_BUTTON_HEIGHT, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
+            STANDARD_BUTTON_WIDTH, STANDARD_BUTTON_HEIGHT,
+            false, false,
+            NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
     public static final SComponentProperties BUTTON_PROPERTIES_STRETCH = new SComponentProperties(
-            STANDARD_BUTTON_WIDTH, STANDARD_BUTTON_HEIGHT, true, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
+            STANDARD_BUTTON_WIDTH, STANDARD_BUTTON_HEIGHT,
+            true, false,
+            NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
     public static final SComponentProperties BUTTON_PROPERTIES_SMALL_STATIC = new SComponentProperties(
-            STANDARD_BUTTON_WIDTH / 2, STANDARD_BUTTON_HEIGHT / 2, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
+            STANDARD_BUTTON_WIDTH / 2, STANDARD_BUTTON_HEIGHT / 2,
+            false, false,
+            NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
     public static final SComponentProperties MAIN_BUTTON_PROPERTIES = new SComponentProperties(
-            (int) (STANDARD_BUTTON_WIDTH * 1.5f), (int) (STANDARD_BUTTON_HEIGHT * 1.5f), false, false, NGFonts.TextType.TITLE, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
+            (int) (STANDARD_BUTTON_WIDTH * 1.5f), (int) (STANDARD_BUTTON_HEIGHT * 1.5f),
+            false, false,
+            NGFonts.TextType.TITLE, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
     public static final SComponentProperties TEXT_PROPERTIES = new SComponentProperties(
-            0, 50, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT_MIDDLE
+            0, 50,
+            false, false,
+            NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT_MIDDLE
     );
     @SuppressWarnings("SuspiciousNameCombination")
     public static final SComponentProperties SQUARE_BUTTON_PROPS = new SComponentProperties(
-            STANDARD_BUTTON_HEIGHT, STANDARD_BUTTON_HEIGHT, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
+            STANDARD_BUTTON_HEIGHT, STANDARD_BUTTON_HEIGHT,
+            false, false,
+            NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
 
-    private final Vector2i topButtonPos;
-    private final Vector2i bottomButtonPos;
     private final Game game;
     private final SFrame newGameFrame;
 
     public MainMenu(Game game, ModLoader modManager, Runnable terminateProgram) {
         super("Main Menu", 400, 500, false);
         this.game = game;
-        topButtonPos = new Vector2i(1, -1);
-        bottomButtonPos = new Vector2i(1, NUM_BUTTONS);
 
         newGameFrame = new NewGameFrame(game, modManager);
         Scenario emptyScenario = new Scenario.Empty(modManager);
@@ -70,7 +74,7 @@ public class MainMenu extends SFrame {
                         new SButton("Start Triangle", () -> triangleScenario.apply(game), MAIN_BUTTON_PROPERTIES),
                         new SButton("Start Linear", () -> linearScenario.apply(game), MAIN_BUTTON_PROPERTIES),
                         new SButton("Start First Scenario", () -> firstScenario.apply(game), MAIN_BUTTON_PROPERTIES),
-                        new SFiller().setGrowthPolicy(false, true),
+                        SFiller.vertical(),
                         new SButton("Exit game", terminateProgram, MAIN_BUTTON_PROPERTIES)
                 ),
                 new SFiller()
@@ -80,14 +84,6 @@ public class MainMenu extends SFrame {
     private void showNewGame() {
         newGameFrame.setVisible(true);
         game.gui().addFrame(newGameFrame);
-    }
-
-    private Vector2i onTop() {
-        return topButtonPos.add(0, 1);
-    }
-
-    private Vector2i onBot() {
-        return bottomButtonPos.sub(0, 1);
     }
 
 }

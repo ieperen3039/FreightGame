@@ -40,7 +40,7 @@ public class SDragEdge extends SComponent implements MouseDragListener {
     }
 
     @Override
-    public void mouseDragged(int xDelta, int yDelta, float xPos, float yPos) {
+    public void onMouseDrag(int xDelta, int yDelta, float xPos, float yPos) {
         parent.addToSize(xDelta, yDelta);
     }
 }

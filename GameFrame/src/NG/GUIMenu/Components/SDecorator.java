@@ -6,7 +6,7 @@ import org.joml.Vector2ic;
 import java.util.Collection;
 
 /**
- * A class for building specific containers
+ * A helper class for building specific containers
  * @author Geert van Ieperen created on 21-2-2020.
  */
 public abstract class SDecorator extends SComponent {

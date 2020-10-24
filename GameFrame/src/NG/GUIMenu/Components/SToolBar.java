@@ -25,7 +25,7 @@ public class SToolBar extends SContainer implements MouseReleaseListener, MouseC
     private SButton clickedButton;
 
     /**
-     * creates the toolbar on the top of the GUI. an instance of this should be passed to the {@link FrameGUIManager}.
+     * creates the toolbar on the top of the GUI.
      * @param game    a reference to the game itself.
      * @param doSides if true, separators are added to each size of the bar
      */
@@ -33,8 +33,8 @@ public class SToolBar extends SContainer implements MouseReleaseListener, MouseC
         super(MAX_BAR_ICONS, 1);
         this.game = game;
         if (doSides) {
-            add(new SFiller(), null);
-            super.add(new SFiller(), new Vector2i(MAX_BAR_ICONS - 1, 0));
+            add(SFiller.horizontal(), null);
+            super.add(SFiller.horizontal(), new Vector2i(MAX_BAR_ICONS - 1, 0));
         }
     }
 
@@ -61,7 +61,7 @@ public class SToolBar extends SContainer implements MouseReleaseListener, MouseC
      * separators are all equal.
      */
     public void addSeparator() {
-        add(new SFiller(), null);
+        add(SFiller.horizontal(), null);
     }
 
     @Override
@@ -85,9 +85,9 @@ public class SToolBar extends SContainer implements MouseReleaseListener, MouseC
     }
 
     @Override
-    public void onRelease(int button, int xSc, int ySc) {
+    public void onRelease(int button) {
         if (clickedButton != null) {
-            clickedButton.onRelease(button, xSc, ySc);
+            clickedButton.onRelease(button);
         }
     }
 
@@ -95,8 +95,5 @@ public class SToolBar extends SContainer implements MouseReleaseListener, MouseC
     public void doValidateLayout() {
         setSize(game.window().getWidth(), TOOL_BAR_HEIGHT);
         super.doValidateLayout();
-
-//        Logger.WARN.print(children().stream().map(SComponent::getWidth).collect(Collectors.toList()));
-//        Logger.WARN.print(children().stream().map(SComponent::minWidth).collect(Collectors.toList()));
     }
 }

@@ -129,4 +129,5 @@ public interface UIFrameManager
      */
     void clear();
 
+    void onScroll(float value);
 }

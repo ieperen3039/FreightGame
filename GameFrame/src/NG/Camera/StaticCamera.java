@@ -65,7 +65,7 @@ public class StaticCamera implements Camera {
     }
 
     @Override
-    public void mouseMoved(int xDelta, int yDelta, float xPos, float yPos) {
+    public void onMouseMove(int xDelta, int yDelta, float xPos, float yPos) {
 
     }
 
@@ -80,7 +80,7 @@ public class StaticCamera implements Camera {
     }
 
     @Override
-    public void onRelease(int button, int xSc, int ySc) {
+    public void onRelease(int button) {
 
     }
 }

@@ -102,6 +102,7 @@ public abstract class SComponent {
         return this;
     }
 
+    /** @see #contains(int, int) */
     public boolean contains(Vector2i v) {
         return contains(v.x, v.y);
     }

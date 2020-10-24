@@ -171,7 +171,7 @@ public class TycoonFixedCamera implements Camera {
     }
 
     @Override
-    public void mouseMoved(int xDelta, int yDelta, float xPos, float yPos) {
+    public void onMouseMove(int xDelta, int yDelta, float xPos, float yPos) {
 //        float exactDelta = xPos - mouseXPos;
         mouseXPos = xPos;
         mouseYPos = yPos;
@@ -222,7 +222,7 @@ public class TycoonFixedCamera implements Camera {
     }
 
     @Override
-    public void onRelease(int button, int xSc, int ySc) {
+    public void onRelease(int button) {
         isBeingRotated = false;
         isBeginMoved = false;
     }

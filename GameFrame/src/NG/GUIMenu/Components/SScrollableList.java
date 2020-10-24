@@ -2,6 +2,7 @@ package NG.GUIMenu.Components;
 
 import NG.GUIMenu.LayoutManagers.LimitedVisibilityLayout;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
+import NG.InputHandling.MouseScrollListener;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
@@ -11,7 +12,7 @@ import java.util.List;
 /**
  * @author Geert van Ieperen created on 13-5-2019.
  */
-public class SScrollableList extends SContainer.GhostContainer {
+public class SScrollableList extends SContainer.GhostContainer implements MouseScrollListener {
     private final SScrollBar scroller;
     private final LimitedVisibilityLayout layout;
     private int nrOfShownElts;
@@ -97,5 +98,10 @@ public class SScrollableList extends SContainer.GhostContainer {
     public void clear() {
         layout.clear();
         scroller.resize(0, nrOfShownElts);
+    }
+
+    @Override
+    public void onScroll(float value) {
+        scroller.onScroll(value);
     }
 }

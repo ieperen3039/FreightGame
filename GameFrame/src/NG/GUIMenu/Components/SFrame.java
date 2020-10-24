@@ -1,6 +1,5 @@
 package NG.GUIMenu.Components;
 
-import NG.GUIMenu.LayoutManagers.SingleElementLayout;
 import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import org.joml.Vector2i;
@@ -41,14 +40,23 @@ public class SFrame extends SDecorator {
         );
         this.title = title;
 
-        SContainer upperBar;
+        SComponent upperBar;
         if (manipulable) {
-            upperBar = makeUpperBar(title);
+            STextArea text = new STextArea(
+                    title, 0, FRAME_TITLE_BAR_SIZE, true,
+                    NGFonts.TextType.TITLE, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
+            );
+            titleComponent = text;
+
+            upperBar = new SListeners.DragListener(
+                    new SPanel(SContainer.row(
+                            text, new SCloseButton(this)
+                    ))
+            ).setDragListener((dx, dy, x, y) -> addToPosition(dx, dy));
 
         } else {
             titleComponent = new STextArea(title, FRAME_TITLE_BAR_SIZE, 0, true, NGFonts.TextType.TITLE, SFrameLookAndFeel.Alignment.CENTER_TOP);
-            upperBar = new SPanel(new SingleElementLayout(), false);
-            upperBar.add(titleComponent, null);
+            upperBar = new SPanel(titleComponent);
         }
         bodyComponent = SContainer.singleton(new SFiller());
 

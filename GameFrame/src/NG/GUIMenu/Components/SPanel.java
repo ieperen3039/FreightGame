@@ -100,10 +100,10 @@ public class SPanel extends SContainer {
 
     /**
      * creates a panel with a single element. Calling {@link #add(SComponent, Object)} causes this element to be
-     * replaced with the new element. Use {@code null} as add position.
+     * replaced with the new element.
      * @param content the element of this panel.
      */
-    public SPanel(SContainer content) {
+    public SPanel(SComponent content) {
         super(new SingleElementLayout());
         add(content, null);
     }
