@@ -2,10 +2,7 @@ package NG.Content.Scenario;
 
 import NG.Core.Game;
 import NG.Core.ModLoader;
-import NG.Entities.Locomotive;
-import NG.Entities.StationImpl;
-import NG.Entities.Train;
-import NG.Entities.Wagon;
+import NG.Entities.*;
 import NG.GameState.GameState;
 import NG.Mods.Mod;
 import NG.Network.RailNode;
@@ -81,16 +78,28 @@ public class TriangleStationsSc extends Scenario {
         bypass2.addSignal(game, true);
         bypass3.addSignal(game, true);
 
-        Train initialTrain = new Train(game, 0, now, station1);
-        initialTrain.addElement(new Locomotive(game.objectTypes().locomotiveTypes.get(0)));
-        initialTrain.addElement(new Wagon(game.objectTypes().wagonTypes.get(0)));
-        initialTrain.addElement(new Wagon(game.objectTypes().wagonTypes.get(0)));
-        game.state().addEntity(initialTrain);
-        station1.addTrain(initialTrain);
+        Train initialTrain1 = new Train(game, 0, now, station1);
+        initialTrain1.addElement(new Locomotive(game.objectTypes().locomotiveTypes.get(0)));
+        initialTrain1.addElement(new Wagon(game.objectTypes().wagonTypes.get(0)));
+        initialTrain1.addElement(new Wagon(game.objectTypes().wagonTypes.get(0)));
+        addTrain(game, station1, initialTrain1);
+
+        Train initialTrain2 = new Train(game, 1, now, station2);
+        initialTrain2.addElement(new Locomotive(game.objectTypes().locomotiveTypes.get(0)));
+        initialTrain2.addElement(new Wagon(game.objectTypes().wagonTypes.get(0)));
+        initialTrain2.addElement(new Wagon(game.objectTypes().wagonTypes.get(0)));
+        initialTrain2.addElement(new Wagon(game.objectTypes().wagonTypes.get(0)));
+        addTrain(game, station2, initialTrain2);
 
         gameState.addEntity(station1);
         gameState.addEntity(station2);
         gameState.addEntity(station3);
+    }
+
+    private static void addTrain(Game game, Station station1, Train train) {
+        game.state().addEntity(train);
+        station1.addTrain(train);
+        game.playerStatus().trains.add(train);
     }
 
     private RailNode getBypass(Game game, TrackType type, Vector2f center, Vector3f offset, float orientation) {

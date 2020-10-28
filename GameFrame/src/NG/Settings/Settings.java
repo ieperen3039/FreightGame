@@ -26,7 +26,6 @@ public class Settings {
 
     // camera settings
     public boolean ISOMETRIC_VIEW = false;
-    public float CAMERA_ZOOM_SPEED = 0.1f;
     public static float Z_NEAR = 1f;
     public static float Z_FAR = 250;
     public float MAX_CAMERA_DIST = Z_FAR / 2f;
@@ -34,7 +33,6 @@ public class Settings {
     public static float FOV = (float) Math.toRadians(40);
 
     // UI settings
-    public static int TOOL_BAR_HEIGHT = 80;
     public static final float CLICK_BOX_WIDTH = 1.5f;
     public static final float CLICK_BOX_HEIGHT = 0.1f;
     public static final float CLICK_BOX_RESOLUTION = 1f;

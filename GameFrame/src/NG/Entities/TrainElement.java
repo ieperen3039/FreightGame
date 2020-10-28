@@ -79,7 +79,7 @@ public interface TrainElement {
     double getLoadTime(Cargo cargo);
 
     class Properties {
-        private final String name;
+        public final String name;
         public final float length;
         public final float mass;
         public final float linearResistance;

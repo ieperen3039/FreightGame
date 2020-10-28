@@ -14,12 +14,14 @@ import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
 
+import java.io.IOException;
+
 /**
  * @author Geert van Ieperen. Created on 28-9-2018.
  */
 public class MainMenu extends SFrame {
-    public static final int STANDARD_BUTTON_WIDTH = 200;
-    public static final int STANDARD_BUTTON_HEIGHT = 50;
+    public static final int STANDARD_BUTTON_WIDTH = 150;
+    public static final int STANDARD_BUTTON_HEIGHT = 30;
 
     public static final SComponentProperties BUTTON_PROPERTIES_STATIC = new SComponentProperties(
             STANDARD_BUTTON_WIDTH, STANDARD_BUTTON_HEIGHT,
@@ -42,7 +44,7 @@ public class MainMenu extends SFrame {
             NGFonts.TextType.TITLE, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
     public static final SComponentProperties TEXT_PROPERTIES = new SComponentProperties(
-            0, 50,
+            0, NGFonts.SIZE_LARGE * 2,
             false, false,
             NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT_MIDDLE
     );
@@ -64,7 +66,7 @@ public class MainMenu extends SFrame {
         Scenario emptyScenario = new Scenario.Empty(modManager);
         Scenario triangleScenario = new TriangleStationsSc(modManager);
         Scenario linearScenario = new LinearConnectionSc(modManager);
-        Scenario firstScenario = new FileScenario(modManager, "first");
+        Scenario firstScenario = getFileScenario(modManager, "first");
 
         setMainPanel(SContainer.row(
                 new SFiller(),
@@ -79,6 +81,14 @@ public class MainMenu extends SFrame {
                 ),
                 new SFiller()
         ));
+    }
+
+    public Scenario getFileScenario(ModLoader modManager, String first) {
+        try {
+            return new FileScenario(modManager, first);
+        } catch (IOException e) {
+            return new Scenario.Empty(modManager);
+        }
     }
 
     private void showNewGame() {

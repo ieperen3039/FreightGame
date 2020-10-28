@@ -181,16 +181,18 @@ public class FlatMesh extends AbstractMesh {
 
         for (int y = 0; y < nOfYFaces; y++) {
             for (int x = 0; x < nOfXFaces; x++) {
-                int left = y * arrayXSize + x;
-                int right = (y + 1) * arrayXSize + x;
+                int a = y * arrayXSize + x;
+                int b = a + 1;
+                int c = (y + 1) * arrayXSize + x;
+                int d = c + 1;
 
                 faces.add(new Mesh.Face(
-                        new int[]{left, right + 1, left + 1},
-                        new int[]{left, right + 1, left + 1}
+                        new int[]{a, b, c},
+                        new int[]{a, b, c}
                 ));
                 faces.add(new Mesh.Face(
-                        new int[]{left, right, right + 1},
-                        new int[]{left, right, right + 1}
+                        new int[]{b, c, d},
+                        new int[]{b, c, d}
                 ));
             }
         }

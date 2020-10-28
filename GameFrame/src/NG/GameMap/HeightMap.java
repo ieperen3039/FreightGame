@@ -63,7 +63,7 @@ public class HeightMap extends GridMap {
                 origin.x(), origin.y(), origin.z(),
                 direction.x(), direction.y(), direction.z(),
                 boundingBox.minX, boundingBox.minY, boundingBox.minZ,
-                boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ,
+                boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ + EPSILON,
                 new Vector2f()
         );
 
@@ -96,20 +96,21 @@ public class HeightMap extends GridMap {
         frame.setVisible(true);
         game.gui().addFrame(frame);
 
-        generate(mapGenerator, game);
+        generate(mapGenerator);
 
         frame.dispose();
 
         Logger.printOnline(() -> "Culled chenks :" + culledChunks.average() + "/" + chunkMeshes.size());
     }
 
-    private void generate(MapGeneratorMod mapGenerator, Game game) {
+    private void generate(MapGeneratorMod mapGenerator) {
         synchronized (this) {
             meshProgress = 0f;
 
             // height map generation
             heightmap = mapGenerator.generateHeightMap();
 
+            edgeLength = mapGenerator.getEdgeLength();
             xSize = heightmap.length;
             ySize = heightmap[0].length;
             float meshPStep = 1f / (xSize * ySize);

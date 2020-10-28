@@ -1,5 +1,6 @@
 {
-  "set_name": "Base Set",
+  "set_name": "Base Mods",
+  "version": "v 0.0",
   "locomotives": {
     "Little Red Diesel": {
       // in units (~10 meters)
@@ -95,7 +96,7 @@
           "fuel": 1
         },
         // in rules per second
-        "rate": 1
+        "rate": 2
       },
       // in total units per type
       "max_cargo": 100
@@ -106,8 +107,7 @@
       "rule": {
         "out": {
           // in units per rule
-          "fuel": 1,
-          "oil": 1
+          "fuel": 1
         },
         // in rules per second
         "rate": 100

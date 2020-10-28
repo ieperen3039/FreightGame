@@ -17,14 +17,20 @@ import java.util.Collections;
  */
 public class ImageMapGenerator implements MapGeneratorMod {
     private final FileResource<PNGDecoder> mapResource;
+    private final float edgeLength;
     private float progress = 0;
-    private float unitHeight = 0.01f;
+    private float unitHeight = 0.05f;
 
     public ImageMapGenerator(Path mapFile) {
+        this(mapFile, 0.5f);
+    }
+
+    public ImageMapGenerator(Path mapFile, float edgeLength) {
         mapResource = FileResource.get(
                 path -> new PNGDecoder(new FileInputStream(path.toFile())),
                 mapFile
         );
+        this.edgeLength = edgeLength;
     }
 
     @Override
@@ -108,5 +114,10 @@ public class ImageMapGenerator implements MapGeneratorMod {
     @Override
     public void cleanup() {
 
+    }
+
+    @Override
+    public float getEdgeLength() {
+        return edgeLength;
     }
 }

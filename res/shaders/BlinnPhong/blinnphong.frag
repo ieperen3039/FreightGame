@@ -40,8 +40,8 @@ const float SHADOW_BIAS = 1.0/(1 << 12);
 const float ATT_LIN = 0.1;
 const float ATT_EXP = 0.01;
 
-const float LINE_SIZE = 0.0004;
-const float LINE_DENSITY = 80;// 500 seems to be the max
+const float LINE_SIZE = 0.0002;
+const float LINE_DENSITY = 100;// 500 seems to be the max
 const float LINE_ALPHA = 0.3;
 const float LINE_COLOR_SENSITIVITY = 2;
 const float MINIMUM_LINE_DIST = 0.1;
@@ -220,7 +220,7 @@ void main() {
         int marker_level_dist = 1 << min(marker_shift, 31);
 
         // calculate distance to nearest marker
-        float fragment_level = mVertexPosition.z / MINIMUM_LINE_DIST;
+        float fragment_level = (mVertexPosition.z / MINIMUM_LINE_DIST);
         float distance_from_level = mod(fragment_level, marker_level_dist);
         float distance_from_height_line = distance_from_level * MINIMUM_LINE_DIST;
 
@@ -241,7 +241,6 @@ void main() {
         float y_component = min(1, max(0, (LINE_COLOR_SENSITIVITY * mVertexNormal.y) + 0.5));
         vec4 line_component = vec4(max(y_component, 0), abs(x_component), max(-y_component, 0), 1.0);
         col_component = (1 - line_visibility) * col_component + line_visibility * line_component;
-
     }
 
     fragColor = col_component;

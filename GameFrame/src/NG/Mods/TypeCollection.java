@@ -34,4 +34,20 @@ public class TypeCollection {
 
         return null;
     }
+
+    public Locomotive.Properties getLocoByName(String name) {
+        for (Locomotive.Properties type : locomotiveTypes) {
+            if (type.name.equals(name)) return type;
+        }
+
+        return null;
+    }
+
+    public Wagon.Properties getWagonByName(String name) {
+        for (Wagon.Properties type : wagonTypes) {
+            if (type.name.equals(name)) return type;
+        }
+
+        return null;
+    }
 }

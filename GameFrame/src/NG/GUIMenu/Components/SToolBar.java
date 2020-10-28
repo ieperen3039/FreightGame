@@ -5,11 +5,11 @@ import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
 import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseReleaseListener;
+import NG.Menu.Main.MainMenu;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
 import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.TOOLBAR_BACKGROUND;
-import static NG.Settings.Settings.TOOL_BAR_HEIGHT;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 
 /**
@@ -17,6 +17,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
  */
 public class SToolBar extends SContainer implements MouseReleaseListener, MouseClickListener {
     public static final int MAX_BAR_ICONS = 20; // TODO look for opportunity of calculating this
+    public static final int TOOL_BAR_HEIGHT = MainMenu.MAIN_BUTTON_PROPERTIES.minHeight;
     private static final int BUTTON_SIZE = TOOL_BAR_HEIGHT - (4 + 4); // where did the 4 come from? / where did it go? / where did you come from, cotton-eyed joe
     private final SComponentProperties buttonProps = new SComponentProperties(200, BUTTON_SIZE, false, false);
 

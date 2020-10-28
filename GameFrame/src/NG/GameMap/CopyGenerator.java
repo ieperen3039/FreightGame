@@ -73,4 +73,9 @@ public class CopyGenerator implements MapGeneratorMod {
     public void cleanup() {
 //        target.cleanup();
     }
+
+    @Override
+    public float getEdgeLength() {
+        return 0.5f;
+    }
 }

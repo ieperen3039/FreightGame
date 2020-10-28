@@ -19,8 +19,9 @@ public class TycoonFixedCamera implements Camera {
     private static final float BORDER_MOVE_SPEED = 0.6f;
     private static final int SCREEN_MOVE_BORDER_SIZE = 50;
     private static final int SCREEN_DEAD_ZONE = 30;
+    private static final float CAMERA_ZOOM_SPEED = 0.1f;
 
-    private static final float ZOOM_SPEED_LIMIT = 0.03f;
+    private static final float ZOOM_SPEED_LIMIT = 0.5f;
     private static final float ROTATION_MODIFIER = 0.002f;
     public static final float DRAG_MODIFIER = 0.0015f;
 
@@ -140,10 +141,9 @@ public class TycoonFixedCamera implements Camera {
         resetFocus();
 
         Settings s = game.settings();
-        float zoomSpeed = s.CAMERA_ZOOM_SPEED;
         float maxZoom = s.MAX_CAMERA_DIST;
 
-        float v = Math.max(Math.min(zoomSpeed * -value, ZOOM_SPEED_LIMIT), -ZOOM_SPEED_LIMIT);
+        float v = Math.max(Math.min(CAMERA_ZOOM_SPEED * -value, ZOOM_SPEED_LIMIT), -ZOOM_SPEED_LIMIT);
         eyeOffset.mul(v + 1f);
         float minZoom = s.MIN_CAMERA_DIST;
 

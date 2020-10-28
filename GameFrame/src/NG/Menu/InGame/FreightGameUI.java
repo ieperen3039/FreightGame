@@ -5,6 +5,7 @@ import NG.Core.ModLoader;
 import NG.GUIMenu.Components.*;
 import NG.GUIMenu.LayoutManagers.GridLayoutManager;
 import NG.Menu.InGame.Build.BuildMenu;
+import NG.Menu.InGame.Overviews.TrainOverview;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.Tools.Directory;
@@ -30,6 +31,14 @@ public class FreightGameUI extends SContainer.GhostContainer {
                 () -> game.gui().addFrame(new BuildMenu(game))
         );
 
+        toolBar.addButton(
+                "Overviews",
+                () -> game.gui().addFrame(new SFrame(
+                        "Overviews", SContainer.column(
+                        new SButton("Trains", () -> game.gui().addFrame(new TrainOverview(game)))
+                )))
+        );
+
         toolBar.addButton("Options", () -> game.gui().addFrame(
                 new SFrame("Options", SContainer.column(
                         new SToggleButton("Show CollisionBox", BUTTON_PROPERTIES_STRETCH, game.settings().RENDER_COLLISION_BOX)
@@ -47,7 +56,8 @@ public class FreightGameUI extends SContainer.GhostContainer {
                                         .ifPresentOrElse(
                                                 n -> Logger.INFO.print(NetworkNode.getNetworkAsString(n)),
                                                 () -> Logger.INFO.print("No network present")
-                                        )
+                                        ),
+                                BUTTON_PROPERTIES_STRETCH
                         ),
 
                         new SButton("Check Network", // checks the NetworkNodes of all track pieces
@@ -61,13 +71,15 @@ public class FreightGameUI extends SContainer.GhostContainer {
                                         .flatMap(t -> Stream.of(t.getStartNode(), t.getEndNode()))
                                         .distinct()
                                         .map(RailNode::getNetworkNode)
-                                        .forEach(NetworkNode::check)
+                                        .forEach(NetworkNode::check),
+                                BUTTON_PROPERTIES_STRETCH
                         ),
 
                         new SButton("dump light map",
                                 () -> game.executeOnRenderThread(
                                         () -> game.lights().dumpShadowMap(Directory.screenshots)
-                                )
+                                ),
+                                BUTTON_PROPERTIES_STRETCH
                         )
                 ))
         ));

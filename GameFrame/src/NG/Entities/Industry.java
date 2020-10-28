@@ -123,6 +123,11 @@ public class Industry extends Storage {
         return nearby;
     }
 
+    @Override
+    public String toString() {
+        return "Industry " + properties.name;
+    }
+
     public static class Rule {
         public final Map<CargoType, Integer> in;
         public final Map<CargoType, Integer> out;

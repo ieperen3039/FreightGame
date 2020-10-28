@@ -19,11 +19,11 @@ import java.util.Collection;
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
 public enum GenericShapes implements Mesh, Shape {
-    ARROW("general", "arrow.obj"),
-    ICOSAHEDRON("general", "icosahedron.obj"),
-    INV_CUBE("general", "inverseCube.obj"),
-    CUBE("general", "cube.obj"),
-    TEXTURED_QUAD("general", "quad.obj"),
+    ARROW("arrow.obj"),
+    ICOSAHEDRON("icosahedron.obj"),
+    INV_CUBE("inverseCube.obj"),
+    CUBE("cube.obj"),
+    TEXTURED_QUAD("quad.obj"),
 
     /** a quad of size 2x2 on the xy plane */
     QUAD(createQuad()),

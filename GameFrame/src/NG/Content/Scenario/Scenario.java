@@ -35,6 +35,8 @@ public abstract class Scenario {
     public void apply(Game game) {
         Settings settings = game.settings();
 
+        init();
+
         // load mods
         List<Mod> modsToLoad = getMods(modLoader);
         modLoader.initMods(modsToLoad);
@@ -48,6 +50,11 @@ public abstract class Scenario {
         // start
         modLoader.startGame();
     }
+
+    protected void init() {
+    }
+
+    ;
 
     /**
      * @return a list of all mods used in this scenario

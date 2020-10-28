@@ -54,4 +54,9 @@ public class FixedMapGenerator implements MapGeneratorMod {
     public void cleanup() {
 
     }
+
+    @Override
+    public float getEdgeLength() {
+        return 0.5f;
+    }
 }

@@ -40,6 +40,8 @@ public interface MapGeneratorMod extends Mod {
 
     void setYSize(int ySize);
 
+    float getEdgeLength();
+
     default void setSize(int x, int y) {
         setXSize(x);
         setYSize(y);

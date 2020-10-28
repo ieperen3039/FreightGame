@@ -37,7 +37,7 @@ public interface ModLoader {
     /**
      * searches a mod with a name close to the given name
      * @param name a name of a mod
-     * @return the mod with a name with the longest common subsequence
+     * @return the mod with a name exactly equal to the given name
      */
     Mod getModByName(String name);
 

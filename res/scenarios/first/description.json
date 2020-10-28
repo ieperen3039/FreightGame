@@ -1,0 +1,33 @@
+{
+  // length of 1 pixel in the height map
+  "map_edge_length": 0.5,
+  // a list of mod names to load
+  "mods": [
+    "Base Mods"
+  ],
+  // all industries on the map in an array
+  "industries": [
+    {
+      "type": "oil well",
+      "position": [100.0, 20.0]
+    }, {
+      "type": "oil well",
+      "position": [80.0, 40.0]
+    }, {
+      "type": "oil well",
+      "position": [100.0, 80.0]
+    }, {
+      "type": "oil well",
+      "position": [75.0, 90.0]
+    }, {
+      "type": "refinery",
+      "position": [20.0, 40.0]
+    }, {
+      "type": "refinery",
+      "position": [23.0, 50.0]
+    }, {
+      "type": "export hub",
+      "position": [30.0, 100.0]
+    }
+  ]
+}

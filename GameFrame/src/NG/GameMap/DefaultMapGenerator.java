@@ -107,4 +107,9 @@ public class DefaultMapGenerator implements MapGeneratorMod {
     public String getModName() {
         return "Default Map Generator";
     }
+
+    @Override
+    public float getEdgeLength() {
+        return 0.5f;
+    }
 }
