@@ -22,9 +22,11 @@ import java.util.*;
 public class Industry extends Storage {
     private static final double CARGO_SPAWN_FREQUENCY = 0.25f; // updates per second
 
-    private final Properties properties;
-    private double nextCargoSpawn;
+    private transient Properties properties;
+    private final String typeName;
     private final Coloring coloring = new Coloring(Color4f.WHITE);
+
+    private double nextCargoSpawn;
 
     public Industry(
             Game game, Vector3fc position, double spawnTime, Properties properties
@@ -32,7 +34,7 @@ public class Industry extends Storage {
         super(game, position, spawnTime);
         this.nextCargoSpawn = game.timer().getGameTime();
         this.properties = properties;
-
+        this.typeName = properties.name;
     }
 
     @Override
@@ -111,7 +113,7 @@ public class Industry extends Storage {
         float rangeSq = range * range;
         List<Industry> nearby = new ArrayList<>();
 
-        for (Entity entity : game.state().entities()) {
+        for (Entity entity : game.state()) {
             if (entity instanceof Industry) {
                 Industry industry = (Industry) entity;
                 if (industry.getPosition().distanceSquared(position) < rangeSq) {
@@ -126,6 +128,12 @@ public class Industry extends Storage {
     @Override
     public String toString() {
         return "Industry " + properties.name;
+    }
+
+    @Override
+    public void restoreFields(Game game) {
+        super.restoreFields(game);
+        properties = game.objectTypes().getIndustryByName(typeName);
     }
 
     public static class Rule {

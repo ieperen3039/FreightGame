@@ -2,7 +2,8 @@ package NG.Core;
 
 /**
  * A class of which a game usually only needs one of. The constructor of these methods should not accept any other
- * GameAspect. Initialisation of objects should be executed in the {@link #init(Game)} method.
+ * GameAspect. Initialisation of objects should be executed in the {@link #init(Game)} method. If this object is
+ * serialized, the {@link #init(Game)} method should be called after de-serialisation
  * @author Geert van Ieperen. Created on 16-9-2018.
  */
 public interface GameAspect {

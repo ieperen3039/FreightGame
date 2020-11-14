@@ -1,5 +1,6 @@
 package NG.Entities;
 
+import NG.Core.Game;
 import NG.DataStructures.Generic.Pair;
 import NG.Freight.Cargo;
 import NG.Mods.CargoType;
@@ -15,10 +16,12 @@ import java.util.Map;
  * @author Geert van Ieperen created on 5-5-2020.
  */
 public class Locomotive implements TrainElement {
-    public final Properties properties;
+    private transient Properties properties;
+    private final String typeName;
 
     public Locomotive(Properties properties) {
         this.properties = properties;
+        this.typeName = properties.name;
     }
 
     @Override
@@ -70,6 +73,11 @@ public class Locomotive implements TrainElement {
     @Override
     public Collection<Cargo> takeAll() {
         return Collections.emptyList();
+    }
+
+    @Override
+    public void restore(Game game) {
+        properties = game.objectTypes().getLocoByName(typeName);
     }
 
     public static class Properties extends TrainElement.Properties {

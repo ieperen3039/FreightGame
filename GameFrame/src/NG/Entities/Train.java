@@ -415,7 +415,7 @@ public class Train extends AbstractGameObject implements Entity {
 
         double loadTime = 0;
         for (TrainElement entity : entities) {
-            int toStore = entity.getStorableAmount(cargo.type);
+            int toStore = entity.getStorableAmount(cargo.getType());
 
             if (toStore > 0) {
                 if (toStore >= cargo.quantity()) {
@@ -546,6 +546,16 @@ public class Train extends AbstractGameObject implements Entity {
 
     public void start() {
         positionEngine.start();
+    }
+
+    @Override
+    public void restoreFields(Game game) {
+        for (TrainElement entity : entities) {
+            entity.restore(game);
+        }
+
+        positionEngine.restore(game);
+        updateProperties();
     }
 
     private class TrainUI extends SFrame {

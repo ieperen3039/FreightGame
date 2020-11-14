@@ -200,4 +200,9 @@ public class StationGhost extends AbstractGameObject implements Station {
         pairs.add(GenericShapes.CUBE, transformation);
         return pairs;
     }
+
+    @Override
+    public void restoreFields(Game game) {
+
+    }
 }

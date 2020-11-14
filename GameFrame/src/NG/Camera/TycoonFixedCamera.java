@@ -8,6 +8,8 @@ import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
+import java.io.Serializable;
+
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_MIDDLE;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
@@ -15,7 +17,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
  * A camera implementation that can be moved by holding the mouse to the corners of the screen
  * @author Geert van Ieperen. Created on 18-11-2018.
  */
-public class TycoonFixedCamera implements Camera {
+public class TycoonFixedCamera implements Camera, Serializable {
     private static final float BORDER_MOVE_SPEED = 0.6f;
     private static final int SCREEN_MOVE_BORDER_SIZE = 50;
     private static final int SCREEN_DEAD_ZONE = 30;
@@ -28,7 +30,7 @@ public class TycoonFixedCamera implements Camera {
     private final Vector3f focus = new Vector3f();
     private final Vector3f eyeOffset;
 
-    private Game game;
+    private transient Game game;
     private float mouseXPos;
     private float mouseYPos;
     private boolean isBeingRotated = false;

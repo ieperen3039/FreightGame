@@ -1,5 +1,7 @@
 package NG.Freight;
 
+import NG.Core.Game;
+import NG.Core.GameObject;
 import NG.DataStructures.CargoCollection;
 import NG.DataStructures.Valuta;
 import NG.Entities.Storage;
@@ -13,8 +15,9 @@ import NG.Mods.CargoType;
  * @see CargoCollection
  * @see CargoType
  */
-public class Cargo {
-    public final CargoType type;
+public class Cargo implements GameObject {
+    private transient CargoType type;
+    private final String typeName;
 
     private final double pickupTime;
     private final Storage pickupPlace;
@@ -26,6 +29,7 @@ public class Cargo {
         this.quantity = quantity;
         this.pickupTime = pickupTime;
         this.pickupPlace = pickupPlace;
+        this.typeName = type.name();
     }
 
     /** return a new Freight class with the given quantity subtracted from this, or null when impossible */
@@ -50,5 +54,14 @@ public class Cargo {
         double secondsInTransit = time - pickupTime;
         float distanceTravelled = pickupPlace.getPosition().distance(target.getPosition());
         return type.value(secondsInTransit, distanceTravelled).multiply(quantity);
+    }
+
+    @Override
+    public void restore(Game game) {
+        type = game.objectTypes().getCargoByName(typeName);
+    }
+
+    public CargoType getType() {
+        return type;
     }
 }

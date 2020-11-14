@@ -17,6 +17,7 @@ import org.joml.Math;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
@@ -35,7 +36,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
     private static final double SIGNAL_PATHING_TIMEOUT = 1.0 / 8;
     private static final int STOP_TARGET_SNAP_DISTANCE_MILLIS = 10;
 
-    public static final BooleanSupplier ALWAYS = () -> true;
+    public static final Conditional ALWAYS = () -> true;
 
     private final Train controller;
 
@@ -694,18 +695,23 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         reservedPath.clear();
     }
 
-    private class SpeedTarget implements Comparable<SpeedTarget> {
+    @Override
+    public void restoreFields(Game game) {
+        // this object doesn't own any other GameObject, and hence doesnt need to restore anything
+    }
+
+    private class SpeedTarget implements Comparable<SpeedTarget>, Serializable {
         public final long startMillis;
         public final long endMillis;
         public final float speed;
-        private final BooleanSupplier condition;
+        private final Conditional condition;
 
         public SpeedTarget(long startMillis, long endMillis, float speed) {
             this(startMillis, endMillis, speed, ALWAYS);
         }
 
         public SpeedTarget(
-                long startMillis, long endMillis, float speed, BooleanSupplier condition
+                long startMillis, long endMillis, float speed, Conditional condition
         ) {
             this.startMillis = startMillis;
             this.endMillis = endMillis;
@@ -740,4 +746,6 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
                     '}';
         }
     }
+
+    interface Conditional extends BooleanSupplier, Serializable {}
 }

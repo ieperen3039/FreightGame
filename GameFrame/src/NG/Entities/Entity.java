@@ -8,12 +8,14 @@ import NG.InputHandling.MouseClickListener;
 import NG.InputHandling.MouseTool.AbstractMouseTool;
 import NG.Rendering.MatrixStack.SGL;
 
+import java.io.Serializable;
+
 /**
  * An entity is anything that is both visible in the world, and allows interaction with other entities (including the
  * map). Particles and other visual things are not entities.
  * @author Geert van Ieperen. Created on 14-9-2018.
  */
-public interface Entity extends GameObject {
+public interface Entity extends GameObject, Serializable {
     enum UpdateFrequency {
         EVERY_TICK, ONCE_PER_SECOND, ONCE_UPON_A_TIME, NEVER
     }

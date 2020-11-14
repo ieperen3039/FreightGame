@@ -17,41 +17,31 @@ import org.joml.Vector3fc;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static org.lwjgl.opengl.GL11.*;
 
 /**
  * @author Geert van Ieperen created on 3-2-2019.
  */
-public class SingleShadowMapLights implements GameLights {
+public class SingleShadowMapLights implements GameLights, Serializable {
     private static final float UPDATE_MARGIN = 5f;
 
-    private final Lock pointLightEditLock;
-    private final Lock pointLightReadLock;
+    private final List<PointLight> lights = new ArrayList<>();
+    // this is overridden by #addDirectionalLight
+    private DirectionalLight sunLight =
+            new DirectionalLight(Color4f.WHITE, new Vector3f(1, -1, 1), 0.5f);
 
-    private final List<PointLight> lights;
-    private DirectionalLight sunLight;
-
-    private Game game;
-    private DepthShader shadowShader;
+    private transient Game game;
+    private transient DepthShader shadowShader;
 
     private float lightDist = 1;
 
     public SingleShadowMapLights() {
-        ReadWriteLock rwl = new ReentrantReadWriteLock(false);
-        this.pointLightEditLock = rwl.writeLock();
-        this.pointLightReadLock = rwl.readLock();
-
-        this.lights = new ArrayList<>();
-        // these are overridden by #addDirectionalLight
-        this.sunLight = new DirectionalLight(Color4f.WHITE, new Vector3f(1, -1, 1), 0.5f);
     }
 
     @Override
@@ -66,11 +56,8 @@ public class SingleShadowMapLights implements GameLights {
 
     @Override
     public void addPointLight(PointLight light) {
-        pointLightEditLock.lock();
-        try {
+        synchronized (lights) {
             lights.add(light);
-        } finally {
-            pointLightEditLock.unlock();
         }
     }
 
@@ -152,14 +139,11 @@ public class SingleShadowMapLights implements GameLights {
         if (shader instanceof LightShader) {
             LightShader lightShader = (LightShader) shader;
 
-            pointLightReadLock.lock();
-            try {
+            synchronized (lights) {
                 for (PointLight light : lights) {
                     Vector3fc mPosition = gl.getPosition(light.getPosition());
                     lightShader.setPointLight(mPosition, light.getColor(), light.getIntensity());
                 }
-            } finally {
-                pointLightReadLock.unlock();
             }
 
             lightShader.setDirectionalLight(sunLight);

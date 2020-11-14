@@ -2,6 +2,8 @@ package NG.Core;
 
 import NG.DataStructures.Tracked.TrackedObject;
 
+import java.io.Serializable;
+
 /**
  * A combination of a gameloop timer and a render timer. The timers are updated on calls to {@link #updateGameTime()}
  * and {@link #updateRenderTime()}
@@ -11,7 +13,7 @@ import NG.DataStructures.Tracked.TrackedObject;
  * seconds = 9.00719925 * 10^15 values, which gives sub-millisecond precision for 285 616 years.
  */
 @SuppressWarnings("WeakerAccess")
-public class GameTimer {
+public class GameTimer implements Serializable {
     /** multiplication factor to multiply system time units to game-seconds */
     protected static final double SYSTEM_TO_SECONDS = 1e-9;
     protected static final int RESOLUTION = 10_000; // 1/10th millisecond accuracy

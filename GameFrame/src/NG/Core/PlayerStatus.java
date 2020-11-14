@@ -4,17 +4,18 @@ import NG.DataStructures.Valuta;
 import NG.Entities.Station;
 import NG.Entities.Train;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Geert van Ieperen created on 30-8-2020.
  */
-public class PlayerStatus implements GameAspect {
+public class PlayerStatus implements GameAspect, Serializable {
     public final Valuta money = Valuta.ofUnitValue(1000);
     public final List<Train> trains = new ArrayList<>();
     public final List<Station> stations = new ArrayList<>();
-    private Game game;
+    private transient Game game;
 
     @Override
     public void init(Game game) throws Exception {

@@ -5,10 +5,12 @@ import NG.Core.Game;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
+import java.io.Serializable;
+
 /**
  * @author Geert van Ieperen created on 22-12-2017. a camera that doesn't move
  */
-public class StaticCamera implements Camera {
+public class StaticCamera implements Camera, Serializable {
     private Vector3fc eye, focus;
     private Vector3fc up;
 

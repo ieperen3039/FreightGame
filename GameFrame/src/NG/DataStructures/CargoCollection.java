@@ -3,13 +3,14 @@ package NG.DataStructures;
 import NG.Freight.Cargo;
 import NG.Mods.CargoType;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * A collection of Freight entities.
  * @author Geert van Ieperen created on 21-1-2019.
  */
-public class CargoCollection extends AbstractCollection<Cargo> {
+public class CargoCollection extends AbstractCollection<Cargo> implements Serializable {
     private final Collection<Cargo> storage;
 
     public CargoCollection() {
@@ -42,7 +43,7 @@ public class CargoCollection extends AbstractCollection<Cargo> {
 
     public int getAmountOf(CargoType type) {
         for (Cargo cargo : storage) {
-            if (cargo.type.equals(type)) {
+            if (cargo.getType().equals(type)) {
                 return cargo.quantity();
             }
         }
@@ -57,7 +58,7 @@ public class CargoCollection extends AbstractCollection<Cargo> {
      */
     public void addToMap(Map<CargoType, Integer> contents) {
         for (Cargo cargo : storage) {
-            contents.merge(cargo.type, cargo.quantity(), Integer::sum);
+            contents.merge(cargo.getType(), cargo.quantity(), Integer::sum);
         }
     }
 
@@ -90,7 +91,7 @@ public class CargoCollection extends AbstractCollection<Cargo> {
         int remainder = amount;
 
         for (Cargo cargo : storage) {
-            if (cargo.type == type) {
+            if (cargo.getType() == type) {
                 int elementQuantity = cargo.quantity();
                 if (elementQuantity > remainder) {
                     Cargo split = cargo.split(remainder);
@@ -124,7 +125,7 @@ public class CargoCollection extends AbstractCollection<Cargo> {
     public String toString() {
         Map<String, Integer> contents = new HashMap<>();
         for (Cargo cargo : storage) {
-            String typeName = cargo.type.name();
+            String typeName = cargo.getType().name();
 
             if (contents.containsKey(typeName)) {
                 contents.put(typeName, contents.get(typeName) + cargo.quantity());

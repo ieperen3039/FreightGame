@@ -9,13 +9,15 @@ import NG.Rendering.MatrixStack.SGL;
 import org.joml.Vector3f;
 
 import java.util.Collection;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * A collection of all entities in the world, all lights present in the world. Allows querying for specific objects and
  * collisions.
  * @author Geert van Ieperen. Created on 21-9-2018.
  */
-public interface GameState extends GameAspect {
+public interface GameState extends GameAspect, Iterable<Entity> {
     /**
      * adds an entity to the game in a thread-safe way.
      * @param entity the new entity, with only its constructor called
@@ -37,7 +39,16 @@ public interface GameState extends GameAspect {
      */
     boolean checkMouseClick(MouseTool tool, int xSc, int ySc, Vector3f origin, Vector3f direction);
 
+    /**
+     * In contrary to {@link #iterator()} and {@link #stream()}, this collection must contain all entities ever added
+     * using {@link #addEntity(Entity)}
+     * @return a copy of all entities ever added to this game state
+     */
     Collection<Entity> entities();
 
     Collection<Entity> getCollisions(ColliderEntity entity);
+
+    default Stream<Entity> stream() {
+        return StreamSupport.stream(spliterator(), false);
+    }
 }

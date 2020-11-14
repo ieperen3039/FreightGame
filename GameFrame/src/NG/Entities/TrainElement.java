@@ -1,5 +1,6 @@
 package NG.Entities;
 
+import NG.Core.GameObject;
 import NG.DataStructures.Generic.Color4f;
 import NG.DataStructures.Generic.Pair;
 import NG.Freight.Cargo;
@@ -20,9 +21,9 @@ import java.util.Map;
 /**
  * @author Geert van Ieperen created on 19-5-2020.
  */
-public interface TrainElement {
+public interface TrainElement extends GameObject {
     default void draw(
-            SGL gl, Vector3fc position, Quaternionfc rotation, Entity sourceEntity, Color4f color
+            SGL gl, Vector3fc position, Quaternionfc rotation, Entity trainEntity, Color4f color
     ) {
         MaterialShader.ifPresent(gl, mat -> {
             mat.setMaterial(Material.METAL, color);
@@ -33,7 +34,8 @@ public interface TrainElement {
             gl.translate(position);
             gl.rotate(rotation);
 
-            gl.render(getProperties().mesh.get(), sourceEntity);
+            Mesh mesh = getProperties().mesh.get();
+            gl.render(mesh, trainEntity);
         }
         gl.popMatrix();
     }

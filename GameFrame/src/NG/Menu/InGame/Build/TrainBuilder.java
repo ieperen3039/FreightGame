@@ -37,7 +37,7 @@ public class TrainBuilder extends EntityActionTool {
         construction.addElement(new Locomotive(locomotiveTypes.get(0)));
         Wagon wagon = new Wagon(wagonTypes.get(0));
 
-        while (construction.getLength() + wagon.properties.length < trackLength) {
+        while (construction.getLength() + wagon.getProperties().length <= trackLength) {
             construction.addElement(wagon);
             wagon = new Wagon(wagonTypes.get(0));
         }

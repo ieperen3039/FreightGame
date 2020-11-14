@@ -30,9 +30,11 @@ import static org.lwjgl.opengl.GL11.glDepthMask;
  */
 public abstract class TrackPiece extends AbstractGameObject implements ColliderEntity {
     private static final Color4f OCCUPIED_COLOR = Color4f.GREY;
-    protected final TrackType type;
-    protected final boolean isModifiable;
+    private transient TrackType type;
+    private final String typeName;
+
     private Resource<AABBf> hitbox;
+    protected final boolean isModifiable;
 
     protected double spawnTime = Double.NEGATIVE_INFINITY;
     protected double despawnTime = Double.POSITIVE_INFINITY;
@@ -41,15 +43,21 @@ public abstract class TrackPiece extends AbstractGameObject implements ColliderE
     private boolean isOccupied = false;
     private final Coloring coloring = new Coloring(Color4f.WHITE);
 
-    // if any of these is occupied, this is occupied as well
+    // if any of these is occupied, this is occupied as well (needs no restoring)
     private List<TrackPiece> entangledTracks = new ArrayList<>();
 
     public TrackPiece(Game game, TrackType type, boolean modifiable) {
         super(game);
         this.type = type;
-        isModifiable = modifiable;
+        this.isModifiable = modifiable;
+        this.typeName = type.toString();
 
         hitbox = new GeneratorResource<>(this::computeHitbox);
+    }
+
+    @Override
+    public void restoreFields(Game game) {
+        type = game.objectTypes().getTrackByName(typeName);
     }
 
     @Override

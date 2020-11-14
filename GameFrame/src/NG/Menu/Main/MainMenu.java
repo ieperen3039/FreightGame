@@ -4,6 +4,7 @@ import NG.Content.Scenario.FileScenario;
 import NG.Content.Scenario.LinearConnectionSc;
 import NG.Content.Scenario.Scenario;
 import NG.Content.Scenario.TriangleStationsSc;
+import NG.Core.FreightGame;
 import NG.Core.Game;
 import NG.Core.ModLoader;
 import NG.GUIMenu.Components.SButton;
@@ -72,6 +73,7 @@ public class MainMenu extends SFrame {
                 new SFiller(),
                 SContainer.column(
                         new SButton("Start new game", this::showNewGame, MAIN_BUTTON_PROPERTIES),
+                        new SButton("Load Game", () -> modManager.loadGame(FreightGame.SAVE_FILE), MAIN_BUTTON_PROPERTIES),
                         new SButton("Start Empty", () -> emptyScenario.apply(game), MAIN_BUTTON_PROPERTIES),
                         new SButton("Start Triangle", () -> triangleScenario.apply(game), MAIN_BUTTON_PROPERTIES),
                         new SButton("Start Linear", () -> linearScenario.apply(game), MAIN_BUTTON_PROPERTIES),
@@ -95,5 +97,4 @@ public class MainMenu extends SFrame {
         newGameFrame.setVisible(true);
         game.gui().addFrame(newGameFrame);
     }
-
 }

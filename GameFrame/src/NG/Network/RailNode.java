@@ -1,19 +1,21 @@
 package NG.Network;
 
 import NG.Core.Game;
+import NG.Core.GameObject;
 import NG.Tools.Vectors;
 import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * A node that connects two track pieces together
  * @author Geert van Ieperen created on 16-12-2018.
  */
-public class RailNode {
+public class RailNode implements Serializable, GameObject {
     /*
      * Representation Invariants
      * for all NetworkNodes n in aNodes {
@@ -33,7 +35,8 @@ public class RailNode {
     private final Vector3fc direction;
 
     /** type of tracks that this node connects */
-    private final TrackType type;
+    private transient TrackType type;
+    private final String typeName;
     private final NetworkNode networkNode;
 
     /** optional signal on this node */
@@ -49,6 +52,7 @@ public class RailNode {
         this.position = new Vector3f(nodePoint);
         this.direction = new Vector3f(direction.x(), direction.y(), 0).normalize();
         this.type = type;
+        this.typeName = type.toString();
         this.networkNode = networkNode;
         this.eolSignal = new Signal(this, true, false);
     }
@@ -57,6 +61,7 @@ public class RailNode {
         this.position = source.position;
         this.direction = source.direction;
         this.type = newType;
+        this.typeName = type.toString();
         this.networkNode = source.networkNode;
         this.signal = null;
         this.eolSignal = null;
@@ -148,5 +153,12 @@ public class RailNode {
 
         // assuming track is part of bDirection
         return false;
+    }
+
+    @Override
+    public void restore(Game game) {
+        if (type == null) {
+            type = game.objectTypes().getTrackByName(typeName);
+        }
     }
 }

@@ -4,11 +4,13 @@ import NG.DataStructures.Generic.Color4f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
+import java.io.Serializable;
+
 /**
  * A class that collects a number of settings. It is the only class whose fields are always initialized upon creation.
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
-public class Settings {
+public class Settings implements Serializable {
     public static final String GAME_NAME = "Trains in SPAAAACE"; // laaaaame
     public boolean DEBUG = true;
 

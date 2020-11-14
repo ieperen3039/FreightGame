@@ -2,6 +2,7 @@ package NG.Core;
 
 import NG.Camera.Camera;
 import NG.Camera.TycoonFixedCamera;
+import NG.Entities.Entity;
 import NG.GUIMenu.FrameManagers.FrameManagerImpl;
 import NG.GUIMenu.FrameManagers.UIFrameManager;
 import NG.GameMap.GameMap;
@@ -30,8 +31,7 @@ import NG.Tools.Directory;
 import NG.Tools.Logger;
 import org.joml.Vector3f;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,30 +44,32 @@ import java.util.List;
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public class FreightGame implements Game, ModLoader {
+    public static final File SAVE_FILE = Directory.savedGames.getFile("test.sav");
     private static final Version GAME_VERSION = new Version(0, 0);
 
-    private final GameTimer time;
-    private final Camera camera;
-    private final GameLoop gameState;
-    private final GameMap gameMap;
     public final RenderLoop renderer;
-    private final GameLights gameLights;
-    private final GameParticles gameParticles;
-    private final Settings settings;
     private final GLFWWindow window;
     private final MouseToolCallbacks inputHandler;
-    private final UIFrameManager frameManager;
     private final KeyControl keyControl;
-    private final ClickShader clickShader;
-    private final PlayerStatus progress;
+
+    private Thread mainThread;
+    private GameLoop gameState;
+    private GameTimer time;
+    private Camera gameCamera;
+    private GameMap gameMap;
+    private GameLights gameLights;
+    private GameParticles gameParticles;
+    private Settings settings;
+    private UIFrameManager frameManager;
+    private ClickShader clickShader;
+    private PlayerStatus progress;
+    private MainMenu mainMenu;
 
     private TypeCollection typeCollection;
-    private MainMenu mainMenu;
 
     private List<Mod> allMods;
     private List<Mod> activeMods = Collections.emptyList();
     private List<Mod> permanentMods;
-    private Thread mainThread;
 
     public FreightGame() throws IOException {
         Logger.INFO.print("Starting up the game engine...");
@@ -91,7 +93,7 @@ public class FreightGame implements Game, ModLoader {
         clickShader = new ClickShader();
         gameMap = new HeightMap();
 
-        camera = new TycoonFixedCamera(new Vector3f(), 100, 100);
+        gameCamera = new TycoonFixedCamera(new Vector3f(), 100, 100);
         renderer = new RenderLoop(settings.TARGET_FPS);
         gameState = new GameLoop(settings.TARGET_TPS, clickShader);
         gameLights = new SingleShadowMapLights();
@@ -123,7 +125,7 @@ public class FreightGame implements Game, ModLoader {
     public void init() throws Exception {
         Logger.DEBUG.print("Initializing...");
         // init all fields
-        camera.init(this);
+        gameCamera.init(this);
         renderer.init(this);
         gameState.init(this);
         gameLights.init(this);
@@ -149,7 +151,6 @@ public class FreightGame implements Game, ModLoader {
         // GUIs
         renderer.addHudItem(frameManager::draw);
 
-        frameManager.setMainGUI(new FreightGameUI(this, this));
         mainMenu = new MainMenu(this, this, renderer::stopLoop);
         frameManager.addFrameCenter(mainMenu, window);
 
@@ -199,6 +200,7 @@ public class FreightGame implements Game, ModLoader {
     public void startGame() {
         frameManager.removeElement(mainMenu);
         mainMenu = null;
+        frameManager.setMainGUI(new FreightGameUI(this, this));
 
         gameState.unPause();
     }
@@ -210,8 +212,112 @@ public class FreightGame implements Game, ModLoader {
         gameMap.cleanup();
         cleanMods();
 
+        frameManager.clear();
+
         mainMenu = new MainMenu(this, this, renderer::stopLoop);
         frameManager.addFrameCenter(mainMenu, window);
+    }
+
+    public void saveGame(File target) {
+        gameState.pause();
+        while (!gameState.isPaused()) Thread.yield();
+
+        try (
+                FileOutputStream fileOut = new FileOutputStream(target);
+                ObjectOutputStream out = new ObjectOutputStream(fileOut)
+        ) {
+            out.writeUTF(GAME_VERSION.toString());
+
+            // mods
+            out.writeInt(activeMods.size());
+            for (Mod mod : activeMods) {
+                out.writeUTF(mod.getModName());
+            }
+
+            // game aspects
+            out.writeObject(settings);
+            out.writeObject(time);
+            out.writeObject(gameCamera);
+            out.writeObject(gameMap);
+            out.writeObject(gameLights);
+            out.writeObject(gameParticles);
+
+            gameState.writeTo(out);
+
+            out.writeObject(progress);
+
+            out.writeUTF("END");
+
+            Logger.INFO.print("Game has been saved to " + Directory.workDirectory().relativize(target.toPath()));
+
+        } catch (IOException ex) {
+            Logger.ERROR.print(ex);
+
+        } finally {
+            gameState.unPause();
+        }
+    }
+
+    public void loadGame(File target) {
+        gameState.pause();
+        while (!gameState.isPaused()) Thread.yield();
+
+        try (
+                FileInputStream fileIn = new FileInputStream(target);
+                ObjectInputStream in = new ObjectInputStream(fileIn)
+        ) {
+            String version = in.readUTF();
+            Logger.INFO.printf("Reading game file of version %s (current is %s)", version, GAME_VERSION);
+
+            // mods
+            cleanMods();
+            int nrOfActiveMods = in.readInt();
+            List<Mod> modsToLoad = new ArrayList<>(nrOfActiveMods);
+            for (int i = 0; i < nrOfActiveMods; i++) {
+                String modName = in.readUTF();
+                modsToLoad.add(getModByName(modName));
+            }
+            initMods(modsToLoad);
+
+            // game aspects
+            settings = (Settings) in.readObject();
+            time = (GameTimer) in.readObject();
+            Camera camera = (Camera) in.readObject();
+            GameMap map = (GameMap) in.readObject();
+            GameLights lights = (GameLights) in.readObject();
+            GameParticles particles = (GameParticles) in.readObject();
+
+            gameState.readFrom(in);
+
+            progress = (PlayerStatus) in.readObject();
+
+            String tail = in.readUTF();
+            if (!tail.equals("END")) throw new IOException("End of save file does not align");
+
+            // init and write
+            lights.init(this);
+            particles.init(this);
+            progress.init(this);
+            camera.init(this);
+
+            gameCamera = camera;
+            gameMap = map;
+            gameLights = lights;
+            gameParticles = particles;
+
+            for (Entity entity : gameState) {
+                entity.restore(this);
+            }
+
+            Logger.INFO.print("Game state has been loaded");
+            startGame();
+
+        } catch (Exception ex) {
+            Logger.ERROR.print(ex);
+
+        } finally {
+            gameState.unPause();
+        }
     }
 
     @Override
@@ -221,7 +327,7 @@ public class FreightGame implements Game, ModLoader {
 
     @Override
     public Camera camera() {
-        return camera;
+        return gameCamera;
     }
 
     @Override
@@ -316,7 +422,7 @@ public class FreightGame implements Game, ModLoader {
         gameState.stopLoop();
         permanentMods.forEach(Mod::cleanup);
 
-        camera.cleanup();
+        gameCamera.cleanup();
         gameState.cleanup();
         gameMap.cleanup();
         gameLights.cleanup();

@@ -82,4 +82,11 @@ public abstract class Storage extends AbstractGameObject implements Entity {
     public double getDespawnTime() {
         return despawnTime;
     }
+
+    @Override
+    public void restoreFields(Game game) {
+        for (Cargo chunk : contents) {
+            chunk.restore(game);
+        }
+    }
 }

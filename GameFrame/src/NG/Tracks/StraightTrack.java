@@ -79,11 +79,11 @@ public class StraightTrack extends TrackPiece {
 
         if (length > CircleTrack.MAX_RENDER_SIZE) {
             Vector3f newDisplacement = new Vector3f(direction).mul(10);
-            this.mesh = new GeneratorResource<>(() -> type.generateStraight(newDisplacement), Mesh::dispose);
+            this.mesh = new GeneratorResource<>(() -> getType().generateStraight(newDisplacement), Mesh::dispose);
             this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(newDisplacement), Mesh::dispose);
 
         } else {
-            this.mesh = new GeneratorResource<>(() -> type.generateStraight(displacement), Mesh::dispose);
+            this.mesh = new GeneratorResource<>(() -> getType().generateStraight(displacement), Mesh::dispose);
             this.clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
         }
 
@@ -104,7 +104,7 @@ public class StraightTrack extends TrackPiece {
 
     @Override
     public float getMaximumSpeed() {
-        return type.getMaximumSpeed();
+        return getType().getMaximumSpeed();
     }
 
     @Override
@@ -183,6 +183,13 @@ public class StraightTrack extends TrackPiece {
         return new Vector3f(direction)
                 .mul(fraction * length)
                 .add(startNode.getPosition());
+    }
+
+    @Override
+    public void restoreFields(Game game) {
+        super.restoreFields(game);
+        startNode.restore(game);
+        endNode.restore(game);
     }
 
     @Override

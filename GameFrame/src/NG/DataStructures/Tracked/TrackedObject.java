@@ -1,11 +1,13 @@
 package NG.DataStructures.Tracked;
 
+import java.io.Serializable;
+
 /**
  * a class that holds a value and tracks its previous value. it does not register when any of its values is internally
  * changed
  * @param <T> the object that can be updated, for structure it should be immutable
  */
-public class TrackedObject<T> {
+public class TrackedObject<T> implements Serializable {
     private T current;
     private T previous;
 

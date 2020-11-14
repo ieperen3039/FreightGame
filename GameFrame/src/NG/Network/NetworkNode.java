@@ -5,10 +5,11 @@ import NG.Tools.Toolbox;
 import NG.Tracks.TrackPiece;
 import org.joml.Vector3f;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.Function;
 
-public class NetworkNode {
+public class NetworkNode implements Serializable {
     private final List<Direction> aDirection = new ArrayList<>(1);
     private final List<Direction> bDirection = new ArrayList<>(1);
 
@@ -608,7 +609,7 @@ public class NetworkNode {
         }
     }
 
-    public static class Direction {
+    public static class Direction implements Serializable {
         public final NetworkNode adjacent;
         public final TrackPiece trackPiece;
         public NetworkNode network;

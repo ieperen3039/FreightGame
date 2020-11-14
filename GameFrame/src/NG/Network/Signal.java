@@ -5,6 +5,7 @@ import NG.Tools.NetworkPathFinder;
 import NG.Tools.Toolbox;
 import NG.Tracks.TrackPiece;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.Function;
 
@@ -13,7 +14,7 @@ import static java.lang.Float.POSITIVE_INFINITY;
 /**
  * @author Geert van Ieperen created on 1-7-2020.
  */
-public class Signal {
+public class Signal implements Serializable {
     private static final float TRACK_OCCUPATION_PENALTY = 10f;
     /** the node where this signals is placed on */
     protected final RailNode hostNode;

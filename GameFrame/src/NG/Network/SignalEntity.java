@@ -2,7 +2,6 @@ package NG.Network;
 
 import NG.Core.Coloring;
 import NG.Core.Game;
-import NG.Core.GameObject;
 import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
 import NG.InputHandling.KeyControl;
@@ -23,7 +22,7 @@ import static NG.InputHandling.MouseTool.AbstractMouseTool.MouseAction.PRESS_ACT
 /**
  * @author Geert van Ieperen created on 26-5-2020.
  */
-public class SignalEntity extends Signal implements Entity, GameObject {
+public class SignalEntity extends Signal implements Entity {
     /** number of vertices along the circle of the ring */
     private static final int RING_RESOLUTION = 128;
     /** height of middle above the floor of the track */
@@ -141,8 +140,6 @@ public class SignalEntity extends Signal implements Entity, GameObject {
     public final void restore(Game game) {
         if (this.game == null) {
             this.game = game;
-
-            restoreFields(game);
         }
     }
 }

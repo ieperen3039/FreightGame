@@ -8,7 +8,6 @@ import NG.DataStructures.Generic.Color4f;
 import NG.Entities.Entity;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.MouseTool.MouseTool;
-import NG.Rendering.Material;
 import NG.Rendering.MatrixStack.SGL;
 import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shaders.ShaderProgram;
@@ -17,12 +16,15 @@ import org.joml.FrustumIntersection;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Stream;
 
 /**
  * A collection of entities, which manages synchronous updating and drawing.
@@ -32,7 +34,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     private final List<Entity> entities;
     private final List<Entity> newEntities;
 
-    private final Deque<Runnable> postUpdateActionQueue;
     private final ClickShader clickShader;
     private Game game;
 
@@ -41,7 +42,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         this.clickShader = clickShader;
         this.entities = new CopyOnWriteArrayList<>();
         this.newEntities = new ArrayList<>();
-        this.postUpdateActionQueue = new ConcurrentLinkedDeque<>();
     }
 
     @Override
@@ -65,7 +65,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
      * updates the server state of all objects
      */
     public void update(float deltaTime) {
-        runPostUpdateActions();
         runCleaning();
 
         game.timer().updateGameTime();
@@ -73,8 +72,6 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         game.playerStatus().update();
 
         updateEntityList();
-
-        runPostUpdateActions();
     }
 
     private synchronized void updateEntityList() {
@@ -99,7 +96,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         FrustumIntersection fic = new FrustumIntersection(viewProjection, false);
 
         for (Entity entity : entities) {
-            matShader.setMaterial(Material.PLASTIC, Color4f.MAGENTA);
+            matShader.setMaterial(Color4f.MAGENTA, Color4f.WHITE, 1);
 
 //            if (entity instanceof ColliderEntity) { // cull if possible
 //                AABBf hitbox = ((ColliderEntity) entity).getHitbox();
@@ -111,23 +108,10 @@ public class GameLoop extends AbstractGameLoop implements GameState {
         }
     }
 
-    /** executes action after a gameloop completes */
-    public void defer(Runnable action) {
-        postUpdateActionQueue.offer(action);
-    }
-
-    /** execute all actions that have been deferred */
-    private void runPostUpdateActions() {
-        Runnable runnable = postUpdateActionQueue.poll();
-        while (runnable != null) {
-            runnable.run();
-            runnable = postUpdateActionQueue.poll();
-        }
-    }
-
     /** remove all entities from the entity list that have their doRemove flag true */
     private void runCleaning() {
-        entities.removeIf(entity -> entity.isDespawnedAt(game.timer().getRenderTime()));
+        double now = game.timer().getRenderTime();
+        entities.removeIf(entity -> entity.isDespawnedAt(now));
     }
 
     @Override
@@ -174,12 +158,59 @@ public class GameLoop extends AbstractGameLoop implements GameState {
     }
 
     @Override
+    public Stream<Entity> stream() {
+        return entities.stream();
+    }
+
+    @Override
     public void cleanup() {
         synchronized (newEntities) {
             newEntities.clear();
         }
 
         entities.clear();
-        postUpdateActionQueue.clear();
+    }
+
+    @Override
+    public Iterator<Entity> iterator() {
+        return entities.iterator();
+    }
+
+    /**
+     * writes the list of entities to the given output. This method is thread-safe.
+     * @param out the output where all entities are written to
+     * @throws IOException if any entity causes an IOException. The stream is left in an undetermined state
+     */
+    public void writeTo(ObjectOutput out) throws IOException {
+        Collection<Entity> entitiesList = entities();
+        int nrEntities = entitiesList.size();
+        out.writeInt(nrEntities);
+
+        for (Entity entity : entitiesList) {
+            out.writeObject(entity);
+        }
+    }
+
+    /**
+     * reads a list of entities from the given input, assuming it was written using {@link #writeTo(ObjectOutput)}. This
+     * method should be executed while this loop is paused, or using {@link #defer(Runnable)}.
+     * @param in the input to read from
+     * @throws IOException            if any entity causes an IOException. The stream is left in an undetermined state.
+     * @throws ClassNotFoundException if the class of any entity is not loaded.
+     */
+    public void readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
+        synchronized (newEntities) {
+            newEntities.clear();
+            entities.clear();
+
+            int nrEntities = in.readInt();
+            ArrayList<Entity> list = new ArrayList<>(nrEntities);
+            for (int i = 0; i < nrEntities; i++) {
+                list.add((Entity) in.readObject());
+            }
+
+            // we do it like this, as `entities` is a `CopyOnWriteArray`
+            entities.addAll(list);
+        }
     }
 }

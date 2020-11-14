@@ -17,7 +17,7 @@ public enum Directory {
     hardMods(false, "mods_hard"),
     softMods(false, "mods_soft"),
     screenshots(false, "Screenshots"),
-    savedMaps(false, "Saved maps"),
+    savedGames(false, "Saved maps"),
     images(true, "res", "images"),
     scenarios(true, "res", "scenarios");
 

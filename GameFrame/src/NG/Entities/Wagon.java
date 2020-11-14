@@ -1,5 +1,6 @@
 package NG.Entities;
 
+import NG.Core.Game;
 import NG.DataStructures.CargoCollection;
 import NG.DataStructures.Generic.Pair;
 import NG.Freight.Cargo;
@@ -13,12 +14,14 @@ import java.util.*;
  * @author Geert van Ieperen created on 20-5-2020.
  */
 public class Wagon implements TrainElement {
-    public final Properties properties;
+    private transient Properties properties;
+    private final String typeName;
     private Collection<Cargo> contents;
-    private CargoType currentType = CargoType.NO_CARGO;
+    private transient CargoType currentType = CargoType.NO_CARGO;
 
     public Wagon(Properties properties) {
         this.properties = properties;
+        this.typeName = properties.name;
         this.contents = new ArrayList<>();
     }
 
@@ -70,27 +73,37 @@ public class Wagon implements TrainElement {
 
     @Override
     public void addContents(Cargo cargo) throws IllegalArgumentException {
-        if (!properties.capacity.containsKey(cargo.type)) {
+        if (!properties.capacity.containsKey(cargo.getType())) {
             throw new IllegalArgumentException("Tried adding cargo of wrong type");
         }
 
-        if (!contents.isEmpty() && !cargo.type.equals(currentType)) {
+        if (!contents.isEmpty() && !cargo.getType().equals(currentType)) {
             throw new IllegalArgumentException("Tried mixing cargo types");
         }
 
-        int maximum = properties.capacity.get(cargo.type);
+        int maximum = properties.capacity.get(cargo.getType());
         if (getCargoAmount() + cargo.quantity() > maximum) {
             throw new IllegalArgumentException("Tried adding more than capacity allows");
         }
 
-        currentType = cargo.type;
+        currentType = cargo.getType();
         contents.add(cargo);
     }
 
     @Override
     public double getLoadTime(Cargo cargo) {
-        int maximum = properties.capacity.get(cargo.type);
+        int maximum = properties.capacity.get(cargo.getType());
         return ((double) cargo.quantity() / maximum) * properties.loadingTime;
+    }
+
+    @Override
+    public void restore(Game game) {
+        properties = game.objectTypes().getWagonByName(typeName);
+
+        for (Cargo cargo : contents) {
+            cargo.restore(game);
+            currentType = cargo.getType();
+        }
     }
 
     public static class Properties extends TrainElement.Properties {

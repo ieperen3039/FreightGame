@@ -113,23 +113,12 @@ public class HeightMap extends GridMap {
             edgeLength = mapGenerator.getEdgeLength();
             xSize = heightmap.length;
             ySize = heightmap[0].length;
-            float meshPStep = 1f / (xSize * ySize);
 
-            List<Resource<Mesh>> worldMeshes = new ArrayList<>();
+            List<Resource<Mesh>> worldMeshes = generateMeshes(heightmap, xSize, ySize, edgeLength);
+            meshProgress = 0.5f;
 
-            // note, y in outer loop: creating rows of x
-            for (int yStart = 0; yStart < ySize; yStart += INDICES_PER_CHUNK) {
-                for (int xStart = 0; xStart < xSize; xStart += INDICES_PER_CHUNK) {
-                    int xEnd = Math.min(xStart + INDICES_PER_CHUNK, xSize - 1);
-                    int yEnd = Math.min(yStart + INDICES_PER_CHUNK, xSize - 1);
-
-                    worldMeshes.add(
-                            FlatMesh.meshFromHeightmap(heightmap, xStart, xEnd, yStart, yEnd, edgeLength)
-                    );
-
-                    meshProgress += meshPStep;
-                }
-            }
+            chunkMeshes.clear();
+            chunkMeshes.addAll(worldMeshes);
 
             for (int x = 0; x < xSize; x++) {
                 for (int y = 0; y < ySize; y++) {
@@ -138,12 +127,27 @@ public class HeightMap extends GridMap {
                 }
             }
 
-            chunkMeshes.clear();
-            chunkMeshes.addAll(worldMeshes);
-
             listeners.forEach(ChangeListener::onMapChange);
             meshProgress = 1f;
         }
+    }
+
+    private static List<Resource<Mesh>> generateMeshes(float[][] heightmap, int xSize, int ySize, float edgeLength) {
+        List<Resource<Mesh>> worldMeshes = new ArrayList<>();
+
+        // note, y in outer loop: creating rows of x
+        for (int yStart = 0; yStart < ySize; yStart += INDICES_PER_CHUNK) {
+            for (int xStart = 0; xStart < xSize; xStart += INDICES_PER_CHUNK) {
+                int xEnd = Math.min(xStart + INDICES_PER_CHUNK, xSize - 1);
+                int yEnd = Math.min(yStart + INDICES_PER_CHUNK, xSize - 1);
+
+                worldMeshes.add(
+                        FlatMesh.meshFromHeightmap(heightmap, xStart, xEnd, yStart, yEnd, edgeLength)
+                );
+            }
+        }
+
+        return worldMeshes;
     }
 
     @Override
@@ -299,12 +303,18 @@ public class HeightMap extends GridMap {
     public void readExternal(ObjectInput in) throws IOException {
         xSize = in.readInt();
         ySize = in.readInt();
+        maxHeight = Float.NEGATIVE_INFINITY;
 
         heightmap = new float[xSize][ySize];
         for (int x = 0; x < xSize; x++) {
             for (int y = 0; y < ySize; y++) {
-                heightmap[x][y] = in.readFloat();
+                float h = in.readFloat();
+
+                heightmap[x][y] = h;
+                if (h > maxHeight) maxHeight = h;
             }
         }
+
+        chunkMeshes.addAll(generateMeshes(heightmap, xSize, ySize, edgeLength));
     }
 }

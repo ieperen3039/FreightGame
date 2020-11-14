@@ -19,12 +19,14 @@ import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
+import java.io.Serializable;
+
 /**
  * A light source that is infinitely far away. Manages shadow mappings and light properties.
  * @author Dungeons-and-Drawings group
  * @author Geert van Ieperen
  */
-public class DirectionalLight {
+public class DirectionalLight implements Serializable {
     private static final float LIGHT_Z_NEAR = 0.5f;
     public static final int LIGHT_Z_FAR_MULTIPLIER = 2;
     public static final int LIGHT_CUBE_SIZE_MULTIPLIER = 2;
@@ -32,7 +34,7 @@ public class DirectionalLight {
     private final Vector3f direction;
     private float intensity;
 
-    private Resource<ShadowMap> shadowMap;
+    private Resource<ShadowMap> shadowMap = null;
 
     private Matrix4f ortho = new Matrix4f();
     private Matrix4f lightSpaceMatrix = new Matrix4f();
@@ -48,16 +50,17 @@ public class DirectionalLight {
     }
 
     /**
-     * Performing this on the OpenGL context is faster.
      * @param game a reference to the game
      * @throws ShaderException when the shader can't be initialized correctly
      */
     public void init(Game game) throws ShaderException {
-        Settings settings = game.settings();
-        int dyRes = settings.SHADOW_RESOLUTION;
+        if (shadowMap == null) {
+            Settings settings = game.settings();
+            int dyRes = settings.SHADOW_RESOLUTION;
 
-        doShadow = dyRes > 0;
-        shadowMap = new GeneratorResource<>(() -> new ShadowMap(dyRes), ShadowMap::cleanup);
+            doShadow = dyRes > 0;
+            shadowMap = new GeneratorResource<>(() -> new ShadowMap(dyRes), ShadowMap::cleanup);
+        }
     }
 
     public Vector3fc getDirectionToLight() {

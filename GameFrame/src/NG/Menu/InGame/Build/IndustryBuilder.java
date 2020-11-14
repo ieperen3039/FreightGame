@@ -34,7 +34,7 @@ public class IndustryBuilder extends AbstractMouseTool {
 
             // reset the industries of all entities
             // TODO make this less than quadratic runtime obnoxity
-            for (Entity entity : game.state().entities()) {
+            for (Entity entity : game.state()) {
                 if (entity instanceof StationImpl) {
                     StationImpl station = (StationImpl) entity;
                     station.recalculateNearbyIndustries();

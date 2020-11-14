@@ -17,4 +17,10 @@ public abstract class AbstractGameObject implements GameObject {
             restoreFields(game);
         }
     }
+
+    /**
+     * restores the fields of this game object,
+     * @param game
+     */
+    protected abstract void restoreFields(Game game);
 }

@@ -8,13 +8,14 @@ import NG.Menu.Main.MainMenu;
 import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 
+import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.Iterator;
 
 /**
  * @author Geert van Ieperen created on 22-5-2020.
  */
-public class Schedule extends AbstractCollection<ScheduleElement> {
+public class Schedule extends AbstractCollection<ScheduleElement> implements Serializable {
     private Node firstNode;
     private int size;
 
@@ -160,7 +161,7 @@ public class Schedule extends AbstractCollection<ScheduleElement> {
         size--;
     }
 
-    public static class Node {
+    public static class Node implements Serializable {
         public final ScheduleElement element;
         private Node next;
         private Node prev;

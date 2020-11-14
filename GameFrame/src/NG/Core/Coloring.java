@@ -2,6 +2,7 @@ package NG.Core;
 
 import NG.DataStructures.Generic.Color4f;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -9,8 +10,8 @@ import java.util.List;
 /**
  * @author Geert van Ieperen created on 3-9-2020.
  */
-public class Coloring {
-    List<Marking> markings = new ArrayList<>(4);
+public class Coloring implements Serializable {
+    private final List<Marking> markings = new ArrayList<>(4);
 
     public enum Priority {
         MAXIMUM, MOUSE_HOVER, OCCUPIED_TRACK, MINIMUM
@@ -44,7 +45,7 @@ public class Coloring {
         return markings.get(0).color;
     }
 
-    public static class Marking {
+    public static class Marking implements Serializable {
         public final Color4f color;
         public final Priority priority;
         private boolean isValid = true;

@@ -3,8 +3,8 @@ package NG.Particles;
 import NG.Core.Game;
 import NG.Core.GameAspect;
 import NG.Rendering.MatrixStack.SGL;
-import NG.Tools.AutoLock;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,16 +12,13 @@ import java.util.List;
  * ordinary container for particles
  * @author Geert van Ieperen created on 3-4-2019.
  */
-public class GameParticles implements GameAspect {
+public class GameParticles implements GameAspect, Serializable {
     private final List<ParticleCloud> particles;
-    private final AutoLock newLock;
     private ParticleCloud newParticles = null;
-    private Game game;
+    private transient Game game;
 
     public GameParticles() {
         this.particles = new ArrayList<>();
-
-        newLock = new AutoLock.Instance();
     }
 
     @Override
@@ -30,7 +27,7 @@ public class GameParticles implements GameAspect {
     }
 
     public void add(ParticleCloud cloud) {
-        try (AutoLock.Instance.Section ignored = newLock.open()) {
+        synchronized (this) {
             if (newParticles == null) {
                 newParticles = cloud;
             } else {
@@ -45,7 +42,7 @@ public class GameParticles implements GameAspect {
         particles.removeIf(cloud -> cloud.disposeIfFaded(now));
 
         if (newParticles != null) {
-            try (AutoLock.Section ignored = newLock.open()) {
+            synchronized (this) {
                 newParticles.granulate()
                         .peek(ParticleCloud::writeToGL)
                         .forEach(particles::add);
@@ -61,16 +58,14 @@ public class GameParticles implements GameAspect {
 
     @Override
     public void cleanup() {
-        newLock.lock();
+        synchronized (this) {
+            particles.forEach(ParticleCloud::dispose);
+            particles.clear();
 
-        particles.forEach(ParticleCloud::dispose);
-        particles.clear();
-
-        if (newParticles != null) {
-            newParticles.dispose();
-            newParticles = null;
+            if (newParticles != null) {
+                newParticles.dispose();
+                newParticles = null;
+            }
         }
-
-        newLock.unlock();
     }
 }

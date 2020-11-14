@@ -1,5 +1,6 @@
 package NG.DataStructures.Generic;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -8,7 +9,7 @@ import java.util.function.Consumer;
  * Optimized version of {@code List<Pair<L, R>>} instances. This list does not permit null values
  * @author Geert van Ieperen created on 29-6-2018.
  */
-public class PairList<L, R> extends AbstractList<Pair<L, R>> {
+public class PairList<L, R> extends AbstractList<Pair<L, R>> implements Serializable {
     private final List<L> leftList;
     private final List<R> rightList;
 

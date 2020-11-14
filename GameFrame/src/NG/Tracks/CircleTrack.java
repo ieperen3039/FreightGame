@@ -20,7 +20,6 @@ import org.joml.*;
 public class CircleTrack extends TrackPiece {
     private static final float EPSILON = 1 / 256f;
     public static final float MAX_RENDER_SIZE = 50f;
-    private final TrackType type;
     private final RailNode startNode;
     private final RailNode endNode;
 
@@ -71,7 +70,6 @@ public class CircleTrack extends TrackPiece {
         super(game, type, modifiable);
         assert startNode.getPosition().distanceSquared(endPosition) > 0 : startNode;
 
-        this.type = type;
         this.startNode = startNode;
 
         Vector3fc startPosition = startNode.getPosition();
@@ -110,11 +108,11 @@ public class CircleTrack extends TrackPiece {
         heightDiff = endPosition.z() - startPosition.z();
         if (radius * angle > MAX_RENDER_SIZE) {
             Vector3f newDisplacement = new Vector3f(startToEnd.x, startToEnd.y, heightDiff).normalize(10);
-            mesh = new GeneratorResource<>(() -> type.generateStraight(newDisplacement), Mesh::dispose);
+            mesh = new GeneratorResource<>(() -> getType().generateStraight(newDisplacement), Mesh::dispose);
             clickBox = new GeneratorResource<>(() -> TrackType.clickBoxStraight(newDisplacement), Mesh::dispose);
 
         } else {
-            mesh = new GeneratorResource<>(() -> type.generateCircle(radius, angle, heightDiff), Mesh::dispose);
+            mesh = new GeneratorResource<>(() -> getType().generateCircle(radius, angle, heightDiff), Mesh::dispose);
             clickBox = new GeneratorResource<>(() -> TrackType.clickBoxCircle(radius, angle, heightDiff), Mesh::dispose);
         }
 
@@ -171,7 +169,7 @@ public class CircleTrack extends TrackPiece {
 
     @Override
     public float getMaximumSpeed() {
-        return type.getMaximumSpeed(radius);
+        return getType().getMaximumSpeed(radius);
     }
 
     @Override

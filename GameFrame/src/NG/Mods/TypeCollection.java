@@ -50,4 +50,12 @@ public class TypeCollection {
 
         return null;
     }
+
+    public TrackType getTrackByName(String name) {
+        for (TrackType type : trackTypes) {
+            if (type.toString().equals(name)) return type;
+        }
+
+        return null;
+    }
 }

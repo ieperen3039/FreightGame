@@ -1,13 +1,21 @@
 package NG.DataStructures;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * default implementation of valuta
  * @author Geert van Ieperen created on 21-1-2019.
  */
-public class Valuta {
+public class Valuta implements Externalizable {
     public static final Valuta NOTHING = ofUnitValue(0);
 
-    private int quantity;
+    private int quantity = 0;
+
+    public Valuta() {
+    }
 
     private Valuta(int quantity) {
         this.quantity = quantity;
@@ -42,6 +50,16 @@ public class Valuta {
     public Valuta multiply(float scalar) {
         quantity *= scalar;
         return this;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeInt(quantity);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException {
+        quantity = in.readInt();
     }
 
     public static Valuta ofUnitValue(int quantity) {

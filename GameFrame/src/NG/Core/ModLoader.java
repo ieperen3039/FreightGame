@@ -2,6 +2,7 @@ package NG.Core;
 
 import NG.Mods.Mod;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -17,6 +18,18 @@ public interface ModLoader {
      * stop a game, unload all mods
      */
     void stopGame();
+
+    /**
+     * save the current state of the game to a file
+     * @param file
+     */
+    void saveGame(File file);
+
+    /**
+     * loads a game state off a file and calls {@link #startGame()}
+     * @param file
+     */
+    void loadGame(File file);
 
     /**
      * Starts the given mods. The mods must be unloaded later by {@link #cleanMods()}

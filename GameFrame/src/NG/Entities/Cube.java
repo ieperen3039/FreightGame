@@ -83,4 +83,9 @@ public class Cube extends AbstractGameObject implements Entity {
     public String toString() {
         return this.getClass().getSimpleName() + " " + id;
     }
+
+    @Override
+    public void restoreFields(Game game) {
+
+    }
 }

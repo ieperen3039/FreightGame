@@ -1,5 +1,6 @@
 package NG.Menu.InGame;
 
+import NG.Core.FreightGame;
 import NG.Core.Game;
 import NG.Core.ModLoader;
 import NG.GUIMenu.Components.*;
@@ -22,9 +23,20 @@ import static NG.Menu.Main.MainMenu.BUTTON_PROPERTIES_STRETCH;
  * @author Geert van Ieperen created on 2-9-2020.
  */
 public class FreightGameUI extends SContainer.GhostContainer {
+
     public FreightGameUI(Game game, ModLoader modLoader) {
         super(new GridLayoutManager(1, 3));
         SToolBar toolBar = new SToolBar(game, true);
+
+        toolBar.addButton("Game", () -> game.gui().addFrame(
+                new SFrame("Options", SContainer.column(
+                        new SButton("Save Game", () -> modLoader.saveGame(FreightGame.SAVE_FILE), BUTTON_PROPERTIES_STRETCH),
+                        new SButton("Exit", () -> {
+                            modLoader.saveGame(FreightGame.SAVE_FILE);
+                            modLoader.stopGame();
+                        }, BUTTON_PROPERTIES_STRETCH)
+                ))
+        ));
 
         toolBar.addButton(
                 "Build Object",
@@ -41,8 +53,9 @@ public class FreightGameUI extends SContainer.GhostContainer {
 
         toolBar.addButton("Options", () -> game.gui().addFrame(
                 new SFrame("Options", SContainer.column(
-                        new SToggleButton("Show CollisionBox", BUTTON_PROPERTIES_STRETCH, game.settings().RENDER_COLLISION_BOX)
-                                .addStateChangeListener((active -> game.settings().RENDER_COLLISION_BOX = active)),
+                        new SToggleButton("Show CollisionBox",
+                                BUTTON_PROPERTIES_STRETCH, game.settings().RENDER_COLLISION_BOX
+                        ).addStateChangeListener(active -> game.settings().RENDER_COLLISION_BOX = active),
 
                         new SButton("Dump Network", // find any networknode, and print getNetworkAsString
                                 () -> game.state().entities().stream()
@@ -75,7 +88,7 @@ public class FreightGameUI extends SContainer.GhostContainer {
                                 BUTTON_PROPERTIES_STRETCH
                         ),
 
-                        new SButton("dump light map",
+                        new SButton("Dump light map",
                                 () -> game.executeOnRenderThread(
                                         () -> game.lights().dumpShadowMap(Directory.screenshots)
                                 ),
@@ -83,12 +96,6 @@ public class FreightGameUI extends SContainer.GhostContainer {
                         )
                 ))
         ));
-
-        toolBar.addButton("Exit", () -> {
-            game.gui().clear();
-            game.gui().setMainGUI(this);
-            modLoader.stopGame();
-        });
 
         add(toolBar, new Vector2i(0, 0));
         add(new SFiller(), new Vector2i(0, 1));
