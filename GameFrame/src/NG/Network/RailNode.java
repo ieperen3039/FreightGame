@@ -4,6 +4,7 @@ import NG.Core.Game;
 import NG.Core.GameObject;
 import NG.Tools.Vectors;
 import NG.Tracks.TrackPiece;
+import NG.Tracks.TrackSupport;
 import NG.Tracks.TrackType;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -41,13 +42,14 @@ public class RailNode implements Serializable, GameObject {
 
     /** optional signal on this node */
     private SignalEntity signal = null;
+    private TrackSupport supportPillar;
 
-    public RailNode(Vector3fc nodePoint, TrackType type, Vector3fc direction) {
-        this(nodePoint, type, direction, new NetworkNode());
+    public RailNode(Game game, Vector3fc nodePoint, TrackType type, Vector3fc direction) {
+        this(game, nodePoint, type, direction, new NetworkNode());
     }
 
     public RailNode(
-            Vector3fc nodePoint, TrackType type, Vector3fc direction, NetworkNode networkNode
+            Game game, Vector3fc nodePoint, TrackType type, Vector3fc direction, NetworkNode networkNode
     ) {
         this.position = new Vector3f(nodePoint);
         this.direction = new Vector3f(direction.x(), direction.y(), 0).normalize();
@@ -55,6 +57,10 @@ public class RailNode implements Serializable, GameObject {
         this.typeName = type.toString();
         this.networkNode = networkNode;
         this.eolSignal = new Signal(this, true, false);
+        this.supportPillar = new TrackSupport(game, type, position, direction);
+
+        supportPillar.setDespawnTrigger(t -> isUnconnected());
+        game.state().addEntity(supportPillar);
     }
 
     public RailNode(RailNode source, TrackType newType) {
@@ -65,6 +71,7 @@ public class RailNode implements Serializable, GameObject {
         this.networkNode = source.networkNode;
         this.signal = null;
         this.eolSignal = null;
+        this.supportPillar = source.supportPillar;
     }
 
     public TrackType getType() {
@@ -134,6 +141,7 @@ public class RailNode implements Serializable, GameObject {
     }
 
     public boolean isUnconnected() {
+        if (networkNode == null) return true;
         return networkNode.getEntriesA().isEmpty() && networkNode.getEntriesB().isEmpty();
     }
 

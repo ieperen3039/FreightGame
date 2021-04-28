@@ -3,7 +3,6 @@ package NG.Tracks;
 import NG.Core.Game;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
-import NG.Tools.Logger;
 import NG.Tools.Vectors;
 import org.joml.Math;
 import org.joml.*;
@@ -45,7 +44,7 @@ public final class RailTools {
         Vector3f sub = new Vector3f(bPosition).sub(aPosition);
         if (sub.length() < MIN_TRACK_LENGTH) return Collections.emptyList();
 
-        return getStraightPieces(game, new RailNode(aPosition, type, sub), bPosition, null, signalDistance, signalDistance);
+        return getStraightPieces(game, new RailNode(game, aPosition, type, sub), bPosition, null, signalDistance, signalDistance);
     }
 
     /**
@@ -62,6 +61,7 @@ public final class RailTools {
 
         float length = toNew.length();
         if (length < MIN_TRACK_LENGTH) return Collections.emptyList();
+        if (length - Math.abs(toNew.z) < MIN_TRACK_LENGTH) return Collections.emptyList();
         toNew.div(length); // normalize toNew
 
         NetworkNode networkNode = node.getNetworkNode();
@@ -187,9 +187,10 @@ public final class RailTools {
             Game game, RailNode node, Vector3fc nodeDirection, Vector3fc endPosition, RailNode endNode,
             float spacing, float offset
     ) {
-        assert offset >= 0;
-        assert spacing > 0;
-        assert offset <= spacing;
+        assert offset >= 0 : offset;
+        assert spacing > 0 : spacing;
+        assert offset <= spacing : offset + " > " + spacing;
+
         if (offset == 0) {
             if (Float.isFinite(spacing)) {
                 node.addSignal(game, true);
@@ -213,7 +214,11 @@ public final class RailTools {
         int sectionsPerSignal;
         float sectionAngle;
 
-        if (spacing / circle.radius >= (float) PI * 2f) {
+        if (Float.isInfinite(spacing)) {
+            sectionAngle = MAX_CIRCLE_ANGLE_RAD;
+            sectionsPerSignal = 0;
+
+        } else if (spacing / circle.radius >= (float) PI * 2f) {
             sectionAngle = MAX_CIRCLE_ANGLE_RAD;
             sectionsPerSignal = 0;
 
@@ -300,7 +305,7 @@ public final class RailTools {
         }
 
         if (node.getPosition().distance(endPosition) < 1 / 128f) {
-            Logger.ERROR.print("Circle edge case", startToEnd, circle, sectionAngle);
+            // this has triggered in the past
             if (!tracks.isEmpty()) {
                 TrackPiece t = tracks.remove(tracks.size() - 1);
                 node = t.getStartNode();
@@ -378,7 +383,7 @@ public final class RailTools {
         TrackType type = trackPiece.getType();
         Vector3f point = trackPiece.getPositionFromFraction(fraction);
         Vector3f direction = trackPiece.getDirectionFromFraction(fraction);
-        RailNode newNode = new RailNode(point, type, direction);
+        RailNode newNode = new RailNode(game, point, type, direction);
 
         TrackPiece aConnection;
         TrackPiece bConnection;
@@ -467,7 +472,7 @@ public final class RailTools {
 
             } else {
                 Vector3f middleDirection = new Vector3f(aDirection).negate().reflect(aToB); // quick math
-                RailNode middleNode = new RailNode(middle, aNode.getType(), middleDirection);
+                RailNode middleNode = new RailNode(game, middle, aNode.getType(), middleDirection);
                 List<TrackPiece> circlePieces = getCirclePieces(game, aNode, aDirection, middle, middleNode, signalDistance, offset);
 
                 float secondOffset = getDistanceToSignal(circlePieces, offset);
@@ -507,7 +512,7 @@ public final class RailTools {
         } else if (aDistance > bDistance) {
             // situation: connect straight to A and circle to B
             Vector3f middle = getMiddlePosition(aDirection, bDirection, aPos, bPos, aDistance, bDistance);
-            RailNode middleNode = new RailNode(middle, aNode.getType(), aDirection);
+            RailNode middleNode = new RailNode(game, middle, aNode.getType(), aDirection);
 
             List<TrackPiece> straightPieces = getStraightPieces(game, aNode, middle, middleNode, signalDistance, offset);
 
@@ -522,7 +527,7 @@ public final class RailTools {
 
         } else {
             Vector3f middle = getMiddlePosition(bDirection, aDirection, bPos, aPos, bDistance, aDistance);
-            RailNode middleNode = new RailNode(middle, aNode.getType(), bDirection);
+            RailNode middleNode = new RailNode(game, middle, aNode.getType(), bDirection);
 
             List<TrackPiece> circlePieces = getCirclePieces(game, aNode, aDirection, middle, middleNode, signalDistance, offset);
 

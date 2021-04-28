@@ -41,6 +41,8 @@ public interface TrackType {
      */
     Mesh generateStraight(Vector3fc displacement);
 
+    Mesh generateSupport(float height);
+
     /**
      * sets the material properties of this track in the shader. for example: {@code shader.setMaterial(Material.ROUGH,
      * Color4f.WHITE);}
@@ -48,7 +50,7 @@ public interface TrackType {
      * @param track
      * @param color
      */
-    void setMaterial(MaterialShader shader, TrackPiece track, Color4f color);
+    void setMaterial(MaterialShader shader, TrackElement track, Color4f color);
 
     /** @return the maximum speed of a straight track */
     float getMaximumSpeed();
@@ -65,6 +67,8 @@ public interface TrackType {
     }
 
     Valuta getCostPerMeter();
+
+    float getMaxSupportLength();
 
     static Mesh clickBoxStraight(Vector3fc displacement) {
         float length = displacement.length();

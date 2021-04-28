@@ -105,6 +105,9 @@ public class CircleTrack extends TrackPiece {
         startTheta = arcTan;
         endTheta = startTheta + angle;
 
+        assert !Float.isNaN(radius) : startToEnd + " - " + startToCenter;
+        assert !Float.isNaN(angle) : vecToStart + " - " + vecToEnd;
+
         heightDiff = endPosition.z() - startPosition.z();
         if (radius * angle > MAX_RENDER_SIZE) {
             Vector3f newDisplacement = new Vector3f(startToEnd.x, startToEnd.y, heightDiff).normalize(10);
@@ -116,10 +119,9 @@ public class CircleTrack extends TrackPiece {
             clickBox = new GeneratorResource<>(() -> TrackType.clickBoxCircle(radius, angle, heightDiff), Mesh::dispose);
         }
 
-        this.endNode = (optionalEndNode != null) ? optionalEndNode : new RailNode(endPosition, type, angleToDirection(endTheta));
-
-        assert !Float.isNaN(radius) : this;
-        assert !Float.isNaN(angle) : this;
+        this.endNode = (optionalEndNode != null)
+                ? optionalEndNode
+                : new RailNode(game, endPosition, type, angleToDirection(endTheta));
 
         // calculate collision shapes
         collisionShapes = new PairList<>();
@@ -146,6 +148,10 @@ public class CircleTrack extends TrackPiece {
             collisionShapes.add(shape, transformation);
 
             oldPosition = newPosition;
+        }
+
+        for (TrackSupport s : getTrackSupports()) {
+            game.state().addEntity(s);
         }
     }
 
@@ -258,6 +264,13 @@ public class CircleTrack extends TrackPiece {
 
     public float getRadius() {
         return radius;
+    }
+
+    @Override
+    public void restoreFields(Game game) {
+        super.restoreFields(game);
+        startNode.restore(game);
+        endNode.restore(game);
     }
 
     /** @see #getCircleDescription(Vector2fc, Vector2fc, Vector2fc) */

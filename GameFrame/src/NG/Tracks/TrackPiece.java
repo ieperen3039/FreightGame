@@ -1,9 +1,7 @@
 package NG.Tracks;
 
-import NG.Core.AbstractGameObject;
 import NG.Core.Coloring;
 import NG.Core.Game;
-import NG.DataStructures.Collision.ColliderEntity;
 import NG.DataStructures.Generic.Color4f;
 import NG.InputHandling.ClickShader;
 import NG.InputHandling.KeyControl;
@@ -28,45 +26,23 @@ import static org.lwjgl.opengl.GL11.glDepthMask;
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
  */
-public abstract class TrackPiece extends AbstractGameObject implements ColliderEntity {
+public abstract class TrackPiece extends TrackElement {
     private static final Color4f OCCUPIED_COLOR = Color4f.GREY;
-    private transient TrackType type;
-    private final String typeName;
 
     private Resource<AABBf> hitbox;
     protected final boolean isModifiable;
 
-    protected double spawnTime = Double.NEGATIVE_INFINITY;
-    protected double despawnTime = Double.POSITIVE_INFINITY;
-
     private boolean doRenderClickBox = false;
     private boolean isOccupied = false;
-    private final Coloring coloring = new Coloring(Color4f.WHITE);
 
     // if any of these is occupied, this is occupied as well (needs no restoring)
     private List<TrackPiece> entangledTracks = new ArrayList<>();
 
     public TrackPiece(Game game, TrackType type, boolean modifiable) {
-        super(game);
-        this.type = type;
+        super(game, type);
         this.isModifiable = modifiable;
-        this.typeName = type.toString();
 
         hitbox = new GeneratorResource<>(this::computeHitbox);
-    }
-
-    @Override
-    public void restoreFields(Game game) {
-        type = game.objectTypes().getTrackByName(typeName);
-    }
-
-    @Override
-    public UpdateFrequency getUpdateFrequency() {
-        return UpdateFrequency.NEVER;
-    }
-
-    public TrackType getType() {
-        return type;
     }
 
     /**
@@ -131,25 +107,6 @@ public abstract class TrackPiece extends AbstractGameObject implements ColliderE
 
     }
 
-    public void setMarking(Coloring.Marking marking) {
-        this.coloring.addMark(marking);
-    }
-
-    @Override
-    public void despawn(double gameTime) {
-        despawnTime = gameTime;
-    }
-
-    @Override
-    public double getSpawnTime() {
-        return spawnTime;
-    }
-
-    @Override
-    public double getDespawnTime() {
-        return despawnTime;
-    }
-
     public abstract float getFractionOfClosest(Vector3fc origin, Vector3fc direction);
 
     public abstract Vector3f getPositionFromFraction(float fraction);
@@ -207,4 +164,28 @@ public abstract class TrackPiece extends AbstractGameObject implements ColliderE
         trackPiece.entangledTracks.add(track);
         track.entangledTracks.add(trackPiece);
     }
+
+    /**
+     * generates and returns all supports necessary for this piece of track, except for the begin and end. These
+     * supports are not yet added to the game state
+     */
+    protected List<TrackSupport> getTrackSupports() {
+        TrackType type = getType();
+        float trackLength = getLength();
+        int nrSupports = (int) (trackLength / type.getMaxSupportLength()) + 1;
+        List<TrackSupport> list = new ArrayList<>();
+
+        for (int i = 1; i < nrSupports; i++) {
+            float fraction = (float) i / nrSupports;
+            Vector3f position = getPositionFromFraction(fraction);
+            Vector3f direction = getDirectionFromFraction(fraction);
+
+            TrackSupport support = new TrackSupport(game, type, position, direction);
+            support.setDespawnTrigger(this::isDespawnedAt);
+            list.add(support);
+        }
+
+        return list;
+    }
+
 }

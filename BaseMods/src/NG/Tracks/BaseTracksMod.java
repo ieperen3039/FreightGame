@@ -31,7 +31,7 @@ public class BaseTracksMod implements Mod {
 
     @Override
     public String getModName() {
-        return "BaseTracks";
+        return "Base Tracks";
     }
 
     @Override
@@ -78,8 +78,69 @@ public class BaseTracksMod implements Mod {
         }
 
         @Override
+        public Mesh generateSupport(float height) {
+            height -= HEIGHT;
+            CustomShape frame = new CustomShape();
+            float baseHSize = 0.2f;
+            float pillarHSize = 0.1f;
+            float floor = 0;
+            float bottomSupport = Math.min(0.5f, height);
+
+            Vector3f a = new Vector3f(baseHSize, baseHSize, -1);
+            Vector3f b = new Vector3f(baseHSize, -baseHSize, -1);
+            Vector3f c = new Vector3f(-baseHSize, -baseHSize, -1);
+            Vector3f d = new Vector3f(-baseHSize, baseHSize, -1);
+
+            Vector3f a2 = new Vector3f();
+            Vector3f b2 = new Vector3f();
+            Vector3f c2 = new Vector3f();
+            Vector3f d2 = new Vector3f();
+
+            // underground base
+            a.z = floor;
+            b.z = floor;
+            c.z = floor;
+            d.z = floor;
+            addPillarLayer(frame, a, b, c, d, a2, b2, c2, d2);
+
+            // base support
+            a.set(pillarHSize, pillarHSize, bottomSupport);
+            b.set(pillarHSize, -pillarHSize, bottomSupport);
+            c.set(-pillarHSize, -pillarHSize, bottomSupport);
+            d.set(-pillarHSize, pillarHSize, bottomSupport);
+            addPillarLayer(frame, a, b, c, d, a2, b2, c2, d2);
+
+            // pillar
+            if (bottomSupport < height) {
+                a.z = height;
+                b.z = height;
+                c.z = height;
+                d.z = height;
+                addPillarLayer(frame, a, b, c, d, a2, b2, c2, d2);
+            }
+
+            // close top
+            frame.addQuad(a, b, c, d);
+            return frame.toFlatMesh();
+        }
+
+        private void addPillarLayer(
+                CustomShape frame, Vector3f a, Vector3f b, Vector3f c, Vector3f d, Vector3f a2, Vector3f b2,
+                Vector3f c2, Vector3f d2
+        ) {
+            frame.addQuad(a, b, b2, a2);
+            frame.addQuad(b, c, c2, b2);
+            frame.addQuad(c, d, d2, c2);
+            frame.addQuad(d, a, a2, d2);
+            a2.set(a);
+            b2.set(b);
+            c2.set(c);
+            d2.set(d);
+        }
+
+        @Override
         public void setMaterial(
-                MaterialShader shader, TrackPiece track, Color4f color
+                MaterialShader shader, TrackElement track, Color4f color
         ) {
             shader.setMaterial(Material.ROUGH, color);
         }
@@ -93,5 +154,11 @@ public class BaseTracksMod implements Mod {
         public Valuta getCostPerMeter() {
             return Valuta.ofUnitValue(1);
         }
+
+        @Override
+        public float getMaxSupportLength() {
+            return 2.0f;
+        }
     }
+
 }

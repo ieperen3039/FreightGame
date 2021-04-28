@@ -7,10 +7,15 @@ import NG.Freight.Cargo;
 import NG.Mods.CargoType;
 import NG.Network.NetworkPosition;
 import NG.Tools.Toolbox;
+import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Consumer;
+
+import static org.joml.Math.cos;
+import static org.joml.Math.sin;
 
 /**
  * A station
@@ -53,4 +58,21 @@ public interface Station extends GameObject, ColliderEntity, NetworkPosition {
     Valuta sell(Cargo cargo);
 
     void addTrain(Train train);
+
+    void forEachCorner(Consumer<Vector3fc> action);
+
+    static void forEachCorner(
+            Vector3fc position, float length, float orientation, float width, Consumer<Vector3fc> action
+    ) {
+        float oSin = sin(orientation);
+        float oCos = cos(orientation);
+        Vector3fc forward = new Vector3f(oCos, oSin, 0).normalize(length / 2f);
+        Vector3fc toRight = new Vector3f(oSin, -oCos, 0).normalize(width / 2f);
+
+        Vector3f point = new Vector3f();
+        action.accept(point.set(position).add(forward).add(toRight));
+        action.accept(point.set(position).add(forward).sub(toRight));
+        action.accept(point.set(position).sub(forward).add(toRight));
+        action.accept(point.set(position).sub(forward).sub(toRight));
+    }
 }

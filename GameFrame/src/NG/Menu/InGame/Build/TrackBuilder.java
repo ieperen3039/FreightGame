@@ -128,7 +128,7 @@ public class TrackBuilder extends AbstractMouseTool {
 
                 } else if (firstPosition != null) {
                     Vector3f toNode = new Vector3f(cursorPosition).sub(firstPosition);
-                    RailNode ghostNode = new RailNode(firstPosition, ghostType, toNode, null);
+                    RailNode ghostNode = new RailNode(game, firstPosition, ghostType, toNode, null);
                     StraightTrack track = new StraightTrack(game, ghostType, ghostNode, cursorPosition, true);
                     checkCollisions(Collections.singletonList(track));
 
@@ -153,7 +153,7 @@ public class TrackBuilder extends AbstractMouseTool {
                     boolean doContinueBuilding = true;
 
                     float fraction = getFraction(trackPiece, origin, direction);
-                    RailNode targetNode = getIfParallel(origin, direction, trackPiece, fraction);
+                    RailNode targetNode = getIfParallel(origin, direction, trackPiece, fraction, game);
 
                     if (targetNode == null) {
                         doContinueBuilding = false;
@@ -208,7 +208,7 @@ public class TrackBuilder extends AbstractMouseTool {
                         }
 
                     } else {
-                        RailNode ghostNodeTarget = getIfParallel(origin, direction, trackPiece, fraction);
+                        RailNode ghostNodeTarget = getIfParallel(origin, direction, trackPiece, fraction, game);
 
                         if (ghostNodeTarget == null) {
                             ghostNodeTarget = getIfExisting(game, trackPiece, fraction);
@@ -218,7 +218,7 @@ public class TrackBuilder extends AbstractMouseTool {
                         if (ghostNodeTarget == null) {
                             Vector3f pos = trackPiece.getPositionFromFraction(fraction);
                             Vector3f dir = trackPiece.getDirectionFromFraction(fraction);
-                            ghostNodeTarget = new RailNode(pos, ghostType, dir);
+                            ghostNodeTarget = new RailNode(game, pos, ghostType, dir);
 
                         } else {
                             // make it a ghost type
@@ -346,7 +346,7 @@ public class TrackBuilder extends AbstractMouseTool {
     }
 
     protected static RailNode getIfParallel(
-            Vector3fc origin, Vector3fc direction, TrackPiece trackPiece, float fraction
+            Vector3fc origin, Vector3fc direction, TrackPiece trackPiece, float fraction, Game game
     ) {
         Vector3f trackPoint = trackPiece.getPositionFromFraction(fraction);
         float t = (trackPoint.z - origin.z()) / direction.z();
@@ -359,7 +359,7 @@ public class TrackBuilder extends AbstractMouseTool {
         Vector3f nodePoint = vecOut.add(trackPoint);
         Vector3f trackDirection = trackPiece.getDirectionFromFraction(fraction);
 
-        return new RailNode(nodePoint, trackPiece.getType(), trackDirection);
+        return new RailNode(game, nodePoint, trackPiece.getType(), trackDirection);
     }
 
     protected static RailNode getIfExisting(Game game, TrackPiece trackPiece, float fraction) {

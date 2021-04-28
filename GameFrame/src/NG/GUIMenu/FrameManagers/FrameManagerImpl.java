@@ -309,9 +309,16 @@ public class FrameManagerImpl implements UIFrameManager {
 
     @Override
     public void onScroll(float value) {
-        if (hoveredComponent instanceof MouseScrollListener) {
-            MouseScrollListener listener = (MouseScrollListener) hoveredComponent;
-            listener.onScroll(value);
+        SComponent target = hoveredComponent;
+
+        while (target != null) {
+            if (target instanceof MouseScrollListener) {
+                MouseScrollListener listener = (MouseScrollListener) hoveredComponent;
+                listener.onScroll(value);
+                break;
+            }
+
+            target = target.getParent().orElse(null);
         }
     }
 

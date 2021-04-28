@@ -23,7 +23,6 @@ import NG.Rendering.Shaders.MaterialShader;
 import NG.Rendering.Shapes.GenericShapes;
 import NG.Rendering.Shapes.Shape;
 import NG.Settings.Settings;
-import NG.Tools.Vectors;
 import NG.Tracks.StraightTrack;
 import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
@@ -31,6 +30,7 @@ import org.joml.Math;
 import org.joml.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * A basic implementation of a station. There is likely no need for another station
@@ -159,11 +159,11 @@ public class StationImpl extends Storage implements Station {
 
         // both nodes have direction to inside the station
         SpecialNetworkNode ANode = new SpecialNetworkNode(this);
-        forwardConnections[index] = new RailNode(aPos, type, AToB, ANode);
+        forwardConnections[index] = new RailNode(game, aPos, type, AToB, ANode);
         nodes.add(new Pair<>(ANode, false));
 
         SpecialNetworkNode BNode = new SpecialNetworkNode(this);
-        backwardConnections[index] = new RailNode(bPos, type, BToA, BNode);
+        backwardConnections[index] = new RailNode(game, bPos, type, BToA, BNode);
         nodes.add(new Pair<>(BNode, false));
     }
 
@@ -176,7 +176,7 @@ public class StationImpl extends Storage implements Station {
         gl.pushMatrix();
         {
             gl.translate(getPosition());
-            gl.rotate(Vectors.Z, orientation);
+            gl.rotateXYZ(0, 0, orientation);
 
             MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.YELLOW));
             gl.pushMatrix();
@@ -323,6 +323,11 @@ public class StationImpl extends Storage implements Station {
     @Override
     public PairList<Shape, Matrix4fc> getConvexCollisionShapes() {
         return collisionShape;
+    }
+
+    @Override
+    public void forEachCorner(Consumer<Vector3fc> action) {
+        Station.forEachCorner(getPosition(), length, orientation, realWidth, action);
     }
 
     protected class StationUI extends SFrame {

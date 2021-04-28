@@ -60,9 +60,9 @@ public class StraightTrack extends TrackPiece {
      * create a new straight piece of track between the two given nodes. The connection is automatically registered.
      * @param type            type of the track
      * @param startNode       one node to connect
-     * @param endNode         another no to connect
-     * @param endNodePosition
-     * @param modifiable      sets the canBeModified flag
+     * @param endNode         another node to connect, or null if a new node should be generated
+     * @param endNodePosition the position of endNode
+     * @param modifiable      sets the canBeModified flag of the track
      */
     public StraightTrack(
             Game game, TrackType type, RailNode startNode, RailNode endNode, Vector3fc endNodePosition,
@@ -75,7 +75,7 @@ public class StraightTrack extends TrackPiece {
         Vector3fc displacement = new Vector3f(endNodePosition).sub(startNodePosition);
         this.length = displacement.length();
         this.direction = new Vector3f(displacement).div(length);
-        this.endNode = endNode != null ? endNode : new RailNode(endNodePosition, type, direction);
+        this.endNode = endNode != null ? endNode : new RailNode(game, endNodePosition, type, direction);
 
         if (length > CircleTrack.MAX_RENDER_SIZE) {
             Vector3f newDisplacement = new Vector3f(direction).mul(10);
@@ -98,6 +98,10 @@ public class StraightTrack extends TrackPiece {
                 .scale(0.5f) // as we transform a 2x2x2 cube
                 .translate(1, 0, 1);
         collisionShapes.add(shape, transformation);
+
+        for (TrackSupport s : getTrackSupports()) {
+            game.state().addEntity(s);
+        }
 
         assert check(startNode, this.endNode, direction);
     }

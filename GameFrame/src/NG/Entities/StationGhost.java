@@ -28,11 +28,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static NG.Entities.StationImpl.HEIGHT_BELOW_STATION;
 import static NG.Entities.StationImpl.PLATFORM_SIZE;
-import static org.joml.Math.cos;
-import static org.joml.Math.sin;
 
 /**
  * A basic implementation of a station. There is likely no need for another station
@@ -175,18 +174,16 @@ public class StationGhost extends AbstractGameObject implements Station {
 
     @Override
     public AABBf getHitbox() {
-        Vector3fc forward = new Vector3f(cos(orientation), sin(orientation), 0).normalize(length / 2f);
-        Vector3fc toRight = new Vector3f(sin(orientation), -cos(orientation), 0).normalize(realWidth / 2f);
-
         AABBf hitbox = new AABBf();
-        Vector3f point = new Vector3f();
-        hitbox.union(point.set(position).add(forward).add(toRight));
-        hitbox.union(point.set(position).add(forward).sub(toRight));
-        hitbox.union(point.set(position).sub(forward).add(toRight));
-        hitbox.union(point.set(position).sub(forward).sub(toRight));
+        forEachCorner(hitbox::union);
         hitbox.minZ = position.z() - HEIGHT_BELOW_STATION;
         hitbox.maxZ = position.z() + HEIGHT;
         return hitbox;
+    }
+
+    @Override
+    public void forEachCorner(Consumer<Vector3fc> action) {
+        Station.forEachCorner(position, length, orientation, realWidth, action);
     }
 
     @Override

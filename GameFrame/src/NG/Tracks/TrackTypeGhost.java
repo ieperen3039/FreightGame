@@ -51,8 +51,13 @@ public class TrackTypeGhost implements TrackType {
     }
 
     @Override
+    public Mesh generateSupport(float height) {
+        return Mesh.EMPTY_MESH;
+    }
+
+    @Override
     public void setMaterial(
-            MaterialShader shader, TrackPiece track, Color4f color
+            MaterialShader shader, TrackElement track, Color4f color
     ) {
         shader.setMaterial(new Color4f(1, 1, 1, 0.5f), color, 0);
     }
@@ -65,5 +70,10 @@ public class TrackTypeGhost implements TrackType {
     @Override
     public Valuta getCostPerMeter() {
         return Valuta.ofUnitValue(1);
+    }
+
+    @Override
+    public float getMaxSupportLength() {
+        return source.getMaxSupportLength();
     }
 }

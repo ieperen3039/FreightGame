@@ -169,7 +169,7 @@ public class FreightGame implements Game, ModLoader {
 
         // init mods
         for (Mod mod : activeMods) {
-            assert mod != null;
+            assert mod != null : activeMods;
 
             try {
                 assert !(mod instanceof InitialisationMod) : "Init mods should not be loaded here";

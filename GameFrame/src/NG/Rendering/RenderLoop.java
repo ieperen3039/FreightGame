@@ -89,7 +89,10 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
         game.timer().updateRenderTime();
 
         GLFWWindow window = game.window();
-        if (window.getWidth() == 0 || window.getHeight() == 0) return;
+        if (window.getWidth() == 0 || window.getHeight() == 0) {
+            window.update();
+            return;
+        }
 
         // camera
         game.camera().updatePosition(deltaTime); // real-time deltatime
