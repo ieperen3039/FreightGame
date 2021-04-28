@@ -1,5 +1,8 @@
 package NG.InputHandling;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.lwjgl.glfw.GLFW.*;
 
 /**
@@ -10,14 +13,26 @@ public class KeyControl implements KeyPressListener, KeyReleaseListener {
     private boolean isControlPressed;
     private boolean isAltPressed;
 
+    private final Map<Integer, Runnable> keyListeners = new HashMap<>();
+
     @Override
     public void keyPressed(int keyCode) {
         setKey(keyCode, true);
+        Runnable runnable = keyListeners.get(keyCode);
+        if (runnable != null) runnable.run();
     }
 
     @Override
     public void keyReleased(int keyCode) {
         setKey(keyCode, false);
+    }
+
+    public void addKeyListener(int keyCode, Runnable action) {
+        keyListeners.put(keyCode, action);
+    }
+
+    public void removeKeyListener(int keyCode) {
+        keyListeners.remove(keyCode);
     }
 
     private void setKey(int keyCode, boolean pressed) {

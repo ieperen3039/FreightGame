@@ -335,6 +335,8 @@ public class ClickShader implements ShaderProgram {
 
         @Override
         public void render(Mesh object, Entity sourceEntity) {
+            if (sourceEntity == null) return; // ignore non-entity drawings
+
             setEntity(sourceEntity);
             setProjectionMatrix(viewProjectionMatrix);
             setModelMatrix(getModelMatrix());

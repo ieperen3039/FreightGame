@@ -17,8 +17,8 @@ import static NG.GUIMenu.Rendering.NVGOverlay.Alignment.*;
  * @author Geert van Ieperen. Created on 21-9-2018.
  */
 public class BaseLF implements SFrameLookAndFeel {
-    private static final int INDENT = 5;
-    private static final int BUTTON_INDENT = 8;
+    private static final int INDENT = 3;
+    private static final int BUTTON_INDENT = 5;
     private static final int STROKE_WIDTH = 2;
 
     private static final NGFonts FONT = ORBITRON_MEDIUM;

@@ -9,6 +9,7 @@ import NG.GUIMenu.Rendering.NGFonts;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
 import NG.Menu.Main.MainMenu;
+import NG.Tracks.TrackPiece;
 import NG.Tracks.TrackType;
 
 import java.util.ArrayList;
@@ -22,17 +23,30 @@ public class TrainConstructionMenu extends SFrame {
     public static final SComponentProperties PROPERTIES_COMPONENT_PROPERTIES = new SComponentProperties(
             200, 0, false, true, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT_TOP
     );
+    public static final SComponentProperties TRAIN_ELEMENT_BUTTON_PROPS = new SComponentProperties(
+            200, 30, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
+    );
+
     private static int id = 1;
 
     private final Game game;
     private final Station targetPlace;
     private final Train construction;
     private final Valuta costs = Valuta.ofUnitValue(0);
+    private final float maxSize;
+    private final STextArea messageElement;
 
     public TrainConstructionMenu(Game game, Station place) {
         super("New Train");
         this.game = game;
         targetPlace = place;
+
+        float tMaxSize = 0;
+        for (TrackPiece track : place.getTracks()) {
+            float length = track.getLength();
+            if (length > tMaxSize) tMaxSize = length;
+        }
+        maxSize = tMaxSize;
 
         double gameTime = game.timer().getGameTime();
         construction = new Train(game, id++, gameTime, place);
@@ -72,7 +86,7 @@ public class TrainConstructionMenu extends SFrame {
                     locoButtons.add(new SButton(
                             loco.toString(),
                             () -> trainTabArea.show(trainPanel),
-                            MainMenu.BUTTON_PROPERTIES_STATIC
+                            TRAIN_ELEMENT_BUTTON_PROPS
                     ));
                 }
             }
@@ -105,7 +119,7 @@ public class TrainConstructionMenu extends SFrame {
                     wagonButtons.add(new SButton(
                             wagon.toString(),
                             () -> wagonTabArea.show(wagonPanel),
-                            MainMenu.BUTTON_PROPERTIES_STATIC
+                            TRAIN_ELEMENT_BUTTON_PROPS
                     ));
                 }
             }
@@ -129,9 +143,12 @@ public class TrainConstructionMenu extends SFrame {
                 MainMenu.BUTTON_PROPERTIES_STRETCH
         );
 
+        messageElement = new STextArea("", MainMenu.TEXT_PROPERTIES);
+
         setMainPanel(SContainer.column(
                 typeSelectionTabs,
                 trainDisplay,
+                messageElement,
                 SContainer.row(
                         new SButton("Build this", this::confirmAndClose, MainMenu.BUTTON_PROPERTIES_STATIC),
                         new SButton("Remove Last", this::removeLast, MainMenu.BUTTON_PROPERTIES_STATIC)
@@ -153,9 +170,18 @@ public class TrainConstructionMenu extends SFrame {
     private void removeLast() {
         TrainElement elt = construction.removeLastElement();
         costs.removeUnits(elt.getProperties().buildCost);
+        messageElement.setText("Element Removed");
     }
 
     private void add(TrainElement elt) {
+        if (construction.getLength() + elt.getProperties().length > maxSize) {
+            messageElement.setText("Train is too long for that element");
+            return;
+
+        } else {
+            messageElement.setText("Element Added");
+        }
+
         costs.addUnits(elt.getProperties().buildCost);
         construction.addElement(elt);
     }

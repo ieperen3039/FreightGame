@@ -5,6 +5,7 @@ import NG.Core.ModLoader;
 import NG.Entities.Industry;
 import NG.Entities.StationImpl;
 import NG.GameMap.DefaultMapGenerator;
+import NG.GameMap.GameMap;
 import NG.GameMap.MapGeneratorMod;
 import NG.Mods.Mod;
 import NG.Mods.TypeCollection;
@@ -54,13 +55,14 @@ public class LinearConnectionSc extends Scenario {
         Vector3f aSide = new Vector3f(-DISTANCE, DISTANCE, 0);
         Vector3f bSide = new Vector3f(DISTANCE, -DISTANCE, 0);
 
-        Vector2f center = new Vector2f(game.map().getSize()).mul(0.5f);
+        GameMap map = game.map();
+        Vector2f center = new Vector2f(map.getSize()).mul(0.5f);
 
         Industry aIndustry = new Industry(game, getGroundPos(game, center, aSide).add(INDUSTRY_DIST, INDUSTRY_DIST, 0), 0, allTypes
-                .getIndustryByName("oil well"));
+                .getIndustryByName("diamond mine"));
         game.state().addEntity(aIndustry);
         Industry bIndustry = new Industry(game, getGroundPos(game, center, bSide).add(-INDUSTRY_DIST, -INDUSTRY_DIST, 0), 0, allTypes
-                .getIndustryByName("refinery"));
+                .getIndustryByName("diamond ore refinery"));
         game.state().addEntity(bIndustry);
 
         StationImpl aStation = new StationImpl(game, 2, 6, type, getGroundPos(game, center, aSide), toRadians(-45), 0);
@@ -75,17 +77,17 @@ public class LinearConnectionSc extends Scenario {
         aNodes.forEach(node -> node.addSignal(game, false));
         bNodes.forEach(node -> node.addSignal(game, false));
 
-        RailNode aLeaveNode = new RailNode(getGroundPos(game, center, new Vector3f(aSide).mul(0.5f)
+        RailNode aLeaveNode = new RailNode(game, getGroundPos(game, center, new Vector3f(aSide).mul(0.5f)
                 .add(-SIGNAL_OFFSET, -SIGNAL_OFFSET, 0)), type, bSide);
         aLeaveNode.addSignal(game, true);
-        RailNode aEnterNode = new RailNode(getGroundPos(game, center, new Vector3f(aSide).mul(0.5f)
+        RailNode aEnterNode = new RailNode(game, getGroundPos(game, center, new Vector3f(aSide).mul(0.5f)
                 .add(SIGNAL_OFFSET, SIGNAL_OFFSET, 0)), type, bSide);
         aEnterNode.addSignal(game, false).allowOppositeTraffic(false);
 
-        RailNode bLeaveNode = new RailNode(getGroundPos(game, center, new Vector3f(bSide).mul(0.5f)
+        RailNode bLeaveNode = new RailNode(game, getGroundPos(game, center, new Vector3f(bSide).mul(0.5f)
                 .add(SIGNAL_OFFSET, SIGNAL_OFFSET, 0)), type, aSide);
         bLeaveNode.addSignal(game, true);
-        RailNode bEnterNode = new RailNode(getGroundPos(game, center, new Vector3f(bSide).mul(0.5f)
+        RailNode bEnterNode = new RailNode(game, getGroundPos(game, center, new Vector3f(bSide).mul(0.5f)
                 .add(-SIGNAL_OFFSET, -SIGNAL_OFFSET, 0)), type, aSide);
         bEnterNode.addSignal(game, false).allowOppositeTraffic(false);
 

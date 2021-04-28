@@ -1,5 +1,5 @@
 {
-  "set_name": "Base Mods",
+  "set_name": "Base Elements",
   "version": "v 0.0",
   "locomotives": {
     "Little Red Diesel": {
@@ -42,21 +42,21 @@
       // in units per second (1/10th of a dollar)
       "maintenance_ps": 0,
       "cargo_types": {
-        "oil": 10,
-        "fuel": 10
+        "diamond ore": 10,
+        "diamonds": 10
       }
     }
   },
   "cargo": {
-    "oil": {
+    "diamond ore": {
       // unit sell price per day in transit
-      "price": [1.0, 0.95],
+      "price": [1.0, 0.99],
       // in units valuta per unit of cargo
       "minimum_price": 1
     },
-    "fuel": {
+    "diamonds": {
       // unit sell price per day in transit
-      "price": [1.0, 0.95],
+      "price": [1.0, 0.99],
       // in units valuta per unit of cargo
       "minimum_price": 2
     },
@@ -68,14 +68,14 @@
     }
   },
   "industries": {
-    "oil well": {
+    "diamond mine": {
       // relative path
       "mesh": "Industry.ply",
       // the rule determines accepted and produced cargo
       "rule": {
         "out": {
           // in units per rule
-          "oil": 3
+          "diamond ore": 3
         },
         // in rules per second
         "rate": 1
@@ -83,17 +83,17 @@
       // in total units per type
       "max_cargo": 100
     },
-    "refinery": {
+    "diamond ore refinery": {
       // relative path
       "mesh": "Industry.ply",
       "rule": {
         "in": {
           // in units per rule
-          "oil": 3
+          "diamond ore": 3
         },
         "out": {
           // in units per rule
-          "fuel": 1
+          "diamonds": 1
         },
         // in rules per second
         "rate": 2
@@ -107,7 +107,7 @@
       "rule": {
         "out": {
           // in units per rule
-          "fuel": 1
+          "diamonds": 1
         },
         // in rules per second
         "rate": 100

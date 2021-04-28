@@ -42,7 +42,7 @@ public class BuildMenu extends SFrame {
 
         SToggleButton buildTrain = new SToggleButton("Build Train", BUTTON_PROPERTIES);
         buildTrain.addStateChangeListener((active) ->
-                game.inputHandling().setMouseTool(active ? new TrainBuilder(game, buildTrain) : null)
+                game.inputHandling().setMouseTool(active ? new InstantTrainBuilder(game, buildTrain) : null)
         );
 
         SToggleButton removeElement = new SToggleButton("Remove", BUTTON_PROPERTIES);

@@ -6,6 +6,7 @@ import NG.Entities.Entity;
 import NG.Entities.Station;
 import NG.Entities.StationGhost;
 import NG.GUIMenu.Components.*;
+import NG.GameMap.GameMap;
 import NG.InputHandling.MouseTool.AbstractMouseTool;
 import NG.Menu.Main.MainMenu;
 import NG.Rendering.Material;
@@ -38,7 +39,6 @@ public class StationBuilder extends AbstractMouseTool {
     private static final Map<Float, Resource<Mesh>> meshes = new HashMap<>();
 
     private static final String[] numbers = new String[12];
-    protected final Runnable deactivation;
 
     static {
         for (int i = 0; i < numbers.length; i++) {
@@ -46,12 +46,15 @@ public class StationBuilder extends AbstractMouseTool {
         }
     }
 
+    protected final Runnable deactivation;
+
     private final StationGhost station;
     private final TrackType trackType;
     private final SizeSelector selector;
     private boolean isPositioned = false;
     private final Vector3f cursorPosition = new Vector3f();
     private boolean cursorIsOnMap = false;
+    private Vector3fc placementPos;
 
     public StationBuilder(Game game, SToggleButton source, TrackType trackType) {
         super(game);
@@ -78,25 +81,38 @@ public class StationBuilder extends AbstractMouseTool {
     public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
         switch (getMouseAction()) {
             case PRESS_ACTIVATE:
+                placementPos = position;
                 station.setPosition(position);
                 cursorPosition.set(position);
                 isPositioned = true;
-                break;
+//                break; // fallthrough to set off the ground
 
             case DRAG_ACTIVATE:
                 if (!isPositioned) return;
-                Vector3fc stationPos = station.getPosition();
 
-                // Planef plane = new Planef(station.getPosition(), Vectors.Z);
-                // float f = Intersectionf.intersectRayPlane(ray, plane, EPSILON);
+                // get relative direction that the player points to
+                /* The following is an optimized version of:
+                 * Planef plane = new Planef(station.getPosition(), Vectors.Z);
+                 * float f = Intersectionf.intersectRayPlane(ray, plane, EPSILON);
+                 */
                 float f = Intersectionf.intersectRayPlane(
                         origin.x(), origin.y(), origin.z(), direction.x(), direction.y(), direction.z(),
-                        0, 0, 1, -stationPos.z(), EPSILON
+                        0, 0, 1, -placementPos.z(), EPSILON
                 );
                 Vector3f point = new Vector3f(direction).mul(f).add(origin);
 
-                Vector2f direction2D = new Vector2f(point.x - stationPos.x(), point.y - stationPos.y());
+                Vector2f direction2D = new Vector2f(point.x - placementPos.x(), point.y - placementPos.y());
                 station.setOrientation(Vectors.arcTan(direction2D));
+
+                // get the minimum elevation of the station
+                GameMap map = game.map();
+                Vector3f newPos = new Vector3f(placementPos);
+                station.forEachCorner(pos -> {
+                    float height = map.getHeightAt(pos.x(), pos.y());
+                    if (newPos.z < height) newPos.z = height;
+                });
+                station.setPosition(newPos);
+
                 break;
 
             case HOVER:

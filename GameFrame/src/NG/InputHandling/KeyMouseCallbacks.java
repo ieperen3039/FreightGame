@@ -1,7 +1,5 @@
 package NG.InputHandling;
 
-import NG.Camera.TycoonFixedCamera;
-
 /**
  * A class that allows binding callbacks of key and mouse listeners.
  * @author Geert van Ieperen. Created on 18-11-2018.
@@ -10,7 +8,7 @@ public interface KeyMouseCallbacks {
     /**
      * @param listener when the mouse moves, the {@link MousePositionListener#mouseMoved2(int, int)} method is called
      */
-    void addMousePositionListener(TycoonFixedCamera listener);
+    void addMousePositionListener(MouseMoveListener listener);
 
     void addMouseScrollListener(MouseScrollListener listener);
 

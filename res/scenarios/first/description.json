@@ -3,27 +3,27 @@
   "map_edge_length": 0.5,
   // a list of mod names to load
   "mods": [
-    "Base Mods"
+    "Base Elements", "Base Tracks"
   ],
   // all industries on the map in an array
   "industries": [
     {
-      "type": "oil well",
+      "type": "diamond mine",
       "position": [100.0, 20.0]
     }, {
-      "type": "oil well",
+      "type": "diamond mine",
       "position": [80.0, 40.0]
     }, {
-      "type": "oil well",
+      "type": "diamond mine",
       "position": [100.0, 80.0]
     }, {
-      "type": "oil well",
+      "type": "diamond mine",
       "position": [75.0, 90.0]
     }, {
-      "type": "refinery",
+      "type": "diamond ore refinery",
       "position": [20.0, 40.0]
     }, {
-      "type": "refinery",
+      "type": "diamond ore refinery",
       "position": [23.0, 50.0]
     }, {
       "type": "export hub",

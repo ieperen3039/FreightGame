@@ -55,7 +55,7 @@ public class SignalBuilder extends AbstractMouseTool {
 
                     if (ghostNodeTarget == null) {
                         Vector3f dir = trackPiece.getDirectionFromFraction(fraction);
-                        ghostNodeTarget = new RailNode(closestPoint, trackPiece.getType(), dir);
+                        ghostNodeTarget = new RailNode(game, closestPoint, trackPiece.getType(), dir);
 
                     } else {
                         // make it a ghost type

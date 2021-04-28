@@ -106,14 +106,14 @@ public class TriangleStationsSc extends Scenario {
         Vector3f position = new Vector3f(offset).mul(0.75f);
         Vector3f direction = new Vector3f(org.joml.Math.cos(orientation), org.joml.Math.sin(orientation), 0);
 
-        return new RailNode(getGroundPos(game, center, position), type, direction);
+        return new RailNode(game, getGroundPos(game, center, position), type, direction);
     }
 
     private RailNode addNodeConnections(
             Game game, TrackType type, Vector2fc center, Vector3fc offset, StationImpl station1, StationImpl station2
     ) {
         Vector3f direction = new Vector3f(offset).rotateZ(-1 / 4f * TAU);
-        RailNode node = new RailNode(getGroundPos(game, center, offset), type, direction);
+        RailNode node = new RailNode(game, getGroundPos(game, center, offset), type, direction);
 
         List<RailNode> nodesStation12 = station1.getNodesOfDirection(direction);
         addConnections(game, node, nodesStation12);
