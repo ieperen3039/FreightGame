@@ -80,7 +80,7 @@ public class NewGameFrame extends SFrame {
 
         // generator selection
         mapGeneratorList.add(new DefaultMapGenerator(0));
-        mapGeneratorSelector = new SDropDown(game.gui(), MainMenu.BUTTON_PROPERTIES_STATIC, 0, mapGeneratorList, Mod::getModName);
+        mapGeneratorSelector = new SDropDown(game.gui(), MainMenu.BUTTON_PROPERTIES_STATIC, 0, mapGeneratorList, true, Mod::getModName);
         mainPanel.add(mapGeneratorSelector, mpos.add(0, 1));
 
         SButton propertiesComponent = new SButton("Set Generator Properties", () -> {

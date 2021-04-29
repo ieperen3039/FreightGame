@@ -29,7 +29,7 @@ public class TrackSupport extends TrackElement {
 
     private final Resource<AABBf> hitbox;
     private final PairList<Shape, Matrix4fc> collisionShapes;
-    private Predicate<Double> despawnTrigger = super::isDespawnedAt;
+    private Predicate<Double> despawnTrigger = super::isDespawnedAt; // TODO serialize
 
     public TrackSupport(Game game, TrackType type, Vector3fc position, Vector3fc direction) {
         super(game, type);

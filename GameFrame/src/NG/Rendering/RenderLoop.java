@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static NG.GUIMenu.Components.SToolBar.TOOL_BAR_HEIGHT;
 import static org.lwjgl.opengl.GL11.*;
 
 /**
@@ -118,7 +117,7 @@ public class RenderLoop extends AbstractGameLoop implements GameAspect {
         int windowHeight = window.getHeight();
 
         doTimed("GUI", () ->
-                overlay.draw(windowWidth, windowHeight, 10, TOOL_BAR_HEIGHT + 10, 12)
+                overlay.draw(windowWidth, windowHeight, 10, 60, 12)
         );
 
         Toolbox.checkGLError(overlay.toString());

@@ -38,9 +38,9 @@ public class SExclusiveButtonRow extends SDecorator {
      * @param buttonProperties
      */
     public SExclusiveButtonRow(boolean horizontal, String[] elements, SComponentProperties buttonProperties) {
-        super(new SContainer.GhostContainer(
+        SContainer.GhostContainer container = new SContainer.GhostContainer(
                 new GridLayoutManager(horizontal ? elements.length : 1, horizontal ? 1 : elements.length)
-        ));
+        );
 
         selectionListeners = new ArrayList<>();
         deselectionListeners = new ArrayList<>();
@@ -65,11 +65,13 @@ public class SExclusiveButtonRow extends SDecorator {
 
             button.addStateChangeListener((s) -> select(s, button, index));
 
-            add(button, pos);
+            container.add(button, pos);
             pos.add(delta);
 
             if (i == 0) selected = button;
         }
+
+        setContents(container);
     }
 
     /**

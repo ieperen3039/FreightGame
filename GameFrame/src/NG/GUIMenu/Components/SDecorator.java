@@ -3,30 +3,46 @@ package NG.GUIMenu.Components;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import org.joml.Vector2ic;
 
-import java.util.Collection;
-
 /**
  * A helper class for building specific containers
  * @author Geert van Ieperen created on 21-2-2020.
  */
 public abstract class SDecorator extends SComponent {
-    private final SContainer contents;
+    private static final SContainer EMPTY = SContainer.singleton(new SFiller());
 
-    public SDecorator(SContainer panel) {
-        contents = panel;
-        panel.setParent(this);
+    private SContainer contents;
+
+    public SDecorator() {
+        contents = EMPTY;
     }
 
-    protected void add(SComponent component, Object property) {
-        contents.add(component, property);
+    public SDecorator(SComponent... components) {
+        this(SContainer.column(components));
     }
 
-    protected void removeComponent(SComponent component) {
-        contents.removeCompoment(component);
+    public SDecorator(SContainer contents) {
+        setContents(contents);
     }
 
-    protected Collection<SComponent> getChildren() {
-        return contents.children();
+    protected void setContents(SContainer contents) {
+        this.contents = contents;
+        contents.setParent(this);
+    }
+
+    @Override
+    public boolean wantHorizontalGrow() {
+        return contents.wantHorizontalGrow();
+    }
+
+    @Override
+    public boolean wantVerticalGrow() {
+        return contents.wantVerticalGrow();
+    }
+
+    @Override
+    public SDecorator setGrowthPolicy(boolean horizontal, boolean vertical) {
+        contents.setGrowthPolicy(horizontal, vertical);
+        return this;
     }
 
     @Override
@@ -49,11 +65,11 @@ public abstract class SDecorator extends SComponent {
     public void doValidateLayout() {
         contents.setSize(getWidth(), getHeight());
         contents.validateLayout();
-        setSize(getWidth(), getHeight());
     }
 
     @Override
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
+        validateLayout();
         contents.draw(design, screenPosition);
     }
 }

@@ -1,5 +1,6 @@
 package NG.GUIMenu.Components;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -8,16 +9,6 @@ import java.util.function.Function;
  */
 public class STabPanel extends SDecorator {
     public <T> STabPanel(List<T> elements, Function<T, String> nameExtractor, Function<T, SComponent> tabCreator) {
-        super(create(elements, nameExtractor, tabCreator));
-    }
-
-    public <T> STabPanel(String[] tabLabels, SComponent[] tabContents) {
-        super(create(tabLabels, tabContents));
-    }
-
-    private static <T> SContainer create(
-            List<T> elements, Function<T, String> nameExtractor, Function<T, SComponent> tabCreator
-    ) {
         int numElements = elements.size();
 
         SComponent[] tabContents = new SComponent[numElements];
@@ -30,10 +21,6 @@ public class STabPanel extends SDecorator {
             tabLabels[i] = nameExtractor.apply(elements.get(i));
         }
 
-        return create(tabLabels, tabContents);
-    }
-
-    private static SContainer create(String[] tabLabels, SComponent[] tabContents) {
         int minWidth = 0;
         int minHeight = 0;
         for (SComponent tab : tabContents) {
@@ -48,8 +35,43 @@ public class STabPanel extends SDecorator {
 
         tabArea.show(new SFiller());
 
-        return SContainer.column(
+        setContents(SContainer.column(
                 tabButtons, tabArea
-        );
+        ));
+    }
+
+    public STabPanel(String[] tabLabels, SComponent[] tabContents) {
+        int minWidth = 0;
+        int minHeight = 0;
+        for (SComponent tab : tabContents) {
+            minWidth = Math.max(minWidth, tab.minWidth());
+            minHeight = Math.max(minHeight, tab.minHeight());
+        }
+
+        SComponentArea tabArea = new SComponentArea(minWidth, minHeight);
+
+        SExclusiveButtonRow tabButtons = new SExclusiveButtonRow(true, tabLabels)
+                .addSelectionListener(i -> tabArea.show(tabContents[i]));
+
+        tabArea.show(new SFiller());
+
+        setContents(SContainer.column(
+                tabButtons, tabArea
+        ));
+    }
+
+    public static class Builder {
+        List<String> labels = new ArrayList<>();
+        List<SComponent> elements = new ArrayList<>();
+
+        public Builder add(String tabLabel, SComponent element) {
+            labels.add(tabLabel);
+            elements.add(element);
+            return this;
+        }
+
+        public STabPanel get() {
+            return new STabPanel(labels.toArray(new String[0]), elements.toArray(new SComponent[0]));
+        }
     }
 }

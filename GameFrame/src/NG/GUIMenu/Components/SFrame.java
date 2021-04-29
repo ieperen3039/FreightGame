@@ -35,9 +35,6 @@ public class SFrame extends SDecorator {
      * @see SPanel
      */
     public SFrame(String title, int width, int height, boolean manipulable) {
-        super(
-                new SPanel(1, 2, true, true)
-        );
         this.title = title;
 
         SComponent upperBar;
@@ -60,8 +57,10 @@ public class SFrame extends SDecorator {
         }
         bodyComponent = SContainer.singleton(new SFiller());
 
-        add(upperBar, new Vector2i(0, 0));
-        add(bodyComponent, new Vector2i(0, 1));
+        SPanel contents = new SPanel(1, 2, true, true);
+        contents.add(upperBar, new Vector2i(0, 0));
+        contents.add(bodyComponent, new Vector2i(0, 1));
+        setContents(contents);
 
         setSize(width, height);
         setGrowthPolicy(false, false);

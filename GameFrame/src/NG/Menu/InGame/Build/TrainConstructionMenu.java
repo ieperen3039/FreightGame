@@ -70,7 +70,7 @@ public class TrainConstructionMenu extends SFrame {
                 if (loco.isCompatibleWith(trackType)) {
                     SContainer trainPanel = new SPanel(SContainer.column(
                             new STextArea(
-                                    loco.toString() + "\n\n" +
+                                    loco + "\n\n" +
                                             "build cost : " + loco.buildCost + "\n" +
                                             "maintenance : " + loco.maintenancePerSecond + "\n" +
                                             "max speed : " + loco.maxSpeed + "\n" +
