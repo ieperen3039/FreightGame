@@ -21,10 +21,14 @@ import static NG.GUIMenu.Rendering.SFrameLookAndFeel.UIComponent.DROP_DOWN_HEAD_
  * @author Geert van Ieperen. Created on 5-10-2018.
  */
 public class SDropDown extends SComponent implements MouseClickListener {
-    public static final NGFonts.TextType TEXT_TYPE = NGFonts.TextType.REGULAR;
+    public static final SComponentProperties DEFAULT_PROPERTIES = new SComponentProperties(
+            250, 80, true, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT_MIDDLE
+    );
+
     private final String[] values;
     private final DropDownOptions optionPane;
     private final UIFrameManager gui;
+    private final boolean doFoldDown;
     private List<Consumer<Integer>> stateChangeListeners = new ArrayList<>();
 
     private int current;
@@ -34,6 +38,8 @@ public class SDropDown extends SComponent implements MouseClickListener {
     private int textWidth;
 
     private int dropOptionHeight = 50;
+    private final SFrameLookAndFeel.Alignment alignment;
+    private final NGFonts.TextType textType;
 
     /**
      * create a dropdown menu with the given possible values, with a minimum width of 150 and height of 50
@@ -42,33 +48,31 @@ public class SDropDown extends SComponent implements MouseClickListener {
      * @param values  a list of possible values for this dropdown menu
      */
     public SDropDown(UIFrameManager gui, int initial, String... values) {
-        assert values.length > 0;
-        this.values = values;
-        this.current = initial;
-        this.minHeight = 80;
-        this.minWidth = 250;
-        this.optionPane = new DropDownOptions(values);
-        this.gui = gui;
-
-        setGrowthPolicy(true, false);
+        this(gui, DEFAULT_PROPERTIES, initial, true, values);
     }
 
     /**
      * create a dropdown menu with the given possible values
-     * @param gui     a reference to the gui in which this is displayed
-     * @param initial the initial selected item, such that {@code values[initial]} is shown
-     * @param values  a list of possible values for this dropdown menu
+     * @param gui             a reference to the gui in which this is displayed
+     * @param initial         the initial selected item, such that {@code values[initial]} is shown
+     * @param directionIsDown if false, the options will appear above the element
+     * @param values          a list of possible values for this dropdown menu
      */
-    public SDropDown(UIFrameManager gui, SComponentProperties properties, int initial, String... values) {
+    public SDropDown(
+            UIFrameManager gui, SComponentProperties properties, int initial, boolean directionIsDown, String... values
+    ) {
         assert values.length > 0;
         this.values = values;
         this.current = initial;
-        this.optionPane = new DropDownOptions(values);
         this.gui = gui;
-
+        this.doFoldDown = directionIsDown;
         this.minWidth = properties.minWidth;
         this.minHeight = properties.minHeight;
+        this.alignment = properties.alignment;
+        this.textType = properties.textType;
         setGrowthPolicy(properties.wantHzGrow, properties.wantVtGrow);
+
+        this.optionPane = new DropDownOptions(values);
     }
 
     /**
@@ -79,7 +83,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
      * @param values  a list of possible values for this dropdown menu
      */
     public <T> SDropDown(UIFrameManager gui, SComponentProperties properties, int initial, List<? extends T> values) {
-        this(gui, properties, initial, values, String::valueOf);
+        this(gui, properties, initial, values, true, String::valueOf);
     }
 
     /**
@@ -88,11 +92,12 @@ public class SDropDown extends SComponent implements MouseClickListener {
      * @param gui       a reference to the gui in which this is displayed
      * @param initial   the initial selected item, such that {@code values[initial]} is shown
      * @param values    a list of possible values for this dropdown menu
-     * @param stringExtractor
+     * @param directionIsDown if false, the options will appear above the element
+     * @param stringExtractor a function to turn a value into its string representation
      */
     public <T> SDropDown(
             UIFrameManager gui, SComponentProperties properties, int initial, List<? extends T> values,
-            Function<T, String> stringExtractor
+            boolean directionIsDown, Function<T, String> stringExtractor
     ) {
         assert !values.isEmpty();
         this.minHeight = properties.minHeight;
@@ -111,9 +116,13 @@ public class SDropDown extends SComponent implements MouseClickListener {
 
         this.current = candidate;
         this.values = arr;
-        this.optionPane = new DropDownOptions(arr);
         this.gui = gui;
+        this.doFoldDown = directionIsDown;
+        this.alignment = properties.alignment;
+        this.textType = properties.textType;
         setGrowthPolicy(properties.wantHzGrow, properties.wantVtGrow);
+
+        this.optionPane = new DropDownOptions(arr);
     }
 
     /** @return the index of the currently selected item in the original array */
@@ -155,7 +164,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
         String text = values[current];
 
-        int textWidth = design.getTextWidth(text, TEXT_TYPE);
+        int textWidth = design.getTextWidth(text, textType);
         if (this.textWidth != textWidth) {
             this.textWidth = textWidth;
             invalidateLayout();
@@ -163,7 +172,7 @@ public class SDropDown extends SComponent implements MouseClickListener {
 
         design.draw(isOpened ? DROP_DOWN_HEAD_OPEN : DROP_DOWN_HEAD_CLOSED, screenPosition, getSize());
         Vector2i textPosition = new Vector2i(screenPosition).add(4, 0); // 4 is the virtual component border
-        design.drawText(textPosition, getSize(), text, TEXT_TYPE, SFrameLookAndFeel.Alignment.LEFT_MIDDLE);
+        design.drawText(textPosition, getSize(), text, textType, alignment);
         // modal dialogs are drawn separately
     }
 
@@ -173,11 +182,14 @@ public class SDropDown extends SComponent implements MouseClickListener {
             close();
 
         } else {
-            Vector2i scPos = getScreenPosition();
-            optionPane.setPosition(scPos.x, scPos.y + getHeight());
             optionPane.setSize(getWidth(), 0);
-            optionPane.setVisible(true);
             optionPane.validateLayout();
+
+            Vector2i scPos = getScreenPosition();
+            int yPos = doFoldDown ? scPos.y + getHeight() : scPos.y - optionPane.getHeight();
+            optionPane.setPosition(scPos.x, yPos);
+            optionPane.setVisible(true);
+
             gui.setModalListener(optionPane);
         }
     }
@@ -193,13 +205,16 @@ public class SDropDown extends SComponent implements MouseClickListener {
 
     private class DropDownOptions extends SDecorator implements MouseClickListener {
         private DropDownOptions(String[] values) {
-            super(new SPanel(1, values.length));
+            SPanel panel = new SPanel(1, values.length);
             setVisible(false);
+
+            assert textType != null;
+            assert alignment != null;
 
             for (int i = 0; i < values.length; i++) {
                 final int index = i;
                 SExtendedTextArea option = new SExtendedTextArea(
-                        values[index], minWidth, dropOptionHeight, true, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT_MIDDLE
+                        values[index], minWidth, dropOptionHeight, true, textType, alignment
                 );
 
                 option.setClickListener((b, x, y) -> {
@@ -207,8 +222,10 @@ public class SDropDown extends SComponent implements MouseClickListener {
                     close();
                 });
 
-                add(option, new Vector2i(0, i));
+                panel.add(option, new Vector2i(0, i));
             }
+
+            setContents(panel);
         }
 
         @Override
