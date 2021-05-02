@@ -1,43 +1,40 @@
 package NG.GUIMenu.Components;
 
-import NG.GUIMenu.LayoutManagers.SingleElementLayout;
+import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
 import NG.Tools.Logger;
+import org.joml.Vector2i;
+import org.joml.Vector2ic;
 
 /**
  * an area with fixed minimum size that can show components or be hidden. Components are stretched to fit the designated
  * area. If the minimum size of the component is too large for this area, an assertion is thrown.
  * @author Geert van Ieperen created on 12-7-2019.
  */
-public class SComponentArea extends SContainer.GhostContainer {
+public class SComponentArea extends SComponent {
     private static final SFiller FILLER = new SFiller();
     private int width;
     private int height;
+    private SComponent element;
 
     public SComponentArea(SComponentProperties props) {
-        super(new SingleElementLayout());
         this.width = props.minWidth;
         this.height = props.minHeight;
-        setVisible(false);
         setGrowthPolicy(props.wantHzGrow, props.wantVtGrow);
+        hide();
     }
 
     public SComponentArea(int width, int height) {
-        super(new SingleElementLayout());
         this.width = width;
         this.height = height;
-        setVisible(false);
         setGrowthPolicy(false, false);
+        hide();
     }
 
     /**
-     * removes the current component, and sets this component's visibility to false
+     * shows the given element in this component. The element is streched to fit this area. if it does not fit, a
+     * warning is logged and the element is not added.
      */
-    public void hide() {
-        add(FILLER, null);
-        setVisible(false);
-    }
-
     public void show(SComponent element) {
         validateLayout();
         int width = getWidth();
@@ -45,12 +42,36 @@ public class SComponentArea extends SContainer.GhostContainer {
 
         if (element.minWidth() <= width && element.minHeight() <= height) {
             element.setSize(width, height);
-            add(element, null);
+            this.element = element;
             setVisible(true);
 
         } else {
             Logger.ASSERT.print("Element too large to show", element, element.getSize(), getSize());
         }
+    }
+
+    /**
+     * removes the current component, and sets this component's visibility to false
+     */
+    public void hide() {
+        element = FILLER;
+        setVisible(false);
+    }
+
+    @Override
+    public boolean contains(Vector2i v) {
+        return isVisible() && element.contains(v);
+    }
+
+    @Override
+    public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
+        element.draw(design, screenPosition);
+    }
+
+    @Override
+    public SComponentArea setGrowthPolicy(boolean horizontal, boolean vertical) {
+        super.setGrowthPolicy(horizontal, vertical);
+        return this;
     }
 
     @Override

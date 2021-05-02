@@ -27,22 +27,21 @@ public class FreightGameUI extends SDecorator {
             0, 100, true, false, NGFonts.TextType.FANCY, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
 
-    private final SContainer mainArea;
-    private final SFiller fillerArea = new SFiller();
+    private final SComponentArea mainArea;
 
     public FreightGameUI(Game game, ModLoader modLoader) {
         setContents(SContainer.column(
-                mainArea = SContainer.singleton(fillerArea).setGrowthPolicy(true, true),
+                mainArea = new SComponentArea(0, 0).setGrowthPolicy(true, true),
                 SContainer.row(
                         // money element
-                        new SPanel(SContainer.row(
-                                new SComponentArea(BUTTON_PROPERTIES_STRETCH),
+                        new SPanel(
                                 new SActiveTextArea(() -> "$" + game.playerStatus().money.getDollars(), MONEY_TEXT_PROPERTIES)
-                        )),
-                        SContainer.column(
+                        ),
+                        new SPanel(SContainer.column(
                                 getBottomButtonRow(game, modLoader),
-                                new SPanel()
-                        )
+                                new SFiller()
+                        )),
+                        new SPanel(new SFiller())
                 ).setGrowthPolicy(true, false)
         ));
 
@@ -53,77 +52,79 @@ public class FreightGameUI extends SDecorator {
         return SContainer.row(
                 new SButton(
                         "Build Object",
-                        () -> setMainArea(SContainer.row(
-                                new BuildMenu(game, () -> setMainArea(fillerArea)), new SFiller()
+                        () -> mainArea.show(SContainer.row(
+                                new BuildMenu(game, mainArea::hide), new SFiller()
                         ))
                 ),
                 new SButton(
                         "Overviews", //
-                        () -> setMainArea(new STabPanel.Builder()
+                        () -> mainArea.show(new STabPanel.Builder()
                                 .add("Trains", new TrainOverview(game))
                                 .get()
                         )
                 ),
                 new SButton(
                         "Options",
-                        () -> game.gui().addFrame(
-                                new SFrame("Options", SContainer.column(
-                                        new SToggleButton("Show CollisionBox",
-                                                BUTTON_PROPERTIES_STRETCH, game.settings().RENDER_COLLISION_BOX
-                                        ).addStateChangeListener(active -> game.settings().RENDER_COLLISION_BOX = active),
-
-                                        new SButton("Dump Network", // find any networknode, and print getNetworkAsString
-                                                () -> game.state().entities().stream()
-                                                        .filter(e -> e instanceof TrackPiece)
-                                                        .map(e -> (TrackPiece) e)
-                                                        .filter(e -> !e.isDespawnedAt(game.timer().getGameTime()))
-                                                        .map(TrackPiece::getStartNode)
-                                                        .map(RailNode::getNetworkNode)
-                                                        .filter(NetworkNode::isNetworkCritical)
-                                                        .findAny()
-                                                        .ifPresentOrElse(
-                                                                n -> Logger.INFO.print(NetworkNode.getNetworkAsString(n)),
-                                                                () -> Logger.INFO.print("No network present")
-                                                        ),
-                                                BUTTON_PROPERTIES_STRETCH
-                                        ),
-
-                                        new SButton("Check Network", // checks the NetworkNodes of all track pieces
-                                                () -> game.state().entities().stream()
-                                                        .filter(e -> e instanceof TrackPiece)
-                                                        .map(e -> (TrackPiece) e)
-                                                        .filter(e -> !e.isDespawnedAt(game.timer().getGameTime()))
-                                                        .peek(t -> {
-                                                            if (!t.isValid()) {
-                                                                throw new IllegalStateException(String.valueOf(t));
-                                                            }
-                                                        })
-                                                        .flatMap(t -> Stream.of(t.getStartNode(), t.getEndNode()))
-                                                        .distinct()
-                                                        .map(RailNode::getNetworkNode)
-                                                        .forEach(NetworkNode::check),
-                                                BUTTON_PROPERTIES_STRETCH
-                                        ),
-
-                                        new SButton("Dump light map",
-                                                () -> game.executeOnRenderThread(
-                                                        () -> game.lights().dumpShadowMap(Directory.screenshots)
-                                                ),
-                                                BUTTON_PROPERTIES_STRETCH
-                                        ),
-                                        new SButton("Save Game", () -> modLoader.saveGame(FreightGame.SAVE_FILE), BUTTON_PROPERTIES_STRETCH),
-                                        new SButton("Exit", () -> {
-                                            modLoader.saveGame(FreightGame.SAVE_FILE);
-                                            modLoader.stopGame();
-                                        }, BUTTON_PROPERTIES_STRETCH)
-                                ))
+                        () -> game.gui().addFrameCenter(
+                                getOptionsMenu(game, modLoader),
+                                game.window()
                         )
                 )
         );
     }
 
-    private void setMainArea(SComponent element) {
-        mainArea.add(element, null);
+    private SFrame getOptionsMenu(Game game, ModLoader modLoader) {
+        return new SFrame("Options", SContainer.column(
+                new SToggleButton(
+                        "Show CollisionBox", BUTTON_PROPERTIES_STRETCH, game.settings().RENDER_COLLISION_BOX
+                ).addStateChangeListener(active -> game.settings().RENDER_COLLISION_BOX = active),
+
+                new SButton("Dump Network", // find any networknode, and print getNetworkAsString
+                        () -> game.state().entities().stream()
+                                .filter(e -> e instanceof TrackPiece)
+                                .map(e -> (TrackPiece) e)
+                                .filter(e -> !e.isDespawnedAt(game.timer().getGameTime()))
+                                .map(TrackPiece::getStartNode)
+                                .map(RailNode::getNetworkNode)
+                                .filter(NetworkNode::isNetworkCritical)
+                                .findAny()
+                                .ifPresentOrElse(
+                                        n -> Logger.INFO.print(NetworkNode.getNetworkAsString(n)),
+                                        () -> Logger.INFO.print("No network present")
+                                ),
+                        BUTTON_PROPERTIES_STRETCH
+                ),
+
+                new SButton("Check Network", // checks the NetworkNodes of all track pieces
+                        () -> game.state().entities().stream()
+                                .filter(e -> e instanceof TrackPiece)
+                                .map(e -> (TrackPiece) e)
+                                .filter(e -> !e.isDespawnedAt(game.timer().getGameTime()))
+                                .peek(t -> {
+                                    if (!t.isValid()) {
+                                        throw new IllegalStateException(String.valueOf(t));
+                                    }
+                                })
+                                .flatMap(t -> Stream.of(t.getStartNode(), t.getEndNode()))
+                                .distinct()
+                                .map(RailNode::getNetworkNode)
+                                .forEach(NetworkNode::check),
+                        BUTTON_PROPERTIES_STRETCH
+                ),
+
+                new SButton("Dump light map",
+                        () -> game.executeOnRenderThread(
+                                () -> game.lights().dumpShadowMap(Directory.screenshots)
+                        ),
+                        BUTTON_PROPERTIES_STRETCH
+                ),
+                new SButton("Save Game", () -> modLoader.saveGame(FreightGame.SAVE_FILE), BUTTON_PROPERTIES_STRETCH),
+                new SButton("Exit", () -> {
+                    modLoader.saveGame(FreightGame.SAVE_FILE);
+                    modLoader.stopGame();
+                }, BUTTON_PROPERTIES_STRETCH)
+        ));
     }
+
 }
 

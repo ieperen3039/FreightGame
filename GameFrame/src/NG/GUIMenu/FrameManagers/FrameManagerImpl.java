@@ -186,27 +186,31 @@ public class FrameManagerImpl implements UIFrameManager {
                 processClick(button, modalComponent, xSc, ySc);
             }
             modalComponent = null;
-
-        } else {
-            // check all frames, starting from the front-most frame
-            SFrame frame = getFrame(xSc, ySc);
-            if (frame != null) {
-                int xr = xSc - frame.getX();
-                int yr = ySc - frame.getY();
-                SComponent component = frame.getComponentAt(xr, yr);
-
-                focus(frame);
-                processClick(button, component, xSc, ySc);
-                return true;
-            }
-
-
-            SComponent component = mainPanel.getComponentAt(xSc, ySc);
-            if (component == null) return false;
-
-            processClick(button, component, xSc, ySc);
+            return true;
         }
-        return true;
+
+        // check all frames, starting from the front-most frame
+        SFrame frame = getFrame(xSc, ySc);
+        if (frame != null) {
+            int xr = xSc - frame.getX();
+            int yr = ySc - frame.getY();
+            SComponent component = frame.getComponentAt(xr, yr);
+
+            Logger.DEBUG.print(frame, component);
+
+            focus(frame);
+            processClick(button, component, xSc, ySc);
+            return true;
+        }
+
+        // check HUD UI
+        SComponent component = mainPanel.getComponentAt(xSc, ySc);
+        if (component != null) {
+            processClick(button, component, xSc, ySc);
+            return true;
+        }
+
+        return false;
     }
 
     private void processClick(int button, SComponent component, int xSc, int ySc) {
