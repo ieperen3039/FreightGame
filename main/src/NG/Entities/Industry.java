@@ -114,8 +114,7 @@ public class Industry extends Storage {
         List<Industry> nearby = new ArrayList<>();
 
         for (Entity entity : game.state()) {
-            if (entity instanceof Industry) {
-                Industry industry = (Industry) entity;
+            if (entity instanceof Industry industry) {
                 if (industry.getPosition().distanceSquared(position) < rangeSq) {
                     nearby.add(industry);
                 }
@@ -134,13 +133,12 @@ public class Industry extends Storage {
     public void restoreFields(Game game) {
         super.restoreFields(game);
         properties = game.objectTypes().getIndustryByName(typeName);
+        assert properties != null;
     }
 
-    public static class Rule {
-        public final Map<CargoType, Integer> in;
-        public final Map<CargoType, Integer> out;
-        public final float rulesPerSecond;
-
+    public record Rule(
+            Map<CargoType, Integer> in, Map<CargoType, Integer> out, float rulesPerSecond
+    ) {
         public static Rule generate(CargoType out, float amountPerSecond) {
             return new Rule(Map.of(out, 1), Collections.emptyMap(), amountPerSecond);
         }
@@ -149,15 +147,9 @@ public class Industry extends Storage {
             return new Rule(Collections.emptyMap(), Map.of(in, 1), amountPerSecond);
         }
 
-        public Rule(
-                Map<CargoType, Integer> in, Map<CargoType, Integer> out, float rulesPerSecond
-        ) {
+        public Rule {
             assert in != null;
             assert out != null;
-
-            this.in = in;
-            this.out = out;
-            this.rulesPerSecond = rulesPerSecond;
         }
     }
 
