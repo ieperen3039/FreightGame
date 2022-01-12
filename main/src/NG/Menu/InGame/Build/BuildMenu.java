@@ -2,8 +2,10 @@ package NG.Menu.InGame.Build;
 
 import NG.Core.Game;
 import NG.GUIMenu.Components.*;
+import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
 import NG.Tracks.TrackType;
+import org.joml.Vector2ic;
 
 import java.util.List;
 
@@ -55,8 +57,12 @@ public class BuildMenu extends SDecorator {
                 typeChooser, buildTrack, buildStation, buildSignal, buildTrain, removeElement, closeMenu
         ));
 
-        setSize(200, 0);
         setGrowthPolicy(false, false);
+    }
+
+    @Override
+    public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
+        super.draw(design, screenPosition);
     }
 
     private TrackType getType(List<TrackType> trackTypes, SDropDown typeChooser) {

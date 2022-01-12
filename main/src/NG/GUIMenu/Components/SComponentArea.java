@@ -8,7 +8,7 @@ import org.joml.Vector2ic;
 
 /**
  * an area with fixed minimum size that can show components or be hidden. Components are stretched to fit the designated
- * area. If the minimum size of the component is too large for this area, an assertion is thrown.
+ * area. If the minimum size of the component is too large for this area, an error is thrown.
  * @author Geert van Ieperen created on 12-7-2019.
  */
 public class SComponentArea extends SComponent {
@@ -40,12 +40,15 @@ public class SComponentArea extends SComponent {
         int width = getWidth();
         int height = getHeight();
 
-        if (element.minWidth() <= width && element.minHeight() <= height) {
-            this.element = element;
-
-        } else {
-            Logger.ASSERT.print("Element too large to show", element, element.getSize(), getSize());
+        if (element.minWidth() > width || element.minHeight() > height) {
+            throw new RuntimeException(String.format("Element %s too large to show (%s > %s)", element, element.getSize(), getSize()));
         }
+
+        this.element = element;
+        element.setParent(this);
+        element.setGrowthPolicy(true, true);
+        element.invalidateLayout();
+        invalidateLayout();
     }
 
     /**

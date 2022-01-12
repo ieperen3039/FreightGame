@@ -8,12 +8,10 @@ import org.joml.Vector2ic;
  * @author Geert van Ieperen created on 21-2-2020.
  */
 public abstract class SDecorator extends SComponent {
-    private static final SContainer EMPTY = SContainer.singleton(new SFiller());
-
     private SContainer contents;
 
     public SDecorator() {
-        contents = EMPTY;
+        contents = SContainer.singleton(new SFiller());
     }
 
     public SDecorator(SComponent... components) {

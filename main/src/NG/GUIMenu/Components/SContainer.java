@@ -156,7 +156,6 @@ public abstract class SContainer extends SComponent {
             column.add(components[i], new Vector2i(0, i));
         }
 
-        column.setSize(0, 0);
         return column;
     }
 
@@ -168,7 +167,6 @@ public abstract class SContainer extends SComponent {
             row.add(components[i], new Vector2i(i, 0));
         }
 
-        row.setSize(0, 0);
         return row;
     }
 
@@ -184,7 +182,6 @@ public abstract class SContainer extends SComponent {
             }
         }
 
-        row.setSize(0, 0);
         return row;
     }
 

@@ -28,6 +28,7 @@ public abstract class TrackElement extends AbstractGameObject implements Collide
     @Override
     public void restoreFields(Game game) {
         type = game.objectTypes().getTrackByName(typeName);
+        assert type != null;
     }
 
     @Override

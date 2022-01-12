@@ -20,6 +20,7 @@ import NG.Tracks.TrackPiece;
 import java.util.stream.Stream;
 
 import static NG.Menu.Main.MainMenu.BUTTON_PROPERTIES_STRETCH;
+import static NG.Menu.Main.MainMenu.TEXT_PROPERTIES;
 
 /**
  * @author Geert van Ieperen created on 2-9-2020.
@@ -53,15 +54,12 @@ public class FreightGameUI extends SDecorator {
         return SContainer.row(
                 new SButton(
                         "Build Object",
-//                        () -> mainArea.show(SContainer.row(
-//                                new BuildMenu(game, mainArea::hide), new SFiller()
-//                        ))
-                        () -> game.gui().addFrameCenter(new SFrame("Build Object",
-                                        SContainer.row(
-                                                new BuildMenu(game, mainArea::hide), new SFiller()
-                                        )),
-                                game.window()
-                        )
+                        () -> mainArea.show(SContainer.row(
+                                SContainer.column(
+                                        new SPanel(new STextArea("Build Menu", TEXT_PROPERTIES)),
+                                        new BuildMenu(game, mainArea::hide).setGrowthPolicy(false, true)
+                                ), new SFiller()
+                        ))
                 ),
                 new SButton(
                         "Overviews",
