@@ -43,6 +43,7 @@ public class SListeners extends SComponent {
 
     @Override
     public void doValidateLayout() {
+        super.doValidateLayout();
         wrapped.setSize(getWidth(), getHeight());
         wrapped.validateLayout();
         setSize(getWidth(), getHeight());

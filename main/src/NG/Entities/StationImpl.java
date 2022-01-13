@@ -29,6 +29,8 @@ import NG.Tracks.TrackType;
 import org.joml.Math;
 import org.joml.*;
 
+import java.io.IOException;
+import java.io.Serial;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -41,7 +43,7 @@ public class StationImpl extends Storage implements Station {
     public static final float HEIGHT = 0.1f;
     public static final float HEIGHT_BELOW_STATION = 2f;
     public static final float FLYING_CUBE_SIZE = 0.4f;
-    private static int nr = 1;
+    private static int nr = 1; // TODO restore value after serialisation
 
     protected String stationName = "Station " + (nr++);
 
@@ -62,7 +64,7 @@ public class StationImpl extends Storage implements Station {
     private final PairList<Shape, Matrix4fc> collisionShape = new PairList<>(1);
     private final List<Train> trains = new ArrayList<>();
 
-    private final List<Runnable> trainArrivalListeners = new ArrayList<>();
+    private transient List<Runnable> trainArrivalListeners = new ArrayList<>();
 
     /**
      * create a fixed station
@@ -312,7 +314,8 @@ public class StationImpl extends Storage implements Station {
     }
 
     public void removeArrivalListener(Runnable onTrainArrival) {
-        trainArrivalListeners.remove(onTrainArrival);
+        boolean success = trainArrivalListeners.remove(onTrainArrival);
+        assert success;
     }
 
     @Override
@@ -330,9 +333,18 @@ public class StationImpl extends Storage implements Station {
         Station.forEachCorner(getPosition(), length, orientation, realWidth, action);
     }
 
+    /**
+     * we don't want to store our {@link #trainArrivalListeners}, as these are (likely) GUI elements.
+     * We also don't want it to be null, just empty
+     */
+    @Serial
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        trainArrivalListeners = new ArrayList<>();
+    }
+
     protected class StationUI extends SFrame {
         private final SScrollableList trainList;
-        private final Runnable updateTrainList;
 
         StationUI() {
             super(stationName, 300, 0);
@@ -343,20 +355,8 @@ public class StationImpl extends Storage implements Station {
                     trainList = new SScrollableList(4)
             ));
 
-            updateTrainList = () -> {
-                trainList.clear();
-
-                for (Train train : trains) {
-                    SContainer trainComponent = SContainer.row(
-                            new SButton(train.toString(), train::openUI, MainMenu.BUTTON_PROPERTIES_STRETCH),
-                            new SButton(">", train::start, MainMenu.SQUARE_BUTTON_PROPS)
-                    );
-                    trainList.add(trainComponent, null);
-                }
-            };
-
-            addArrivalListener(updateTrainList);
-            updateTrainList.run();
+            addArrivalListener(this::updateTrailList);
+            updateTrailList();
         }
 
         private String text() {
@@ -372,7 +372,19 @@ public class StationImpl extends Storage implements Station {
         @Override
         public void dispose() {
             super.dispose();
-            removeArrivalListener(updateTrainList);
+            removeArrivalListener(this::updateTrailList);
+        }
+
+        private void updateTrailList() {
+            trainList.clear();
+
+            for (Train train : trains) {
+                SContainer trainComponent = SContainer.row(
+                        new SButton(train.toString(), train::openUI, MainMenu.BUTTON_PROPERTIES_STRETCH),
+                        new SButton(">", train::start, MainMenu.SQUARE_BUTTON_PROPS)
+                );
+                trainList.add(trainComponent, null);
+            }
         }
     }
 }

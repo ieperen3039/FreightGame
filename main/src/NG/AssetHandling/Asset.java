@@ -9,9 +9,11 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * contains an object that is not included when serialized. Instead, it is regenerated when necessary, and automatically
@@ -179,6 +181,14 @@ public abstract class Asset<T> implements Serializable {
                 }
             }
         }
+    }
+
+    public static void forEachActive(Consumer<Asset<?>> action) {
+        forEach(asset -> {
+            if (asset.element != null) {
+                action.accept(asset);
+            }
+        });
     }
 
     @Serial

@@ -9,7 +9,6 @@ import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
 import NG.Menu.InGame.Build.BuildMenu;
 import NG.Menu.InGame.Overviews.TrainOverview;
-import NG.Menu.Main.MainMenu;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.AssetHandling.Asset;
@@ -130,7 +129,7 @@ public class FreightGameUI extends SDecorator {
                         BUTTON_PROPERTIES_STRETCH
                 ),
                 new SButton("Reload Assets", () -> game.executeOnRenderThread(Asset::dropAll)),
-                new SButton("Dump Assets", () -> Asset.forEach(Logger.DEBUG::print)),
+                new SButton("Dump Assets", () -> Asset.forEachActive(Logger.DEBUG::print)),
                 new SButton("Save Game", () -> modLoader.saveGame(FreightGame.SAVE_FILE), BUTTON_PROPERTIES_STRETCH),
                 new SButton("Exit", () -> {
                     modLoader.saveGame(FreightGame.SAVE_FILE);

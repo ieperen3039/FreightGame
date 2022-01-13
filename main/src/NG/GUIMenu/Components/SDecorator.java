@@ -61,6 +61,7 @@ public abstract class SDecorator extends SComponent {
 
     @Override
     public void doValidateLayout() {
+        super.doValidateLayout();
         contents.setSize(getWidth(), getHeight());
         contents.validateLayout();
     }

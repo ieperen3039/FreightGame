@@ -13,10 +13,9 @@ import org.joml.Vector2ic;
 public class SFrame extends SDecorator {
     public static final int FRAME_TITLE_BAR_SIZE = 50;
 
-    private final String title;
     private boolean isDisposed = false;
 
-    private STextArea titleComponent;
+    private final STextArea titleComponent;
     private final SContainer bodyComponent;
 
     /**
@@ -35,19 +34,16 @@ public class SFrame extends SDecorator {
      * @see SPanel
      */
     public SFrame(String title, int width, int height, boolean manipulable) {
-        this.title = title;
-
         SComponent upperBar;
         if (manipulable) {
-            STextArea text = new STextArea(
+            titleComponent = new STextArea(
                     title, 0, FRAME_TITLE_BAR_SIZE, true,
                     NGFonts.TextType.TITLE, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
             );
-            titleComponent = text;
 
             upperBar = new SListeners.DragListener(
                     SPanel.row(
-                            text, new SCloseButton(this)
+                            titleComponent, new SCloseButton(this)
                     )
             ).setDragListener((dx, dy, x, y) -> addToPosition(dx, dy));
 
@@ -57,10 +53,9 @@ public class SFrame extends SDecorator {
         }
         bodyComponent = SContainer.singleton(new SFiller());
 
-        SPanel contents = new SPanel(1, 2, true, true);
-        contents.add(upperBar, new Vector2i(0, 0));
-        contents.add(bodyComponent, new Vector2i(0, 1));
-        setContents(contents);
+        setContents(SPanel.column(
+                upperBar, bodyComponent
+        ));
 
         setSize(width, height);
         setGrowthPolicy(false, false);
@@ -83,17 +78,6 @@ public class SFrame extends SDecorator {
 
     public void setTitle(String title) {
         titleComponent.setText(title);
-    }
-
-    private SPanel makeUpperBar(String frameTitle) {
-        SExtendedTextArea title = new SExtendedTextArea(
-                frameTitle, 0, FRAME_TITLE_BAR_SIZE, true,
-                NGFonts.TextType.TITLE, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
-        );
-        titleComponent = title;
-        title.setDragListener((dx, dy, x, y) -> addToPosition(dx, dy));
-
-        return SPanel.row(title, new SCloseButton(this));
     }
 
     /**
@@ -125,7 +109,7 @@ public class SFrame extends SDecorator {
 
     @Override
     public String toString() {
-        return "SFrame (" + title + ")";
+        return "SFrame (" + titleComponent.getText() + ")";
     }
 
     @Override
