@@ -1,5 +1,7 @@
 package NG.GUIMenu.Components;
 
+import NG.GUIMenu.SComponentProperties;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -38,7 +40,7 @@ public class STabPanel extends SDecorator {
         ));
     }
 
-    public STabPanel(String[] tabLabels, SComponent[] tabContents) {
+    public STabPanel(String[] tabLabels, SComponent[] tabContents, SComponentProperties tabButtonProperties) {
         int minWidth = 0;
         int minHeight = 0;
         for (SComponent tab : tabContents) {
@@ -48,7 +50,7 @@ public class STabPanel extends SDecorator {
 
         SComponentArea tabArea = new SComponentArea(minWidth, minHeight);
 
-        SExclusiveButtonRow tabButtons = new SExclusiveButtonRow(true, tabLabels)
+        SExclusiveButtonRow tabButtons = new SExclusiveButtonRow(true, tabLabels, tabButtonProperties)
                 .addSelectionListener(i -> tabArea.show(tabContents[i]));
 
         setContents(SContainer.column(
@@ -66,8 +68,8 @@ public class STabPanel extends SDecorator {
             return this;
         }
 
-        public STabPanel get() {
-            return new STabPanel(labels.toArray(new String[0]), elements.toArray(new SComponent[0]));
+        public STabPanel get(SComponentProperties tabButtonProperties) {
+            return new STabPanel(labels.toArray(new String[0]), elements.toArray(new SComponent[0]), tabButtonProperties);
         }
     }
 }

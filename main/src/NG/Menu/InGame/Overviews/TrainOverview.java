@@ -14,14 +14,13 @@ import java.util.stream.Collectors;
 /**
  * @author Geert van Ieperen created on 11-10-2020.
  */
-public class TrainOverview extends SFrame {
+public class TrainOverview extends SDecorator {
     public TrainOverview(Game game) {
-        super("Trains");
 
         PlayerStatus playerStatus = game.playerStatus();
         List<Train> trains = playerStatus.trains;
 
-        setMainPanel(SContainer.row(
+        setContents(SPanel.row(
                 new SComponentArea(200, 500),
                 new SScrollableList(10, trains.stream()
                         .map(TrainView::new)

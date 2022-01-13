@@ -3,6 +3,7 @@ package NG.GUIMenu.Components;
 import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
 import NG.Tools.Logger;
+import NG.Tools.Vectors;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
@@ -41,13 +42,16 @@ public class SComponentArea extends SComponent {
         int height = getHeight();
 
         if (element.minWidth() > width || element.minHeight() > height) {
-            throw new RuntimeException(String.format("Element %s too large to show (%s > %s)", element, element.getSize(), getSize()));
+            throw new RuntimeException(String.format(
+                    "Element %s too large to show (%s > %s)",
+                    element, Vectors.asVectorString(element.minWidth(), element.minHeight()),
+                    Vectors.toString(getSize())
+            ));
         }
 
         this.element = element;
         element.setParent(this);
         element.setGrowthPolicy(true, true);
-        element.invalidateLayout();
         invalidateLayout();
     }
 

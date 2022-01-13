@@ -171,7 +171,7 @@ public abstract class SContainer extends SComponent {
     }
 
     /** creates a new invisible container with the given components in a grid */
-    public static SComponent grid(SComponent[][] components) {
+    public static SContainer grid(SComponent[][] components) {
         int xSize = components[0].length;
         int ySize = components.length;
         SContainer row = new GhostContainer(new GridLayoutManager(xSize, ySize));

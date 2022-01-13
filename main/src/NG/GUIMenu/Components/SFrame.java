@@ -46,9 +46,9 @@ public class SFrame extends SDecorator {
             titleComponent = text;
 
             upperBar = new SListeners.DragListener(
-                    new SPanel(SContainer.row(
+                    SPanel.row(
                             text, new SCloseButton(this)
-                    ))
+                    )
             ).setDragListener((dx, dy, x, y) -> addToPosition(dx, dy));
 
         } else {
@@ -93,9 +93,7 @@ public class SFrame extends SDecorator {
         titleComponent = title;
         title.setDragListener((dx, dy, x, y) -> addToPosition(dx, dy));
 
-        return new SPanel(SContainer.row(
-                title, new SCloseButton(this)
-        ));
+        return SPanel.row(title, new SCloseButton(this));
     }
 
     /**

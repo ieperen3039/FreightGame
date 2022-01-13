@@ -9,6 +9,7 @@ import NG.GUIMenu.Rendering.SFrameLookAndFeel;
 import NG.GUIMenu.SComponentProperties;
 import NG.Menu.InGame.Build.BuildMenu;
 import NG.Menu.InGame.Overviews.TrainOverview;
+import NG.Menu.Main.MainMenu;
 import NG.Network.NetworkNode;
 import NG.Network.RailNode;
 import NG.AssetHandling.Asset;
@@ -19,8 +20,7 @@ import NG.Tracks.TrackPiece;
 
 import java.util.stream.Stream;
 
-import static NG.Menu.Main.MainMenu.BUTTON_PROPERTIES_STRETCH;
-import static NG.Menu.Main.MainMenu.TEXT_PROPERTIES;
+import static NG.Menu.Main.MainMenu.*;
 
 /**
  * @author Geert van Ieperen created on 2-9-2020.
@@ -40,10 +40,10 @@ public class FreightGameUI extends SDecorator {
                         new SPanel(
                                 new SActiveTextArea(() -> "$" + game.playerStatus().money.getDollars(), MONEY_TEXT_PROPERTIES)
                         ),
-                        new SPanel(SContainer.column(
+                        SPanel.column(
                                 getBottomButtonRow(game, modLoader),
                                 new SFiller()
-                        )),
+                        ),
                         new SPanel(new SFiller())
                 ).setGrowthPolicy(true, false)
         ));
@@ -55,18 +55,24 @@ public class FreightGameUI extends SDecorator {
                 new SButton(
                         "Build Object",
                         () -> mainArea.show(SContainer.row(
-                                SContainer.column(
-                                        new SPanel(new STextArea("Build Menu", TEXT_PROPERTIES)),
+                                SPanel.column(
+                                        new STextArea("Build Menu", TEXT_PROPERTIES),
                                         new BuildMenu(game, mainArea::hide).setGrowthPolicy(false, true)
-                                ), new SFiller()
+                                ),
+                                new SFiller()
                         ))
                 ),
                 new SButton(
                         "Overviews",
-                        () -> mainArea.show(new STabPanel.Builder()
-                                .add("Trains", new TrainOverview(game))
-                                .get()
-                        )
+                        () -> mainArea.show(SContainer.column(
+                                new STabPanel.Builder()
+                                        .add("Trains", new TrainOverview(game))
+                                        .get(TEXT_PROPERTIES),
+                                SPanel.row(
+                                        new SFiller(),
+                                        new SButton("Close", mainArea::hide, BUTTON_PROPERTIES_STATIC)
+                                )
+                        ))
                 ),
                 new SButton(
                         "Options",

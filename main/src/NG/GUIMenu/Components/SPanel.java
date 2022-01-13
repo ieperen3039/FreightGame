@@ -51,7 +51,8 @@ public class SPanel extends SContainer {
     ) {
         this(
                 (cols * rows > 0 ? new GridLayoutManager(cols, rows) : new SingleElementLayout()),
-                growHorizontal, growVertical);
+                growHorizontal, growVertical
+        );
     }
 
     /**
@@ -106,6 +107,44 @@ public class SPanel extends SContainer {
     public SPanel(SComponent content) {
         super(new SingleElementLayout());
         add(content, null);
+    }
+
+
+    /** creates a new invisible container with the given components on a single column */
+    public static SPanel column(SComponent... components) {
+        SPanel column = new SPanel(1, components.length, true, true);
+
+        for (int i = 0; i < components.length; i++) {
+            column.add(components[i], new Vector2i(0, i));
+        }
+
+        return column;
+    }
+
+    /** creates a new invisible container with the given components in a single row */
+    public static SPanel row(SComponent... components) {
+        SPanel row = new SPanel(components.length, 1, true, true);
+
+        for (int i = 0; i < components.length; i++) {
+            row.add(components[i], new Vector2i(i, 0));
+        }
+
+        return row;
+    }
+
+    /** creates a new invisible container with the given components in a grid */
+    public static SPanel grid(SComponent[][] components) {
+        int xSize = components[0].length;
+        int ySize = components.length;
+        SPanel grid = new SPanel(xSize, ySize, true, true);
+
+        for (int i = 0; i < xSize; i++) {
+            for (int j = 0; j < ySize; j++) {
+                grid.add(components[j][i], new Vector2i(i, j));
+            }
+        }
+
+        return grid;
     }
 
     @Override

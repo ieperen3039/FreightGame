@@ -10,8 +10,6 @@ import java.io.ObjectOutput;
  * @author Geert van Ieperen created on 21-1-2019.
  */
 public class Valuta implements Externalizable {
-    public static final Valuta NOTHING = ofUnitValue(0);
-
     private int quantity = 0;
 
     public Valuta() {

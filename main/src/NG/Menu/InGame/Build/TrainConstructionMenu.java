@@ -67,7 +67,7 @@ public class TrainConstructionMenu extends SFrame {
             List<SButton> locoButtons = new ArrayList<>();
             for (Locomotive.Properties loco : locomotiveTypes) {
                 if (loco.isCompatibleWith(trackType)) {
-                    SContainer trainPanel = new SPanel(SContainer.column(
+                    SContainer trainPanel = SPanel.column(
                             new STextArea(
                                     loco + "\n\n" +
                                             "build cost : " + loco.buildCost + "\n" +
@@ -80,7 +80,7 @@ public class TrainConstructionMenu extends SFrame {
                                     PROPERTIES_COMPONENT_PROPERTIES
                             ),
                             new SButton("Add", () -> add(new Locomotive(loco)), MainMenu.BUTTON_PROPERTIES_STRETCH)
-                    ));
+                    );
 
                     locoButtons.add(new SButton(
                             loco.toString(),
@@ -101,9 +101,9 @@ public class TrainConstructionMenu extends SFrame {
             List<SButton> wagonButtons = new ArrayList<>();
             for (Wagon.Properties wagon : wagonTypes) {
                 if (wagon.isCompatibleWith(trackType)) {
-                    SContainer wagonPanel = new SPanel(SContainer.column(
+                    SContainer wagonPanel = SPanel.column(
                             new STextArea(
-                                    wagon.toString() + "\n\n" +
+                                    wagon.name + "\n\n" +
                                             "build cost : " + wagon.buildCost + "\n" +
                                             "maintenance : " + wagon.maintenancePerSecond + "\n" +
                                             "max speed : " + wagon.maxSpeed + "\n" +
@@ -112,7 +112,7 @@ public class TrainConstructionMenu extends SFrame {
                                     PROPERTIES_COMPONENT_PROPERTIES
                             ),
                             new SButton("Add", () -> add(new Wagon(wagon)), MainMenu.BUTTON_PROPERTIES_STRETCH)
-                    ));
+                    );
 
                     wagonButtons.add(new SButton(
                             wagon.toString(),
@@ -130,7 +130,7 @@ public class TrainConstructionMenu extends SFrame {
         }
 
         // tab area
-        STabPanel typeSelectionTabs = new STabPanel(tabLabels, typeTabArea);
+        STabPanel typeSelectionTabs = new STabPanel(tabLabels, typeTabArea, MainMenu.BUTTON_PROPERTIES_STATIC);
 
         // train preview
         SComponent trainDisplay = new SActiveTextArea(
