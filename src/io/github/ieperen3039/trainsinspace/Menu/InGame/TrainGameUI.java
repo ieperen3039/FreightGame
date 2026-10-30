@@ -1,6 +1,6 @@
 package io.github.ieperen3039.trainsinspace.Menu.InGame;
 
-import io.github.ieperen3039.trainsinspace.Core.FreightGame;
+import io.github.ieperen3039.trainsinspace.Core.TrainGame;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.ModLoader;
 import io.github.ieperen3039.trainsinspace.GUIMenu.Components.*;
@@ -24,14 +24,14 @@ import static io.github.ieperen3039.trainsinspace.Menu.Main.MainMenu.*;
 /**
  * @author Geert van Ieperen created on 2-9-2020.
  */
-public class FreightGameUI extends SDecorator {
+public class TrainGameUI extends SDecorator {
     private static final SComponentProperties MONEY_TEXT_PROPERTIES = new SComponentProperties(
             0, 100, true, false, NGFonts.TextType.FANCY, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
 
     private final SComponentArea mainArea;
 
-    public FreightGameUI(Game game, ModLoader modLoader) {
+    public TrainGameUI(Game game, ModLoader modLoader) {
         setContents(SContainer.column(
                 mainArea = new SComponentArea(0, 0).setGrowthPolicy(true, true),
                 SContainer.row(
@@ -130,9 +130,9 @@ public class FreightGameUI extends SDecorator {
                 ),
                 new SButton("Reload Assets", () -> game.executeOnRenderThread(Asset::dropAll)),
                 new SButton("Dump Assets", () -> Asset.forEachActive(Logger.DEBUG::print)),
-                new SButton("Save Game", () -> modLoader.saveGame(FreightGame.SAVE_FILE), BUTTON_PROPERTIES_STRETCH),
+                new SButton("Save Game", () -> modLoader.saveGame(TrainGame.SAVE_FILE), BUTTON_PROPERTIES_STRETCH),
                 new SButton("Exit", () -> {
-                    modLoader.saveGame(FreightGame.SAVE_FILE);
+                    modLoader.saveGame(TrainGame.SAVE_FILE);
                     modLoader.stopGame();
                 }, BUTTON_PROPERTIES_STRETCH)
         ));

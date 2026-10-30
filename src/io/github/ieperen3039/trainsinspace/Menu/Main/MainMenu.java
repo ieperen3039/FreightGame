@@ -4,7 +4,7 @@ import io.github.ieperen3039.trainsinspace.Content.Scenario.FileScenario;
 import io.github.ieperen3039.trainsinspace.Content.Scenario.LinearConnectionSc;
 import io.github.ieperen3039.trainsinspace.Content.Scenario.Scenario;
 import io.github.ieperen3039.trainsinspace.Content.Scenario.TriangleStationsSc;
-import io.github.ieperen3039.trainsinspace.Core.FreightGame;
+import io.github.ieperen3039.trainsinspace.Core.TrainGame;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.ModLoader;
 import io.github.ieperen3039.trainsinspace.GUIMenu.Components.SButton;
@@ -73,7 +73,7 @@ public class MainMenu extends SFrame {
                 new SFiller(),
                 SContainer.column(
                         new SButton("Start new game", this::showNewGame, MAIN_BUTTON_PROPERTIES),
-                        new SButton("Load Game", () -> modManager.loadGame(FreightGame.SAVE_FILE), MAIN_BUTTON_PROPERTIES),
+                        new SButton("Load Game", () -> modManager.loadGame(TrainGame.SAVE_FILE), MAIN_BUTTON_PROPERTIES),
                         new SButton("Start Empty", () -> emptyScenario.apply(game), MAIN_BUTTON_PROPERTIES),
                         new SButton("Start Triangle", () -> triangleScenario.apply(game), MAIN_BUTTON_PROPERTIES),
                         new SButton("Start Linear", () -> linearScenario.apply(game), MAIN_BUTTON_PROPERTIES),

@@ -7,11 +7,11 @@ import java.io.*;
 import java.util.Collection;
 
 /**
- * A file that stores the gaemstate of the given Game
+ * A file that stores the gamestate of the given Game
  * @author Geert van Ieperen. Created on 28-9-2018.
  */
 public class SaveFile {
-    private static final String INITIAL_DATA = "Freight Game SaveFile";
+    private static final String INITIAL_DATA = "Trains in Space Game SaveFile";
 
     public static void write(Game game, String name, ModLoader modLoader) throws IOException {
         FileOutputStream fileOut = new FileOutputStream(name);

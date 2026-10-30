@@ -1,6 +1,6 @@
 package io.github.ieperen3039.trainsinspace.GameState;
 
-import io.github.ieperen3039.trainsinspace.Core.FreightGame;
+import io.github.ieperen3039.trainsinspace.Core.TrainGame;
 import io.github.ieperen3039.trainsinspace.Core.GameAspect;
 import io.github.ieperen3039.trainsinspace.DataStructures.Collision.ColliderEntity;
 import io.github.ieperen3039.trainsinspace.Entities.Entity;
@@ -25,7 +25,7 @@ public interface GameState extends GameAspect, Iterable<Entity> {
     void addEntity(Entity entity);
 
     /**
-     * draws the objects on the screen, according to the state of the {@link FreightGame#timer()} object.
+     * draws the objects on the screen, according to the state of the {@link TrainGame#timer()} object.
      * @param gl the gl object to draw with
      */
     void draw(SGL gl);

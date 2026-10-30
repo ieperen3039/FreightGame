@@ -12,7 +12,7 @@ import io.github.ieperen3039.trainsinspace.GameState.GameState;
 import io.github.ieperen3039.trainsinspace.InputHandling.ClickShader;
 import io.github.ieperen3039.trainsinspace.InputHandling.KeyControl;
 import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseToolCallbacks;
-import io.github.ieperen3039.trainsinspace.Menu.InGame.FreightGameUI;
+import io.github.ieperen3039.trainsinspace.Menu.InGame.TrainGameUI;
 import io.github.ieperen3039.trainsinspace.Menu.Main.MainMenu;
 import io.github.ieperen3039.trainsinspace.Mods.InitialisationMod;
 import io.github.ieperen3039.trainsinspace.Mods.Mod;
@@ -43,7 +43,7 @@ import java.util.List;
  * provides all aspects of the game engine through the {@link Game} interface.
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
-public class FreightGame implements Game, ModLoader {
+public class TrainGame implements Game, ModLoader {
     public static final File SAVE_FILE = Directory.savedGames.getFile("test.sav");
     private static final Version GAME_VERSION = new Version(0, 0);
 
@@ -71,7 +71,7 @@ public class FreightGame implements Game, ModLoader {
     private List<Mod> activeMods = Collections.emptyList();
     private List<Mod> permanentMods;
 
-    public FreightGame() throws IOException {
+    public TrainGame() throws IOException {
         Logger.INFO.print("Starting up the game engine...");
 
         Logger.INFO.print("General debug information: " +
@@ -199,7 +199,7 @@ public class FreightGame implements Game, ModLoader {
     public void startGame() {
         frameManager.removeElement(mainMenu);
         mainMenu = null;
-        frameManager.setMainGUI(new FreightGameUI(this, this));
+        frameManager.setMainGUI(new TrainGameUI(this, this));
 
         gameState.unPause();
     }

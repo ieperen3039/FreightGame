@@ -1,6 +1,6 @@
 package io.github.ieperen3039.trainsinspace;
 
-import io.github.ieperen3039.trainsinspace.Core.FreightGame;
+import io.github.ieperen3039.trainsinspace.Core.TrainGame;
 import io.github.ieperen3039.trainsinspace.Tools.Logger;
 import org.lwjgl.system.Configuration;
 
@@ -30,6 +30,6 @@ public class Boot {
             Configuration.DEBUG.set(true);
         }
 
-        new FreightGame().root();
+        new TrainGame().root();
     }
 }
