@@ -11,6 +11,7 @@ import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SceneShaderGL;
 import io.github.ieperen3039.trainsinspace.Rendering.Shaders.SceneShader;
 import io.github.ieperen3039.trainsinspace.Tools.Toolbox;
 import io.github.ieperen3039.trainsinspace.Tools.Vectors;
+import org.joml.primitives.AABBf;
 import org.joml.*;
 
 import java.lang.Math;

@@ -3,7 +3,7 @@ package io.github.ieperen3039.trainsinspace.DataStructures.Collision;
 import io.github.ieperen3039.trainsinspace.DataStructures.Generic.PairList;
 import io.github.ieperen3039.trainsinspace.Entities.Entity;
 import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Shape;
-import org.joml.AABBf;
+import org.joml.primitives.AABBf;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;

@@ -5,6 +5,7 @@ import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Pair;
 import io.github.ieperen3039.trainsinspace.Rendering.GLFWWindow;
 import org.joml.Math;
+import org.joml.primitives.*;
 import org.joml.*;
 
 import java.util.Locale;

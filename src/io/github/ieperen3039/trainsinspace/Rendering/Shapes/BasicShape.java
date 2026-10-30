@@ -2,7 +2,7 @@ package io.github.ieperen3039.trainsinspace.Rendering.Shapes;
 
 import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
 import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Primitives.Plane;
-import org.joml.AABBf;
+import org.joml.primitives.AABBf;
 import org.joml.Vector3fc;
 
 import java.util.Collection;

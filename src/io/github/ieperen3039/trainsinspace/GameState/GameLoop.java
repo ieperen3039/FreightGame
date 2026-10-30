@@ -11,7 +11,7 @@ import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTool;
 import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
 import io.github.ieperen3039.trainsinspace.Rendering.Shaders.MaterialShader;
 import io.github.ieperen3039.trainsinspace.Rendering.Shaders.ShaderProgram;
-import org.joml.AABBf;
+import org.joml.primitives.AABBf;
 import org.joml.FrustumIntersection;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
@@ -143,7 +143,7 @@ public class GameLoop extends AbstractGameLoop implements GameState {
             if (ety instanceof ColliderEntity) {
                 ColliderEntity colliderEntity = (ColliderEntity) ety;
 
-                boolean mayCollide = hitbox.testAABB(colliderEntity.getHitbox());
+                boolean mayCollide = hitbox.containsAABB(colliderEntity.getHitbox());
                 if (mayCollide) {
                     boolean doesCollide = GilbertJohnsonKeerthiCollision.checkCollision(entity, colliderEntity);
 

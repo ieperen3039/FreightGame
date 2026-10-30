@@ -6,7 +6,7 @@ import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Primitives.Plane;
 import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
 import io.github.ieperen3039.trainsinspace.Tools.Logger;
 import io.github.ieperen3039.trainsinspace.Tools.Vectors;
-import org.joml.AABBf;
+import org.joml.primitives.AABBf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.joml.Vector3i;

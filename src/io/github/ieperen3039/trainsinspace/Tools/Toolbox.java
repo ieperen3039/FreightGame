@@ -6,7 +6,7 @@ import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
 import io.github.ieperen3039.trainsinspace.Rendering.Shaders.MaterialShader;
 import io.github.ieperen3039.trainsinspace.Rendering.Shaders.ShaderProgram;
 import io.github.ieperen3039.trainsinspace.Rendering.Shapes.GenericShapes;
-import org.joml.AABBf;
+import org.joml.primitives.AABBf;
 import org.joml.Quaternionf;
 import org.lwjgl.BufferUtils;
 

@@ -18,6 +18,7 @@ import io.github.ieperen3039.trainsinspace.Rendering.Shaders.ShaderProgram;
 import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
 import io.github.ieperen3039.trainsinspace.Tools.Logger;
 import io.github.ieperen3039.trainsinspace.Tools.Toolbox;
+import org.joml.primitives.AABBf;
 import org.joml.Math;
 import org.joml.*;
 

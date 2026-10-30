@@ -22,6 +22,7 @@ import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Shape;
 import io.github.ieperen3039.trainsinspace.Tools.Vectors;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackPiece;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackType;
+import org.joml.primitives.AABBf;
 import org.joml.*;
 
 import java.util.Collection;

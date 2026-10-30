@@ -7,7 +7,7 @@ import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Primitives.Plane;
 import io.github.ieperen3039.trainsinspace.AssetHandling.GeneratorAsset;
 import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
 import io.github.ieperen3039.trainsinspace.AssetHandling.Resource;
-import org.joml.AABBf;
+import org.joml.primitives.AABBf;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;

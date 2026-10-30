@@ -14,7 +14,7 @@ import io.github.ieperen3039.trainsinspace.Rendering.Shaders.ShaderProgram;
 import io.github.ieperen3039.trainsinspace.Rendering.Shapes.GenericShapes;
 import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
 import io.github.ieperen3039.trainsinspace.AssetHandling.GeneratorAsset;
-import org.joml.AABBf;
+import org.joml.primitives.AABBf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 

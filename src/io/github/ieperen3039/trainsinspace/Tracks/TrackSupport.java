@@ -13,6 +13,7 @@ import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Shape;
 import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
 import io.github.ieperen3039.trainsinspace.AssetHandling.GeneratorAsset;
 import org.joml.Math;
+import org.joml.primitives.AABBf;
 import org.joml.*;
 
 /**
