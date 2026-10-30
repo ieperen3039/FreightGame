@@ -57,7 +57,7 @@ public final class NVGOverlay {
         NGFonts[] fonts = NGFonts.values();
         for (int i = 0; i < fonts.length; i++) {
             fontBuffer[i] = fonts[i].asByteBuffer();
-            if (nvgCreateFontMem(vg, fonts[i].name, fontBuffer[i], 1) == -1) {
+            if (nvgCreateFontMem(vg, fonts[i].name, fontBuffer[i], true) == -1) {
                 Logger.ERROR.print("Could not create font " + fonts[i].name);
             }
         }
