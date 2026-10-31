@@ -29,6 +29,7 @@ import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
 import io.github.ieperen3039.trainsinspace.Settings.Settings;
 import io.github.ieperen3039.trainsinspace.Tools.Directory;
 import io.github.ieperen3039.trainsinspace.Tools.Logger;
+import io.github.ieperen3039.trainsinspace.Tracks.TrackTypeBase;
 import org.joml.Vector3f;
 
 import java.io.*;
@@ -116,6 +117,8 @@ public class TrainGame implements Game, ModLoader {
                 Logger.ERROR.print(ex);
             }
         }
+
+        typeCollection.trackTypes.add(new TrackTypeBase());
     }
 
     /**
