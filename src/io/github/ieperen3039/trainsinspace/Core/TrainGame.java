@@ -1,17 +1,29 @@
 package io.github.ieperen3039.trainsinspace.Core;
 
-import io.github.ieperen3039.trainsinspace.Camera.Camera;
+import io.github.ieperen3039.ngn.AssetHandling.Asset;
+import io.github.ieperen3039.ngn.Camera.Camera;
+import io.github.ieperen3039.ngn.InputHandling.KeyControl;
+import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseToolCallbacks;
+import io.github.ieperen3039.ngn.InputHandling.MouseTools.UISelector;
+import io.github.ieperen3039.ngn.Rendering.GLFWWindow;
+import io.github.ieperen3039.ngn.Rendering.Lights.SceneLights;
+import io.github.ieperen3039.ngn.Rendering.Lights.SingleShadowMapLights;
+import io.github.ieperen3039.ngn.Rendering.RenderLoop;
+import io.github.ieperen3039.ngn.Rendering.Shaders.BlinnPhongShader;
+import io.github.ieperen3039.ngn.Rendering.Shaders.ClickShader;
+import io.github.ieperen3039.ngn.Rendering.Shaders.ClickShaderTarget;
+import io.github.ieperen3039.ngn.Tools.Logger;
+import io.github.ieperen3039.ngn.Tools.RealTimeTimer;
+import io.github.ieperen3039.ngn.Tools.TickTimeTimer;
+import io.github.ieperen3039.ngn.UserInterface.FrameManagers.FrameManager;
+import io.github.ieperen3039.ngn.UserInterface.FrameManagers.FrameManagerImpl;
+import io.github.ieperen3039.ngn.Version;
 import io.github.ieperen3039.trainsinspace.Camera.TycoonFixedCamera;
-import io.github.ieperen3039.trainsinspace.Entities.Entity;
-import io.github.ieperen3039.trainsinspace.GUIMenu.FrameManagers.FrameManagerImpl;
-import io.github.ieperen3039.trainsinspace.GUIMenu.FrameManagers.UIFrameManager;
 import io.github.ieperen3039.trainsinspace.GameMap.GameMap;
 import io.github.ieperen3039.trainsinspace.GameMap.HeightMap;
+import io.github.ieperen3039.trainsinspace.GameMap.MapSelector;
 import io.github.ieperen3039.trainsinspace.GameState.GameLoop;
 import io.github.ieperen3039.trainsinspace.GameState.GameState;
-import io.github.ieperen3039.trainsinspace.InputHandling.ClickShader;
-import io.github.ieperen3039.trainsinspace.InputHandling.KeyControl;
-import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseToolCallbacks;
 import io.github.ieperen3039.trainsinspace.Menu.InGame.TrainGameUI;
 import io.github.ieperen3039.trainsinspace.Menu.Main.MainMenu;
 import io.github.ieperen3039.trainsinspace.Mods.InitialisationMod;
@@ -20,15 +32,8 @@ import io.github.ieperen3039.trainsinspace.Mods.SoftMod;
 import io.github.ieperen3039.trainsinspace.Mods.TypeCollection;
 import io.github.ieperen3039.trainsinspace.Particles.GameParticles;
 import io.github.ieperen3039.trainsinspace.Particles.ParticleShader;
-import io.github.ieperen3039.trainsinspace.Rendering.GLFWWindow;
-import io.github.ieperen3039.trainsinspace.Rendering.Lights.GameLights;
-import io.github.ieperen3039.trainsinspace.Rendering.Lights.SingleShadowMapLights;
-import io.github.ieperen3039.trainsinspace.Rendering.RenderLoop;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.BlinnPhongShader;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
 import io.github.ieperen3039.trainsinspace.Settings.Settings;
 import io.github.ieperen3039.trainsinspace.Tools.Directory;
-import io.github.ieperen3039.trainsinspace.Tools.Logger;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackTypeBase;
 import org.joml.Vector3f;
 
@@ -55,13 +60,13 @@ public class TrainGame implements Game, ModLoader {
 
     private Thread mainThread;
     private GameLoop gameState;
-    private GameTimer time;
+    private TickTimeTimer time;
     private Camera gameCamera;
     private GameMap gameMap;
-    private GameLights gameLights;
+    private SingleShadowMapLights gameLights;
     private GameParticles gameParticles;
     private Settings settings;
-    private UIFrameManager frameManager;
+    private FrameManagerImpl frameManager;
     private ClickShader clickShader;
     private PlayerStatus progress;
     private MainMenu mainMenu;
@@ -84,19 +89,19 @@ public class TrainGame implements Game, ModLoader {
                 "\n\tMods directory:     " + Directory.hardMods.getPath()
         );
 
-        // these are not GameAspects, and thus the init() rule does not apply.
         settings = new Settings();
-        time = GameTimer.create(settings.TARGET_FPS, settings.TARGET_TPS);
+        settings.TITLE = "Trains in SPAAAACE";
+        time = new RealTimeTimer();
 //        time = new FixedTimer(0, settings.TARGET_TPS); // for breakpoints only
 
-        GLFWWindow.Settings videoSettings = new GLFWWindow.Settings(settings);
-        window = new GLFWWindow(Settings.GAME_NAME, videoSettings, true);
-        clickShader = new ClickShader();
+        window = new GLFWWindow(settings.TITLE, new GLFWWindow.Settings(settings));
+        ClickShaderTarget clickShaderTarget = new ClickShaderTarget();
+        clickShader = new ClickShader(clickShaderTarget);
         gameMap = new HeightMap();
 
         gameCamera = new TycoonFixedCamera(new Vector3f(), 100, 100);
         renderer = new RenderLoop(settings.TARGET_FPS);
-        gameState = new GameLoop(settings.TARGET_TPS, clickShader);
+        gameState = new GameLoop(settings.TARGET_TPS, clickShaderTarget);
         gameLights = new SingleShadowMapLights();
         gameParticles = new GameParticles();
         inputHandler = new MouseToolCallbacks();
@@ -105,12 +110,16 @@ public class TrainGame implements Game, ModLoader {
         progress = new PlayerStatus();
         mainThread = Thread.currentThread();
 
+        inputHandler.setSelectionLayers(
+                gameState,
+                new MapSelector(this, gameMap),
+                new UISelector(frameManager)
+        );
+
         // load mods
-        allMods = JarModReader.loadMods(Directory.hardMods);
         for (File file : Directory.softMods.getFiles()) {
             try {
-                SoftMod mod = new SoftMod(file.toPath());
-                allMods.add(mod);
+                allMods.add(new SoftMod(file.toPath()));
 
             } catch (IOException ex) {
                 Logger.WARN.print("Error loading soft mod " + file);
@@ -134,26 +143,25 @@ public class TrainGame implements Game, ModLoader {
         gameLights.init(this);
         gameParticles.init(this);
         inputHandler.init(this);
-        frameManager.init(this);
+        frameManager.init(window, this, renderer.getFontLoader());
         progress.init(this);
 
         permanentMods = JarModReader.filterInitialisationMods(allMods, this);
 
         renderer.renderSequence(new BlinnPhongShader())
-                .add((gl, game) -> game.lights().draw(gl))
-                .add((gl, game) -> game.map().draw(gl))
-                .add((gl, game) -> game.state().draw(gl))
-                .add((gl, game) -> game.inputHandling().getMouseTool().draw(gl));
+                .add(gl -> gameLights.draw(gl))
+                .add(gl -> gameMap.draw(gl))
+                .add(gl -> gameState.draw(gl));
         // particles
-        renderer.renderSequence(new ParticleShader())
-                .add((gl, game) -> game.particles().draw(gl));
+        renderer.renderSequence(new ParticleShader(settings.PARTICLE_SIZE))
+                .add(gl -> gameParticles.draw(gl));
         // click shader
         renderer.renderSequence(clickShader)
-                .add((gl, game) -> game.state().draw(gl));
+                .add(gl -> gameState.draw(gl));
         // GUIs
         renderer.addHudItem(frameManager::draw);
 
-        mainMenu = new MainMenu(this, this, renderer::stopLoop);
+        mainMenu = new MainMenu(this, this, renderer::initiateStop);
         frameManager.addFrameCenter(mainMenu, window);
 
         gameState.start();
@@ -176,6 +184,7 @@ public class TrainGame implements Game, ModLoader {
             try {
                 assert !(mod instanceof InitialisationMod) : "Init mods should not be loaded here";
 
+                Logger.DEBUG.print("Loading mod " + mod.getModName());
                 mod.init(this);
 
             } catch (Exception ex) {
@@ -200,9 +209,9 @@ public class TrainGame implements Game, ModLoader {
 
     @Override
     public void startGame() {
-        frameManager.removeElement(mainMenu);
+        mainMenu.dispose();
         mainMenu = null;
-        frameManager.setMainGUI(new TrainGameUI(this, this));
+        frameManager.setMainPanel(new TrainGameUI(this, this));
 
         gameState.unPause();
     }
@@ -216,7 +225,7 @@ public class TrainGame implements Game, ModLoader {
 
         frameManager.clear();
 
-        mainMenu = new MainMenu(this, this, renderer::stopLoop);
+        mainMenu = new MainMenu(this, this, renderer::initiateStop);
         frameManager.addFrameCenter(mainMenu, window);
     }
 
@@ -268,8 +277,10 @@ public class TrainGame implements Game, ModLoader {
                 FileInputStream fileIn = new FileInputStream(target);
                 ObjectInputStream in = new ObjectInputStream(fileIn)
         ) {
-            String version = in.readUTF();
-            Logger.INFO.printf("Reading game file of version %s (current is %s)", version, GAME_VERSION);
+            String saveFileVersion = in.readUTF();
+            Logger.INFO.printf("Reading savegame from \"%s\" (this is %s)", saveFileVersion, GAME_VERSION);
+
+            new Version(saveFileVersion).requireAtLeast(0, 0);
 
             // mods
             cleanMods();
@@ -277,16 +288,22 @@ public class TrainGame implements Game, ModLoader {
             List<Mod> modsToLoad = new ArrayList<>(nrOfActiveMods);
             for (int i = 0; i < nrOfActiveMods; i++) {
                 String modName = in.readUTF();
-                modsToLoad.add(getModByName(modName));
+                Mod loadedMod = getModByName(modName);
+
+                if (loadedMod != null) {
+                    modsToLoad.add(loadedMod);
+                } else {
+                    Logger.WARN.printf("Savegame contains unknown mod \"%s\"", modName);
+                }
             }
             initMods(modsToLoad);
 
             // game aspects
             settings = (Settings) in.readObject();
-            time = (GameTimer) in.readObject();
+            time = (TickTimeTimer) in.readObject();
             Camera camera = (Camera) in.readObject();
             GameMap map = (GameMap) in.readObject();
-            GameLights lights = (GameLights) in.readObject();
+            SingleShadowMapLights lights = (SingleShadowMapLights) in.readObject();
             GameParticles particles = (GameParticles) in.readObject();
 
             gameState.readFrom(in);
@@ -307,10 +324,6 @@ public class TrainGame implements Game, ModLoader {
             gameLights = lights;
             gameParticles = particles;
 
-            for (Entity entity : gameState) {
-                entity.restore(this);
-            }
-
             Logger.INFO.print("Game state has been loaded");
             startGame();
 
@@ -323,7 +336,7 @@ public class TrainGame implements Game, ModLoader {
     }
 
     @Override
-    public GameTimer timer() {
+    public TickTimeTimer timer() {
         return time;
     }
 
@@ -340,11 +353,6 @@ public class TrainGame implements Game, ModLoader {
     @Override
     public GameMap map() {
         return gameMap;
-    }
-
-    @Override
-    public GameLights lights() {
-        return gameLights;
     }
 
     @Override
@@ -388,6 +396,17 @@ public class TrainGame implements Game, ModLoader {
     }
 
     @Override
+    public FrameManager gui() {
+        return frameManager;
+    }
+
+    @Override
+    public SceneLights lights() {
+        return gameLights;
+    }
+
+
+    @Override
     public void executeOnRenderThread(Runnable action) {
         if (Thread.currentThread() == mainThread) {
             action.run();
@@ -395,12 +414,6 @@ public class TrainGame implements Game, ModLoader {
             renderer.defer(action);
         }
     }
-
-    @Override
-    public UIFrameManager gui() {
-        return frameManager;
-    }
-
     @Override
     public List<Mod> allMods() {
         return Collections.unmodifiableList(allMods);
@@ -421,7 +434,7 @@ public class TrainGame implements Game, ModLoader {
     }
 
     private void cleanup() {
-        gameState.stopLoop();
+        gameState.initiateStop();
         permanentMods.forEach(Mod::cleanup);
 
         gameCamera.cleanup();
@@ -430,9 +443,10 @@ public class TrainGame implements Game, ModLoader {
         gameLights.cleanup();
         gameParticles.cleanup();
         inputHandler.cleanup();
-        frameManager.cleanup();
         clickShader.cleanup();
         progress.cleanup();
+
+        frameManager.clear();
 
         renderer.cleanup();
         window.cleanup();

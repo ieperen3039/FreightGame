@@ -1,37 +1,43 @@
 package io.github.ieperen3039.trainsinspace.Menu.InGame.Build;
 
+import io.github.ieperen3039.ngn.AssetHandling.Asset;
+import io.github.ieperen3039.ngn.AssetHandling.GeneratorAsset;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTarget;
+import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTool;
+import io.github.ieperen3039.ngn.Rendering.Material;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
+import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
+import io.github.ieperen3039.ngn.Tools.Vectors;
+import io.github.ieperen3039.ngn.UserInterface.Components.*;
+import io.github.ieperen3039.ngn.UserInterface.LayoutManagers.GridLayoutManager;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
-import io.github.ieperen3039.trainsinspace.Entities.Entity;
-import io.github.ieperen3039.trainsinspace.Entities.Station;
+import io.github.ieperen3039.trainsinspace.Entities.GameEntity;
+import io.github.ieperen3039.trainsinspace.Entities.Shapes;
 import io.github.ieperen3039.trainsinspace.Entities.StationGhost;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.*;
 import io.github.ieperen3039.trainsinspace.GameMap.GameMap;
-import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.AbstractMouseTool;
+import io.github.ieperen3039.trainsinspace.InputHandling.InputMapping;
+import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTargetEntity;
+import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTargetMap;
+import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseToolVisuals;
 import io.github.ieperen3039.trainsinspace.Menu.Main.MainMenu;
-import io.github.ieperen3039.trainsinspace.Rendering.Material;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.MaterialShader;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.GenericShapes;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
-import io.github.ieperen3039.trainsinspace.AssetHandling.GeneratorAsset;
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
+import io.github.ieperen3039.trainsinspace.Tools.Rays;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackType;
-import org.joml.Math;
 import org.joml.*;
+import org.joml.Math;
+import org.joml.primitives.Rayf;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
 import static io.github.ieperen3039.trainsinspace.Entities.StationImpl.PLATFORM_SIZE;
-import static io.github.ieperen3039.trainsinspace.Settings.Settings.STATION_RANGE;
 
 /**
  * @author Geert van Ieperen created on 30-4-2020.
  */
-public class StationBuilder extends AbstractMouseTool {
+public class StationBuilder implements MouseTool {
     private static final float EPSILON = 1 / 128f;
     private static final int RING_RADIAL_PARTS = 64;
     private static final float RING_THICKNESS = 0.1f;
@@ -47,123 +53,129 @@ public class StationBuilder extends AbstractMouseTool {
     }
 
     protected final Runnable deactivation;
-
-    private final StationGhost station;
+    private final Game game;
     private final TrackType trackType;
-    private final SizeSelector selector;
+    private StationGhost station;
+    private SizeSelector selector;
     private boolean isPositioned = false;
-    private final Vector3f cursorPosition = new Vector3f();
+    private Vector3f cursorPosition = new Vector3f();
     private boolean cursorIsOnMap = false;
     private Vector3fc placementPos;
 
     public StationBuilder(Game game, SToggleButton source, TrackType trackType) {
-        super(game);
-        this.deactivation = () -> source.setActive(false);
-        this.station = new StationGhost(game, 1, 6);
+        this.game = game;
         this.trackType = trackType;
+        this.deactivation = () -> source.setActive(false);
+        this.selector = null;
+    }
 
-        selector = new SizeSelector();
+    @Override
+    public void onActivate() {
+        this.station = new StationGhost(game, 1, 6);
+        this.selector = new SizeSelector();
+        // TODO move this out of the MouseTool
         game.gui().addFrame(selector);
+        game.state().addEntity(new Visuals());
     }
 
     @Override
-    public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
-        cursorIsOnMap = false;
-        // do nothing
-    }
-
-    @Override
-    public void dispose() {
+    public void onDeactivate() {
+        station = null;
         selector.dispose();
         deactivation.run();
     }
 
-    public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
-        switch (getMouseAction()) {
-            case PRESS_ACTIVATE:
-                placementPos = position;
-                station.setPosition(position);
-                cursorPosition.set(position);
-                isPositioned = true;
-//                break; // fallthrough to set off the ground
+    @Override
+    public boolean onPress(int button, MouseTarget target, int xSc, int ySc) {
+        if (button == InputMapping.DeactivateMouseTool.getButton()) {
+            onDeactivate();
+            return false;
+        }
 
-            case DRAG_ACTIVATE:
-                if (!isPositioned) return;
+        if (button != InputMapping.UseMouseTool.getButton()) return false;
 
-                // get relative direction that the player points to
-                /* The following is an optimized version of:
-                 * Planef plane = new Planef(station.getPosition(), Vectors.Z);
-                 * float f = Intersectionf.intersectRayPlane(ray, plane, EPSILON);
-                 */
-                float f = Intersectionf.intersectRayPlane(
-                        origin.x(), origin.y(), origin.z(), direction.x(), direction.y(), direction.z(),
-                        0, 0, 1, -placementPos.z(), EPSILON
-                );
-                Vector3f point = new Vector3f(direction).mul(f).add(origin);
+        if (target instanceof MouseTargetEntity) {
+            cursorIsOnMap = false;
+            return false;
 
-                Vector2f direction2D = new Vector2f(point.x - placementPos.x(), point.y - placementPos.y());
-                station.setOrientation(Vectors.arcTan(direction2D));
+        } else if (target instanceof MouseTargetMap map) {
+            placementPos = map.position();
+            station.setPosition(map.position());
+            cursorPosition.set(map.position());
+            isPositioned = true;
 
-                // get the minimum elevation of the station
-                GameMap map = game.map();
-                Vector3f newPos = new Vector3f(placementPos);
-                station.forEachCorner(pos -> {
-                    float height = map.getHeightAt(pos.x(), pos.y());
-                    if (newPos.z < height) newPos.z = height;
-                });
-                station.setPosition(newPos);
+            return true;
+        }
 
-                break;
+        return false;
+    }
 
-            case HOVER:
-                if (!isPositioned) {
-                    cursorPosition.set(position);
-                }
-                cursorIsOnMap = true;
+    @Override
+    public void onDrag(int xDelta, int yDelta, float xSc, float ySc) {
+        if (isPositioned) {
+            Rayf ray = game.camera().unproject((int) xSc, (int) ySc, game.getViewPort());
+            // get relative direction that the player points to
+            /* The following is an optimized version of:
+             * Planef plane = new Planef(placementPos, Vectors.Z);
+             * float f = Intersectionf.intersectRayPlane(ray, plane, EPSILON);
+             */
+            float f = Intersectionf.intersectRayPlane(
+                    ray.oX, ray.oY, ray.oZ,
+                    ray.dX, ray.dY, ray.dZ,
+                    0, 0, 1,
+                    -placementPos.z(), EPSILON
+            );
+            if (f == -1.0f) return;
+
+            Vector3f point = Rays.toPosition(ray, f);
+            Vector2f direction2D = new Vector2f(point.x - placementPos.x(), point.y - placementPos.y());
+            station.setOrientation(Vectors.arcTan(direction2D));
+
+            // get the minimum elevation of the station
+            GameMap map = game.map();
+            Vector3f newPos = new Vector3f(placementPos);
+            station.forEachCorner(pos -> {
+                float height = map.getHeightAt(pos.x(), pos.y());
+                if (newPos.z < height) newPos.z = height;
+            });
+            station.setPosition(newPos);
         }
     }
 
     @Override
-    public void draw(SGL gl) {
-        if (isPositioned) {
-            station.draw(gl);
-        }
-
-        if (cursorIsOnMap) {
-            gl.pushMatrix();
-            {
-                gl.translate(cursorPosition);
-
-                MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREY));
-                float diameter = pythagoras(station.getLength(), station.getNumberOfPlatforms() * PLATFORM_SIZE);
-                gl.render(getRingMesh(diameter / 2), station);
-
-                MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREEN));
-                gl.render(getRingMesh(STATION_RANGE), station);
+    public boolean onHover(MouseTarget target, int xDelta, int yDelta, float xSc, float ySc) {
+        if (target instanceof MouseTargetMap map) {
+            if (!isPositioned) {
+                cursorPosition.set(map.position());
             }
-            gl.popMatrix();
+            cursorIsOnMap = true;
+        } else {
+            cursorIsOnMap = false;
         }
+        return true;
     }
 
-    private float pythagoras(float a, float b) {
+    private float hypotenuse(float a, float b) {
         return Math.sqrt(a * a + b * b);
     }
 
     protected Mesh getRingMesh(float radius) {
-        Asset<Mesh> meshAsset = meshes.computeIfAbsent(radius, (r) -> new GeneratorAsset<>(
-                () -> GenericShapes.createRing((r + RING_THICKNESS), RING_RADIAL_PARTS, RING_THICKNESS),
-                mesh -> game.executeOnRenderThread(mesh::dispose)
-        ));
+        Asset<Mesh> meshAsset = meshes.computeIfAbsent(
+                radius, (r) -> new GeneratorAsset<>(
+                        () -> Shapes.createRing(
+                                (r + StationBuilder.RING_THICKNESS), RING_RADIAL_PARTS, RING_THICKNESS),
+                        mesh -> game.executeOnRenderThread(mesh::dispose)
+                )
+        );
         return meshAsset.get();
     }
 
     @Override
-    public void onRelease(int button) {
-        super.onRelease(button);
+    public void onRelease(int button, MouseTarget target, int xSc, int ySc) {
         if (!isPositioned) return;
-        double gameTime = game.timer().getGameTime();
+        double gameTime = game.timer().getTime();
 
-        Station newStation = station.solidify(game, trackType, gameTime);
+        GameEntity newStation = station.solidify(game, trackType, gameTime);
         game.state().addEntity(newStation);
         game.playerStatus().stations.add(station);
 
@@ -171,11 +183,40 @@ public class StationBuilder extends AbstractMouseTool {
         game.inputHandling().setMouseTool(null);
     }
 
+    private class Visuals extends MouseToolVisuals {
+        public Visuals() {
+            super(selector);
+        }
+
+        @Override
+        public void draw(SGL gl) {
+            if (isPositioned) {
+                station.draw(gl);
+            }
+
+            if (cursorIsOnMap) {
+                gl.pushMatrix();
+                {
+                    gl.translate(cursorPosition);
+
+                    MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREY));
+                    float diameter = hypotenuse(station.getLength(), station.getNumberOfPlatforms() * PLATFORM_SIZE);
+                    gl.render(getRingMesh(diameter / 2), 0);
+
+                    MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREEN));
+                    gl.render(getRingMesh(game.settings().STATION_RANGE), 0);
+                }
+                gl.popMatrix();
+            }
+        }
+    }
+
     private class SizeSelector extends SFrame {
         // TODO remember previous setting
         SizeSelector() {
             super("Station Size");
-            SPanel panel = new SPanel(2, 2);
+            GridLayoutManager layout = new GridLayoutManager(2, 2);
+            SPanel panel = new SPanel(layout);
 
             SDropDown platformCapacityChooser = new SDropDown(game.gui(), (int) station.getLength(), numbers);
             SDropDown nrOfPlatormChooser = new SDropDown(game.gui(), station.getNumberOfPlatforms(), numbers);
@@ -185,10 +226,10 @@ public class StationBuilder extends AbstractMouseTool {
             platformCapacityChooser.addStateChangeListener(changeListener);
             nrOfPlatormChooser.addStateChangeListener(changeListener);
 
-            panel.add(new STextArea("Wagons per platform", MainMenu.TEXT_PROPERTIES), new Vector2i(0, 0));
-            panel.add(platformCapacityChooser, new Vector2i(1, 0));
-            panel.add(new STextArea("Number of platforms", MainMenu.TEXT_PROPERTIES), new Vector2i(0, 1));
-            panel.add(nrOfPlatormChooser, new Vector2i(1, 1));
+            panel.add(new STextComponent("Wagons per platform", MainMenu.TEXT_PROPERTIES));
+            panel.add(platformCapacityChooser);
+            panel.add(new STextComponent("Number of platforms", MainMenu.TEXT_PROPERTIES));
+            panel.add(nrOfPlatormChooser);
 
             setMainPanel(panel);
             pack();
@@ -204,7 +245,7 @@ public class StationBuilder extends AbstractMouseTool {
         public void dispose() {
             if (!isDisposed()) {
                 super.dispose();
-                StationBuilder.this.dispose();
+                StationBuilder.this.onDeactivate();
             }
         }
     }

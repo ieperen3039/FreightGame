@@ -1,43 +1,51 @@
 package io.github.ieperen3039.trainsinspace.Network;
 
+import io.github.ieperen3039.ngn.AssetHandling.Asset;
+import io.github.ieperen3039.ngn.AssetHandling.GeneratorAsset;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.InputHandling.KeyControl;
+import io.github.ieperen3039.ngn.Rendering.Material;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
+import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
+import io.github.ieperen3039.ngn.Tools.Vectors;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
-import io.github.ieperen3039.trainsinspace.Entities.Entity;
-import io.github.ieperen3039.trainsinspace.InputHandling.KeyControl;
-import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.AbstractMouseTool;
-import io.github.ieperen3039.trainsinspace.Rendering.Material;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.MaterialShader;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.GenericShapes;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
-import io.github.ieperen3039.trainsinspace.AssetHandling.GeneratorAsset;
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
+import io.github.ieperen3039.trainsinspace.Entities.GameEntity;
+import io.github.ieperen3039.trainsinspace.Entities.Shapes;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-
-import static io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.AbstractMouseTool.MouseAction.PRESS_ACTIVATE;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * @author Geert van Ieperen created on 26-5-2020.
  */
-public class SignalEntity extends Signal implements Entity {
-    /** number of vertices along the circle of the ring */
+public class SignalEntity extends GameEntity {
+    /**
+     * number of vertices along the circle of the ring
+     */
     private static final int RING_RESOLUTION = 128;
-    /** height of middle above the floor of the track */
+    /**
+     * height of middle above the floor of the track
+     */
     private static final float INNER_RADIUS = 0.6f;
-    /** size increase of the inner radius in each direction to avoid collision */
+    /**
+     * size increase of the inner radius in each direction to avoid collision
+     */
     private static final float MARGIN = 0.1f;
-    /** how far each color ring is offset from the middle */
+    /**
+     * how far each color ring is offset from the middle
+     */
     private static final float COLOR_OFFSET = 0.1f;
 
-    private final static Asset<Mesh> RING_MESH = new GeneratorAsset<>(() ->
-            GenericShapes.createRing(INNER_RADIUS + MARGIN, RING_RESOLUTION, COLOR_OFFSET / 2f),
+    private final static Asset<Mesh> RING_MESH = new GeneratorAsset<>(
+            () ->
+                    Shapes.createRing(INNER_RADIUS + MARGIN, RING_RESOLUTION, COLOR_OFFSET / 2f),
             Mesh::dispose
     );
 
     private final Vector3fc ringMiddle;
+    private final Signal signal;
     protected transient Game game;
 
     private double despawnTime = Double.POSITIVE_INFINITY;
@@ -50,7 +58,7 @@ public class SignalEntity extends Signal implements Entity {
      * @param allowOppositeTraffic whether to allow traffic in the opposite direction of sourceNode
      */
     public SignalEntity(Game game, RailNode sourceNode, boolean inNodeDirection, boolean allowOppositeTraffic) {
-        super(sourceNode, inNodeDirection, allowOppositeTraffic);
+        signal = new Signal(sourceNode, inNodeDirection, allowOppositeTraffic);
         this.game = game;
         this.ringMiddle = new Vector3f(sourceNode.getPosition()).add(0, 0, INNER_RADIUS - MARGIN);
     }
@@ -59,8 +67,8 @@ public class SignalEntity extends Signal implements Entity {
     public void update() {
         // TODO maybe color
 
-        if (hostNode.isUnconnected()) {
-            despawn(game.timer().getGameTime());
+        if (signal.hostNode.isUnconnected()) {
+            despawn(game.timer().getTime());
         }
     }
 
@@ -70,24 +78,24 @@ public class SignalEntity extends Signal implements Entity {
         {
             gl.translate(ringMiddle);
 
-            Vector3fc targetDirection = hostNode.getDirection();
-            Vector3f cross = Vectors.newZVector().cross(targetDirection);
+            Vector3fc targetDirection = signal.hostNode.getDirection();
+            Vector3f cross = Vectors.Z.cross(targetDirection, new Vector3f());
             gl.rotate(cross, Vectors.Z.angle(targetDirection));
 
-            int sig = inNodeDirection ? 1 : -1;
+            int sig = signal.inNodeDirection ? 1 : -1;
 
             MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, getColor()));
-            gl.render(RING_MESH.get(), this);
+            gl.render(RING_MESH.get(), entityId);
 
             gl.translate(0, 0, -sig * COLOR_OFFSET);
             MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREEN));
-            gl.render(RING_MESH.get(), this);
+            gl.render(RING_MESH.get(), entityId);
             gl.translate(0, 0, sig * COLOR_OFFSET);
 
-            if (!allowOppositeTraffic) {
+            if (!signal.allowOppositeTraffic) {
                 gl.translate(0, 0, sig * COLOR_OFFSET);
                 MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.RED));
-                gl.render(RING_MESH.get(), this);
+                gl.render(RING_MESH.get(), entityId);
                 gl.translate(0, 0, -sig * COLOR_OFFSET);
             }
         }
@@ -95,20 +103,19 @@ public class SignalEntity extends Signal implements Entity {
     }
 
     private Color4f getColor() {
-        if (hostNode.isUnconnected()) {
+        if (signal.hostNode.isUnconnected()) {
             return Color4f.CYAN;
         }
 
         return coloring.getColor();
     }
 
-    @Override
-    public void reactMouse(AbstractMouseTool.MouseAction action, KeyControl keys) {
-        if (action.equals(PRESS_ACTIVATE)) {
+    public void onMouseClick(int button, KeyControl keys) {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             if (keys.isControlPressed()) {
-                allowOppositeTraffic(!allowOppositeTraffic);
+                signal.allowOppositeTraffic(!signal.allowOppositeTraffic);
             } else {
-                revert();
+                signal.revert();
             }
         }
     }
@@ -118,18 +125,8 @@ public class SignalEntity extends Signal implements Entity {
     }
 
     @Override
-    public double getDespawnTime() {
-        return despawnTime;
-    }
-
-    @Override
     public boolean isDespawnedAt(double gameTime) {
-        return gameTime > despawnTime || hostNode.isUnconnected();
-    }
-
-    @Override
-    public void despawn(double gameTime) {
-        despawnTime = gameTime;
+        return gameTime > despawnTime || signal.hostNode.isUnconnected();
     }
 
     @Override
@@ -137,10 +134,7 @@ public class SignalEntity extends Signal implements Entity {
         return UpdateFrequency.NEVER;
     }
 
-    @Override
-    public final void restore(Game game) {
-        if (this.game == null) {
-            this.game = game;
-        }
+    public Signal getSignal() {
+        return signal;
     }
 }

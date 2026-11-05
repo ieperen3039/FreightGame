@@ -1,8 +1,8 @@
 package io.github.ieperen3039.trainsinspace.GameMap;
 
+import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTool;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTool;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;

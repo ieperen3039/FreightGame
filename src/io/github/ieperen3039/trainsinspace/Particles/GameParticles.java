@@ -1,8 +1,8 @@
 package io.github.ieperen3039.trainsinspace.Particles;
 
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.GameAspect;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -52,7 +52,7 @@ public class GameParticles implements GameAspect, Serializable {
         }
 
         for (ParticleCloud cloud : particles) {
-            gl.render(cloud, null);
+            gl.render(cloud, 0);
         }
     }
 

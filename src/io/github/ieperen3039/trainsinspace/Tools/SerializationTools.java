@@ -1,5 +1,7 @@
 package io.github.ieperen3039.trainsinspace.Tools;
 
+import io.github.ieperen3039.ngn.Tools.Logger;
+
 import java.io.*;
 
 /**
@@ -11,8 +13,7 @@ import java.io.*;
 public final class SerializationTools {
     /**
      * Writes this object to a file, which can be recovered with {@link #readFromFile(File)}
-     * @param file   the file to write to, existing or not.
-     * @param object
+     * @param file   the file to write to, one is created if it doesn't exist
      */
     public static void writeToFile(File file, Serializable object) {
         try (OutputStream fileStream = new FileOutputStream(file)) {

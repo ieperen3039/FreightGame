@@ -1,7 +1,7 @@
 package io.github.ieperen3039.trainsinspace;
 
 import io.github.ieperen3039.trainsinspace.Core.TrainGame;
-import io.github.ieperen3039.trainsinspace.Tools.Logger;
+import io.github.ieperen3039.ngn.Tools.Logger;
 import org.lwjgl.system.Configuration;
 
 import java.util.ArrayList;

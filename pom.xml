@@ -119,6 +119,11 @@
     </dependencyManagement>
     <dependencies>
         <dependency>
+            <groupId>io.github.ieperen3039</groupId>
+            <artifactId>ngn</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
             <groupId>org.lwjgl</groupId>
             <artifactId>lwjgl</artifactId>
         </dependency>

@@ -1,9 +1,9 @@
 package io.github.ieperen3039.trainsinspace.DataStructures.Collision;
 
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.PairList;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Shape;
-import io.github.ieperen3039.trainsinspace.Tools.Logger;
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
+import io.github.ieperen3039.ngn.DataStructures.Generic.PairList;
+import io.github.ieperen3039.ngn.Rendering.Shapes.Shape;
+import io.github.ieperen3039.ngn.Tools.Logger;
+import io.github.ieperen3039.ngn.Tools.Vectors;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;

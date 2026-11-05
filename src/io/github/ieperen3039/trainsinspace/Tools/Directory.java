@@ -1,5 +1,7 @@
 package io.github.ieperen3039.trainsinspace.Tools;
 
+import io.github.ieperen3039.ngn.Tools.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;

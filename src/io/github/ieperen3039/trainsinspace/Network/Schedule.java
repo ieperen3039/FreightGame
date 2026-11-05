@@ -1,11 +1,11 @@
 package io.github.ieperen3039.trainsinspace.Network;
 
+import io.github.ieperen3039.ngn.UserInterface.Components.*;
+import io.github.ieperen3039.ngn.UserInterface.LayoutManagers.ListLayoutManager;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.Entities.Entity;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.*;
+import io.github.ieperen3039.trainsinspace.Entities.GameEntity;
 import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.EntityActionTool;
 import io.github.ieperen3039.trainsinspace.Menu.Main.MainMenu;
-import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.Serializable;
@@ -207,19 +207,18 @@ public class Schedule extends AbstractCollection<ScheduleElement> implements Ser
         }
 
         private void updateBody() {
-            SPanel panel = new SPanel(1, schedule.size);
-            int i = 0;
+            SPanel panel = new SPanel(new ListLayoutManager(false));
             for (Node node : schedule.nodes()) {
-                SExtendedTextArea text = new SExtendedTextArea(node.element.toString(), MainMenu.TEXT_PROPERTIES);
+                SExtendedTextComponent text = new SExtendedTextComponent(node.element.toString(), MainMenu.TEXT_PROPERTIES);
                 text.setClickListener((button, xRel, yRel) -> {
                     if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
                         selectedNode = node;
                     }
                 });
 
-                panel.add(text, new Vector2i(0, i++));
+                panel.add(text);
             }
-            body.add(panel, null);
+            body.add(panel);
         }
 
         protected void removeSelected() {
@@ -229,11 +228,11 @@ public class Schedule extends AbstractCollection<ScheduleElement> implements Ser
         }
 
         private void activateAddTool() {
-            EntityActionTool tool = new EntityActionTool(game, entity -> entity instanceof NetworkPosition, this::add);
+            EntityActionTool tool = new EntityActionTool(entity -> entity instanceof NetworkPosition, this::add);
             game.inputHandling().setMouseTool(tool);
         }
 
-        private void add(Entity entity) {
+        private void add(GameEntity entity) {
             ScheduleElement newElement = new ScheduleElement((NetworkPosition) entity);
 
             schedule.addAfter(selectedNode, newElement);

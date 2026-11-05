@@ -1,11 +1,17 @@
 package io.github.ieperen3039.trainsinspace.Entities;
 
+import io.github.ieperen3039.ngn.AssetHandling.Asset;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Pair;
+import io.github.ieperen3039.ngn.Rendering.Material;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
+import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Pair;
 import io.github.ieperen3039.trainsinspace.Freight.Cargo;
 import io.github.ieperen3039.trainsinspace.Mods.CargoType;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
+import org.joml.Quaternionfc;
+import org.joml.Vector3fc;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -76,9 +82,24 @@ public class Locomotive implements TrainElement {
     }
 
     @Override
+    public void draw(SGL gl, Vector3fc position, Quaternionfc rotation, int entityId, Color4f color) {
+        MaterialShader.ifPresent(gl, mat -> mat.setMaterial(Material.METAL, color));
+
+        gl.pushMatrix();
+        {
+            gl.translate(position);
+            gl.rotate(rotation);
+
+            Mesh mesh = getProperties().mesh.get();
+            gl.render(mesh, entityId);
+        }
+        gl.popMatrix();
+    }
+
     public void restore(Game game) {
         properties = game.objectTypes().getLocoByName(typeName);
     }
+
 
     public static class Properties extends TrainElement.Properties {
         public final float tractiveEffort;

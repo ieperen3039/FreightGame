@@ -1,7 +1,8 @@
 package io.github.ieperen3039.trainsinspace.Camera;
 
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
-import io.github.ieperen3039.trainsinspace.Rendering.Lights.PointLight;
+import io.github.ieperen3039.ngn.Camera.Camera;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.Rendering.Lights.PointLight;
 import org.joml.Vector3fc;
 
 /**

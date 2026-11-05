@@ -1,18 +1,17 @@
 package io.github.ieperen3039.trainsinspace.DataStructures.Collision;
 
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.PairList;
-import io.github.ieperen3039.trainsinspace.Entities.Entity;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Shape;
-import org.joml.primitives.AABBf;
+import io.github.ieperen3039.ngn.DataStructures.Generic.PairList;
+import io.github.ieperen3039.ngn.Rendering.Shapes.Shape;
+import io.github.ieperen3039.ngn.Scene.Entity;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.joml.primitives.AABBf;
 
 /**
  * @author Geert van Ieperen created on 24-6-2020.
  */
 public interface ColliderEntity extends Entity {
-
     /**
      * returns an axis aligned box that completely encases this entity in world position. The returned value should not
      * change over time.

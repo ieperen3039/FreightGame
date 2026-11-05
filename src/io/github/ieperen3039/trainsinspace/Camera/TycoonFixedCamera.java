@@ -1,14 +1,15 @@
 package io.github.ieperen3039.trainsinspace.Camera;
 
-import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.Rendering.GLFWWindow;
-import io.github.ieperen3039.trainsinspace.Settings.Settings;
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
-import org.joml.Vector2i;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
+import io.github.ieperen3039.ngn.Camera.Camera;
+import io.github.ieperen3039.ngn.Core.Main;
+import io.github.ieperen3039.ngn.Rendering.GLFWWindow;
+import io.github.ieperen3039.ngn.Settings.Settings;
+import io.github.ieperen3039.ngn.Tools.Vectors;
+import org.joml.*;
+import org.joml.primitives.Rayf;
 
 import java.io.Serializable;
+import java.lang.Math;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_MIDDLE;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
@@ -30,15 +31,15 @@ public class TycoonFixedCamera implements Camera, Serializable {
     private final Vector3f focus = new Vector3f();
     private final Vector3f eyeOffset;
 
-    private transient Game game;
+    private transient Main main;
     private float mouseXPos;
     private float mouseYPos;
     private boolean isBeingRotated = false;
-    private boolean isBeginMoved = false;
+    private boolean isBeingMoved = false;
 
     /**
      * a camera that always has the same angle to the ground. The angle can be set by the ratio between eyeOffset and
-     * eyeHeight. The camera will start rotated on 45 degrees around the z-axis
+     * eyeHeight. The camera will start rotated at 45 degrees around the z-axis
      * @param initialFocus the position of the camera focus
      * @param eyeOffset    the x-offset of the camera
      * @param eyeHeight    the z-offset of the camera
@@ -50,8 +51,8 @@ public class TycoonFixedCamera implements Camera, Serializable {
     }
 
     @Override
-    public void init(Game game) {
-        this.game = game;
+    public void init(Main game) {
+        this.main = game;
 
         Vector2i mousePosition = game.window().getMousePosition();
         mouseXPos = mousePosition.x;
@@ -66,12 +67,12 @@ public class TycoonFixedCamera implements Camera, Serializable {
     @Override
     public void updatePosition(float deltaTime) {
         // prevents side-of-window movement when rotating or dragging
-        if (isBeingRotated || isBeginMoved) return;
+        if (isBeingRotated || isBeingMoved) return;
         // prevent overshooting when camera is not updated.
         deltaTime = Math.min(deltaTime, 0.5f);
 
         Vector3f eyeDir = new Vector3f(eyeOffset);
-        GLFWWindow window = game.window();
+        GLFWWindow window = main.window();
         int width = window.getWidth();
         int height = window.getHeight();
 
@@ -127,6 +128,10 @@ public class TycoonFixedCamera implements Camera, Serializable {
     }
 
     @Override
+    public void set(Vector3fc focus) {
+        this.focus.set(focus);
+    }
+
     public void set(Vector3fc focus, Vector3fc eye) {
         this.focus.set(focus);
         Vector3f offset = new Vector3f(eye).sub(focus);
@@ -134,15 +139,19 @@ public class TycoonFixedCamera implements Camera, Serializable {
     }
 
     @Override
+    public Matrix4f getProjectionMatrix(float aspectRatio) {
+        return null;
+    }
+
     public boolean isIsometric() {
-        return game.settings().ISOMETRIC_VIEW;
+        return main.settings().ISOMETRIC_VIEW;
     }
 
     @Override
     public void onScroll(float value) {
         resetFocus();
 
-        Settings s = game.settings();
+        Settings s = main.settings();
         float maxZoom = s.MAX_CAMERA_DIST;
 
         float v = Math.max(Math.min(CAMERA_ZOOM_SPEED * -value, ZOOM_SPEED_LIMIT), -ZOOM_SPEED_LIMIT);
@@ -182,7 +191,7 @@ public class TycoonFixedCamera implements Camera, Serializable {
             float angle = -xDelta * ROTATION_MODIFIER;
             eyeOffset.rotateZ(angle);
 
-        } else if (isBeginMoved) {
+        } else if (isBeingMoved) {
             // x movement
             Vector3f eyeDir = new Vector3f(eyeOffset);
             eyeDir.mul(xDelta * DRAG_MODIFIER).cross(getUpVector());
@@ -201,24 +210,24 @@ public class TycoonFixedCamera implements Camera, Serializable {
             resetFocus();
 
         } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-            isBeginMoved = true;
+            isBeingMoved = true;
         }
     }
 
     private void resetFocus() {
         // set focus to middle of screen
-        Vector3f eyeMidOrigin = new Vector3f();
-        Vector3f eyeMidDirection = new Vector3f();
-        int width = game.window().getWidth();
-        int height = game.window().getHeight();
+        Settings settings = main.settings();
 
-        Vectors.windowCoordToRay(game, width / 2, height / 2, eyeMidOrigin, eyeMidDirection);
-        eyeMidDirection.normalize(Settings.Z_FAR - Settings.Z_NEAR);
-        Float tFrac = game.map().gridMapIntersection(eyeMidOrigin, eyeMidDirection);
+        Main.ViewPort viewPort = main.getViewPort();
+        Rayf ray = unproject(viewPort.width() / 2, viewPort.height() / 2, viewPort);
+        Vector3f eyeMidOrigin = new Vector3f(ray.oX, ray.oY, ray.oZ);
+        Vector3f eyeMidDirection = new Vector3f(ray.dX, ray.dY, ray.dZ).normalize(settings.Z_FAR - settings.Z_NEAR);
+//        Float tFrac = main.gameMap().gridMapIntersection(eyeMidOrigin, eyeMidDirection);
+        float tFrac = Intersectionf.intersectRayPlane(eyeMidOrigin, eyeMidDirection, Vectors.O, Vectors.Z, 1f / 8);
 
-        if (tFrac != null) {
+        if (tFrac > 0) {
             Vector3fc eyePos = getEye();
-            focus.set(eyeMidDirection).mul(tFrac).add(eyeMidOrigin);
+            focus.set(Vectors.getFromRay(ray, tFrac));
             eyeOffset.set(eyePos).sub(focus);
         }
     }
@@ -226,7 +235,7 @@ public class TycoonFixedCamera implements Camera, Serializable {
     @Override
     public void onRelease(int button) {
         isBeingRotated = false;
-        isBeginMoved = false;
+        isBeingMoved = false;
     }
 }
 

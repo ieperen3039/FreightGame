@@ -1,17 +1,14 @@
 package io.github.ieperen3039.trainsinspace.Particles;
 
-import io.github.ieperen3039.trainsinspace.Camera.Camera;
-import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.Core.GameTimer;
-import io.github.ieperen3039.trainsinspace.Entities.Entity;
-import io.github.ieperen3039.trainsinspace.Rendering.GLFWWindow;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.AbstractSGL;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.ShaderException;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.ShaderProgram;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Resource;
-import io.github.ieperen3039.trainsinspace.Settings.Settings;
-import io.github.ieperen3039.trainsinspace.Tools.Logger;
+import io.github.ieperen3039.ngn.AssetHandling.Resource;
+import io.github.ieperen3039.ngn.Camera.Camera;
+import io.github.ieperen3039.ngn.Core.Main;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.AbstractSGL;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
+import io.github.ieperen3039.ngn.Rendering.Shaders.ShaderException;
+import io.github.ieperen3039.ngn.Rendering.Shaders.ShaderProgram;
+import io.github.ieperen3039.ngn.Tools.Logger;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.lwjgl.system.MemoryStack;
@@ -19,8 +16,6 @@ import org.lwjgl.system.MemoryStack;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 
-import static io.github.ieperen3039.trainsinspace.Rendering.Shaders.ShaderProgram.createShader;
-import static io.github.ieperen3039.trainsinspace.Rendering.Shaders.ShaderProgram.loadText;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL32.GL_GEOMETRY_SHADER;
 
@@ -33,7 +28,6 @@ public class ParticleShader implements ShaderProgram {
     private static final Resource.Path FRAGMENT_PATH = PARTICLE_SHADER_PATH.resolve("fragment.frag");
     private static final Resource.Path GEOMETRY_PATH = PARTICLE_SHADER_PATH.resolve("geometry.glsl");
 
-
     private final int programId;
     private final int vertexShaderId;
     private final int fragmentShaderId;
@@ -42,32 +36,27 @@ public class ParticleShader implements ShaderProgram {
     private final int projectionUniform;
     private final int geometryShaderId;
     private final int sizeUniform;
+    private float particleSize;
 
-    public ParticleShader() throws IOException {
+    public ParticleShader(float particleSize) throws IOException {
+        this.particleSize = particleSize;
+
         programId = glCreateProgram();
 
-        final String vertexCode = loadText(VERTEX_PATH);
-        vertexShaderId = createShader(programId, GL_VERTEX_SHADER, vertexCode);
+        final String vertexCode = VERTEX_PATH.asText();
+        vertexShaderId = ShaderProgram.createShader(programId, GL_VERTEX_SHADER, vertexCode);
 
-        final String fragmentCode = loadText(FRAGMENT_PATH);
-        fragmentShaderId = createShader(programId, GL_FRAGMENT_SHADER, fragmentCode);
+        final String fragmentCode = FRAGMENT_PATH.asText();
+        fragmentShaderId = ShaderProgram.createShader(programId, GL_FRAGMENT_SHADER, fragmentCode);
 
-        final String geometryCode = loadText(GEOMETRY_PATH);
-        geometryShaderId = createShader(programId, GL_GEOMETRY_SHADER, geometryCode);
+        final String geometryCode = GEOMETRY_PATH.asText();
+        geometryShaderId = ShaderProgram.createShader(programId, GL_GEOMETRY_SHADER, geometryCode);
 
         link();
 
         timeUniform = glGetUniformLocation(programId, "currentTime");
         projectionUniform = glGetUniformLocation(programId, "viewProjectionMatrix");
         sizeUniform = glGetUniformLocation(programId, "particleSize");
-    }
-
-    @Override
-    public void initialize(Game game) {
-        GameTimer timer = game.timer();
-        Settings settings = game.settings();
-        glUniform1f(timeUniform, (float) timer.getRenderTime());
-        glUniform1f(sizeUniform, settings.PARTICLE_SIZE);
     }
 
     public void bind() {
@@ -113,24 +102,29 @@ public class ParticleShader implements ShaderProgram {
         }
     }
 
-    public ParticleGL getGL(Game game) {
-        GLFWWindow window = game.window();
-        Camera camera = game.camera();
+    public void setParticleSize(float particleSize) {
+        this.particleSize = particleSize;
+    }
 
-        return new ParticleGL(camera, window);
+    @Override
+    public ParticleGL getGL(Main game) {
+        Camera camera = game.camera();
+        TickTime timer = game.timer();
+        glUniform1f(timeUniform, (float) timer.getRenderTime());
+        glUniform1f(sizeUniform, particleSize);
+
+        return new ParticleGL(camera, game.getViewPort());
     }
 
     public class ParticleGL extends AbstractSGL {
         private final Matrix4f viewProjectionMatrix;
 
-        public ParticleGL(
-                Camera camera, GLFWWindow window
-        ) {
-            viewProjectionMatrix = camera.getViewProjection(window);
+        public ParticleGL(Camera camera, Main.ViewPort viewPort) {
+            viewProjectionMatrix = camera.getViewProjection(viewPort);
         }
 
         @Override
-        public void render(Mesh object, Entity sourceEntity) {
+        public void render(Mesh object, int sourceEntity) {
             setProjection(viewProjectionMatrix);
             object.render(LOCK);
         }

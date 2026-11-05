@@ -1,10 +1,10 @@
 package io.github.ieperen3039.trainsinspace.GameMap;
 
-import io.github.ieperen3039.trainsinspace.Core.Version;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
-import io.github.ieperen3039.trainsinspace.AssetHandling.ExternalAsset;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Resource;
 import de.matthiasmann.twl.utils.PNGDecoder;
+import io.github.ieperen3039.ngn.AssetHandling.Asset;
+import io.github.ieperen3039.ngn.AssetHandling.ExternalAsset;
+import io.github.ieperen3039.ngn.AssetHandling.Resource;
+import io.github.ieperen3039.ngn.Version;
 
 import java.io.FileInputStream;
 import java.io.IOException;

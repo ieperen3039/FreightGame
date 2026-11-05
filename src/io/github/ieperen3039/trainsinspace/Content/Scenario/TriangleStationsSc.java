@@ -32,7 +32,7 @@ public class TriangleStationsSc extends Scenario {
 
     @Override
     protected void setEntities(Game game, Settings settings) {
-        double now = game.timer().getGameTime();
+        double now = game.timer().getTime();
         GameState gameState = game.state();
 
         TrackType type = game.objectTypes().trackTypes.get(0);

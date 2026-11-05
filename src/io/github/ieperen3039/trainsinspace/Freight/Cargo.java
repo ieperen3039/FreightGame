@@ -1,7 +1,6 @@
 package io.github.ieperen3039.trainsinspace.Freight;
 
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.Core.GameObject;
 import io.github.ieperen3039.trainsinspace.DataStructures.CargoCollection;
 import io.github.ieperen3039.trainsinspace.DataStructures.Valuta;
 import io.github.ieperen3039.trainsinspace.Entities.Storage;
@@ -15,7 +14,7 @@ import io.github.ieperen3039.trainsinspace.Mods.CargoType;
  * @see CargoCollection
  * @see CargoType
  */
-public class Cargo implements GameObject {
+public class Cargo {
     private transient CargoType type;
     private final String typeName;
 
@@ -56,7 +55,6 @@ public class Cargo implements GameObject {
         return type.value(secondsInTransit, distanceTravelled).multiply(quantity);
     }
 
-    @Override
     public void restore(Game game) {
         type = game.objectTypes().getCargoByName(typeName);
     }

@@ -1,6 +1,6 @@
 package io.github.ieperen3039.trainsinspace.GameMap;
 
-import io.github.ieperen3039.trainsinspace.Core.Version;
+import io.github.ieperen3039.ngn.Version;
 
 import java.util.Collection;
 import java.util.Collections;

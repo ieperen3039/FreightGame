@@ -1,11 +1,9 @@
 package io.github.ieperen3039.trainsinspace.Entities;
 
-import io.github.ieperen3039.trainsinspace.Core.AbstractGameObject;
-import io.github.ieperen3039.trainsinspace.Core.Game;
+import io.github.ieperen3039.ngn.Tools.Logger;
 import io.github.ieperen3039.trainsinspace.DataStructures.CargoCollection;
 import io.github.ieperen3039.trainsinspace.Freight.Cargo;
 import io.github.ieperen3039.trainsinspace.Mods.CargoType;
-import io.github.ieperen3039.trainsinspace.Tools.Logger;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -15,16 +13,12 @@ import java.util.Collection;
  * A storage is any building that stores {@link Cargo}.
  * @author Geert van Ieperen. Created on 12-11-2018.
  */
-public abstract class Storage extends AbstractGameObject implements Entity {
+public abstract class Storage extends GameEntity {
     private final CargoCollection contents;
     private final Vector3f position;
 
-    private double spawnTime;
-    private double despawnTime = Double.POSITIVE_INFINITY;
-
-    public Storage(Game game, Vector3fc position, double spawnTime) {
-        super(game);
-        this.spawnTime = spawnTime;
+    public Storage(Vector3fc position, double spawnTime) {
+        super(spawnTime);
         this.position = new Vector3f(position);
         this.contents = new CargoCollection();
     }
@@ -66,27 +60,5 @@ public abstract class Storage extends AbstractGameObject implements Entity {
 
     public Vector3fc getPosition() {
         return position;
-    }
-
-    @Override
-    public void despawn(double gameTime) {
-        despawnTime = gameTime;
-    }
-
-    @Override
-    public double getSpawnTime() {
-        return spawnTime;
-    }
-
-    @Override
-    public double getDespawnTime() {
-        return despawnTime;
-    }
-
-    @Override
-    public void restoreFields(Game game) {
-        for (Cargo chunk : contents) {
-            chunk.restore(game);
-        }
     }
 }

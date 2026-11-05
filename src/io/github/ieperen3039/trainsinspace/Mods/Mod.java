@@ -1,8 +1,8 @@
 package io.github.ieperen3039.trainsinspace.Mods;
 
+import io.github.ieperen3039.ngn.Version;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.GameAspect;
-import io.github.ieperen3039.trainsinspace.Core.Version;
 
 import java.io.IOException;
 

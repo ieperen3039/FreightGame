@@ -1,7 +1,8 @@
 package io.github.ieperen3039.trainsinspace.Core;
 
+import io.github.ieperen3039.ngn.Tools.Logger;
+import io.github.ieperen3039.ngn.Version;
 import io.github.ieperen3039.trainsinspace.Mods.Mod;
-import io.github.ieperen3039.trainsinspace.Tools.Logger;
 
 import java.io.*;
 import java.util.Collection;

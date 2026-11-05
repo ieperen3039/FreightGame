@@ -1,18 +1,18 @@
 package io.github.ieperen3039.trainsinspace.Tracks;
 
+import io.github.ieperen3039.ngn.AssetHandling.Asset;
+import io.github.ieperen3039.ngn.AssetHandling.GeneratorAsset;
+import io.github.ieperen3039.ngn.DataStructures.Generic.PairList;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
+import io.github.ieperen3039.ngn.Rendering.Shapes.GenericShapes;
+import io.github.ieperen3039.ngn.Rendering.Shapes.Shape;
+import io.github.ieperen3039.ngn.Tools.Vectors;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.PairList;
 import io.github.ieperen3039.trainsinspace.Network.RailNode;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.GenericShapes;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Shape;
-import io.github.ieperen3039.trainsinspace.AssetHandling.GeneratorAsset;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
 import io.github.ieperen3039.trainsinspace.Settings.Settings;
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
-import org.joml.Math;
 import org.joml.*;
+import org.joml.Math;
 
 /**
  * @author Geert van Ieperen. Created on 18-9-2018.
@@ -44,9 +44,10 @@ public class CircleTrack extends TrackPiece {
      * @param endPosition    the point where this track should end
      */
     public CircleTrack(
-            Game game, TrackType type, RailNode startNode, Vector3fc startDirection, Vector3fc endPosition
+            Game game, TrackType type, RailNode startNode, Vector3fc startDirection, Vector3fc endPosition,
+            Settings settings
     ) {
-        this(game, type, startNode, startDirection, endPosition, null, true);
+        this(game, type, startNode, startDirection, endPosition, null, true, settings);
     }
 
     /**
@@ -56,16 +57,18 @@ public class CircleTrack extends TrackPiece {
      * @param startNode      point A where this track should start
      * @param startDirection the direction in point A
      * @param endNode        point B where this track should end
+     * @param settings
      */
     public CircleTrack(
-            Game game, TrackType type, RailNode startNode, Vector3fc startDirection, RailNode endNode
+            Game game, TrackType type, RailNode startNode, Vector3fc startDirection, RailNode endNode,
+            Settings settings
     ) {
-        this(game, type, startNode, startDirection, endNode.getPosition(), endNode, true);
+        this(game, type, startNode, startDirection, endNode.getPosition(), endNode, true, settings);
     }
 
     private CircleTrack(
             Game game, TrackType type, RailNode startNode, Vector3fc startDirection, Vector3fc endPosition,
-            RailNode optionalEndNode, boolean modifiable
+            RailNode optionalEndNode, boolean modifiable, Settings settings
     ) {
         super(game, type, modifiable);
         assert startNode.getPosition().distanceSquared(endPosition) > 0 : startNode;
@@ -112,11 +115,11 @@ public class CircleTrack extends TrackPiece {
         if (radius * angle > MAX_RENDER_SIZE) {
             Vector3f newDisplacement = new Vector3f(startToEnd.x, startToEnd.y, heightDiff).normalize(10);
             mesh = new GeneratorAsset<>(() -> getType().generateStraight(newDisplacement), Mesh::dispose);
-            clickBox = new GeneratorAsset<>(() -> TrackType.clickBoxStraight(newDisplacement), Mesh::dispose);
+            clickBox = new GeneratorAsset<>(() -> TrackType.clickBoxStraight(newDisplacement, settings), Mesh::dispose);
 
         } else {
             mesh = new GeneratorAsset<>(() -> getType().generateCircle(radius, angle, heightDiff), Mesh::dispose);
-            clickBox = new GeneratorAsset<>(() -> TrackType.clickBoxCircle(radius, angle, heightDiff), Mesh::dispose);
+            clickBox = new GeneratorAsset<>(() -> TrackType.clickBoxCircle(radius, angle, heightDiff, settings), Mesh::dispose);
         }
 
         this.endNode = (optionalEndNode != null)
@@ -125,7 +128,7 @@ public class CircleTrack extends TrackPiece {
 
         // calculate collision shapes
         collisionShapes = new PairList<>();
-        int collisionResolution = (int) Math.max(getLength() / Settings.TRACK_COLLISION_BOX_LENGTH, angle / Math.toRadians(45)) + 1;
+        int collisionResolution = (int) Math.max(getLength() / settings.TRACK_COLLISION_BOX_LENGTH, angle / Math.toRadians(45)) + 1;
 
         Vector3fc oldPosition = startPosition;
         Vector3fc newPosition;
@@ -141,7 +144,7 @@ public class CircleTrack extends TrackPiece {
             Matrix4f transformation = new Matrix4f()
                     .translate(oldPosition)
                     .rotate(rotation)
-                    .scale(oldToNew.length(), Settings.TRACK_WIDTH, Settings.TRACK_HEIGHT_SPACE)
+                    .scale(oldToNew.length(), settings.TRACK_WIDTH, settings.TRACK_HEIGHT_SPACE)
                     .scale(0.5f) // as we transform a 2x2x2 cube
                     .translate(1, 0, 1);
 
@@ -161,7 +164,7 @@ public class CircleTrack extends TrackPiece {
         {
             gl.translate(center);
             gl.rotate(startTheta, 0, 0, 1);
-            gl.render(renderClickBox ? clickBox.get() : mesh.get(), this);
+            gl.render(renderClickBox ? clickBox.get() : mesh.get(), entityId);
         }
         gl.popMatrix();
     }
@@ -266,13 +269,6 @@ public class CircleTrack extends TrackPiece {
         return radius;
     }
 
-    @Override
-    public void restoreFields(Game game) {
-        super.restoreFields(game);
-        startNode.restore(game);
-        endNode.restore(game);
-    }
-
     /** @see #getCircleDescription(Vector2fc, Vector2fc, Vector2fc) */
     public static Description getCircleDescription(Vector3fc startPos, Vector3fc startDir, Vector3fc endPos) {
         return getCircleDescription(
@@ -284,7 +280,7 @@ public class CircleTrack extends TrackPiece {
 
     /**
      * computes circle parameters in the same way as {@link #CircleTrack(Game, TrackType, RailNode, Vector3fc,
-     * Vector3fc)}.
+     * Vector3fc, Settings)}.
      * @param startPos point A
      * @param startDir the direction in point A
      * @param endPos   point B

@@ -1,6 +1,7 @@
 package io.github.ieperen3039.trainsinspace.Content.Scenario;
 
-import io.github.ieperen3039.trainsinspace.Camera.Camera;
+import io.github.ieperen3039.ngn.Camera.Camera;
+import io.github.ieperen3039.trainsinspace.Camera.TycoonFixedCamera;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.ModLoader;
 import io.github.ieperen3039.trainsinspace.GameMap.DefaultMapGenerator;
@@ -85,8 +86,12 @@ public abstract class Scenario {
         Camera cam = game.camera();
         Vector2f size = game.map().getSize();
         Vector3f cameraFocus = new Vector3f(size.x / 2, size.y / 2, 0);
-        Vector3f cameraEye = new Vector3f(cameraFocus).add(-20, -20, 20);
-        cam.set(cameraFocus, cameraEye);
+        if (cam instanceof TycoonFixedCamera tCam) {
+            Vector3f cameraEye = new Vector3f(cameraFocus).add(-20, -20, 20);
+            tCam.set(cameraFocus, cameraEye);
+        } else {
+            cam.set(cameraFocus);
+        }
     }
 
     /**
@@ -101,13 +106,13 @@ public abstract class Scenario {
 
     protected static Vector3f getGroundPos(Game game, Vector2fc origin, Vector3fc offset) {
         Vector3f stationPos = new Vector3f(origin, 0).add(offset);
-        stationPos.z = game.map().getHeightAt(stationPos.x, stationPos.y) + Settings.TRACK_HEIGHT_ABOVE_GROUND;
+        stationPos.z = game.map().getHeightAt(stationPos.x, stationPos.y) + game.settings().TRACK_HEIGHT_ABOVE_GROUND;
         return stationPos;
     }
 
     protected static Vector3f getGroundPos(Game game, Vector3fc origin, Vector3fc offset) {
         Vector3f stationPos = new Vector3f(origin).add(offset);
-        stationPos.z = game.map().getHeightAt(stationPos.x, stationPos.y) + Settings.TRACK_HEIGHT_ABOVE_GROUND;
+        stationPos.z = game.map().getHeightAt(stationPos.x, stationPos.y) + game.settings().TRACK_HEIGHT_ABOVE_GROUND;
         return stationPos;
     }
 

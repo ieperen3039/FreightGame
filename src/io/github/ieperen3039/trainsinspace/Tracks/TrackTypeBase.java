@@ -1,11 +1,11 @@
 package io.github.ieperen3039.trainsinspace.Tracks;
 
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
 import io.github.ieperen3039.trainsinspace.DataStructures.Valuta;
-import io.github.ieperen3039.trainsinspace.Rendering.Material;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.MaterialShader;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.CustomShape;
+import io.github.ieperen3039.ngn.Rendering.Material;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
+import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
+import io.github.ieperen3039.ngn.Rendering.Shapes.CustomShape;
 import org.joml.Math;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;

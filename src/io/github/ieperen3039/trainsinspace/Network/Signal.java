@@ -1,8 +1,9 @@
 package io.github.ieperen3039.trainsinspace.Network;
 
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Pair;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Pair;
+import io.github.ieperen3039.ngn.Tools.Toolbox;
 import io.github.ieperen3039.trainsinspace.Tools.NetworkPathFinder;
-import io.github.ieperen3039.trainsinspace.Tools.Toolbox;
+
 import io.github.ieperen3039.trainsinspace.Tracks.TrackPiece;
 
 import java.io.Serializable;
@@ -37,6 +38,7 @@ public class Signal implements Serializable {
 
     /**
      * calculates the path of the given controller, positioned on hostNode, to the targets as given by the controller.
+     *
      * @param targets         the target supplier, which should give a next target given a scheduling depth.
      * @param inSameDirection whether the path should be calculated in the direction of the railnode. false iff {@link
      *                        #getNode()}{@link RailNode#isInDirectionOf(TrackPiece) .isInDirectionOf(previousTrack)}
@@ -82,16 +84,16 @@ public class Signal implements Serializable {
 
             // get best direct path to target node
             for (Pair<NetworkNode, Boolean> targetNode : target.getNodes()) {
-                TrackPath pathToNode = nodes.get(targetNode.left);
+                TrackPath pathToNode = nodes.get(targetNode.left());
 
                 if (pathToNode != null) {
                     TrackPiece arrivalTrack = pathToNode.path.getLast();
-                    if (targetNode.left.isInDirectionOf(arrivalTrack) == targetNode.right) {
+                    if (targetNode.left().isInDirectionOf(arrivalTrack) == targetNode.right()) {
                         float adjLength = pathToNode.adjLength();
                         if (adjLength < lengthOfBest) {
                             bestPath = pathToNode;
                             lengthOfBest = adjLength;
-                            targetOfBest = targetNode.left;
+                            targetOfBest = targetNode.left();
                         }
                     }
                 }
@@ -100,7 +102,8 @@ public class Signal implements Serializable {
             if (bestPath == null) break; // no direct path exists
 //            assert targetOfBest != null;
 
-            assert !bestPath.path.isEmpty() : nodes; // usually caused by (targets.apply(depth) == targets.apply(depth + 1))
+            assert !bestPath.path.isEmpty()
+                    : nodes; // usually caused by (targets.apply(depth) == targets.apply(depth + 1))
             pathViaNodes.append(bestPath);
 
             TrackPiece last = bestPath.path.getLast();
@@ -165,7 +168,9 @@ public class Signal implements Serializable {
             signalToNetworkLength = 0;
 
         } else {
-            List<NetworkNode.Direction> directions = inDirection ? otherNetwork.getEntriesA() : otherNetwork.getEntriesB();
+            List<NetworkNode.Direction> directions = inDirection
+                    ? otherNetwork.getEntriesA()
+                    : otherNetwork.getEntriesB();
             assert directions.size() == 1; // !networkNode.isNetworkCritical() => !networkNode.isSwitch()
 
             NetworkNode.Direction direction = directions.get(0);
@@ -186,6 +191,7 @@ public class Signal implements Serializable {
 
     /**
      * collects the paths to all signals and nodes in the given direction
+     *
      * @param node        the node to analyse
      * @param sourceTrack the track where we are coming from, which is connected to node
      * @param signals     the map [signals -> the shortest path to this signal], where signal is null for an
@@ -252,6 +258,7 @@ public class Signal implements Serializable {
      * track.setOccupied(false)}.
      * <p>
      * If the path is not empty, then it starts and ends with a signal, with no signal inbetween.
+     *
      * @param trackDirection indicates whether the starting direction is the same as the direction of {@link
      *                       #getNode()}
      * @param targetFunction
@@ -283,7 +290,9 @@ public class Signal implements Serializable {
 
             case BOTH_DIRECTIONS:
                 Pair<TrackPath, Float> pathInDirection = getPath(targetFunction, true);
-                Pair<TrackPath, Float> pathAgainstDirection = allowOppositeTraffic ? getPath(targetFunction, false) : null;
+                Pair<TrackPath, Float> pathAgainstDirection = allowOppositeTraffic
+                        ? getPath(targetFunction, false)
+                        : null;
 
                 if (pathInDirection == null) {
                     path = pathAgainstDirection;
@@ -292,7 +301,7 @@ public class Signal implements Serializable {
                     path = pathInDirection;
 
                 } else {
-                    if (pathInDirection.right < pathAgainstDirection.right) {
+                    if (pathInDirection.right() < pathAgainstDirection.right()) {
                         path = pathInDirection;
                     } else {
                         path = pathAgainstDirection;
@@ -303,8 +312,8 @@ public class Signal implements Serializable {
                 throw new IllegalStateException("unknown enum value " + trackDirection);
         }
 
-        if (path == null || path.left.isOccupied) return Signal.getEmptyPath();
-        return reserve(path.left);
+        if (path == null || path.left().isOccupied) return Signal.getEmptyPath();
+        return reserve(path.left());
     }
 
     private Deque<TrackPiece> reserve(TrackPath pathToBest) {

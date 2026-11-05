@@ -1,8 +1,8 @@
 package io.github.ieperen3039.trainsinspace.Tools;
 
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.AveragingQueue;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Pair;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.PairList;
+import io.github.ieperen3039.ngn.DataStructures.Generic.AveragingQueue;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Pair;
+import io.github.ieperen3039.ngn.DataStructures.Generic.PairList;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -100,7 +100,7 @@ public class TimeObserver {
             pairs.add(elt, average);
         }
 
-        pairs.sort((a, b) -> -Float.compare(a.right, b.right));
+        pairs.sort((a, b) -> -Float.compare(a.right(), b.right()));
 
         return pairs;
     }
@@ -110,7 +110,7 @@ public class TimeObserver {
                 .average()));
         for (Pair<String, Float> result : results()) {
             builder.append("\n");
-            builder.append(String.format("| %-30s | %4.01f%% |", result.left, result.right * 100));
+            builder.append(String.format("| %-30s | %4.01f%% |", result.left(), result.right() * 100));
         }
         return builder.toString();
     }

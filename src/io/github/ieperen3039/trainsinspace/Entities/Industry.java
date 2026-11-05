@@ -1,17 +1,15 @@
 package io.github.ieperen3039.trainsinspace.Entities;
 
+import io.github.ieperen3039.ngn.AssetHandling.Asset;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.Rendering.Material;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
+import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
 import io.github.ieperen3039.trainsinspace.Freight.Cargo;
-import io.github.ieperen3039.trainsinspace.InputHandling.KeyControl;
-import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.AbstractMouseTool;
 import io.github.ieperen3039.trainsinspace.Mods.CargoType;
-import io.github.ieperen3039.trainsinspace.Rendering.Material;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.MaterialShader;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
 import org.joml.Vector3fc;
 
 import java.util.*;
@@ -22,6 +20,7 @@ import java.util.*;
 public class Industry extends Storage {
     private static final double CARGO_SPAWN_FREQUENCY = 0.25f; // updates per second
 
+    private final Game game;
     private transient Properties properties;
     private final String typeName;
     private final Coloring coloring = new Coloring(Color4f.WHITE);
@@ -31,15 +30,16 @@ public class Industry extends Storage {
     public Industry(
             Game game, Vector3fc position, double spawnTime, Properties properties
     ) {
-        super(game, position, spawnTime);
-        this.nextCargoSpawn = game.timer().getGameTime();
+        super(position, spawnTime);
+        this.nextCargoSpawn = game.timer().getTime();
+        this.game = game;
         this.properties = properties;
         this.typeName = properties.name;
     }
 
     @Override
     public void update() {
-        double now = game.timer().getGameTime();
+        double now = game.timer().getTime();
         while (now > nextCargoSpawn) {
             Rule rule = properties.cargoRule;
             int ruleExecutions = (int) (rule.rulesPerSecond / CARGO_SPAWN_FREQUENCY);
@@ -84,15 +84,10 @@ public class Industry extends Storage {
         gl.pushMatrix();
         {
             gl.translate(getPosition());
-            gl.render(properties.mesh.get(), this);
+            gl.render(properties.mesh.get(), entityId);
         }
 
         gl.popMatrix();
-    }
-
-    @Override
-    public void reactMouse(AbstractMouseTool.MouseAction action, KeyControl keys) {
-
     }
 
     @Override
@@ -113,7 +108,7 @@ public class Industry extends Storage {
         float rangeSq = range * range;
         List<Industry> nearby = new ArrayList<>();
 
-        for (Entity entity : game.state()) {
+        for (GameEntity entity : game.state()) {
             if (entity instanceof Industry industry) {
                 if (industry.getPosition().distanceSquared(position) < rangeSq) {
                     nearby.add(industry);
@@ -127,13 +122,6 @@ public class Industry extends Storage {
     @Override
     public String toString() {
         return "Industry " + properties.name;
-    }
-
-    @Override
-    public void restoreFields(Game game) {
-        super.restoreFields(game);
-        properties = game.objectTypes().getIndustryByName(typeName);
-        assert properties != null;
     }
 
     public record Rule(

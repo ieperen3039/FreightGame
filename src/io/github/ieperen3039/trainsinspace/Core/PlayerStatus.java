@@ -15,7 +15,7 @@ public class PlayerStatus implements GameAspect, Serializable {
     public final Valuta money = Valuta.ofUnitValue(1000);
     public final List<Train> trains = new ArrayList<>();
     public final List<Station> stations = new ArrayList<>();
-    private transient Game game;
+    private Game game;
 
     @Override
     public void init(Game game) throws Exception {
@@ -23,7 +23,7 @@ public class PlayerStatus implements GameAspect, Serializable {
     }
 
     public void update() {
-        double gameTime = game.timer().getGameTime();
+        double gameTime = game.timer().getTime();
         trains.removeIf(t -> t.isDespawnedAt(gameTime));
     }
 

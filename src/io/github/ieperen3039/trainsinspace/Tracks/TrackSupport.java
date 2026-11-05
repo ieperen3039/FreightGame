@@ -1,20 +1,18 @@
 package io.github.ieperen3039.trainsinspace.Tracks;
 
+import io.github.ieperen3039.ngn.AssetHandling.Asset;
+import io.github.ieperen3039.ngn.AssetHandling.GeneratorAsset;
+import io.github.ieperen3039.ngn.DataStructures.Generic.PairList;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
+import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
+import io.github.ieperen3039.ngn.Rendering.Shaders.ShaderProgram;
+import io.github.ieperen3039.ngn.Rendering.Shapes.GenericShapes;
+import io.github.ieperen3039.ngn.Rendering.Shapes.Shape;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.PairList;
-import io.github.ieperen3039.trainsinspace.InputHandling.KeyControl;
-import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.AbstractMouseTool;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.MaterialShader;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.ShaderProgram;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.GenericShapes;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Shape;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
-import io.github.ieperen3039.trainsinspace.AssetHandling.GeneratorAsset;
+import org.joml.*;
 import org.joml.Math;
 import org.joml.primitives.AABBf;
-import org.joml.*;
 
 /**
  * a pillar that supports a track.
@@ -29,7 +27,7 @@ public class TrackSupport extends TrackElement {
     private final PairList<Shape, Matrix4fc> collisionShapes;
 
     public TrackSupport(Game game, TrackType type, Vector3fc position, Vector3fc direction) {
-        super(game, type);
+        super(type);
 
         float mapHeight = game.map().getHeightAt(position.x(), position.y());
         float height = position.z() - mapHeight;
@@ -62,13 +60,9 @@ public class TrackSupport extends TrackElement {
         {
             gl.translate(position);
             gl.rotateXYZ(0, 0, orientation);
-            gl.render(graphic.get(), null);
+            gl.render(graphic.get(), 0);
         }
         gl.popMatrix();
-    }
-
-    @Override
-    public void reactMouse(AbstractMouseTool.MouseAction action, KeyControl keys) {
     }
 
     @Override

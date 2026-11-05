@@ -1,8 +1,9 @@
 package io.github.ieperen3039.trainsinspace.Mods;
 
+import io.github.ieperen3039.ngn.Tools.Toolbox;
 import io.github.ieperen3039.trainsinspace.DataStructures.Valuta;
 import io.github.ieperen3039.trainsinspace.Freight.Cargo;
-import io.github.ieperen3039.trainsinspace.Tools.Toolbox;
+
 
 /**
  * A material that can be transported.
