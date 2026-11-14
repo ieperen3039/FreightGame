@@ -9,6 +9,7 @@ import io.github.ieperen3039.ngn.Rendering.Material;
 import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
 import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
 import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.ngn.Tools.Vectors;
 import io.github.ieperen3039.ngn.UserInterface.Components.*;
 import io.github.ieperen3039.ngn.UserInterface.LayoutManagers.GridLayoutManager;
@@ -189,9 +190,9 @@ public class StationBuilder implements MouseTool {
         }
 
         @Override
-        public void draw(SGL gl) {
+        public void draw(SGL gl, TickTime renderTime) {
             if (isPositioned) {
-                station.draw(gl);
+                station.draw(gl, renderTime);
             }
 
             if (cursorIsOnMap) {

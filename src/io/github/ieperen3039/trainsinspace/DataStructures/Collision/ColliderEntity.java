@@ -7,6 +7,7 @@ import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.joml.primitives.AABBf;
+import org.joml.primitives.AABBfc;
 
 /**
  * @author Geert van Ieperen created on 24-6-2020.
@@ -15,9 +16,10 @@ public interface ColliderEntity extends Entity {
     /**
      * returns an axis aligned box that completely encases this entity in world position. The returned value should not
      * change over time.
+     *
      * @return an axis-aligned bounding box
      */
-    AABBf getHitbox();
+    AABBfc getHitbox();
 
     /**
      * returns a collection of convex shapes, each with a transformation such that the transformed shapes roughly make

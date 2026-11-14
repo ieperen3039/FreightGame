@@ -10,6 +10,7 @@ import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
 import io.github.ieperen3039.ngn.Rendering.Shaders.ShaderProgram;
 import io.github.ieperen3039.ngn.Rendering.Shapes.GenericShapes;
 import io.github.ieperen3039.ngn.Rendering.Shapes.Shape;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.ngn.Tools.Vectors;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
@@ -24,6 +25,7 @@ import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.joml.primitives.AABBf;
+import org.joml.primitives.AABBfc;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -66,7 +68,7 @@ public class StationGhost extends GameEntity implements Station {
     }
 
     @Override
-    public void draw(SGL gl) {
+    public void draw(SGL gl, TickTime renderTime) {
         gl.pushMatrix();
         {
             gl.translate(position);
@@ -157,7 +159,7 @@ public class StationGhost extends GameEntity implements Station {
     }
 
     @Override
-    public AABBf getHitbox() {
+    public AABBfc getHitbox() {
         AABBf hitbox = new AABBf();
         forEachCorner(hitbox::union);
         hitbox.minZ = position.z() - HEIGHT_BELOW_STATION;

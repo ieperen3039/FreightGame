@@ -73,7 +73,7 @@ public class TrainGame implements Game, ModLoader {
 
     private TypeCollection typeCollection;
 
-    private List<Mod> allMods;
+    private List<Mod> allMods = new ArrayList<>();
     private List<Mod> activeMods = Collections.emptyList();
     private List<Mod> permanentMods;
 
@@ -86,7 +86,7 @@ public class TrainGame implements Game, ModLoader {
                 "\n\tJava VM:            " + System.getProperty("java.runtime.version") +
                 "\n\tGame version:       " + getVersionNumber() +
                 "\n\tWorking directory:  " + Directory.workDirectory() +
-                "\n\tMods directory:     " + Directory.hardMods.getPath()
+                "\n\tMods directory:     " + Directory.mods.getPath()
         );
 
         settings = new Settings();
@@ -95,7 +95,8 @@ public class TrainGame implements Game, ModLoader {
 //        time = new FixedTimer(0, settings.TARGET_TPS); // for breakpoints only
 
         window = new GLFWWindow(settings.TITLE, new GLFWWindow.Settings(settings));
-        ClickShaderTarget clickShaderTarget = new ClickShaderTarget();
+
+        ClickShaderTarget clickShaderTarget = new ClickShaderTarget(window);
         clickShader = new ClickShader(clickShaderTarget);
         gameMap = new HeightMap();
 
@@ -108,6 +109,7 @@ public class TrainGame implements Game, ModLoader {
         keyControl = inputHandler.getKeyControl();
         frameManager = new FrameManagerImpl();
         progress = new PlayerStatus();
+        typeCollection = new TypeCollection();
         mainThread = Thread.currentThread();
 
         inputHandler.setSelectionLayers(
@@ -117,9 +119,15 @@ public class TrainGame implements Game, ModLoader {
         );
 
         // load mods
-        for (File file : Directory.softMods.getFiles()) {
+        File[] files = Directory.mods.getFiles();
+        if (files.length == 0) {
+            Logger.INFO.print("No mods found");
+        }
+        for (File file : files) {
             try {
-                allMods.add(new SoftMod(file.toPath()));
+                SoftMod mod = new SoftMod(file.toPath());
+                Logger.INFO.print("Found mod " + mod.name + " " + mod.version);
+                allMods.add(mod);
 
             } catch (IOException ex) {
                 Logger.WARN.print("Error loading soft mod " + file);
@@ -149,15 +157,15 @@ public class TrainGame implements Game, ModLoader {
         permanentMods = JarModReader.filterInitialisationMods(allMods, this);
 
         renderer.renderSequence(new BlinnPhongShader())
-                .add(gl -> gameLights.draw(gl))
-                .add(gl -> gameMap.draw(gl))
-                .add(gl -> gameState.draw(gl));
+                .add(gameLights::draw)
+                .add(gameMap::draw)
+                .add(gameState::draw);
         // particles
         renderer.renderSequence(new ParticleShader(settings.PARTICLE_SIZE))
-                .add(gl -> gameParticles.draw(gl));
+                .add(gameParticles::draw);
         // click shader
         renderer.renderSequence(clickShader)
-                .add(gl -> gameState.draw(gl));
+                .add(gameState::draw);
         // GUIs
         renderer.addHudItem(frameManager::draw);
 
@@ -176,6 +184,7 @@ public class TrainGame implements Game, ModLoader {
         assert activeMods.isEmpty() : "Already mods loaded";
         activeMods = new ArrayList<>(mods);
         typeCollection = new TypeCollection();
+        typeCollection.trackTypes.add(new TrackTypeBase());
 
         // init mods
         for (Mod mod : activeMods) {

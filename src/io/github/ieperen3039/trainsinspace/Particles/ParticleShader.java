@@ -107,10 +107,9 @@ public class ParticleShader implements ShaderProgram {
     }
 
     @Override
-    public ParticleGL getGL(Main game) {
+    public ParticleGL getGL(Main game, TickTime renderTime) {
         Camera camera = game.camera();
-        TickTime timer = game.timer();
-        glUniform1f(timeUniform, (float) timer.getRenderTime());
+        glUniform1f(timeUniform, (float) renderTime.getTime());
         glUniform1f(sizeUniform, particleSize);
 
         return new ParticleGL(camera, game.getViewPort());

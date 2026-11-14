@@ -10,6 +10,7 @@ import io.github.ieperen3039.ngn.Rendering.Shaders.ClickShader;
 import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
 import io.github.ieperen3039.ngn.Rendering.Shapes.GenericShapes;
 import io.github.ieperen3039.ngn.Rendering.Shapes.Shape;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.ngn.UserInterface.Components.*;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
@@ -27,6 +28,7 @@ import io.github.ieperen3039.trainsinspace.Tracks.TrackType;
 import org.joml.*;
 import org.joml.Math;
 import org.joml.primitives.AABBf;
+import org.joml.primitives.AABBfc;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
@@ -177,7 +179,7 @@ public class StationImpl extends Storage implements Station {
     }
 
     @Override
-    public void draw(SGL gl) {
+    public void draw(SGL gl, TickTime renderTime) {
         gl.pushMatrix();
         {
             gl.translate(getPosition());
@@ -321,7 +323,7 @@ public class StationImpl extends Storage implements Station {
     }
 
     @Override
-    public AABBf getHitbox() {
+    public AABBfc getHitbox() {
         return hitbox;
     }
 

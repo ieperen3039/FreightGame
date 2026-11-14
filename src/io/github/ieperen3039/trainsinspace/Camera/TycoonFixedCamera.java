@@ -140,11 +140,16 @@ public class TycoonFixedCamera implements Camera, Serializable {
 
     @Override
     public Matrix4f getProjectionMatrix(float aspectRatio) {
-        return null;
-    }
+        Settings settings = main.settings();
+        Matrix4f vpMatrix = new Matrix4f();
 
-    public boolean isIsometric() {
-        return main.settings().ISOMETRIC_VIEW;
+        if (settings.ISOMETRIC_VIEW) {
+            float visionSize = (vectorToFocus().length() - settings.Z_NEAR) / 2;
+            vpMatrix.setOrthoSymmetric(aspectRatio * visionSize, visionSize, settings.Z_NEAR, settings.Z_FAR);
+        } else {
+            vpMatrix.setPerspective(settings.FOV, aspectRatio, settings.Z_NEAR, settings.Z_FAR);
+        }
+        return vpMatrix;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package io.github.ieperen3039.trainsinspace.GameState;
 
 import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.trainsinspace.Core.GameAspect;
 import io.github.ieperen3039.trainsinspace.Core.TrainGame;
 import io.github.ieperen3039.trainsinspace.DataStructures.Collision.ColliderEntity;
@@ -25,9 +26,11 @@ public interface GameState extends GameAspect, Iterable<GameEntity> {
 
     /**
      * draws the objects on the screen, according to the state of the {@link TrainGame#timer()} object.
-     * @param gl the gl object to draw with
+     *
+     * @param gl   the gl object to draw with
+     * @param time
      */
-    void draw(SGL gl);
+    void draw(SGL gl, TickTime time);
 
     /**
      * In contrary to {@link #iterator()} and {@link #stream()}, this collection shall contain all entities ever added

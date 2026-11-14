@@ -5,19 +5,20 @@ import io.github.ieperen3039.ngn.Camera.StaticCamera;
 import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
 import io.github.ieperen3039.ngn.Rendering.GLFWWindow;
 import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.ngn.Rendering.MatrixStack.SceneShaderGL;
 import io.github.ieperen3039.ngn.Rendering.Shaders.BlinnPhongShader;
-import io.github.ieperen3039.ngn.Rendering.Shaders.SceneShader;
 import io.github.ieperen3039.ngn.Tools.Toolbox;
 import io.github.ieperen3039.ngn.Tools.Vectors;
 import io.github.ieperen3039.ngn.UserInterface.Components.SComponent;
 import io.github.ieperen3039.ngn.UserInterface.Rendering.SFrameLookAndFeel;
-import io.github.ieperen3039.ngn.UserInterface.Rendering.SFrameLookAndFeel.*;
+import io.github.ieperen3039.ngn.UserInterface.Rendering.SFrameLookAndFeel.UIComponentType;
+import io.github.ieperen3039.ngn.UserInterface.Rendering.SFrameLookAndFeel.UIState;
 import io.github.ieperen3039.trainsinspace.Core.Game;
+import org.joml.Quaternionf;
+import org.joml.Vector2ic;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.joml.primitives.AABBf;
-import org.joml.*;
 
-import java.lang.Math;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -75,11 +76,9 @@ public class S3DModelDisplay extends SComponent {
     public void draw(SFrameLookAndFeel design, Vector2ic screenPosition) {
         design.draw(UIComponentType.PANEL, UIState.ACTIVATED, screenPosition, getSize());
 
-        design.getPainter().render(() -> {
+        design.renderGl(() -> {
             shader.bind();
             {
-                ;
-
                 GLFWWindow window = game.window();
 
                 SGL gl = shader.getGL(view, game.getViewPort(), game.settings());

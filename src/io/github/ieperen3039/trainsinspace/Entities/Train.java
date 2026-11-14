@@ -5,6 +5,7 @@ import io.github.ieperen3039.ngn.DataStructures.Generic.Pair;
 import io.github.ieperen3039.ngn.InputHandling.KeyControl;
 import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
 import io.github.ieperen3039.ngn.Tools.Logger;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.ngn.Tools.Toolbox;
 import io.github.ieperen3039.ngn.UserInterface.Components.SActiveTextComponent;
 import io.github.ieperen3039.ngn.UserInterface.Components.SButton;
@@ -312,9 +313,9 @@ public class Train extends GameEntity {
     }
 
     @Override
-    public void draw(SGL gl) {
+    public void draw(SGL gl, TickTime renderTime) {
         if (entities.isEmpty()) return;
-        double now = game.timer().getTime();
+        double now = renderTime.getTime();
         if (now > timeOfStore && now < timeOfUnstore) return;
         // position 0 is on the very front of the first wagon, hence the middle of first wagon is displaced
         float displacement = entities.get(0).getProperties().length / 2;

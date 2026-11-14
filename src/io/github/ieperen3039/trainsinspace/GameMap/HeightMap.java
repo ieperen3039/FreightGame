@@ -12,6 +12,7 @@ import io.github.ieperen3039.ngn.Rendering.Shaders.BlinnPhongShader;
 import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
 import io.github.ieperen3039.ngn.Rendering.Shaders.ShaderProgram;
 import io.github.ieperen3039.ngn.Tools.Logger;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.ngn.Tools.Toolbox;
 import io.github.ieperen3039.ngn.UserInterface.Components.SFiller;
 import io.github.ieperen3039.ngn.UserInterface.Components.SFrame;
@@ -206,7 +207,7 @@ public class HeightMap extends GridMap {
     }
 
     @Override
-    public void draw(SGL gl) {
+    public void draw(SGL gl, TickTime time) {
         ShaderProgram shader = gl.getShader();
 
         if (shader instanceof MaterialShader mat) {

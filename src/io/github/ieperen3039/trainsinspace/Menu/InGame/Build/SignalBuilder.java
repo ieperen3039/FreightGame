@@ -3,6 +3,7 @@ package io.github.ieperen3039.trainsinspace.Menu.InGame.Build;
 import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTarget;
 import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTool;
 import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.ngn.UserInterface.Components.SFrame;
 import io.github.ieperen3039.ngn.UserInterface.Components.SToggleButton;
 import io.github.ieperen3039.trainsinspace.Core.Game;
@@ -99,9 +100,9 @@ public class SignalBuilder implements MouseTool {
         selector = new SFrame("Signal builder");
         game.state().addEntity(new MouseToolVisuals(selector) {
             @Override
-            public void draw(SGL gl) {
+            public void draw(SGL gl, TickTime renderTime) {
                 if (ghostSignal != null) {
-                    ghostSignal.draw(gl);
+                    ghostSignal.draw(gl, renderTime);
                 }
             }
         });

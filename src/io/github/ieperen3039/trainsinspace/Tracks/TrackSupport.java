@@ -9,10 +9,12 @@ import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
 import io.github.ieperen3039.ngn.Rendering.Shaders.ShaderProgram;
 import io.github.ieperen3039.ngn.Rendering.Shapes.GenericShapes;
 import io.github.ieperen3039.ngn.Rendering.Shapes.Shape;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import org.joml.*;
 import org.joml.Math;
 import org.joml.primitives.AABBf;
+import org.joml.primitives.AABBfc;
 
 /**
  * a pillar that supports a track.
@@ -49,7 +51,7 @@ public class TrackSupport extends TrackElement {
     }
 
     @Override
-    public void draw(SGL gl) {
+    public void draw(SGL gl, TickTime renderTime) {
         ShaderProgram shader = gl.getShader();
 
         if (shader instanceof MaterialShader) {
@@ -66,7 +68,7 @@ public class TrackSupport extends TrackElement {
     }
 
     @Override
-    public AABBf getHitbox() {
+    public AABBfc getHitbox() {
         return hitbox.get();
     }
 

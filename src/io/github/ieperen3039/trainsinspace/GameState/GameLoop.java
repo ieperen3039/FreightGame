@@ -18,7 +18,7 @@ import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTargetEn
 import org.joml.FrustumIntersection;
 import org.joml.Matrix4fc;
 import org.joml.Vector2ic;
-import org.joml.primitives.AABBf;
+import org.joml.primitives.AABBfc;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -87,7 +87,7 @@ public class GameLoop extends GenericThreadLoop implements GameState, MouseSelec
 
     // note: visualizes the GameState
     @Override
-    public void draw(SGL gl) {
+    public void draw(SGL gl, TickTime time) {
         MaterialShader matShader = (d, s, r) -> {
         };
 
@@ -102,13 +102,13 @@ public class GameLoop extends GenericThreadLoop implements GameState, MouseSelec
         for (GameEntity entity : entities) {
             matShader.setMaterial(Color4f.MAGENTA, Color4f.WHITE, 1);
 
-//            if (entity instanceof ColliderEntity) { // cull if possible
-//                AABBf hitbox = ((ColliderEntity) entity).getHitbox();
-//                boolean isVisible = fic.testAab(hitbox.minX, hitbox.minY, hitbox.minZ, hitbox.maxX, hitbox.maxY, hitbox.maxZ);
-//                if (!isVisible) continue;
-//            }
+            if (entity instanceof ColliderEntity collider) { // cull if possible
+                AABBfc hitbox = collider.getHitbox();
+                boolean isVisible = fic.testAab(hitbox.minX(), hitbox.minY(), hitbox.minZ(), hitbox.maxX(), hitbox.maxY(), hitbox.maxZ());
+                if (!isVisible) continue;
+            }
 
-            entity.draw(gl);
+            entity.draw(gl, time);
         }
     }
 
@@ -150,7 +150,7 @@ public class GameLoop extends GenericThreadLoop implements GameState, MouseSelec
 
     @Override
     public Collection<GameEntity> getCollisions(ColliderEntity entity) {
-        AABBf hitbox = entity.getHitbox();
+        AABBfc hitbox = entity.getHitbox();
         List<GameEntity> result = new ArrayList<>();
 
         for (GameEntity ety : entities) {

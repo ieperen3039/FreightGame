@@ -6,6 +6,7 @@ import io.github.ieperen3039.ngn.Rendering.Material;
 import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
 import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
 import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Freight.Cargo;
@@ -78,7 +79,7 @@ public class Industry extends Storage {
     }
 
     @Override
-    public void draw(SGL gl) {
+    public void draw(SGL gl, TickTime time) {
         MaterialShader.ifPresent(gl, _gl -> _gl.setMaterial(Material.ROUGH, coloring.getColor()));
 
         gl.pushMatrix();

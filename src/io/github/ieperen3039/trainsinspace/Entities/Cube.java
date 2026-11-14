@@ -7,6 +7,7 @@ import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
 import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
 import io.github.ieperen3039.ngn.Rendering.Shaders.ShaderProgram;
 import io.github.ieperen3039.ngn.Rendering.Shapes.GenericShapes;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import org.joml.Vector3f;
@@ -34,11 +35,10 @@ public class Cube extends GameEntity {
     }
 
     @Override
-    public void draw(SGL gl) {
+    public void draw(SGL gl, TickTime renderTime) {
         ShaderProgram shader = gl.getShader();
 
-        if (shader instanceof MaterialShader) {
-            MaterialShader materialShader = (MaterialShader) shader;
+        if (shader instanceof MaterialShader materialShader) {
             materialShader.setMaterial(Material.ROUGH, coloring.getColor());
         }
 

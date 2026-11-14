@@ -2,6 +2,7 @@ package io.github.ieperen3039.trainsinspace.GameMap;
 
 import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTool;
 import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
@@ -33,12 +34,14 @@ public interface GameMap extends Externalizable {
 
     /**
      * draws the map on the screen.
-     * @param gl the gl object to draw with
+     *
+     * @param gl   the gl object to draw with
+     * @param time
      */
-    void draw(SGL gl);
+    void draw(SGL gl, TickTime time);
 
     /**
-     * allows objects to listen for when this map is changed. Any call to {@link #draw(SGL)}, {@link #getHeightAt(float,
+     * allows objects to listen for when this map is changed. Any call to {@link #draw(SGL, TickTime)}, {@link #getHeightAt(float,
      * float)} etc. will represent the new values when this callback is activated.
      * @param listener the object to notify
      */

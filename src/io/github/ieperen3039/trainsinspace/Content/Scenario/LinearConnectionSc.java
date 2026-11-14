@@ -60,6 +60,8 @@ public class LinearConnectionSc extends Scenario {
 
         {
             Industry.Properties properties = allTypes.getIndustryByName("diamond mine");
+            assert properties != null;
+
             Vector3f pos = getGroundPos(game, center, aSide).add(INDUSTRY_DIST, INDUSTRY_DIST, 0);
             game.state().addEntity(new Industry(game, pos, 0, properties));
         }
