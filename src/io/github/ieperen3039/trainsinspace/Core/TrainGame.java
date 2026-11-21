@@ -2,6 +2,7 @@ package io.github.ieperen3039.trainsinspace.Core;
 
 import io.github.ieperen3039.ngn.AssetHandling.Asset;
 import io.github.ieperen3039.ngn.Camera.Camera;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
 import io.github.ieperen3039.ngn.InputHandling.KeyControl;
 import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseToolCallbacks;
 import io.github.ieperen3039.ngn.InputHandling.MouseTools.UISelector;
@@ -15,6 +16,7 @@ import io.github.ieperen3039.ngn.Rendering.Shaders.ClickShaderTarget;
 import io.github.ieperen3039.ngn.Tools.Logger;
 import io.github.ieperen3039.ngn.Tools.RealTimeTimer;
 import io.github.ieperen3039.ngn.Tools.TickTimeTimer;
+import io.github.ieperen3039.ngn.Tools.Toolbox;
 import io.github.ieperen3039.ngn.UserInterface.FrameManagers.FrameManager;
 import io.github.ieperen3039.ngn.UserInterface.FrameManagers.FrameManagerImpl;
 import io.github.ieperen3039.ngn.Version;
@@ -91,6 +93,14 @@ public class TrainGame implements Game, ModLoader {
 
         settings = new Settings();
         settings.TITLE = "Trains in SPAAAACE";
+        settings.BACKGROUND_COLOR = Color4f.BLACK;
+        settings.PRINT_ROLL = true;
+        settings.PRINT_ROLL_COLOR = Color4f.WHITE;
+        settings.Z_NEAR = 1f;
+        settings.Z_FAR = 250;
+        settings.MAX_CAMERA_DIST = settings.Z_FAR / 2f;
+        settings.MIN_CAMERA_DIST = settings.Z_NEAR * 2f;
+
         time = new RealTimeTimer();
 //        time = new FixedTimer(0, settings.TARGET_TPS); // for breakpoints only
 

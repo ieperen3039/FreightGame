@@ -11,7 +11,7 @@ import java.io.Serializable;
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public class Settings extends io.github.ieperen3039.ngn.Settings.Settings implements Serializable {
-    public int TARGET_TPS;
+    public int TARGET_TPS = 10;
 
     public final float CLICK_BOX_WIDTH = 1.5f;
     public final float CLICK_BOX_HEIGHT = 0.1f;
