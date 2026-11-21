@@ -1,6 +1,7 @@
 package io.github.ieperen3039.trainsinspace.Rendering.Shapes.Primitives;
 
-import io.github.ieperen3039.trainsinspace.Tools.Toolbox;
+import io.github.ieperen3039.ngn.Rendering.Shapes.Primitives.Plane;
+import io.github.ieperen3039.ngn.Tools.Toolbox;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.junit.Before;

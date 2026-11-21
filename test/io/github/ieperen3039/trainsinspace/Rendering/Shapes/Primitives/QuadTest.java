@@ -1,6 +1,7 @@
 package io.github.ieperen3039.trainsinspace.Rendering.Shapes.Primitives;
 
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
+import io.github.ieperen3039.ngn.Rendering.Shapes.Primitives.Quad;
+import io.github.ieperen3039.ngn.Tools.Vectors;
 import org.joml.Vector3f;
 import org.junit.Before;
 import org.junit.Test;
