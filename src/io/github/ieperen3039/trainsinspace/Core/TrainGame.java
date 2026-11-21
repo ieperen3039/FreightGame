@@ -241,7 +241,13 @@ public class TrainGame implements Game, ModLoader {
 
     public void saveGame(File target) {
         gameState.pause();
-        while (!gameState.isPaused()) Thread.yield();
+
+        try {
+            Thread.sleep(1000 / settings.TARGET_TPS);
+        } catch (Exception e) {
+            Toolbox.display(e);
+            return;
+        }
 
         try (
                 FileOutputStream fileOut = new FileOutputStream(target);
