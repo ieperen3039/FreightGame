@@ -154,8 +154,6 @@ public class TycoonFixedCamera implements Camera, Serializable {
 
     @Override
     public void onScroll(float value) {
-        resetFocus();
-
         Settings s = main.settings();
         float maxZoom = s.MAX_CAMERA_DIST;
 
