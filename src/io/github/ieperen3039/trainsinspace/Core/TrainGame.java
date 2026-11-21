@@ -123,19 +123,20 @@ public class TrainGame implements Game, ModLoader {
         if (files.length == 0) {
             Logger.INFO.print("No mods found");
         }
-        for (File file : files) {
+        for (File modDir : files) {
             try {
-                SoftMod mod = new SoftMod(file.toPath());
+                File description = new File(modDir.getPath(), "description.json");
+                if (!description.exists()) continue;
+
+                SoftMod mod = new SoftMod(modDir.toPath());
                 Logger.INFO.print("Found mod " + mod.name + " " + mod.version);
                 allMods.add(mod);
 
             } catch (IOException ex) {
-                Logger.WARN.print("Error loading soft mod " + file);
+                Logger.WARN.print("Error loading soft mod " + modDir);
                 Logger.ERROR.print(ex);
             }
         }
-
-        typeCollection.trackTypes.add(new TrackTypeBase());
     }
 
     /**
