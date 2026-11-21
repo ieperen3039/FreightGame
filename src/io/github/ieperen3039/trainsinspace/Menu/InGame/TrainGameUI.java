@@ -24,7 +24,7 @@ import static io.github.ieperen3039.trainsinspace.Menu.Main.MainMenu.*;
 /**
  * @author Geert van Ieperen created on 2-9-2020.
  */
-public class TrainGameUI extends SPanel {
+public class TrainGameUI extends SContainer.GhostContainer {
     private static final SComponentProperties MONEY_TEXT_PROPERTIES = new SComponentProperties(
             0, 100, true, false, NGFont.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
