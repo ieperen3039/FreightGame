@@ -10,13 +10,10 @@ import io.github.ieperen3039.ngn.Rendering.GLFWWindow;
 import io.github.ieperen3039.ngn.Rendering.Lights.SceneLights;
 import io.github.ieperen3039.ngn.Rendering.Lights.SingleShadowMapLights;
 import io.github.ieperen3039.ngn.Rendering.RenderLoop;
-import io.github.ieperen3039.ngn.Rendering.Shaders.BlinnPhongShader;
+import io.github.ieperen3039.ngn.Rendering.Shaders.BPShadowShader;
 import io.github.ieperen3039.ngn.Rendering.Shaders.ClickShader;
 import io.github.ieperen3039.ngn.Rendering.Shaders.ClickShaderTarget;
-import io.github.ieperen3039.ngn.Tools.Logger;
-import io.github.ieperen3039.ngn.Tools.RealTimeTimer;
-import io.github.ieperen3039.ngn.Tools.TickTimeTimer;
-import io.github.ieperen3039.ngn.Tools.Toolbox;
+import io.github.ieperen3039.ngn.Tools.*;
 import io.github.ieperen3039.ngn.UserInterface.FrameManagers.FrameManager;
 import io.github.ieperen3039.ngn.UserInterface.FrameManagers.FrameManagerImpl;
 import io.github.ieperen3039.ngn.Version;
@@ -100,6 +97,7 @@ public class TrainGame implements Game, ModLoader {
         settings.Z_FAR = 250;
         settings.MAX_CAMERA_DIST = settings.Z_FAR / 2f;
         settings.MIN_CAMERA_DIST = settings.Z_NEAR * 2f;
+        Logger.doPrintCallsites = true;
 
         time = new RealTimeTimer();
 //        time = new FixedTimer(0, settings.TARGET_TPS); // for breakpoints only
@@ -166,8 +164,9 @@ public class TrainGame implements Game, ModLoader {
         progress.init(this);
 
         permanentMods = JarModReader.filterInitialisationMods(allMods, this);
+        gameLights.addDirectionalLight(Vectors.Z, Color4f.BLACK, 0);
 
-        renderer.renderSequence(new BlinnPhongShader())
+        renderer.renderSequence(new BPShadowShader())
                 .add(gameLights::draw)
                 .add(gameMap::draw)
                 .add(gameState::draw);
