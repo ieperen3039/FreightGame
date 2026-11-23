@@ -18,6 +18,7 @@ import io.github.ieperen3039.ngn.UserInterface.FrameManagers.FrameManager;
 import io.github.ieperen3039.ngn.UserInterface.FrameManagers.FrameManagerImpl;
 import io.github.ieperen3039.ngn.Version;
 import io.github.ieperen3039.trainsinspace.Camera.TycoonFixedCamera;
+import io.github.ieperen3039.trainsinspace.Content.Scenario.Scenario;
 import io.github.ieperen3039.trainsinspace.GameMap.GameMap;
 import io.github.ieperen3039.trainsinspace.GameMap.HeightMap;
 import io.github.ieperen3039.trainsinspace.GameMap.MapSelector;
@@ -413,6 +414,26 @@ public class TrainGame implements Game, ModLoader {
     @Override
     public TypeCollection objectTypes() {
         return typeCollection;
+    }
+
+    @Override
+    public void loadScenario(Scenario scenario) {
+        Settings settings = settings();
+
+        scenario.init();
+
+        // load mods
+        List<Mod> modsToLoad = scenario.getMods(this);
+        initMods(modsToLoad);
+
+        // set elements
+        scenario.setMap(this, settings);
+        scenario.setEntities(this, settings);
+        scenario.setCamera(this, settings);
+        scenario.setLight(this, settings);
+
+        // start
+        startGame();
     }
 
     @Override

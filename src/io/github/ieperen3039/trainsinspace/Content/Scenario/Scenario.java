@@ -27,42 +27,15 @@ public abstract class Scenario {
     public static final int X_SIZE = 100;
     public static final int Y_SIZE = 100;
 
-    private final ModLoader modLoader;
 
-    public Scenario(ModLoader modLoader) {
-        this.modLoader = modLoader;
-    }
-
-    public void apply(Game game) {
-        Settings settings = game.settings();
-
-        init();
-
-        // load mods
-        List<Mod> modsToLoad = getMods(modLoader);
-        modLoader.initMods(modsToLoad);
-
-        // set elements
-        setMap(game, settings);
-        setEntities(game, settings);
-        setCamera(game, settings);
-        setLight(game, settings);
-
-        // start
-        modLoader.startGame();
-    }
-
-    protected void init() {
-    }
-
-    ;
+    public void init() {}
 
     /**
      * @return a list of all mods used in this scenario
      */
-    protected abstract List<Mod> getMods(ModLoader modLoader);
+    public abstract List<Mod> getMods(ModLoader modLoader);
 
-    protected void setMap(Game game, Settings settings) {
+    public void setMap(Game game, Settings settings) {
         // random map
         MapGeneratorMod mapGenerator = new DefaultMapGenerator(0);
         mapGenerator.setSize(X_SIZE, Y_SIZE);
@@ -74,14 +47,14 @@ public abstract class Scenario {
     /**
      * set all entities in this scenario. The default does nothing
      */
-    protected void setEntities(Game game, Settings settings) {
+    public void setEntities(Game game, Settings settings) {
 
     }
 
     /**
      * set the camera to the initial position. The default centers the camera on the map
      */
-    protected void setCamera(Game game, Settings settings) {
+    public void setCamera(Game game, Settings settings) {
         // set camera to middle of map
         Camera cam = game.camera();
         Vector2f size = game.map().getSize();
@@ -97,7 +70,7 @@ public abstract class Scenario {
     /**
      * set the lights on this map. The default installs one sunlight element
      */
-    protected void setLight(Game game, Settings settings) {
+    public void setLight(Game game, Settings settings) {
         // add light
         game.lights().addDirectionalLight(
                 settings.SUNLIGHT_POSITION, settings.SUNLIGHT_COLOR, settings.SUNLIGHT_INTENSITY
@@ -105,20 +78,20 @@ public abstract class Scenario {
     }
 
     protected static Vector3f getGroundPos(Game game, Vector2fc origin, Vector3fc offset) {
-        Vector3f stationPos = new Vector3f(origin, 0).add(offset);
-        stationPos.z = game.map().getHeightAt(stationPos.x, stationPos.y) + game.settings().TRACK_HEIGHT_ABOVE_GROUND;
-        return stationPos;
+        Vector3f pos = new Vector3f(origin, 0).add(offset);
+        pos.z = game.map().getHeightAt(pos.x, pos.y) + game.settings().TRACK_HEIGHT_ABOVE_GROUND;
+        return pos;
     }
 
     protected static Vector3f getGroundPos(Game game, Vector3fc origin, Vector3fc offset) {
-        Vector3f stationPos = new Vector3f(origin).add(offset);
-        stationPos.z = game.map().getHeightAt(stationPos.x, stationPos.y) + game.settings().TRACK_HEIGHT_ABOVE_GROUND;
-        return stationPos;
+        Vector3f pos = new Vector3f(origin).add(offset);
+        pos.z = game.map().getHeightAt(pos.x, pos.y) + game.settings().TRACK_HEIGHT_ABOVE_GROUND;
+        return pos;
     }
 
-    protected static void addConnections(Game game, RailNode targetNode, List<RailNode> stationNodes) {
-        for (RailNode stationNode : stationNodes) {
-            addConnections(game, stationNode, targetNode, Float.POSITIVE_INFINITY);
+    protected static void addConnections(Game game, RailNode targetNode, List<RailNode> nodes) {
+        for (RailNode node : nodes) {
+            addConnections(game, node, targetNode, Float.POSITIVE_INFINITY);
         }
     }
 
@@ -133,12 +106,8 @@ public abstract class Scenario {
     }
 
     public static class Empty extends Scenario {
-        public Empty(ModLoader loader) {
-            super(loader);
-        }
-
         @Override
-        protected List<Mod> getMods(ModLoader modLoader) {
+        public List<Mod> getMods(ModLoader modLoader) {
             return modLoader.allMods();
         }
     }

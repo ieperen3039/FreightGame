@@ -28,17 +28,13 @@ public class LinearConnectionSc extends Scenario {
     public static final float SIGNAL_OFFSET = 0.5f;
     public static final int INDUSTRY_DIST = 3;
 
-    public LinearConnectionSc(ModLoader modLoader) {
-        super(modLoader);
-    }
-
     @Override
-    protected List<Mod> getMods(ModLoader modLoader) {
+    public List<Mod> getMods(ModLoader modLoader) {
         return modLoader.allMods();
     }
 
     @Override
-    protected void setMap(Game game, Settings settings) {
+    public void setMap(Game game, Settings settings) {
         // random map
         MapGeneratorMod mapGenerator = new DefaultMapGenerator(0);
         mapGenerator.setSize(X_SIZE, Y_SIZE);
@@ -48,7 +44,7 @@ public class LinearConnectionSc extends Scenario {
     }
 
     @Override
-    protected void setEntities(Game game, Settings settings) {
+    public void setEntities(Game game, Settings settings) {
         TypeCollection allTypes = game.objectTypes();
         TrackType type = allTypes.trackTypes.get(0);
 

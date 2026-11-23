@@ -3,6 +3,7 @@ package io.github.ieperen3039.trainsinspace.Core;
 import io.github.ieperen3039.ngn.Core.Main;
 import io.github.ieperen3039.ngn.Rendering.Lights.SceneLights;
 import io.github.ieperen3039.ngn.UserInterface.FrameManagers.FrameManager;
+import io.github.ieperen3039.trainsinspace.Content.Scenario.Scenario;
 import io.github.ieperen3039.trainsinspace.GameMap.GameMap;
 import io.github.ieperen3039.trainsinspace.GameState.GameState;
 import io.github.ieperen3039.trainsinspace.Mods.TypeCollection;
@@ -31,4 +32,6 @@ public interface Game extends Main {
     GameParticles particles();
 
     TypeCollection objectTypes();
+
+    void loadScenario(Scenario emptyScenario);
 }

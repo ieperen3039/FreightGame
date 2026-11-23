@@ -64,20 +64,20 @@ public class MainMenu extends SFrame {
         this.game = game;
 
         newGameFrame = new NewGameFrame(game, modManager);
-        Scenario emptyScenario = new Scenario.Empty(modManager);
-        Scenario triangleScenario = new TriangleStationsSc(modManager);
-        Scenario linearScenario = new LinearConnectionSc(modManager);
-        Scenario firstScenario = getFileScenario(modManager, "first");
+        Scenario emptyScenario = new Scenario.Empty();
+        Scenario triangleScenario = new TriangleStationsSc();
+        Scenario linearScenario = new LinearConnectionSc();
+        Scenario firstScenario = getFileScenario("first");
 
         setMainPanel(SContainer.row(
                 new SFiller(),
                 SContainer.column(
                         new SButton("Start new game", MAIN_BUTTON_PROPERTIES, this::showNewGame),
                         new SButton("Load Game", MAIN_BUTTON_PROPERTIES, () -> modManager.loadGame(TrainGame.SAVE_FILE)),
-                        new SButton("Start Empty", MAIN_BUTTON_PROPERTIES, () -> emptyScenario.apply(game)),
-                        new SButton("Start Triangle", MAIN_BUTTON_PROPERTIES, () -> triangleScenario.apply(game)),
-                        new SButton("Start Linear", MAIN_BUTTON_PROPERTIES, () -> linearScenario.apply(game)),
-                        new SButton("Start First Scenario", MAIN_BUTTON_PROPERTIES, () -> firstScenario.apply(game)),
+                        new SButton("Start Empty", MAIN_BUTTON_PROPERTIES, () -> game.loadScenario(emptyScenario)),
+                        new SButton("Start Triangle", MAIN_BUTTON_PROPERTIES, () -> game.loadScenario(triangleScenario)),
+                        new SButton("Start Linear", MAIN_BUTTON_PROPERTIES, () -> game.loadScenario(linearScenario)),
+                        new SButton("Start First Scenario", MAIN_BUTTON_PROPERTIES, () -> game.loadScenario(firstScenario)),
                         SFiller.vertical(),
                         new SButton("Exit game", MAIN_BUTTON_PROPERTIES, terminateProgram)
                 ),
@@ -85,11 +85,11 @@ public class MainMenu extends SFrame {
         ));
     }
 
-    public Scenario getFileScenario(ModLoader modManager, String file) {
+    public Scenario getFileScenario(String file) {
         try {
-            return new FileScenario(modManager, file);
+            return new FileScenario(file);
         } catch (IOException e) {
-            return new Scenario.Empty(modManager);
+            return new Scenario.Empty();
         }
     }
 
