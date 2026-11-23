@@ -6,7 +6,6 @@ import io.github.ieperen3039.ngn.Rendering.GLFWWindow;
 import io.github.ieperen3039.ngn.Settings.Settings;
 import io.github.ieperen3039.ngn.Tools.Vectors;
 import org.joml.*;
-import org.joml.primitives.Rayf;
 
 import java.io.Serializable;
 import java.lang.Math;
@@ -36,6 +35,7 @@ public class TycoonFixedCamera implements Camera, Serializable {
     private float mouseYPos;
     private boolean isBeingRotated = false;
     private boolean isBeingMoved = false;
+    private double minimumFocusDistance;
 
     /**
      * a camera that always has the same angle to the ground. The angle can be set by the ratio between eyeOffset and
@@ -53,6 +53,7 @@ public class TycoonFixedCamera implements Camera, Serializable {
     @Override
     public void init(Main game) {
         this.main = game;
+        minimumFocusDistance = game.settings().Z_NEAR;
 
         Vector2i mousePosition = game.window().getMousePosition();
         mouseXPos = mousePosition.x;
@@ -219,19 +220,16 @@ public class TycoonFixedCamera implements Camera, Serializable {
 
     private void resetFocus() {
         // set focus to middle of screen
-        Settings settings = main.settings();
-
-        Main.ViewPort viewPort = main.getViewPort();
-        Rayf ray = unproject(viewPort.width() / 2, viewPort.height() / 2, viewPort);
-        Vector3f eyeMidOrigin = new Vector3f(ray.oX, ray.oY, ray.oZ);
-        Vector3f eyeMidDirection = new Vector3f(ray.dX, ray.dY, ray.dZ).normalize(settings.Z_FAR - settings.Z_NEAR);
+        Vector3fc eyePos = getEye();
+        Vector3fc eyeDir = vectorToFocus();
 //        Float tFrac = main.gameMap().gridMapIntersection(eyeMidOrigin, eyeMidDirection);
-        float tFrac = Intersectionf.intersectRayPlane(eyeMidOrigin, eyeMidDirection, Vectors.O, Vectors.Z, 1f / 8);
+        float tFrac = Intersectionf.intersectRayPlane(eyePos, eyeDir, Vectors.O, Vectors.Z, 1f / 8);
 
-        if (tFrac > 0) {
-            Vector3fc eyePos = getEye();
-            focus.set(Vectors.getFromRay(ray, tFrac));
-            eyeOffset.set(eyePos).sub(focus);
+        if (tFrac > minimumFocusDistance) {
+            focus.set(eyeDir).mul(tFrac).add(eyeOffset);
+            // given that the new focus is `eye + tFrac * vectorToFocus`, and `vectorToFocus = -eyeOffset`,
+            // the new eye offset is `tFrac * vectorToFocus`, or `eyeOffset * -tFrac`
+            eyeOffset.mul(-tFrac);
         }
     }
 
