@@ -3,7 +3,6 @@ package io.github.ieperen3039.trainsinspace.GameMap;
 import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTool;
 import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
 import io.github.ieperen3039.ngn.Tools.TickTime;
-import io.github.ieperen3039.trainsinspace.Core.Game;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
@@ -19,10 +18,9 @@ public interface GameMap extends Externalizable {
 
     /**
      * generate a map using the provided generator. This method can be run in a separate thread
-     * @param game
      * @param mapGenerator the generator to use for this map.
      */
-    void generateNew(Game game, MapGeneratorMod mapGenerator);
+    void generateNew(MapGeneratorMod mapGenerator);
 
     /**
      * calculates the exact height of a given real position

@@ -7,6 +7,7 @@ import io.github.ieperen3039.trainsinspace.Core.ModLoader;
 import io.github.ieperen3039.trainsinspace.GameMap.DefaultMapGenerator;
 import io.github.ieperen3039.trainsinspace.GameMap.MapGeneratorMod;
 import io.github.ieperen3039.trainsinspace.GameState.GameState;
+import io.github.ieperen3039.trainsinspace.Menu.InGame.MapGenerationProgress;
 import io.github.ieperen3039.trainsinspace.Mods.Mod;
 import io.github.ieperen3039.trainsinspace.Network.NetworkNode;
 import io.github.ieperen3039.trainsinspace.Network.RailNode;
@@ -38,10 +39,15 @@ public abstract class Scenario {
     public void setMap(Game game, Settings settings) {
         // random map
         MapGeneratorMod mapGenerator = new DefaultMapGenerator(0);
+        MapGenerationProgress progressUi = new MapGenerationProgress(mapGenerator::heightmapProgress);
+
+        game.gui().addFrame(progressUi);
         mapGenerator.setSize(X_SIZE, Y_SIZE);
         mapGenerator.setProperty(DefaultMapGenerator.MAJOR_AMPLITUDE, 10);
         mapGenerator.setProperty(DefaultMapGenerator.MINOR_AMPLITUDE, 0);
-        game.map().generateNew(game, mapGenerator);
+        game.map().generateNew(mapGenerator);
+
+        progressUi.dispose();
     }
 
     /**

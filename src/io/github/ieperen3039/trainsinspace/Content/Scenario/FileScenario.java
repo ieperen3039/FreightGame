@@ -73,7 +73,7 @@ public class FileScenario extends Scenario {
         Resource.Path imagePath = scenarioPath.resolve("heightmap.png");
 
         MapGeneratorMod generator = new ImageMapGenerator(imagePath, edgeLength);
-        game.map().generateNew(game, generator);
+        game.map().generateNew(generator);
     }
 
     @Override

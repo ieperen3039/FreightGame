@@ -55,6 +55,11 @@ public class GameLoop extends GenericThreadLoop implements GameState, MouseSelec
     }
 
     @Override
+    public void cleanup() {
+        clear();
+    }
+
+    @Override
     public void addEntity(GameEntity entity) {
         synchronized (newEntities) {
             newEntities.add(entity);
@@ -173,8 +178,7 @@ public class GameLoop extends GenericThreadLoop implements GameState, MouseSelec
         return entities.stream();
     }
 
-    @Override
-    public void cleanup() {
+    public void clear() {
         synchronized (newEntities) {
             newEntities.clear();
         }

@@ -14,11 +14,6 @@ import io.github.ieperen3039.ngn.Rendering.Shaders.ShaderProgram;
 import io.github.ieperen3039.ngn.Tools.Logger;
 import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.ngn.Tools.Toolbox;
-import io.github.ieperen3039.ngn.UserInterface.Components.SFiller;
-import io.github.ieperen3039.ngn.UserInterface.Components.SFrame;
-import io.github.ieperen3039.ngn.UserInterface.Components.SNineWayPanel;
-import io.github.ieperen3039.ngn.UserInterface.Components.SProgressBar;
-import io.github.ieperen3039.trainsinspace.Core.Game;
 import org.joml.*;
 import org.joml.Math;
 import org.joml.primitives.AABBf;
@@ -29,6 +24,7 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 
 /**
  * a simple heightmap grid with (0, 0) mapping to (0, 0, map[0][0])
@@ -40,6 +36,7 @@ public class HeightMap extends GridMap {
 
     private final List<Asset<Mesh>> chunkMeshes = new CopyOnWriteArrayList<>();
     private float meshProgress;
+    private MapGeneratorMod mapGenerator;
 
     private float[][] heightmap;
     private float edgeLength = 0.5f;
@@ -50,6 +47,8 @@ public class HeightMap extends GridMap {
 
     private final List<ChangeListener> listeners = new ArrayList<>();
     private float maxHeight = Float.POSITIVE_INFINITY;
+
+    private Supplier<String> culledChunksPrintRoll;
 
     @Override
     Float getTileIntersect(Vector3fc origin, Vector3fc direction, int xCoord, int yCoord) {
@@ -88,24 +87,9 @@ public class HeightMap extends GridMap {
     }
 
     @Override
-    public void generateNew(Game game, MapGeneratorMod mapGenerator) {
-        SFrame frame = new SFrame("Generating map...", 500, 200, false);
-        SNineWayPanel panel = new SNineWayPanel();
-        panel.add(new SFiller(), SNineWayPanel.NORTHEAST);
-        panel.add(new SProgressBar(400, 50, () -> (mapGenerator.heightmapProgress() + meshProgress) / 2), SNineWayPanel.MIDDLE);
-        panel.add(new SFiller(), SNineWayPanel.SOUTHWEST);
-        frame.setMainPanel(panel);
-        frame.setVisible(true);
-        game.gui().addFrame(frame);
+    public void generateNew(MapGeneratorMod mapGenerator) {
+        this.mapGenerator = mapGenerator;
 
-        generate(mapGenerator);
-
-        frame.dispose();
-
-        Logger.printOnline(() -> "Culled chenks :" + culledChunks.average() + "/" + chunkMeshes.size());
-    }
-
-    private void generate(MapGeneratorMod mapGenerator) {
         synchronized (this) {
             meshProgress = 0f;
 
@@ -116,8 +100,9 @@ public class HeightMap extends GridMap {
             xSize = heightmap.length;
             ySize = heightmap[0].length;
 
+            meshProgress = 0.2f;
             List<Asset<Mesh>> worldMeshes = generateMeshes(heightmap, xSize, ySize, edgeLength);
-            meshProgress = 0.5f;
+            meshProgress = 0.8f;
 
             chunkMeshes.clear();
             chunkMeshes.addAll(worldMeshes);
@@ -131,6 +116,8 @@ public class HeightMap extends GridMap {
 
             listeners.forEach(ChangeListener::onMapChange);
             meshProgress = 1f;
+
+            Logger.printOnline(culledChunksPrintRoll = () -> "Culled chunks :" + culledChunks.average() + "/" + chunkMeshes.size());
         }
     }
 
@@ -320,5 +307,9 @@ public class HeightMap extends GridMap {
         }
 
         chunkMeshes.addAll(generateMeshes(heightmap, xSize, ySize, edgeLength));
+    }
+
+    public float getGenerationProgress() {
+        return (mapGenerator.heightmapProgress() + meshProgress) / 2;
     }
 }

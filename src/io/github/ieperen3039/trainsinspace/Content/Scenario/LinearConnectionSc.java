@@ -40,7 +40,7 @@ public class LinearConnectionSc extends Scenario {
         mapGenerator.setSize(X_SIZE, Y_SIZE);
         mapGenerator.setProperty(DefaultMapGenerator.MAJOR_AMPLITUDE, 2);
         mapGenerator.setProperty(DefaultMapGenerator.MINOR_AMPLITUDE, 0);
-        game.map().generateNew(game, mapGenerator);
+        game.map().generateNew(mapGenerator);
     }
 
     @Override

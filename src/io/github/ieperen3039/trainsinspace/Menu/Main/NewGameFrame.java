@@ -156,7 +156,7 @@ public class NewGameFrame extends SFrame {
             modLoader.initMods(targets);
 
             if (targets.isEmpty()) throw new ModLoader.IllegalNumberOfModulesException("No mods selected");
-            game.map().generateNew(game, generatorMod);
+            game.map().generateNew(generatorMod);
 
             // set camera to middle of map
             Vector2f size = game.map().getSize();

@@ -239,7 +239,7 @@ public class TrainGame implements Game, ModLoader {
     @Override
     public void stopGame() {
         gameState.pause();
-        gameState.cleanup();
+        gameState.clear();
         gameMap.cleanup();
         cleanMods();
 
@@ -260,7 +260,7 @@ public class TrainGame implements Game, ModLoader {
         }
 
         try (
-                FileOutputStream fileOut = new FileOutputStream(target);
+                FileOutputStream fileOut = createFileOut(target);
                 ObjectOutputStream out = new ObjectOutputStream(fileOut)
         ) {
             out.writeUTF(GAME_VERSION.toString());
@@ -293,6 +293,10 @@ public class TrainGame implements Game, ModLoader {
         } finally {
             gameState.unPause();
         }
+    }
+
+    private static FileOutputStream createFileOut(File target) throws FileNotFoundException {
+        return new FileOutputStream(target);
     }
 
     public void loadGame(File target) {
@@ -418,6 +422,9 @@ public class TrainGame implements Game, ModLoader {
 
     @Override
     public void loadScenario(Scenario scenario) {
+        gameState.clear();
+        gameLights.clear();
+
         Settings settings = settings();
 
         scenario.init();
@@ -484,7 +491,7 @@ public class TrainGame implements Game, ModLoader {
         permanentMods.forEach(Mod::cleanup);
 
         gameCamera.cleanup();
-        gameState.cleanup();
+        gameState.clear();
         gameMap.cleanup();
         gameLights.cleanup();
         gameParticles.cleanup();
