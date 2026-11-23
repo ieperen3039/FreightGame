@@ -13,7 +13,10 @@ import io.github.ieperen3039.ngn.Rendering.RenderLoop;
 import io.github.ieperen3039.ngn.Rendering.Shaders.BPShadowShader;
 import io.github.ieperen3039.ngn.Rendering.Shaders.ClickShader;
 import io.github.ieperen3039.ngn.Rendering.Shaders.ClickShaderTarget;
-import io.github.ieperen3039.ngn.Tools.*;
+import io.github.ieperen3039.ngn.Tools.Logger;
+import io.github.ieperen3039.ngn.Tools.TickTimeTimer;
+import io.github.ieperen3039.ngn.Tools.Toolbox;
+import io.github.ieperen3039.ngn.Tools.Vectors;
 import io.github.ieperen3039.ngn.UserInterface.FrameManagers.FrameManager;
 import io.github.ieperen3039.ngn.UserInterface.FrameManagers.FrameManagerImpl;
 import io.github.ieperen3039.ngn.Version;
@@ -60,7 +63,6 @@ public class TrainGame implements Game, ModLoader {
 
     private Thread mainThread;
     private GameLoop gameState;
-    private TickTimeTimer time;
     private Camera gameCamera;
     private GameMap gameMap;
     private SingleShadowMapLights gameLights;
@@ -99,9 +101,6 @@ public class TrainGame implements Game, ModLoader {
         settings.MAX_CAMERA_DIST = settings.Z_FAR / 2f;
         settings.MIN_CAMERA_DIST = settings.Z_NEAR * 2f;
         Logger.doPrintCallsites = true;
-
-        time = new RealTimeTimer();
-//        time = new FixedTimer(0, settings.TARGET_TPS); // for breakpoints only
 
         window = new GLFWWindow(settings.TITLE, new GLFWWindow.Settings(settings));
 
@@ -273,7 +272,6 @@ public class TrainGame implements Game, ModLoader {
 
             // game aspects
             out.writeObject(settings);
-            out.writeObject(time);
             out.writeObject(gameCamera);
             out.writeObject(gameMap);
             out.writeObject(gameLights);
@@ -330,7 +328,6 @@ public class TrainGame implements Game, ModLoader {
 
             // game aspects
             settings = (Settings) in.readObject();
-            time = (TickTimeTimer) in.readObject();
             Camera camera = (Camera) in.readObject();
             GameMap map = (GameMap) in.readObject();
             SingleShadowMapLights lights = (SingleShadowMapLights) in.readObject();
@@ -371,7 +368,7 @@ public class TrainGame implements Game, ModLoader {
 
     @Override
     public TickTimeTimer timer() {
-        return time;
+        return gameState.getTimer();
     }
 
     @Override

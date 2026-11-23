@@ -15,6 +15,7 @@ import io.github.ieperen3039.trainsinspace.DataStructures.Collision.ColliderEnti
 import io.github.ieperen3039.trainsinspace.DataStructures.Collision.GilbertJohnsonKeerthiCollision;
 import io.github.ieperen3039.trainsinspace.Entities.GameEntity;
 import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTargetEntity;
+import io.github.ieperen3039.trainsinspace.Tools.GameTimeTimer;
 import org.joml.FrustumIntersection;
 import org.joml.Matrix4fc;
 import org.joml.Vector2ic;
@@ -39,7 +40,7 @@ public class GameLoop extends GenericThreadLoop implements GameState, MouseSelec
     private final Map<Integer, GameEntity> entityIdMap = new HashMap<>();
 
     private final ClickShaderTarget clickShader;
-    private TickTimeTimer timer;
+    private TickTimeTimer timer = new GameTimeTimer();
     private Game game;
 
     public GameLoop(int targetTps, ClickShaderTarget clickShader) {
@@ -52,6 +53,10 @@ public class GameLoop extends GenericThreadLoop implements GameState, MouseSelec
     @Override
     public void init(Game game) throws Exception {
         this.game = game;
+    }
+
+    public TickTimeTimer getTimer() {
+        return timer;
     }
 
     @Override
@@ -74,6 +79,8 @@ public class GameLoop extends GenericThreadLoop implements GameState, MouseSelec
      */
     public void update(TickTime realTime) {
         runCleaning(realTime.getTime());
+
+        timer.updateLoopTime();
 
         entities.forEach(GameEntity::update);
         game.playerStatus().update();
