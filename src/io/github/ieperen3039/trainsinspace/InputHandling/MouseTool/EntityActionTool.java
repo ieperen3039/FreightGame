@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
+ * allows clicking an entity, and if it passes a given guard, runs a given action, then deactivates.
  * @author Geert van Ieperen created on 27-5-2020.
  */
 public class EntityActionTool implements MouseTool {
@@ -21,16 +22,16 @@ public class EntityActionTool implements MouseTool {
     }
 
     @Override
-    public boolean onPress(int button, MouseTarget target, int xSc, int ySc) {
+    public HandleResult onPress(int button, MouseTarget target, int xSc, int ySc) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             if (target instanceof MouseTargetEntity entity) {
                 if (guard.test(entity.target())) {
                     action.accept(entity.target());
-                    return true;
+                    return HandleResult.DEACTIVATE;
                 }
             }
         }
 
-        return false;
+        return HandleResult.CONTINUE;
     }
 }
