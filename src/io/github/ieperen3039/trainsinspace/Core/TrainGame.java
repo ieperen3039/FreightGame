@@ -17,7 +17,7 @@ import io.github.ieperen3039.ngn.Tools.*;
 import io.github.ieperen3039.ngn.UserInterface.FrameManagers.FrameManager;
 import io.github.ieperen3039.ngn.UserInterface.FrameManagers.FrameManagerImpl;
 import io.github.ieperen3039.ngn.Version;
-import io.github.ieperen3039.trainsinspace.Camera.TycoonFixedCamera;
+import io.github.ieperen3039.trainsinspace.Camera.TycoonCamera;
 import io.github.ieperen3039.trainsinspace.Content.Scenario.Scenario;
 import io.github.ieperen3039.trainsinspace.GameMap.GameMap;
 import io.github.ieperen3039.trainsinspace.GameMap.HeightMap;
@@ -109,7 +109,7 @@ public class TrainGame implements Game, ModLoader {
         clickShader = new ClickShader(clickShaderTarget);
         gameMap = new HeightMap();
 
-        gameCamera = new TycoonFixedCamera(new Vector3f(), 100, 100);
+        gameCamera = new TycoonCamera(new Vector3f(), 100, 100);
         renderer = new RenderLoop(settings.TARGET_FPS);
         gameState = new GameLoop(settings.TARGET_TPS, clickShaderTarget);
         gameLights = new SingleShadowMapLights();
@@ -342,6 +342,10 @@ public class TrainGame implements Game, ModLoader {
 
             String tail = in.readUTF();
             if (!tail.equals("END")) throw new IOException("End of save file does not align");
+
+            if (camera instanceof TycoonCamera tCam) {
+                tCam.setMap(map);
+            }
 
             // init and write
             lights.init(this);

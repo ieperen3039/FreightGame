@@ -6,7 +6,7 @@ import io.github.ieperen3039.ngn.DataStructures.Generic.PairList;
 import io.github.ieperen3039.ngn.Tools.Logger;
 import io.github.ieperen3039.ngn.UserInterface.Components.*;
 import io.github.ieperen3039.ngn.UserInterface.LayoutManagers.ListLayoutManager;
-import io.github.ieperen3039.trainsinspace.Camera.TycoonFixedCamera;
+import io.github.ieperen3039.trainsinspace.Camera.TycoonCamera;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.ModLoader;
 import io.github.ieperen3039.trainsinspace.GameMap.DefaultMapGenerator;
@@ -163,7 +163,7 @@ public class NewGameFrame extends SFrame {
             Vector3f cameraFocus = new Vector3f(size.x / 2, size.y / 2, 0);
             Camera cam = game.camera();
 
-            if (cam instanceof TycoonFixedCamera tCam) {
+            if (cam instanceof TycoonCamera tCam) {
                 Vector3f cameraEye = new Vector3f(cameraFocus).add(-20, -20, 20);
                 tCam.set(cameraFocus, cameraEye);
             } else {

@@ -5,6 +5,7 @@ import io.github.ieperen3039.ngn.Core.Main;
 import io.github.ieperen3039.ngn.Rendering.GLFWWindow;
 import io.github.ieperen3039.ngn.Settings.Settings;
 import io.github.ieperen3039.ngn.Tools.Vectors;
+import io.github.ieperen3039.trainsinspace.GameMap.GameMap;
 import org.joml.*;
 
 import java.io.Serializable;
@@ -17,7 +18,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
  * A camera implementation that can be moved by holding the mouse to the corners of the screen
  * @author Geert van Ieperen. Created on 18-11-2018.
  */
-public class TycoonFixedCamera implements Camera, Serializable {
+public class TycoonCamera implements Camera, Serializable {
     private static final float BORDER_MOVE_SPEED = 0.6f;
     private static final int SCREEN_MOVE_BORDER_SIZE = 50;
     private static final int SCREEN_DEAD_ZONE = 30;
@@ -27,15 +28,17 @@ public class TycoonFixedCamera implements Camera, Serializable {
     private static final float ROTATION_MODIFIER = 0.002f;
     public static final float DRAG_MODIFIER = 0.0015f;
 
+    private transient Main main;
+    private transient GameMap map;
+
     private final Vector3f focus = new Vector3f();
     private final Vector3f eyeOffset;
 
-    private transient Main main;
-    private float mouseXPos;
-    private float mouseYPos;
-    private boolean isBeingRotated = false;
-    private boolean isBeingMoved = false;
-    private double minimumFocusDistance;
+    private transient float mouseXPos;
+    private transient float mouseYPos;
+    private transient boolean isBeingRotated = false;
+    private transient boolean isBeingMoved = false;
+    private transient double minimumFocusDistance;
 
     /**
      * a camera that always has the same angle to the ground. The angle can be set by the ratio between eyeOffset and
@@ -44,7 +47,7 @@ public class TycoonFixedCamera implements Camera, Serializable {
      * @param eyeOffset    the x-offset of the camera
      * @param eyeHeight    the z-offset of the camera
      */
-    public TycoonFixedCamera(Vector3fc initialFocus, float eyeOffset, float eyeHeight) {
+    public TycoonCamera(Vector3fc initialFocus, float eyeOffset, float eyeHeight) {
         this.eyeOffset = new Vector3f(-eyeOffset, 0, eyeHeight);
         this.eyeOffset.rotateZ((float) (Math.PI / 4));
         focus.set(initialFocus);
@@ -58,6 +61,10 @@ public class TycoonFixedCamera implements Camera, Serializable {
         Vector2i mousePosition = game.window().getMousePosition();
         mouseXPos = mousePosition.x;
         mouseYPos = mousePosition.y;
+    }
+
+    public void setMap(GameMap map) {
+        this.map = map;
     }
 
     @Override
@@ -222,10 +229,15 @@ public class TycoonFixedCamera implements Camera, Serializable {
         // set focus to middle of screen
         Vector3fc eyePos = getEye();
         Vector3fc eyeDir = vectorToFocus();
-//        Float tFrac = main.gameMap().gridMapIntersection(eyeMidOrigin, eyeMidDirection);
-        float tFrac = Intersectionf.intersectRayPlane(eyePos, eyeDir, Vectors.O, Vectors.Z, 1f / 8);
 
-        if (tFrac > minimumFocusDistance) {
+        Float tFrac;
+        if (map != null) {
+            tFrac = map.gridMapIntersection(eyePos, eyeDir);
+        } else {
+            tFrac = Intersectionf.intersectRayPlane(eyePos, eyeDir, Vectors.O, Vectors.Z, 1f / 8);
+        }
+
+        if (tFrac != null && tFrac > minimumFocusDistance) {
             focus.set(eyeDir).mul(tFrac).add(eyeOffset);
             // given that the new focus is `eye + tFrac * vectorToFocus`, and `vectorToFocus = -eyeOffset`,
             // the new eye offset is `tFrac * vectorToFocus`, or `eyeOffset * -tFrac`

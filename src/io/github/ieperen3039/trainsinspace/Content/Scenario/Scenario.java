@@ -1,7 +1,7 @@
 package io.github.ieperen3039.trainsinspace.Content.Scenario;
 
 import io.github.ieperen3039.ngn.Camera.Camera;
-import io.github.ieperen3039.trainsinspace.Camera.TycoonFixedCamera;
+import io.github.ieperen3039.trainsinspace.Camera.TycoonCamera;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.ModLoader;
 import io.github.ieperen3039.trainsinspace.GameMap.DefaultMapGenerator;
@@ -65,9 +65,10 @@ public abstract class Scenario {
         Camera cam = game.camera();
         Vector2f size = game.map().getSize();
         Vector3f cameraFocus = new Vector3f(size.x / 2, size.y / 2, 0);
-        if (cam instanceof TycoonFixedCamera tCam) {
+        if (cam instanceof TycoonCamera tCam) {
             Vector3f cameraEye = new Vector3f(cameraFocus).add(-20, -20, 20);
             tCam.set(cameraFocus, cameraEye);
+            tCam.setMap(game.map());
         } else {
             cam.set(cameraFocus);
         }
