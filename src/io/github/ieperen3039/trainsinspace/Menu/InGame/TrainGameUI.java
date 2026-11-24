@@ -134,7 +134,7 @@ public class TrainGameUI extends SContainer.GhostContainer {
                         "Save Game", BUTTON_PROPERTIES_STRETCH, () -> modLoader.saveGame(TrainGame.SAVE_FILE)
                 ),
                 new SButton("Exit", BUTTON_PROPERTIES_STRETCH, () -> {
-                    modLoader.saveGame(TrainGame.SAVE_FILE);
+//                    modLoader.saveGame(TrainGame.SAVE_FILE);
                     modLoader.stopGame();
                 })
         ));

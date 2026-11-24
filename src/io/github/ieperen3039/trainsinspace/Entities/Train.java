@@ -2,23 +2,14 @@ package io.github.ieperen3039.trainsinspace.Entities;
 
 import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
 import io.github.ieperen3039.ngn.DataStructures.Generic.Pair;
-import io.github.ieperen3039.ngn.InputHandling.KeyControl;
 import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
 import io.github.ieperen3039.ngn.Tools.Logger;
 import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.ngn.Tools.Toolbox;
-import io.github.ieperen3039.ngn.UserInterface.Components.SActiveTextComponent;
-import io.github.ieperen3039.ngn.UserInterface.Components.SButton;
-import io.github.ieperen3039.ngn.UserInterface.Components.SContainer;
-import io.github.ieperen3039.ngn.UserInterface.Components.SFrame;
-import io.github.ieperen3039.ngn.UserInterface.Rendering.NGFont;
-import io.github.ieperen3039.ngn.UserInterface.Rendering.SFrameLookAndFeel;
-import io.github.ieperen3039.ngn.UserInterface.SComponentProperties;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.DataStructures.Valuta;
 import io.github.ieperen3039.trainsinspace.Freight.Cargo;
-import io.github.ieperen3039.trainsinspace.InputHandling.InputMapping;
 import io.github.ieperen3039.trainsinspace.Mods.CargoType;
 import io.github.ieperen3039.trainsinspace.Network.NetworkNode;
 import io.github.ieperen3039.trainsinspace.Network.NetworkPosition;
@@ -38,10 +29,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Geert van Ieperen created on 19-5-2020.
  */
 public class Train extends GameEntity {
-    private static final SComponentProperties BUTTON_PROPERTIES = new SComponentProperties(
-            300, 50, false, false, NGFont.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
-    );
-
     private static final boolean CHOOSE_RANDOM_SPAWN_TRACK = true;
     private static final double TRAIN_PLACEMENT_STUN_TIME = 1;
 
@@ -335,28 +322,7 @@ public class Train extends GameEntity {
         return positionEngine.getPosition(time);
     }
 
-    public void onMouseClick(int button, KeyControl keys) {
-        assert positionEngine != null : "visible but without position";
 
-        if (button == InputMapping.UseMouseTool.getButton()) {
-            if (keys.isControlPressed()) {
-                if (positionEngine.isStopping()) {
-                    positionEngine.start();
-                } else {
-                    positionEngine.stop();
-                }
-            } else {
-                openUI();
-            }
-        }
-    }
-
-    /**
-     * opens the ui of this train
-     */
-    public void openUI() {
-        game.gui().addFrame(new TrainUI());
-    }
 
     public void setMarking(Coloring.Marking mark) {
         coloring.addMark(mark);
@@ -535,61 +501,63 @@ public class Train extends GameEntity {
         positionEngine.start();
     }
 
-    private class TrainUI extends SFrame {
+    public void reverse() {
+        positionEngine.reverse();
+    }
 
-        public TrainUI() {
-            super(Train.this.toString());
-            setMainPanel(SContainer.column(
-                    new SActiveTextComponent(this::getStatus, 50),
-                    new SActiveTextComponent(() -> String.format("Speed: %5.01f", positionEngine.getSpeed()), 50),
-                    new SActiveTextComponent(() -> String.format("Cargo: %s", getContents()), 50),
-                    new SButton("Start", BUTTON_PROPERTIES, positionEngine::start),
-                    new SButton("Stop", BUTTON_PROPERTIES, positionEngine::stop),
-                    new SButton("Reverse", BUTTON_PROPERTIES, positionEngine::reverse),
-                    new SButton("Schedule", BUTTON_PROPERTIES, () -> game.gui()
-                            .addFrame(new Schedule.ScheduleUI(game, schedule)))
-            ));
-            pack();
+    public void stop() {
+        positionEngine.stop();
+    }
+
+    public float getSpeed() {
+        return positionEngine.getSpeed();
+    }
+
+    public boolean isStopping() {
+        return positionEngine.isStopping();
+    }
+
+    public Schedule getSchedule() {
+        return schedule;
+    }
+
+    public String getStatusString() {
+        if (isLoading()) {
+            double time = loadTimer - game.timer().getTime();
+            return String.format("Loading / Unloading (%4.01f sec left)", time);
         }
 
-        private String getStatus() {
-            if (isLoading()) {
-                double time = loadTimer - game.timer().getTime();
-                return String.format("Loading / Unloading (%4.01f sec left)", time);
-            }
+        if (storagePosition != null) {
+            return "Stowed away";
+        }
 
-            if (storagePosition != null) {
-                return "Stowed away";
+        if (positionEngine.isStopping()) {
+            if (positionEngine.getSpeed() == 0) {
+                return "Stopped";
             }
+            return "Stopping...";
+        }
 
-            if (positionEngine.isStopping()) {
+        if (currentScheduleNode == null) {
+            if (schedule.isEmpty()) {
+                return "No schedule";
+            } else {
+                return "Waiting for schedule start";
+            }
+        }
+
+        if (!positionEngine.hasPath()) {
+            if (shouldWaitFor(currentScheduleNode.element.target)) {
                 if (positionEngine.getSpeed() == 0) {
-                    return "Stopped";
-                }
-                return "Stopping...";
-            }
-
-            if (currentScheduleNode == null) {
-                if (schedule.isEmpty()) {
-                    return "No schedule";
-                } else {
-                    return "Waiting for schedule start";
-                }
-            }
-
-            if (!positionEngine.hasPath()) {
-                if (shouldWaitFor(currentScheduleNode.element.target)) {
-                    if (positionEngine.getSpeed() == 0) {
-                        return "Stopped at station (not loading)";
-                    }
-
-                    return "Stopping at station";
+                    return "Stopped at station (not loading)";
                 }
 
-                return "Waiting for free path...";
+                return "Stopping at station";
             }
 
-            return "Now heading for " + currentScheduleNode.element;
+            return "Waiting for free path...";
         }
+
+        return "Now heading for " + currentScheduleNode.element;
     }
 }

@@ -6,6 +6,7 @@ import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.PlayerStatus;
 import io.github.ieperen3039.trainsinspace.Entities.Train;
 import io.github.ieperen3039.trainsinspace.Entities.TrainElement;
+import io.github.ieperen3039.trainsinspace.Menu.EntityScreens.TrainScreen;
 import io.github.ieperen3039.trainsinspace.Menu.Main.MainMenu;
 import org.lwjgl.glfw.GLFW;
 
@@ -16,8 +17,11 @@ import java.util.stream.Collectors;
  * @author Geert van Ieperen created on 11-10-2020.
  */
 public class TrainOverview extends SPanel {
+    private final Game game;
+
     public TrainOverview(Game game) {
         super(new SingleElementLayout());
+        this.game = game;
 
         PlayerStatus playerStatus = game.playerStatus();
         List<Train> trains = playerStatus.trains;
@@ -31,13 +35,13 @@ public class TrainOverview extends SPanel {
         ));
     }
 
-    private static class TrainView extends SPanel {
+    private class TrainView extends SPanel {
         public TrainView(Train train) {
             super(SContainer.column(
                     new SExtendedTextComponent(train.toString(), MainMenu.TEXT_PROPERTIES)
                             .setClickListener((button, xRel, yRel) -> {
                                 if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-                                    train.openUI();
+                                    game.gui().addFrame(new TrainScreen(game, train));
                                 }
                             }),
                     new STextComponent(
