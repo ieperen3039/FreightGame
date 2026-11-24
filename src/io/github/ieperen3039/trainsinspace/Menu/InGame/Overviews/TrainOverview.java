@@ -1,10 +1,11 @@
 package io.github.ieperen3039.trainsinspace.Menu.InGame.Overviews;
 
+import io.github.ieperen3039.ngn.UserInterface.Components.*;
+import io.github.ieperen3039.ngn.UserInterface.LayoutManagers.SingleElementLayout;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.PlayerStatus;
 import io.github.ieperen3039.trainsinspace.Entities.Train;
 import io.github.ieperen3039.trainsinspace.Entities.TrainElement;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.*;
 import io.github.ieperen3039.trainsinspace.Menu.Main.MainMenu;
 import org.lwjgl.glfw.GLFW;
 
@@ -14,13 +15,14 @@ import java.util.stream.Collectors;
 /**
  * @author Geert van Ieperen created on 11-10-2020.
  */
-public class TrainOverview extends SDecorator {
+public class TrainOverview extends SPanel {
     public TrainOverview(Game game) {
+        super(new SingleElementLayout());
 
         PlayerStatus playerStatus = game.playerStatus();
         List<Train> trains = playerStatus.trains;
 
-        setContents(SPanel.row(
+        add(SPanel.row(
                 new SComponentArea(200, 500),
                 new SScrollableList(10, trains.stream()
                         .map(TrainView::new)
@@ -32,20 +34,20 @@ public class TrainOverview extends SDecorator {
     private static class TrainView extends SPanel {
         public TrainView(Train train) {
             super(SContainer.column(
-                    new SExtendedTextArea(train.toString(), MainMenu.TEXT_PROPERTIES)
+                    new SExtendedTextComponent(train.toString(), MainMenu.TEXT_PROPERTIES)
                             .setClickListener((button, xRel, yRel) -> {
                                 if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
                                     train.openUI();
                                 }
                             }),
-                    new STextArea(
+                    new STextComponent(
                             train.getElements().stream()
                                     .map(TrainElement::getProperties)
                                     .map(TrainElement.Properties::toString)
                                     .collect(Collectors.joining(" | ")),
                             MainMenu.TEXT_PROPERTIES
                     ),
-                    new SActiveTextArea(() -> train.getContents().toString(), MainMenu.TEXT_PROPERTIES)
+                    new SActiveTextComponent(() -> train.getContents().toString(), MainMenu.TEXT_PROPERTIES)
             ));
         }
     }

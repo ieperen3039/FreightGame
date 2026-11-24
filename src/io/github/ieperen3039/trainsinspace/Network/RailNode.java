@@ -1,8 +1,7 @@
 package io.github.ieperen3039.trainsinspace.Network;
 
+import io.github.ieperen3039.ngn.Tools.Vectors;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.Core.GameObject;
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackPiece;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackSupport;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackType;
@@ -16,7 +15,7 @@ import java.util.List;
  * A node that connects two track pieces together
  * @author Geert van Ieperen created on 16-12-2018.
  */
-public class RailNode implements Serializable, GameObject {
+public class RailNode implements Serializable {
     /*
      * Representation Invariants
      * for all NetworkNodes n in aNodes {
@@ -121,17 +120,17 @@ public class RailNode implements Serializable, GameObject {
     }
 
     public Signal getSignal() {
-        return networkNode.isEnd() ? eolSignal : signal;
+        return networkNode.isEnd() ? eolSignal : signal.getSignal();
     }
 
     public Signal addSignal(Game game, boolean inNodeDirection) {
         this.signal = new SignalEntity(game, this, inNodeDirection, true);
         game.state().addEntity(signal);
-        return signal;
+        return signal.getSignal();
     }
 
     public void removeSignal(Game game) {
-        signal.despawn(game.timer().getGameTime());
+        signal.despawn(game.timer().getTime());
         signal = null;
     }
 
@@ -163,7 +162,6 @@ public class RailNode implements Serializable, GameObject {
         return false;
     }
 
-    @Override
     public void restore(Game game) {
         if (type == null) {
             type = game.objectTypes().getTrackByName(typeName);

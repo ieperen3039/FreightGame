@@ -1,17 +1,17 @@
 package io.github.ieperen3039.trainsinspace.Mods;
 
-import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.Core.Version;
-import io.github.ieperen3039.trainsinspace.Entities.Industry;
-import io.github.ieperen3039.trainsinspace.Entities.Locomotive;
-import io.github.ieperen3039.trainsinspace.Entities.Wagon;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonFactoryBuilder;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.ieperen3039.ngn.AssetHandling.Asset;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
+import io.github.ieperen3039.ngn.Version;
+import io.github.ieperen3039.trainsinspace.Core.Game;
+import io.github.ieperen3039.trainsinspace.Entities.Industry;
+import io.github.ieperen3039.trainsinspace.Entities.Locomotive;
+import io.github.ieperen3039.trainsinspace.Entities.Wagon;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,20 +1,27 @@
 package io.github.ieperen3039.trainsinspace.Menu.InGame.Build;
 
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTarget;
+import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTool;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Tools.Logger;
+import io.github.ieperen3039.ngn.Tools.TickTime;
+import io.github.ieperen3039.ngn.UserInterface.Components.SFrame;
+import io.github.ieperen3039.ngn.UserInterface.Components.SToggleButton;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
-import io.github.ieperen3039.trainsinspace.Entities.Entity;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.SToggleButton;
-import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.AbstractMouseTool;
+import io.github.ieperen3039.trainsinspace.Entities.GameEntity;
+import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTargetEntity;
+import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTargetMap;
+import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseToolVisuals;
 import io.github.ieperen3039.trainsinspace.Network.NetworkNode;
 import io.github.ieperen3039.trainsinspace.Network.RailNode;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
 import io.github.ieperen3039.trainsinspace.Settings.Settings;
-import io.github.ieperen3039.trainsinspace.Tools.Logger;
 import io.github.ieperen3039.trainsinspace.Tracks.*;
 import org.joml.Intersectionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.joml.primitives.Rayf;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Collection;
@@ -25,8 +32,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author Geert van Ieperen created on 16-12-2018.
  */
-public class TrackBuilder extends AbstractMouseTool {
+public class TrackBuilder implements MouseTool {
     private static final float ENDNODE_SELECTION_MARGIN = 0.5f;
+    private final Game game;
     protected final Runnable deactivation;
     private final TrackType type;
     private RailNode firstNode;
@@ -34,203 +42,216 @@ public class TrackBuilder extends AbstractMouseTool {
 
     private final TrackTypeGhost ghostType;
     private List<TrackPiece> ghostTracks = new CopyOnWriteArrayList<>();
+    // TODO UI option to change signal distance
     private float signalDistance = 10f;
     private Coloring.Marking mark = new Coloring.Marking();
     private Vector3f cursorPosition;
     private float cursorBaseHaight;
+    private SFrame selector;
 
     /**
      * this mousetool lets the player place a track by clicking on the map
+     *
      * @param game   the game instance
      * @param type   the type of track to place
-     * @param source
+     * @param source button that activated this
      */
     public TrackBuilder(Game game, TrackType type, SToggleButton source) {
-        super(game);
+        this.game = game;
         this.deactivation = () -> source.setActive(false);
         this.type = type;
         this.ghostType = new TrackTypeGhost(type);
     }
 
     @Override
-    public void onClick(int button, int x, int y) {
+    public boolean onPress(int button, MouseTarget target, int xSc, int ySc) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-            dispose();
-
-        } else {
-            super.onClick(button, x, y);
+            onDeactivate();
+            return true;
         }
+
+        mark.invalidate();
+        clearGhostTracks();
+
+        if (target instanceof MouseTargetMap) {
+            if (firstNode != null) {
+                List<TrackPiece> tracks = RailTools.createNew(game, firstNode, cursorPosition, signalDistance);
+                if (isValidTracks(tracks)) {
+                    assert !tracks.isEmpty();
+                    TrackPiece lastTrack = processTracksReturnLast(game, tracks);
+                    assert lastTrack != null;
+                    firstNode = lastTrack.getEndNode();
+                }
+
+            } else if (firstPosition != null) {
+                List<TrackPiece> tracks = RailTools.createNew(
+                        game, type, firstPosition, cursorPosition, signalDistance);
+                if (isValidTracks(tracks)) {
+                    assert !tracks.isEmpty();
+                    // no validation, as this is a straight track piece
+                    TrackPiece lastTrack = processTracksReturnLast(game, tracks);
+                    assert lastTrack != null;
+                    firstNode = lastTrack.getEndNode();
+
+                    firstPosition = null;
+                }
+
+            } else {
+                firstPosition = new Vector3f(cursorPosition);
+            }
+
+            return true;
+        } else if (target instanceof MouseTargetEntity entity) {
+            Logger.DEBUG.print("Clicked on entity " + entity.target());
+            if (entity.target() instanceof TrackPiece trackPiece) {
+                assert trackPiece.isValid() : trackPiece;
+                boolean doContinueBuilding = true;
+
+                Rayf rayf = game.camera().unproject(xSc, ySc, game.getViewPort());
+                Vector3f origin = new Vector3f(rayf.oX, rayf.oY, rayf.oZ);
+                Vector3f direction = new Vector3f(rayf.dX, rayf.dY, rayf.dZ);
+
+                float fraction = getFraction(trackPiece, origin, direction);
+                RailNode targetNode = getIfParallel(origin, direction, trackPiece, fraction, game);
+
+                if (targetNode == null) {
+                    doContinueBuilding = false;
+                    targetNode = getIfExisting(game, trackPiece, fraction);
+                }
+
+                if (targetNode == null) {
+                    double gameTime = game.timer().getTime();
+                    targetNode = RailTools.createSplit(game, trackPiece, fraction, gameTime);
+
+                }
+
+                if (firstNode == null) {
+                    firstNode = targetNode;
+
+                } else if (firstNode == targetNode) {
+                    return true;
+
+                } else {
+                    List<TrackPiece> connection =
+                            RailTools.createConnection(game, firstNode, targetNode, signalDistance);
+
+                    if (isValidTracks(connection)) {
+                        processTracksReturnLast(game, connection);
+                    }
+
+                    firstNode = doContinueBuilding ? targetNode : null;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     @Override
-    public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
-        mark.invalidate();
+    public boolean onHover(MouseTarget target, int xDelta, int yDelta, float xSc, float ySc) {
+        // remake ghost tracks
+        clearGhostTracks();
+        Settings settings = game.settings();
 
-        if (game.keyControl().isShiftPressed()) {
-            // find the elevation of the new point
-            Vector3f endPoint = new Vector3f(direction).mul(Settings.Z_FAR - Settings.Z_NEAR).add(origin);
-            Vector3f result = new Vector3f();
+        if (target instanceof MouseTargetMap map) {
+            if (game.keyControl().isShiftPressed()) {
+                Rayf rayf = game.camera().unproject((int) xSc, (int) ySc, game.getViewPort());
 
-            Intersectionf.findClosestPointsLineSegments(
-                    cursorPosition.x, cursorPosition.y, cursorBaseHaight,
-                    cursorPosition.x, cursorPosition.y, cursorBaseHaight + 100,
-                    origin.x(), origin.y(), origin.z(),
-                    endPoint.x, endPoint.y, endPoint.z,
-                    result, new Vector3f()
-            );
+                // find the elevation of the new point
+                Vector3f endPoint = new Vector3f(rayf.dX, rayf.dY, rayf.dZ)
+                        .mul(settings.Z_FAR - settings.Z_NEAR)
+                        .add(rayf.oX, rayf.oY, rayf.oZ);
+                Vector3f result = new Vector3f();
+
+                Intersectionf.findClosestPointsLineSegments(
+                        cursorPosition.x, cursorPosition.y, cursorBaseHaight,
+                        cursorPosition.x, cursorPosition.y, cursorBaseHaight + 100,
+                        rayf.oX, rayf.oY, rayf.oZ,
+                        endPoint.x, endPoint.y, endPoint.z,
+                        result, new Vector3f()
+                );
 
 //            Logger.WARN.print(cursorPosition, result);
-            cursorPosition = result;
+                cursorPosition = result;
 
-        } else {
-            cursorPosition = new Vector3f(position).add(0, 0, Settings.TRACK_HEIGHT_ABOVE_GROUND);
-            cursorBaseHaight = cursorPosition.z;
-        }
+            } else {
+                cursorPosition = new Vector3f(map.position()).add(0, 0, settings.TRACK_HEIGHT_ABOVE_GROUND);
+                cursorBaseHaight = cursorPosition.z;
+            }
 
-        switch (getMouseAction()) {
-            case PRESS_ACTIVATE -> {
-                if (firstNode != null) {
-                    List<TrackPiece> tracks = RailTools.createNew(game, firstNode, cursorPosition, signalDistance);
-                    if (isValidTracks(tracks)) {
-                        assert !tracks.isEmpty();
-                        TrackPiece lastTrack = processTracksReturnLast(game, tracks);
-                        assert lastTrack != null;
-                        firstNode = lastTrack.getEndNode();
-                    }
+            if (firstNode != null) {
+                RailNode ghostNode = new RailNode(firstNode, ghostType);
+                List<TrackPiece> tracks = RailTools.createNew(
+                        game, ghostNode, cursorPosition, Float.POSITIVE_INFINITY);
+                checkCollisions(tracks);
 
-                } else if (firstPosition != null) {
-                    List<TrackPiece> tracks = RailTools.createNew(game, type, firstPosition, cursorPosition, signalDistance);
-                    if (isValidTracks(tracks)) {
-                        assert !tracks.isEmpty();
-                        // no validation, as this is a straight track piece
-                        TrackPiece lastTrack = processTracksReturnLast(game, tracks);
-                        assert lastTrack != null;
-                        firstNode = lastTrack.getEndNode();
+                ghostTracks.addAll(tracks);
 
-                        firstPosition = null;
+            } else if (firstPosition != null) {
+                Vector3f toNode = new Vector3f(cursorPosition).sub(firstPosition);
+                RailNode ghostNode = new RailNode(game, firstPosition, ghostType, toNode, null);
+                StraightTrack track = new StraightTrack(game, ghostType, ghostNode, cursorPosition, true);
+                checkCollisions(Collections.singletonList(track));
+
+                ghostTracks.add(track);
+            }
+            return true;
+        } else if (target instanceof MouseTargetEntity entity) {
+            if (entity.target() instanceof TrackPiece trackPiece) {
+                Rayf rayf = game.camera().unproject((int) xSc, (int) ySc, game.getViewPort());
+                Vector3f origin = new Vector3f(rayf.oX, rayf.oY, rayf.oZ);
+                Vector3f direction = new Vector3f(rayf.dX, rayf.dY, rayf.dZ);
+                float fraction = getFraction(trackPiece, origin, direction);
+
+                if (firstNode == null) {
+                    mark = new Coloring.Marking(Color4f.BLUE, Coloring.Priority.MOUSE_HOVER);
+
+                    if (fraction == 0 || fraction == 1) {
+                        RailNode node = (fraction == 0) ? trackPiece.getStartNode() : trackPiece.getEndNode();
+
+                        // TODO mark node itself
+                        for (NetworkNode.Direction entry : node.getNetworkNode().getAllEntries()) {
+                            entry.trackPiece.setMarking(mark);
+                        }
+
+                    } else {
+                        trackPiece.setMarking(mark);
                     }
 
                 } else {
-                    firstPosition = new Vector3f(cursorPosition);
-                }
-            }
-            case HOVER -> {
-                clearGhostTracks();
-                if (firstNode != null) {
-                    RailNode ghostNode = new RailNode(firstNode, ghostType);
-                    List<TrackPiece> tracks = RailTools.createNew(game, ghostNode, cursorPosition, Float.POSITIVE_INFINITY);
-                    checkCollisions(tracks);
+                    RailNode ghostNodeTarget = getIfParallel(origin, direction, trackPiece, fraction, game);
 
-                    ghostTracks.addAll(tracks);
-
-                } else if (firstPosition != null) {
-                    Vector3f toNode = new Vector3f(cursorPosition).sub(firstPosition);
-                    RailNode ghostNode = new RailNode(game, firstPosition, ghostType, toNode, null);
-                    StraightTrack track = new StraightTrack(game, ghostType, ghostNode, cursorPosition, true);
-                    checkCollisions(Collections.singletonList(track));
-
-                    ghostTracks.add(track);
-                }
-            }
-            default -> {
-            }
-        }
-    }
-
-    @Override
-    public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
-        mark.invalidate();
-
-        switch (getMouseAction()) {
-            case PRESS_ACTIVATE -> {
-                Logger.DEBUG.print("Clicked on entity " + entity);
-                if (entity instanceof TrackPiece trackPiece) {
-                    assert trackPiece.isValid() : trackPiece;
-                    boolean doContinueBuilding = true;
-
-                    float fraction = getFraction(trackPiece, origin, direction);
-                    RailNode targetNode = getIfParallel(origin, direction, trackPiece, fraction, game);
-
-                    if (targetNode == null) {
-                        doContinueBuilding = false;
-                        targetNode = getIfExisting(game, trackPiece, fraction);
+                    if (ghostNodeTarget == null) {
+                        ghostNodeTarget = getIfExisting(game, trackPiece, fraction);
+                        if (ghostNodeTarget == firstNode) return true;
                     }
 
-                    if (targetNode == null) {
-                        double gameTime = game.timer().getGameTime();
-                        targetNode = RailTools.createSplit(game, trackPiece, fraction, gameTime);
-
-                    }
-
-                    if (firstNode == null) {
-                        firstNode = targetNode;
-
-                    } else if (firstNode == targetNode) {
-                        break;
+                    if (ghostNodeTarget == null) {
+                        Vector3f pos = trackPiece.getPositionFromFraction(fraction);
+                        Vector3f dir = trackPiece.getDirectionFromFraction(fraction);
+                        ghostNodeTarget = new RailNode(game, pos, ghostType, dir);
 
                     } else {
-                        List<TrackPiece> connection =
-                                RailTools.createConnection(game, firstNode, targetNode, signalDistance);
-
-                        if (isValidTracks(connection)) {
-                            processTracksReturnLast(game, connection);
-                        }
-
-                        firstNode = doContinueBuilding ? targetNode : null;
+                        // make it a ghost type
+                        ghostNodeTarget = new RailNode(ghostNodeTarget, ghostType);
                     }
+
+                    RailNode ghostNodeFirst = new RailNode(firstNode, ghostType);
+                    List<TrackPiece> connection =
+                            RailTools.createConnection(
+                                    game, ghostNodeFirst, ghostNodeTarget, Float.POSITIVE_INFINITY);
+
+                    checkCollisions(connection);
+
+                    ghostTracks.addAll(connection);
                 }
             }
-            case HOVER -> {
-                clearGhostTracks();
-                if (entity instanceof TrackPiece trackPiece) {
-                    float fraction = getFraction(trackPiece, origin, direction);
-
-                    if (firstNode == null) {
-                        mark = new Coloring.Marking(Color4f.BLUE, Coloring.Priority.MOUSE_HOVER);
-
-                        if (fraction == 0 || fraction == 1) {
-                            RailNode node = (fraction == 0) ? trackPiece.getStartNode() : trackPiece.getEndNode();
-
-                            // TODO mark node itself
-                            for (NetworkNode.Direction entry : node.getNetworkNode().getAllEntries()) {
-                                entry.trackPiece.setMarking(mark);
-                            }
-
-                        } else {
-                            trackPiece.setMarking(mark);
-                        }
-
-                    } else {
-                        RailNode ghostNodeTarget = getIfParallel(origin, direction, trackPiece, fraction, game);
-
-                        if (ghostNodeTarget == null) {
-                            ghostNodeTarget = getIfExisting(game, trackPiece, fraction);
-                            if (ghostNodeTarget == firstNode) return;
-                        }
-
-                        if (ghostNodeTarget == null) {
-                            Vector3f pos = trackPiece.getPositionFromFraction(fraction);
-                            Vector3f dir = trackPiece.getDirectionFromFraction(fraction);
-                            ghostNodeTarget = new RailNode(game, pos, ghostType, dir);
-
-                        } else {
-                            // make it a ghost type
-                            ghostNodeTarget = new RailNode(ghostNodeTarget, ghostType);
-                        }
-
-                        RailNode ghostNodeFirst = new RailNode(firstNode, ghostType);
-                        List<TrackPiece> connection =
-                                RailTools.createConnection(game, ghostNodeFirst, ghostNodeTarget, Float.POSITIVE_INFINITY);
-
-                        checkCollisions(connection);
-
-                        ghostTracks.addAll(connection);
-                    }
-                }
-            }
-            default -> {
-            }
+            return true;
         }
+
+        return false;
     }
 
     private boolean isValidTracks(List<TrackPiece> tracks) {
@@ -252,14 +273,14 @@ public class TrackBuilder extends AbstractMouseTool {
         boolean hasCollisions = false;
 
         for (TrackPiece track : tracks) {
-            Collection<Entity> collisions = game.state().getCollisions(track);
+            Collection<GameEntity> collisions = game.state().getCollisions(track);
             collisions.removeIf(other -> other instanceof TrackPiece && isAdjacent(track, (TrackPiece) other));
 
             if (!collisions.isEmpty()) {
                 track.setMarking(mark);
                 hasCollisions = true;
 
-                for (Entity other : collisions) {
+                for (GameEntity other : collisions) {
                     other.setMarking(mark);
                 }
             }
@@ -300,7 +321,7 @@ public class TrackBuilder extends AbstractMouseTool {
     }
 
     public void clearGhostTracks() {
-        double gameTime = game.timer().getGameTime();
+        double gameTime = game.timer().getTime();
         for (TrackPiece ghostTrack : ghostTracks) {
             ghostTrack.despawn(gameTime);
         }
@@ -308,19 +329,24 @@ public class TrackBuilder extends AbstractMouseTool {
     }
 
     @Override
-    public void draw(SGL gl) {
-        super.draw(gl);
-
-        for (TrackPiece ghostTrack : ghostTracks) {
-            ghostTrack.draw(gl);
-        }
+    public void onActivate() {
+        selector = new SFrame("Track builder");
+        game.state().addEntity(new MouseToolVisuals(selector) {
+            @Override
+            public void draw(SGL gl, TickTime renderTime) {
+                for (TrackPiece ghostTrack : ghostTracks) {
+                    ghostTrack.draw(gl, renderTime);
+                }
+            }
+        });
     }
 
     @Override
-    public void dispose() {
+    public void onDeactivate() {
         clearGhostTracks();
         deactivation.run();
         mark.invalidate();
+        selector.dispose();
     }
 
     @Override
@@ -346,9 +372,9 @@ public class TrackBuilder extends AbstractMouseTool {
         Vector3f rayPoint = new Vector3f(direction).mul(t).add(origin);
         float xyDistance = rayPoint.distance(trackPoint);
 
-        if (xyDistance < Settings.CLICK_BOX_WIDTH / 4) return null;
+        if (xyDistance < game.settings().CLICK_BOX_WIDTH / 4) return null;
 
-        Vector3f vecOut = new Vector3f(rayPoint).sub(trackPoint).normalize(Settings.CLICK_BOX_WIDTH / 2);
+        Vector3f vecOut = new Vector3f(rayPoint).sub(trackPoint).normalize(game.settings().CLICK_BOX_WIDTH / 2);
         Vector3f nodePoint = vecOut.add(trackPoint);
         Vector3f trackDirection = trackPiece.getDirectionFromFraction(fraction);
 

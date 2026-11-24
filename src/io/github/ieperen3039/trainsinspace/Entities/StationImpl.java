@@ -1,34 +1,35 @@
 package io.github.ieperen3039.trainsinspace.Entities;
 
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Pair;
+import io.github.ieperen3039.ngn.DataStructures.Generic.PairList;
+import io.github.ieperen3039.ngn.InputHandling.KeyControl;
+import io.github.ieperen3039.ngn.Rendering.Material;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.Shaders.ClickShader;
+import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
+import io.github.ieperen3039.ngn.Rendering.Shapes.GenericShapes;
+import io.github.ieperen3039.ngn.Rendering.Shapes.Shape;
+import io.github.ieperen3039.ngn.Tools.TickTime;
+import io.github.ieperen3039.ngn.UserInterface.Components.*;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Pair;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.PairList;
 import io.github.ieperen3039.trainsinspace.DataStructures.Valuta;
 import io.github.ieperen3039.trainsinspace.Freight.Cargo;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.*;
-import io.github.ieperen3039.trainsinspace.InputHandling.ClickShader;
-import io.github.ieperen3039.trainsinspace.InputHandling.KeyControl;
-import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.AbstractMouseTool.MouseAction;
 import io.github.ieperen3039.trainsinspace.Menu.InGame.Build.TrainConstructionMenu;
 import io.github.ieperen3039.trainsinspace.Menu.Main.MainMenu;
 import io.github.ieperen3039.trainsinspace.Mods.CargoType;
 import io.github.ieperen3039.trainsinspace.Network.NetworkNode;
 import io.github.ieperen3039.trainsinspace.Network.RailNode;
 import io.github.ieperen3039.trainsinspace.Network.SpecialNetworkNode;
-import io.github.ieperen3039.trainsinspace.Rendering.Material;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.MaterialShader;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.GenericShapes;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Shape;
-import io.github.ieperen3039.trainsinspace.Settings.Settings;
 import io.github.ieperen3039.trainsinspace.Tracks.StraightTrack;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackPiece;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackType;
+import org.joml.*;
 import org.joml.Math;
 import org.joml.primitives.AABBf;
-import org.joml.*;
+import org.joml.primitives.AABBfc;
+import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
 import java.io.Serial;
@@ -37,6 +38,7 @@ import java.util.function.Consumer;
 
 /**
  * A basic implementation of a station. There is likely no need for another station
+ *
  * @author Geert van Ieperen created on 27-1-2019.
  */
 public class StationImpl extends Storage implements Station {
@@ -44,8 +46,9 @@ public class StationImpl extends Storage implements Station {
     public static final float HEIGHT = 0.1f;
     public static final float HEIGHT_BELOW_STATION = 2f;
     public static final float FLYING_CUBE_SIZE = 0.4f;
-    private static int nr = 1; // TODO restore value after serialisation
+    protected final Game game;
 
+    private static int nr = 1; // TODO restore value after serialisation
     protected String stationName = "Station " + (nr++);
 
     private final float orientation;
@@ -69,6 +72,7 @@ public class StationImpl extends Storage implements Station {
 
     /**
      * create a fixed station
+     *
      * @param game              the game instance
      * @param numberOfPlatforms the number of platforms of this station
      * @param length            the length of each platform in meters
@@ -81,7 +85,7 @@ public class StationImpl extends Storage implements Station {
             Game game, int numberOfPlatforms, int length, TrackType type, Vector3fc position, float orientation,
             double spawnTime
     ) {
-        super(game, position, spawnTime);
+        super(position, spawnTime);
         assert numberOfPlatforms > 0 : "created station with " + numberOfPlatforms + " platforms";
         this.game = game;
         this.numberOfPlatforms = numberOfPlatforms;
@@ -175,7 +179,7 @@ public class StationImpl extends Storage implements Station {
     }
 
     @Override
-    public void draw(SGL gl) {
+    public void draw(SGL gl, TickTime renderTime) {
         gl.pushMatrix();
         {
             gl.translate(getPosition());
@@ -186,13 +190,13 @@ public class StationImpl extends Storage implements Station {
             {
                 gl.translate(0, 0, 2);
                 gl.scale(FLYING_CUBE_SIZE, FLYING_CUBE_SIZE, FLYING_CUBE_SIZE);
-                gl.render(GenericShapes.CUBE, this);
+                gl.render(GenericShapes.CUBE, entityId);
             }
             gl.popMatrix();
 
             MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, Color4f.GREY));
             gl.scale(length / 2, realWidth / 2, HEIGHT / 2);
-            gl.render(GenericShapes.CUBE, this);
+            gl.render(GenericShapes.CUBE, entityId);
 
             boolean isClickShader = gl.getShader() instanceof ClickShader;
             if (!isClickShader) {
@@ -201,7 +205,7 @@ public class StationImpl extends Storage implements Station {
                 gl.translate(0, 0, -1f);
                 Color4f color = coloring.getColor();
                 MaterialShader.ifPresent(gl, m -> m.setMaterial(Material.ROUGH, color));
-                gl.render(GenericShapes.CUBE, this);
+                gl.render(GenericShapes.CUBE, entityId);
             }
         }
         gl.popMatrix();
@@ -217,9 +221,8 @@ public class StationImpl extends Storage implements Station {
         return stationName;
     }
 
-    @Override
-    public void reactMouse(MouseAction action, KeyControl keys) {
-        if (action == MouseAction.PRESS_ACTIVATE) {
+    public void onMouseClick(int button, KeyControl keys) {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             game.gui().addFrame(new StationUI());
         }
     }
@@ -282,7 +285,7 @@ public class StationImpl extends Storage implements Station {
 
     public void recalculateNearbyIndustries() {
         industries.clear();
-        industries.addAll(Industry.getNearbyIndustries(game, getPosition(), Settings.STATION_RANGE));
+        industries.addAll(Industry.getNearbyIndustries(game, getPosition(), game.settings().STATION_RANGE));
         industryAcceptedCargo.clear();
 
         for (Industry industry : industries) {
@@ -298,7 +301,7 @@ public class StationImpl extends Storage implements Station {
 
     @Override
     public Valuta sell(Cargo cargo) {
-        double now = game.timer().getGameTime();
+        double now = game.timer().getTime();
         Valuta sellValue = cargo.value(now, this);
         // TODO effect of cargo on industries
         return sellValue;
@@ -320,7 +323,7 @@ public class StationImpl extends Storage implements Station {
     }
 
     @Override
-    public AABBf getHitbox() {
+    public AABBfc getHitbox() {
         return hitbox;
     }
 
@@ -350,8 +353,8 @@ public class StationImpl extends Storage implements Station {
         StationUI() {
             super(stationName, 300, 0);
             setMainPanel(SContainer.column(
-                    new SActiveTextArea(() -> "Industries: " + industries, MainMenu.TEXT_PROPERTIES),
-                    new SActiveTextArea(this::text, MainMenu.TEXT_PROPERTIES),
+                    new SActiveTextComponent(() -> "Industries: " + industries, MainMenu.TEXT_PROPERTIES),
+                    new SActiveTextComponent(this::text, MainMenu.TEXT_PROPERTIES),
                     new SButton("Build Train", this::openTrainBuilder),
                     trainList = new SScrollableList(4)
             ));
@@ -372,7 +375,6 @@ public class StationImpl extends Storage implements Station {
 
         @Override
         public void dispose() {
-            super.dispose();
             removeArrivalListener(this::updateTrailList);
         }
 
@@ -381,10 +383,10 @@ public class StationImpl extends Storage implements Station {
 
             for (Train train : trains) {
                 SContainer trainComponent = SContainer.row(
-                        new SButton(train.toString(), train::openUI, MainMenu.BUTTON_PROPERTIES_STRETCH),
-                        new SButton(">", train::start, MainMenu.SQUARE_BUTTON_PROPS)
+                        new SButton(train.toString(), MainMenu.BUTTON_PROPERTIES_STRETCH, train::openUI),
+                        new SButton(">", MainMenu.SQUARE_BUTTON_PROPS, train::start)
                 );
-                trainList.add(trainComponent, null);
+                trainList.add(trainComponent);
             }
         }
     }

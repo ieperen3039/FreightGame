@@ -1,5 +1,12 @@
 package io.github.ieperen3039.trainsinspace.Content.Scenario;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonFactoryBuilder;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.ieperen3039.ngn.AssetHandling.Resource;
+import io.github.ieperen3039.ngn.Tools.Logger;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.ModLoader;
 import io.github.ieperen3039.trainsinspace.Entities.Industry;
@@ -8,14 +15,7 @@ import io.github.ieperen3039.trainsinspace.GameMap.ImageMapGenerator;
 import io.github.ieperen3039.trainsinspace.GameMap.MapGeneratorMod;
 import io.github.ieperen3039.trainsinspace.Mods.Mod;
 import io.github.ieperen3039.trainsinspace.Mods.TypeCollection;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Resource;
 import io.github.ieperen3039.trainsinspace.Settings.Settings;
-import io.github.ieperen3039.trainsinspace.Tools.Logger;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonFactoryBuilder;
-import com.fasterxml.jackson.core.json.JsonReadFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -36,8 +36,7 @@ public class FileScenario extends Scenario {
     public final Resource.Path scenarioPath;
     private final Resource<JsonNode> scenarioDescription;
 
-    public FileScenario(ModLoader modLoader, String scenarioName) throws IOException {
-        super(modLoader);
+    public FileScenario(String scenarioName) throws IOException {
         scenarioPath = SCENARIOS_DIRECTORY.resolve(scenarioName);
 
         Resource.Path descriptionFile = scenarioPath.resolve("description.json");
@@ -45,7 +44,7 @@ public class FileScenario extends Scenario {
     }
 
     @Override
-    protected void setEntities(Game game, Settings settings) {
+    public void setEntities(Game game, Settings settings) {
         TypeCollection entityTypes = game.objectTypes();
         GameMap map = game.map();
 
@@ -69,16 +68,16 @@ public class FileScenario extends Scenario {
     }
 
     @Override
-    protected void setMap(Game game, Settings settings) {
+    public void setMap(Game game, Settings settings) {
         float edgeLength = scenarioDescription.get().get("map_edge_length").floatValue();
         Resource.Path imagePath = scenarioPath.resolve("heightmap.png");
 
         MapGeneratorMod generator = new ImageMapGenerator(imagePath, edgeLength);
-        game.map().generateNew(game, generator);
+        game.map().generateNew(generator);
     }
 
     @Override
-    protected List<Mod> getMods(ModLoader modLoader) {
+    public List<Mod> getMods(ModLoader modLoader) {
         JsonNode modNode = scenarioDescription.get().get("mods");
         assert modNode.isArray();
 

@@ -1,12 +1,12 @@
 package io.github.ieperen3039.trainsinspace.Tracks;
 
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
+import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
+import io.github.ieperen3039.ngn.Rendering.Shapes.CustomShape;
+import io.github.ieperen3039.ngn.Tools.Vectors;
 import io.github.ieperen3039.trainsinspace.DataStructures.Valuta;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.MaterialShader;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.CustomShape;
 import io.github.ieperen3039.trainsinspace.Settings.Settings;
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
 import org.joml.Math;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -70,26 +70,26 @@ public interface TrackType {
 
     float getMaxSupportLength();
 
-    static Mesh clickBoxStraight(Vector3fc displacement) {
+    static Mesh clickBoxStraight(Vector3fc displacement, Settings settings) {
         float length = displacement.length();
 
         return generateFunctional(
                 t -> new Vector3f(displacement).mul(t),
                 t -> new Vector3f(displacement).div(length),
-                Settings.CLICK_BOX_WIDTH, Settings.CLICK_BOX_HEIGHT, 2
+                settings.CLICK_BOX_WIDTH, settings.CLICK_BOX_HEIGHT, 2
         ).toFlatMesh();
     }
 
-    static Mesh clickBoxCircle(float radius, float angle, float endHeight) {
+    static Mesh clickBoxCircle(float radius, float angle, float endHeight, Settings settings) {
         float hDelta = endHeight / (angle * radius);
         float length = Math.abs(radius * angle);
 
-        int resolution = (int) Math.max(Settings.CLICK_BOX_RESOLUTION * length, Math.abs((8 / Math.PI) * angle));
+        int resolution = (int) Math.max(settings.CLICK_BOX_RESOLUTION * length, Math.abs((8 / Math.PI) * angle));
 
         return generateFunctional(
                 t -> new Vector3f(radius * Math.cos(angle * t), radius * Math.sin(angle * t), endHeight * t),
                 t -> new Vector3f(-Math.sin(angle * t), Math.cos(angle * t), hDelta).normalize(),
-                Settings.CLICK_BOX_WIDTH, Settings.CLICK_BOX_HEIGHT, resolution
+                settings.CLICK_BOX_WIDTH, settings.CLICK_BOX_HEIGHT, resolution
         ).toFlatMesh();
     }
 

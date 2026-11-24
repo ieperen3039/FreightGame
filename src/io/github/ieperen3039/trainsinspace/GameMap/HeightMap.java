@@ -1,26 +1,22 @@
 package io.github.ieperen3039.trainsinspace.GameMap;
 
-import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.AveragingQueue;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.SFiller;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.SFrame;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.SPanel;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.SProgressBar;
-import io.github.ieperen3039.trainsinspace.Rendering.IntersectionTester;
-import io.github.ieperen3039.trainsinspace.Rendering.Material;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.FlatMesh;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.BlinnPhongShader;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.MaterialShader;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.ShaderProgram;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
-import io.github.ieperen3039.trainsinspace.Tools.Logger;
-import io.github.ieperen3039.trainsinspace.Tools.Toolbox;
-import org.joml.primitives.AABBf;
-import org.joml.Math;
+import io.github.ieperen3039.ngn.AssetHandling.Asset;
+import io.github.ieperen3039.ngn.DataStructures.Generic.AveragingQueue;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTool;
+import io.github.ieperen3039.ngn.Rendering.Material;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.FlatMesh;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
+import io.github.ieperen3039.ngn.Rendering.Shaders.BlinnPhongShader;
+import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
+import io.github.ieperen3039.ngn.Rendering.Shaders.ShaderProgram;
+import io.github.ieperen3039.ngn.Tools.Logger;
+import io.github.ieperen3039.ngn.Tools.TickTime;
+import io.github.ieperen3039.ngn.Tools.Toolbox;
 import org.joml.*;
+import org.joml.Math;
+import org.joml.primitives.AABBf;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -28,6 +24,7 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 
 /**
  * a simple heightmap grid with (0, 0) mapping to (0, 0, map[0][0])
@@ -39,6 +36,7 @@ public class HeightMap extends GridMap {
 
     private final List<Asset<Mesh>> chunkMeshes = new CopyOnWriteArrayList<>();
     private float meshProgress;
+    private MapGeneratorMod mapGenerator;
 
     private float[][] heightmap;
     private float edgeLength = 0.5f;
@@ -49,6 +47,8 @@ public class HeightMap extends GridMap {
 
     private final List<ChangeListener> listeners = new ArrayList<>();
     private float maxHeight = Float.POSITIVE_INFINITY;
+
+    private Supplier<String> culledChunksPrintRoll;
 
     @Override
     Float getTileIntersect(Vector3fc origin, Vector3fc direction, int xCoord, int yCoord) {
@@ -87,24 +87,9 @@ public class HeightMap extends GridMap {
     }
 
     @Override
-    public void generateNew(Game game, MapGeneratorMod mapGenerator) {
-        SFrame frame = new SFrame("Generating map...", 500, 200, false);
-        SPanel panel = new SPanel();
-        panel.add(new SFiller(), SPanel.NORTHEAST);
-        panel.add(new SProgressBar(400, 50, () -> (mapGenerator.heightmapProgress() + meshProgress) / 2), SPanel.MIDDLE);
-        panel.add(new SFiller(), SPanel.SOUTHWEST);
-        frame.setMainPanel(panel);
-        frame.setVisible(true);
-        game.gui().addFrame(frame);
+    public void generateNew(MapGeneratorMod mapGenerator) {
+        this.mapGenerator = mapGenerator;
 
-        generate(mapGenerator);
-
-        frame.dispose();
-
-        Logger.printOnline(() -> "Culled chenks :" + culledChunks.average() + "/" + chunkMeshes.size());
-    }
-
-    private void generate(MapGeneratorMod mapGenerator) {
         synchronized (this) {
             meshProgress = 0f;
 
@@ -115,8 +100,9 @@ public class HeightMap extends GridMap {
             xSize = heightmap.length;
             ySize = heightmap[0].length;
 
+            meshProgress = 0.2f;
             List<Asset<Mesh>> worldMeshes = generateMeshes(heightmap, xSize, ySize, edgeLength);
-            meshProgress = 0.5f;
+            meshProgress = 0.8f;
 
             chunkMeshes.clear();
             chunkMeshes.addAll(worldMeshes);
@@ -130,6 +116,8 @@ public class HeightMap extends GridMap {
 
             listeners.forEach(ChangeListener::onMapChange);
             meshProgress = 1f;
+
+            Logger.printOnline(culledChunksPrintRoll = () -> "Culled chunks :" + culledChunks.average() + "/" + chunkMeshes.size());
         }
     }
 
@@ -206,16 +194,14 @@ public class HeightMap extends GridMap {
     }
 
     @Override
-    public void draw(SGL gl) {
+    public void draw(SGL gl, TickTime time) {
         ShaderProgram shader = gl.getShader();
 
-        if (shader instanceof MaterialShader) {
-            MaterialShader mat = (MaterialShader) shader;
+        if (shader instanceof MaterialShader mat) {
             mat.setMaterial(Material.ROUGH, new Color4f(0, 0.8f, 0));
         }
-        if (shader instanceof BlinnPhongShader) {
-            BlinnPhongShader bps = (BlinnPhongShader) shader;
-            bps.setHeightLines(true);
+        if (shader instanceof BlinnPhongShader bps) {
+//            TODO bps.setHeightLines(true);
         }
 
         Matrix4fc viewProjection = gl.getViewProjectionMatrix();
@@ -244,7 +230,7 @@ public class HeightMap extends GridMap {
             );
 
             if (isVisible) {
-                gl.render(mesh.get(), null);
+                gl.render(mesh.get(), 0);
             } else {
                 numChunksCulled++;
             }
@@ -252,9 +238,8 @@ public class HeightMap extends GridMap {
 
         culledChunks.add(numChunksCulled);
 
-        if (shader instanceof BlinnPhongShader) {
-            BlinnPhongShader bps = (BlinnPhongShader) shader;
-            bps.setHeightLines(false);
+        if (shader instanceof BlinnPhongShader bps) {
+//           TODO bps.setHeightLines(false);
         }
     }
 
@@ -266,6 +251,11 @@ public class HeightMap extends GridMap {
     @Override
     public Vector2f getSize() {
         return new Vector2f(xSize * edgeLength, ySize * edgeLength);
+    }
+
+    @Override
+    public boolean checkMouseClick(MouseTool tool, int xSc, int ySc, Vector3f origin, Vector3f direction) {
+        return false;
     }
 
     @Override
@@ -317,5 +307,9 @@ public class HeightMap extends GridMap {
         }
 
         chunkMeshes.addAll(generateMeshes(heightmap, xSize, ySize, edgeLength));
+    }
+
+    public float getGenerationProgress() {
+        return (mapGenerator.heightmapProgress() + meshProgress) / 2;
     }
 }

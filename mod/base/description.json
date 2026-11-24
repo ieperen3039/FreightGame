@@ -1,6 +1,6 @@
 {
   "set_name": "Base Elements",
-  "version": "v 0.0",
+  "version": "v0.0",
   "locomotives": {
     "Little Red Diesel": {
       // in units (~10 meters)

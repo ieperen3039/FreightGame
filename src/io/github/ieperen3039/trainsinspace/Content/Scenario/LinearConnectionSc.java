@@ -28,27 +28,23 @@ public class LinearConnectionSc extends Scenario {
     public static final float SIGNAL_OFFSET = 0.5f;
     public static final int INDUSTRY_DIST = 3;
 
-    public LinearConnectionSc(ModLoader modLoader) {
-        super(modLoader);
-    }
-
     @Override
-    protected List<Mod> getMods(ModLoader modLoader) {
+    public List<Mod> getMods(ModLoader modLoader) {
         return modLoader.allMods();
     }
 
     @Override
-    protected void setMap(Game game, Settings settings) {
+    public void setMap(Game game, Settings settings) {
         // random map
         MapGeneratorMod mapGenerator = new DefaultMapGenerator(0);
         mapGenerator.setSize(X_SIZE, Y_SIZE);
         mapGenerator.setProperty(DefaultMapGenerator.MAJOR_AMPLITUDE, 2);
         mapGenerator.setProperty(DefaultMapGenerator.MINOR_AMPLITUDE, 0);
-        game.map().generateNew(game, mapGenerator);
+        game.map().generateNew(mapGenerator);
     }
 
     @Override
-    protected void setEntities(Game game, Settings settings) {
+    public void setEntities(Game game, Settings settings) {
         TypeCollection allTypes = game.objectTypes();
         TrackType type = allTypes.trackTypes.get(0);
 
@@ -60,6 +56,8 @@ public class LinearConnectionSc extends Scenario {
 
         {
             Industry.Properties properties = allTypes.getIndustryByName("diamond mine");
+            assert properties != null;
+
             Vector3f pos = getGroundPos(game, center, aSide).add(INDUSTRY_DIST, INDUSTRY_DIST, 0);
             game.state().addEntity(new Industry(game, pos, 0, properties));
         }

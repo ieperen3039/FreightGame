@@ -1,5 +1,7 @@
 package io.github.ieperen3039.trainsinspace.Tools;
 
+import io.github.ieperen3039.ngn.Tools.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -11,8 +13,7 @@ import java.nio.file.Paths;
  * @author Geert van Ieperen. Created on 13-9-2018.
  */
 public enum Directory {
-    hardMods("mods_hard"),
-    softMods("mods_soft"),
+    mods("mods"),
     screenshots("Screenshots"),
     savedGames("Saved maps");
 

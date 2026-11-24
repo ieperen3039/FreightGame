@@ -1,9 +1,10 @@
 package io.github.ieperen3039.trainsinspace.Particles;
 
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.Tools.Toolbox;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
+
+import io.github.ieperen3039.ngn.Tools.Toolbox;
 import org.joml.Vector3fc;
 import org.lwjgl.system.MemoryUtil;
 

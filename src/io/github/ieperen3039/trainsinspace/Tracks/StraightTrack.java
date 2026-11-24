@@ -1,16 +1,15 @@
 package io.github.ieperen3039.trainsinspace.Tracks;
 
+import io.github.ieperen3039.ngn.AssetHandling.Asset;
+import io.github.ieperen3039.ngn.AssetHandling.GeneratorAsset;
+import io.github.ieperen3039.ngn.DataStructures.Generic.PairList;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
+import io.github.ieperen3039.ngn.Rendering.Shapes.GenericShapes;
+import io.github.ieperen3039.ngn.Rendering.Shapes.Shape;
+import io.github.ieperen3039.ngn.Tools.Vectors;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.PairList;
 import io.github.ieperen3039.trainsinspace.Network.RailNode;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.GenericShapes;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Shape;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
-import io.github.ieperen3039.trainsinspace.AssetHandling.GeneratorAsset;
-import io.github.ieperen3039.trainsinspace.Settings.Settings;
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
 import org.joml.*;
 
 import java.lang.Math;
@@ -80,11 +79,11 @@ public class StraightTrack extends TrackPiece {
         if (length > CircleTrack.MAX_RENDER_SIZE) {
             Vector3f newDisplacement = new Vector3f(direction).mul(10);
             this.mesh = new GeneratorAsset<>(() -> getType().generateStraight(newDisplacement), Mesh::dispose);
-            this.clickBox = new GeneratorAsset<>(() -> TrackType.clickBoxStraight(newDisplacement), Mesh::dispose);
+            this.clickBox = new GeneratorAsset<>(() -> TrackType.clickBoxStraight(newDisplacement, game.settings()), Mesh::dispose);
 
         } else {
             this.mesh = new GeneratorAsset<>(() -> getType().generateStraight(displacement), Mesh::dispose);
-            this.clickBox = new GeneratorAsset<>(() -> TrackType.clickBoxStraight(displacement), Mesh::dispose);
+            this.clickBox = new GeneratorAsset<>(() -> TrackType.clickBoxStraight(displacement, game.settings()), Mesh::dispose);
         }
 
         collisionShapes = new PairList<>();
@@ -94,7 +93,7 @@ public class StraightTrack extends TrackPiece {
         Matrix4f transformation = new Matrix4f()
                 .translate(startNodePosition)
                 .rotate(rotation)
-                .scale(length, Settings.TRACK_WIDTH, Settings.TRACK_HEIGHT_SPACE)
+                .scale(length, game.settings().TRACK_WIDTH, game.settings().TRACK_HEIGHT_SPACE)
                 .scale(0.5f) // as we transform a 2x2x2 cube
                 .translate(1, 0, 1);
         collisionShapes.add(shape, transformation);
@@ -137,7 +136,7 @@ public class StraightTrack extends TrackPiece {
         gl.pushMatrix();
         {
             gl.translate(startNode.getPosition());
-            gl.render(renderClickBox ? clickBox.get() : mesh.get(), this);
+            gl.render(renderClickBox ? clickBox.get() : mesh.get(), entityId);
         }
         gl.popMatrix();
     }
@@ -187,13 +186,6 @@ public class StraightTrack extends TrackPiece {
         return new Vector3f(direction)
                 .mul(fraction * length)
                 .add(startNode.getPosition());
-    }
-
-    @Override
-    public void restoreFields(Game game) {
-        super.restoreFields(game);
-        startNode.restore(game);
-        endNode.restore(game);
     }
 
     @Override

@@ -1,8 +1,9 @@
 package io.github.ieperen3039.trainsinspace.Particles;
 
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.GameAspect;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -36,8 +37,8 @@ public class GameParticles implements GameAspect, Serializable {
         }
     }
 
-    public void draw(SGL gl) {
-        double now = game.timer().getRenderTime();
+    public void draw(SGL gl, TickTime renderTime) {
+        double now = renderTime.getTime();
 
         particles.removeIf(cloud -> cloud.disposeIfFaded(now));
 
@@ -52,7 +53,7 @@ public class GameParticles implements GameAspect, Serializable {
         }
 
         for (ParticleCloud cloud : particles) {
-            gl.render(cloud, null);
+            gl.render(cloud, 0);
         }
     }
 

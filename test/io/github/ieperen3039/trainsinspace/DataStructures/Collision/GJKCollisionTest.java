@@ -1,7 +1,7 @@
 package io.github.ieperen3039.trainsinspace.DataStructures.Collision;
 
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.GenericShapes;
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
+import io.github.ieperen3039.ngn.Rendering.Shapes.GenericShapes;
+import io.github.ieperen3039.ngn.Tools.Vectors;
 import org.joml.Matrix4f;
 import org.junit.Assert;
 import org.junit.Test;

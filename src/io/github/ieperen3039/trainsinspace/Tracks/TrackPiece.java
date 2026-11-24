@@ -1,22 +1,22 @@
 package io.github.ieperen3039.trainsinspace.Tracks;
 
+import io.github.ieperen3039.ngn.AssetHandling.Asset;
+import io.github.ieperen3039.ngn.AssetHandling.GeneratorAsset;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.Shaders.ClickShader;
+import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
+import io.github.ieperen3039.ngn.Rendering.Shaders.ShaderProgram;
+import io.github.ieperen3039.ngn.Rendering.Shapes.GenericShapes;
+import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
-import io.github.ieperen3039.trainsinspace.InputHandling.ClickShader;
-import io.github.ieperen3039.trainsinspace.InputHandling.KeyControl;
-import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.AbstractMouseTool;
 import io.github.ieperen3039.trainsinspace.Network.NetworkNode;
 import io.github.ieperen3039.trainsinspace.Network.RailNode;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.MaterialShader;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.ShaderProgram;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.GenericShapes;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
-import io.github.ieperen3039.trainsinspace.AssetHandling.GeneratorAsset;
-import org.joml.primitives.AABBf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.joml.primitives.AABBf;
+import org.joml.primitives.AABBfc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,10 +28,10 @@ import static org.lwjgl.opengl.GL11.glDepthMask;
  */
 public abstract class TrackPiece extends TrackElement {
     private static final Color4f OCCUPIED_COLOR = Color4f.GREY;
+    protected final boolean isModifiable;
 
     private final Asset<AABBf> hitbox;
-
-    protected final boolean isModifiable;
+    private final Game game;
     private boolean doRenderClickBox = false;
     private boolean isOccupied = false;
 
@@ -39,7 +39,8 @@ public abstract class TrackPiece extends TrackElement {
     private List<TrackPiece> entangledTracks = new ArrayList<>();
 
     public TrackPiece(Game game, TrackType type, boolean modifiable) {
-        super(game, type);
+        super(type);
+        this.game = game;
         this.isModifiable = modifiable;
 
         hitbox = new GeneratorAsset<>(this::computeHitbox);
@@ -62,14 +63,14 @@ public abstract class TrackPiece extends TrackElement {
 
     @Override
     public void update() {
-        double gameTime = game.timer().getGameTime();
+        double gameTime = game.timer().getTime();
         this.doRenderClickBox = game.keyControl().isAltPressed();
 
         entangledTracks.removeIf(t -> t.isDespawnedAt(gameTime));
     }
 
     @Override
-    public void draw(SGL gl) {
+    public void draw(SGL gl, TickTime renderTime) {
         ShaderProgram shader = gl.getShader();
 
         if (shader instanceof MaterialShader) {
@@ -87,7 +88,7 @@ public abstract class TrackPiece extends TrackElement {
                     Color4f reddish = new Color4f(0.5f, 0, 0, 0.2f);
                     MaterialShader.ifPresent(gl, mat -> mat.setMaterial(reddish, Color4f.BLACK, 1));
                     gl.multiply(m);
-                    gl.render(GenericShapes.CUBE, this);
+                    gl.render(GenericShapes.CUBE, entityId);
                     glDepthMask(true);
                 }
                 gl.popMatrix();
@@ -98,13 +99,8 @@ public abstract class TrackPiece extends TrackElement {
     protected abstract void draw(SGL gl, boolean clickBox);
 
     @Override
-    public AABBf getHitbox() {
+    public AABBfc getHitbox() {
         return hitbox.get();
-    }
-
-    @Override
-    public void reactMouse(AbstractMouseTool.MouseAction action, KeyControl keys) {
-
     }
 
     public abstract float getFractionOfClosest(Vector3fc origin, Vector3fc direction);

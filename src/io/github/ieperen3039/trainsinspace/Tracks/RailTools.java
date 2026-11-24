@@ -1,11 +1,11 @@
 package io.github.ieperen3039.trainsinspace.Tracks;
 
+import io.github.ieperen3039.ngn.Tools.Vectors;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Network.NetworkNode;
 import io.github.ieperen3039.trainsinspace.Network.RailNode;
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
-import org.joml.Math;
 import org.joml.*;
+import org.joml.Math;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -285,7 +285,9 @@ public final class RailTools {
                     break;
                 }
 
-                TrackPiece trackConnection = new CircleTrack(game, node.getType(), node, direction, localEndPos);
+                TrackPiece trackConnection = new CircleTrack(game, node.getType(), node, direction, localEndPos,
+                        game.settings()
+                );
                 node = trackConnection.getEndNode();
 
                 if (sectionsPerSignal > 0 && i % sectionsPerSignal == offsetIndex) {
@@ -313,9 +315,9 @@ public final class RailTools {
         }
 
         if (endNode != null) {
-            tracks.add(new CircleTrack(game, node.getType(), node, direction, endNode));
+            tracks.add(new CircleTrack(game, node.getType(), node, direction, endNode, game.settings()));
         } else {
-            tracks.add(new CircleTrack(game, node.getType(), node, direction, endPosition));
+            tracks.add(new CircleTrack(game, node.getType(), node, direction, endPosition, game.settings()));
         }
 
         return tracks;
@@ -397,8 +399,8 @@ public final class RailTools {
             Vector3f aDirNorm = new Vector3f(aStartDir).normalize();
             Vector3f newDirNorm = new Vector3f(direction).normalize();
 
-            aConnection = new CircleTrack(game, type, aNode, aDirNorm, newNode);
-            bConnection = new CircleTrack(game, type, newNode, newDirNorm, bNode);
+            aConnection = new CircleTrack(game, type, aNode, aDirNorm, newNode, game.settings());
+            bConnection = new CircleTrack(game, type, newNode, newDirNorm, bNode, game.settings());
         }
 
         // DONT RailNode.addConnection(trackConnection);

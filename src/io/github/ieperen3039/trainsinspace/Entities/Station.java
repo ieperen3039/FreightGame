@@ -1,12 +1,12 @@
 package io.github.ieperen3039.trainsinspace.Entities;
 
-import io.github.ieperen3039.trainsinspace.Core.GameObject;
+import io.github.ieperen3039.ngn.Tools.Toolbox;
 import io.github.ieperen3039.trainsinspace.DataStructures.Collision.ColliderEntity;
 import io.github.ieperen3039.trainsinspace.DataStructures.Valuta;
 import io.github.ieperen3039.trainsinspace.Freight.Cargo;
 import io.github.ieperen3039.trainsinspace.Mods.CargoType;
 import io.github.ieperen3039.trainsinspace.Network.NetworkPosition;
-import io.github.ieperen3039.trainsinspace.Tools.Toolbox;
+
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -21,7 +21,7 @@ import static org.joml.Math.sin;
  * A station
  * @author Geert van Ieperen created on 29-4-2020.
  */
-public interface Station extends GameObject, ColliderEntity, NetworkPosition {
+public interface Station extends ColliderEntity, NetworkPosition {
     /**
      * @return the middle of this station
      */

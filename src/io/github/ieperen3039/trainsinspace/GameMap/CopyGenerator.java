@@ -1,6 +1,6 @@
 package io.github.ieperen3039.trainsinspace.GameMap;
 
-import io.github.ieperen3039.trainsinspace.Core.Version;
+import io.github.ieperen3039.ngn.Version;
 import org.joml.Vector2ic;
 
 import java.util.Collection;

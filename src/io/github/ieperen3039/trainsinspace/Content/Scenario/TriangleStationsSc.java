@@ -21,18 +21,14 @@ import java.util.List;
 public class TriangleStationsSc extends Scenario {
     private static final float TAU = (float) Math.PI * 2;
 
-    public TriangleStationsSc(ModLoader modLoader) {
-        super(modLoader);
-    }
-
     @Override
-    protected List<Mod> getMods(ModLoader modLoader) {
+    public List<Mod> getMods(ModLoader modLoader) {
         return modLoader.allMods();
     }
 
     @Override
-    protected void setEntities(Game game, Settings settings) {
-        double now = game.timer().getGameTime();
+    public void setEntities(Game game, Settings settings) {
+        double now = game.timer().getTime();
         GameState gameState = game.state();
 
         TrackType type = game.objectTypes().trackTypes.get(0);

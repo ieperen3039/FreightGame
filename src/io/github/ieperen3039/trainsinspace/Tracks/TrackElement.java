@@ -1,39 +1,28 @@
 package io.github.ieperen3039.trainsinspace.Tracks;
 
-import io.github.ieperen3039.trainsinspace.Core.AbstractGameObject;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
-import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.DataStructures.Collision.ColliderEntity;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.trainsinspace.Entities.GameEntity;
 
 /**
  * Any entity that is connected to a specific type of track. This excludes entities that accept arbitrary track types.
+ *
  * @author Geert van Ieperen created on 26-4-2021.
  */
-public abstract class TrackElement extends AbstractGameObject implements ColliderEntity {
+public abstract class TrackElement extends GameEntity implements ColliderEntity {
     protected final String typeName;
     protected final Coloring coloring = new Coloring(Color4f.WHITE);
     protected transient TrackType type;
-    protected double spawnTime = Double.NEGATIVE_INFINITY;
-    protected double despawnTime = Double.POSITIVE_INFINITY;
 
-    public TrackElement(
-            Game game, TrackType type
-    ) {
-        super(game);
+    public TrackElement(TrackType type) {
         this.type = type;
         this.typeName = type.toString();
     }
 
     @Override
-    public void restoreFields(Game game) {
-        type = game.objectTypes().getTrackByName(typeName);
-        assert type != null;
-    }
-
-    @Override
-    public UpdateFrequency getUpdateFrequency() {
-        return UpdateFrequency.NEVER;
+    public GameEntity.UpdateFrequency getUpdateFrequency() {
+        return GameEntity.UpdateFrequency.NEVER;
     }
 
     public TrackType getType() {
@@ -42,20 +31,5 @@ public abstract class TrackElement extends AbstractGameObject implements Collide
 
     public void setMarking(Coloring.Marking marking) {
         this.coloring.addMark(marking);
-    }
-
-    @Override
-    public void despawn(double gameTime) {
-        despawnTime = gameTime;
-    }
-
-    @Override
-    public double getSpawnTime() {
-        return spawnTime;
-    }
-
-    @Override
-    public double getDespawnTime() {
-        return despawnTime;
     }
 }

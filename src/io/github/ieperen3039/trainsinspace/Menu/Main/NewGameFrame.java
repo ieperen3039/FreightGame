@@ -1,15 +1,17 @@
 package io.github.ieperen3039.trainsinspace.Menu.Main;
 
 
-import io.github.ieperen3039.trainsinspace.Camera.Camera;
+import io.github.ieperen3039.ngn.Camera.Camera;
+import io.github.ieperen3039.ngn.DataStructures.Generic.PairList;
+import io.github.ieperen3039.ngn.Tools.Logger;
+import io.github.ieperen3039.ngn.UserInterface.Components.*;
+import io.github.ieperen3039.ngn.UserInterface.LayoutManagers.ListLayoutManager;
+import io.github.ieperen3039.trainsinspace.Camera.TycoonCamera;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.ModLoader;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.PairList;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.*;
 import io.github.ieperen3039.trainsinspace.GameMap.DefaultMapGenerator;
 import io.github.ieperen3039.trainsinspace.GameMap.MapGeneratorMod;
 import io.github.ieperen3039.trainsinspace.Mods.Mod;
-import io.github.ieperen3039.trainsinspace.Tools.Logger;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
@@ -29,7 +31,7 @@ public class NewGameFrame extends SFrame {
     private final PairList<SToggleButton, Mod> toggleList;
     private final ModLoader modLoader;
     private final Game game;
-    private final STextArea notice;
+    private final STextComponent notice;
 
     public NewGameFrame(final Game game, final ModLoader loader) {
         super("New Game Frame");
@@ -39,28 +41,22 @@ public class NewGameFrame extends SFrame {
         int nOfMods = modList.size();
         toggleList = new PairList<>(nOfMods);
 
-        final int ROWS = 10;
-        final int COLS = 3;
-        Vector2i mpos = new Vector2i(1, 0);
-
-        SPanel mainPanel = new SPanel(COLS, ROWS);
-        mainPanel.add(new SFiller(10, 10), new Vector2i(0, 0));
-        mainPanel.add(new SFiller(10, 10), new Vector2i(COLS - 1, ROWS - 1));
+        SPanel mainPanel = new SPanel(new ListLayoutManager(false));
 
         // message
-        notice = new STextArea("Select which mods to load", MainMenu.TEXT_PROPERTIES);
-        mainPanel.add(notice, mpos.add(0, 1));
+        notice = new STextComponent("Select which mods to load", MainMenu.TEXT_PROPERTIES);
+        mainPanel.add(notice);
 
         // size selection
-        SPanel sizeSelection = new SPanel(4, 1, false, false);
-        sizeSelection.add(new STextArea("Size", MainMenu.TEXT_PROPERTIES), new Vector2i(0, 0));
+        SPanel sizeSelection = new SPanel(new ListLayoutManager(false), false);
+        sizeSelection.add(new STextComponent("Size", MainMenu.TEXT_PROPERTIES));
         this.game = game;
         xSizeSelector = new SDropDown(game.gui(), 1, "100", "200", "500", "1000");
-        sizeSelection.add(xSizeSelector, new Vector2i(1, 0));
-        sizeSelection.add(new STextArea("X", MainMenu.TEXT_PROPERTIES), new Vector2i(2, 0));
+        sizeSelection.add(xSizeSelector);
+        sizeSelection.add(new STextComponent("X", MainMenu.TEXT_PROPERTIES));
         ySizeSelector = new SDropDown(game.gui(), 1, "100", "200", "500", "1000");
-        sizeSelection.add(ySizeSelector, new Vector2i(3, 0));
-        mainPanel.add(sizeSelection, mpos.add(0, 1));
+        sizeSelection.add(ySizeSelector);
+        mainPanel.add(sizeSelection);
 
         // add mod buttons
         SContainer modPanel = new SPanel(1, nOfMods);
@@ -73,38 +69,21 @@ public class NewGameFrame extends SFrame {
                 SToggleButton button = new SToggleButton(mod.getModName(), MainMenu.BUTTON_PROPERTIES_STRETCH);
                 button.setActive(true);
                 toggleList.add(button, mod);
-                modPanel.add(button, pos.add(0, 1));
+                modPanel.add(button);
             }
         }
-        mainPanel.add(modPanel, mpos.add(0, 1));
+        mainPanel.add(modPanel);
 
         // generator selection
         mapGeneratorList.add(new DefaultMapGenerator(0));
-        mapGeneratorSelector = new SDropDown(game.gui(), MainMenu.BUTTON_PROPERTIES_STATIC, 0, mapGeneratorList, true, Mod::getModName);
-        mainPanel.add(mapGeneratorSelector, mpos.add(0, 1));
+        mapGeneratorSelector = new SDropDown(game.gui(), MainMenu.BUTTON_PROPERTIES_STATIC, 0, mapGeneratorList, Mod::getModName);
+        mainPanel.add(mapGeneratorSelector);
 
         SButton propertiesComponent = new SButton("Set Generator Properties", () -> {
             // collect map generator properties
             MapGeneratorMod generator = mapGeneratorList.get(mapGeneratorSelector.getSelectedIndex());
             Collection<MapGeneratorMod.Property> properties = generator.getProperties();
-            SPanel propPanel = new SPanel(2, properties.size());
-            Vector2i propertyButtonPos = new Vector2i(0, -1);
-
-            for (MapGeneratorMod.Property property : properties) {
-                SSlider slider = new SSlider(property.minimum, property.maximum, property.current, MainMenu.BUTTON_PROPERTIES_STRETCH);
-                slider.addChangeListener(newValue -> property.current = newValue);
-
-                int precision = 3 - (int) (Math.log10(property.maximum - property.minimum));
-                SActiveTextArea value = new SActiveTextArea(
-                        () -> String.format("%6.0" + precision + "f", property.current),
-                        MainMenu.TEXT_PROPERTIES
-                );
-
-                propPanel.add(slider, propertyButtonPos.add(0, 1));
-                propPanel.add(value, propertyButtonPos.add(1, 0));
-
-                propertyButtonPos.add(-1, 0);
-            }
+            SPanel propPanel = createPropertiesPanel(properties);
             SFrame frame = new SFrame(generator.getModName() + " Properties");
             frame.setMainPanel(SContainer.column(
                     propPanel,
@@ -115,18 +94,37 @@ public class NewGameFrame extends SFrame {
             game.gui().addFrame(frame, this.getX(), this.getY());
         });
 
-        mainPanel.add(propertiesComponent, mpos.add(0, 1));
+        mainPanel.add(propertiesComponent);
 
         // generate button
-        mainPanel.add(new SFiller(0, 50), mpos.add(0, 1));
+        mainPanel.add(new SFiller(0, 50));
         SButton generate = new SButton("Generate", MainMenu.BUTTON_PROPERTIES_STATIC);
-        mainPanel.add(generate, mpos.add(0, 1));
+        mainPanel.add(generate);
 
         setMainPanel(mainPanel);
         pack();
 
         // start game action
         generate.addLeftClickListener(this::generate);
+    }
+
+    private static SPanel createPropertiesPanel(Collection<MapGeneratorMod.Property> properties) {
+        SPanel propPanel = new SPanel(2, properties.size());
+
+        for (MapGeneratorMod.Property property : properties) {
+            SSlider slider = new SSlider(property.minimum, property.maximum, property.current, MainMenu.BUTTON_PROPERTIES_STRETCH);
+            slider.addChangeListener(newValue -> property.current = newValue);
+
+            int precision = 3 - (int) (Math.log10(property.maximum - property.minimum));
+            SActiveTextComponent value = new SActiveTextComponent(
+                    () -> String.format("%6.0" + precision + "f", property.current),
+                    MainMenu.TEXT_PROPERTIES
+            );
+
+            propPanel.add(slider);
+            propPanel.add(value);
+        }
+        return propPanel;
     }
 
     public void generate() {
@@ -158,14 +156,19 @@ public class NewGameFrame extends SFrame {
             modLoader.initMods(targets);
 
             if (targets.isEmpty()) throw new ModLoader.IllegalNumberOfModulesException("No mods selected");
-            game.map().generateNew(game, generatorMod);
+            game.map().generateNew(generatorMod);
 
             // set camera to middle of map
             Vector2f size = game.map().getSize();
             Vector3f cameraFocus = new Vector3f(size.x / 2, size.y / 2, 0);
             Camera cam = game.camera();
-            Vector3f cameraEye = new Vector3f(cameraFocus).add(-20, -20, 20);
-            cam.set(cameraFocus, cameraEye);
+
+            if (cam instanceof TycoonCamera tCam) {
+                Vector3f cameraEye = new Vector3f(cameraFocus).add(-20, -20, 20);
+                tCam.set(cameraFocus, cameraEye);
+            } else {
+                cam.set(cameraFocus);
+            }
 
             // start
             modLoader.startGame();

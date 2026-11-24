@@ -1,9 +1,8 @@
 package io.github.ieperen3039.trainsinspace.GameMap;
 
-import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTool;
-import io.github.ieperen3039.trainsinspace.Tools.Logger;
-import org.joml.Math;
+import io.github.ieperen3039.ngn.Tools.Logger;
 import org.joml.*;
+import org.joml.Math;
 
 /**
  * An object that represents the world where all other entities stand on. This includes both the graphical and the
@@ -13,16 +12,6 @@ import org.joml.*;
  */
 public abstract class GridMap implements GameMap {
     public static final float EPSILON = 1f / (1 << 16);
-
-    @Override
-    public boolean checkMouseClick(MouseTool tool, int xSc, int ySc, Vector3f origin, Vector3f direction) {
-        Float t = gridMapIntersection(origin, direction);
-        if (t == null) return false;
-
-        Vector3f position = new Vector3f(direction).mul(t).add(origin);
-        tool.apply(position, origin, direction);
-        return true;
-    }
 
     @Override
     public Float gridMapIntersection(Vector3fc origin, Vector3fc direction) {

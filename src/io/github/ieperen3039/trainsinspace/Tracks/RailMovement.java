@@ -1,18 +1,17 @@
 package io.github.ieperen3039.trainsinspace.Tracks;
 
-import io.github.ieperen3039.trainsinspace.Core.AbstractGameObject;
+import io.github.ieperen3039.ngn.DataStructures.Generic.AveragingQueue;
+import io.github.ieperen3039.ngn.DataStructures.Generic.BlockingTimedArrayQueue;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Pair;
+import io.github.ieperen3039.ngn.DataStructures.Interpolation.FloatInterpolator;
+import io.github.ieperen3039.ngn.DataStructures.Interpolation.LongInterpolator;
+import io.github.ieperen3039.ngn.Tools.Logger;
+import io.github.ieperen3039.ngn.Tools.Toolbox;
+import io.github.ieperen3039.ngn.Tools.Vectors;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.AveragingQueue;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.BlockingTimedArrayQueue;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Pair;
-import io.github.ieperen3039.trainsinspace.DataStructures.Interpolation.FloatInterpolator;
-import io.github.ieperen3039.trainsinspace.DataStructures.Interpolation.LongInterpolator;
 import io.github.ieperen3039.trainsinspace.Entities.Train;
 import io.github.ieperen3039.trainsinspace.Network.*;
-import io.github.ieperen3039.trainsinspace.Tools.Logger;
 import io.github.ieperen3039.trainsinspace.Tools.NetworkPathFinder;
-import io.github.ieperen3039.trainsinspace.Tools.Toolbox;
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
 import org.joml.Math;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -28,7 +27,7 @@ import static io.github.ieperen3039.trainsinspace.Network.Signal.Direction.IN_DI
  * A
  * @author Geert van Ieperen created on 6-5-2020.
  */
-public class RailMovement extends AbstractGameObject implements Schedule.UpdateListener {
+public class RailMovement implements Schedule.UpdateListener {
     private static final float DELTA_TIME = 1f / 128f;
     private static final int METERS_TO_MILLIS = 1000;
     private static final float SPEED_RESOLUTION = 1 / (DELTA_TIME * METERS_TO_MILLIS);
@@ -48,6 +47,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
     private final List<SpeedTarget> activeSpeedTargets = new ArrayList<>();
 
     private long currentTotalMillis; // (millis = 1000 * the real distance) : data type is adequate for almost a lightyear distance
+    private final Game game;
     private TrackPiece currentTrack; // track the train is on
     private boolean isPositiveDirection; // whether the train faces in positive direction on currentTrack
     private long trackEndDistanceMillis;
@@ -89,7 +89,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
     public RailMovement(
             Game game, Train controller, double spawnTime, TrackPiece startPiece, boolean isPositiveDirection
     ) {
-        super(game);
+        this.game = game;
         this.currentTrack = startPiece;
         this.controller = controller;
 
@@ -134,7 +134,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
     }
 
     public void update() {
-        double gametime = game.timer().getGameTime();
+        double gametime = game.timer().getTime();
         update(gametime);
     }
 
@@ -271,7 +271,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
             accelerationAverage.add(accelerationFraction);
 
             // track our tail was on the previous tick (+1 to include equal)
-            TrackPiece prePiece = tracks.getPrevious(currentTotalMillis - trainLengthMillis + 1).left;
+            TrackPiece prePiece = tracks.getPrevious(currentTotalMillis - trainLengthMillis + 1).left();
 
             // update position
             // s = vt + at^2 // movement in meters
@@ -281,7 +281,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
 
 
             // track our tail is now. when leaving a track, free it
-            TrackPiece postPiece = tracks.getPrevious(currentTotalMillis - trainLengthMillis + 1).left;
+            TrackPiece postPiece = tracks.getPrevious(currentTotalMillis - trainLengthMillis + 1).left();
             if (prePiece != postPiece) {
                 prePiece.setOccupied(false);
             }
@@ -395,8 +395,8 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
 
         Pair<TrackPiece, Boolean> previous = tracks.getPrevious(startDistanceMillis);
         while (currentTotalMillis > trackEndDistanceMillis) {
-            TrackPiece track = previous.left;
-            commitTrack(track, !previous.right);
+            TrackPiece track = previous.left();
+            commitTrack(track, !previous.right());
 
             long trackStart = trackEndDistanceMillis - (long) (track.getLength() * METERS_TO_MILLIS);
             futureSpeedTargets.add(new SpeedTarget(trackStart, trackEndDistanceMillis, track.getMaximumSpeed()));
@@ -624,7 +624,7 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         double totalMillis = totalMillimeters.getInterpolated(time) + displacement * METERS_TO_MILLIS;
         Pair<TrackPiece, Boolean> previous = tracks.getPrevious(totalMillis);
         if (previous == null) previous = tracks.getNext(totalMillis);
-        TrackPiece track = previous.left;
+        TrackPiece track = previous.left();
         float localDistance = totalToLocalDistance.getInterpolated(totalMillis);
 
         float trackLength = track.getLength();
@@ -650,12 +650,12 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
         float localDistance = totalToLocalDistance.getInterpolated(distanceMillis);
         Pair<TrackPiece, Boolean> activeTrack = tracks.getPrevious(distanceMillis);
         if (activeTrack == null) activeTrack = tracks.getNext(distanceMillis);
-        TrackPiece track = activeTrack.left;
+        TrackPiece track = activeTrack.left();
 
         float fractionTravelled = localDistance / track.getLength();
         Vector3f directionOfTrack = track.getDirectionFromFraction(fractionTravelled);
 
-        Boolean isPositive = activeTrack.right;
+        Boolean isPositive = activeTrack.right();
         if (!isPositive) directionOfTrack.negate();
         directionOfTrack.normalize();
 
@@ -693,11 +693,6 @@ public class RailMovement extends AbstractGameObject implements Schedule.UpdateL
             trackPiece.setOccupied(false);
         }
         reservedPath.clear();
-    }
-
-    @Override
-    public void restoreFields(Game game) {
-        // this object doesn't own any other GameObject, and hence doesnt need to restore anything
     }
 
     private class SpeedTarget implements Comparable<SpeedTarget>, Serializable {

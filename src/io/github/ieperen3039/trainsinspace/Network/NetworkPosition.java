@@ -1,6 +1,6 @@
 package io.github.ieperen3039.trainsinspace.Network;
 
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Pair;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Pair;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackPiece;
 
 import java.util.List;
@@ -29,8 +29,8 @@ public interface NetworkPosition {
         List<Pair<NetworkNode, Boolean>> targetNodes = getNodes();
 
         for (Pair<NetworkNode, Boolean> target : targetNodes) {
-            if (target.left.equals(node)) {
-                if (target.left.isInDirectionOf(arrivalTrack) == target.right) {
+            if (target.left().equals(node)) {
+                if (target.left().isInDirectionOf(arrivalTrack) == target.right()) {
                     return true;
                 }
             }

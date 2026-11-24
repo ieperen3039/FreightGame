@@ -1,6 +1,6 @@
 package io.github.ieperen3039.trainsinspace.Tools;
 
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Pair;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Pair;
 import io.github.ieperen3039.trainsinspace.Network.NetworkNode;
 import io.github.ieperen3039.trainsinspace.Network.NetworkPosition;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackPiece;
@@ -26,7 +26,7 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
         List<Pair<NetworkNode, Boolean>> nodes = target.getNodes();
         this.targets = new HashSet<>(nodes.size());
         for (Pair<NetworkNode, Boolean> node : nodes) {
-            targets.add(node.left);
+            targets.add(node.left());
         }
     }
 
@@ -47,7 +47,7 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
         List<Pair<NetworkNode, Boolean>> nodes = target.getNodes();
         this.targets = new HashSet<>(nodes.size());
         for (Pair<NetworkNode, Boolean> node : nodes) {
-            targets.add(node.left);
+            targets.add(node.left());
         }
 
         this.startNode = networkNode;

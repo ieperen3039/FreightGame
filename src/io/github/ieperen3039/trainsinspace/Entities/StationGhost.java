@@ -1,29 +1,31 @@
 package io.github.ieperen3039.trainsinspace.Entities;
 
-import io.github.ieperen3039.trainsinspace.Core.AbstractGameObject;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Pair;
+import io.github.ieperen3039.ngn.DataStructures.Generic.PairList;
+import io.github.ieperen3039.ngn.Rendering.Material;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.Shaders.ClickShader;
+import io.github.ieperen3039.ngn.Rendering.Shaders.MaterialShader;
+import io.github.ieperen3039.ngn.Rendering.Shaders.ShaderProgram;
+import io.github.ieperen3039.ngn.Rendering.Shapes.GenericShapes;
+import io.github.ieperen3039.ngn.Rendering.Shapes.Shape;
+import io.github.ieperen3039.ngn.Tools.TickTime;
+import io.github.ieperen3039.ngn.Tools.Vectors;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Pair;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.PairList;
 import io.github.ieperen3039.trainsinspace.DataStructures.Valuta;
 import io.github.ieperen3039.trainsinspace.Freight.Cargo;
-import io.github.ieperen3039.trainsinspace.InputHandling.ClickShader;
-import io.github.ieperen3039.trainsinspace.InputHandling.KeyControl;
-import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.AbstractMouseTool.MouseAction;
 import io.github.ieperen3039.trainsinspace.Mods.CargoType;
 import io.github.ieperen3039.trainsinspace.Network.NetworkNode;
-import io.github.ieperen3039.trainsinspace.Rendering.Material;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.MaterialShader;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.ShaderProgram;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.GenericShapes;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Shape;
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackPiece;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackType;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.joml.primitives.AABBf;
-import org.joml.*;
+import org.joml.primitives.AABBfc;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -35,17 +37,14 @@ import static io.github.ieperen3039.trainsinspace.Entities.StationImpl.HEIGHT_BE
 import static io.github.ieperen3039.trainsinspace.Entities.StationImpl.PLATFORM_SIZE;
 
 /**
- * A basic implementation of a station. There is likely no need for another station
  * @author Geert van Ieperen created on 27-1-2019.
  */
-public class StationGhost extends AbstractGameObject implements Station {
+public class StationGhost extends GameEntity implements Station {
     public static final float HEIGHT = 0.1f;
     public static final Color4f STATION_COLOR = new Color4f(1.0f, 1.0f, 1.0f, 0.5f);
 
     private Vector3f position = new Vector3f();
     private float orientation = 0;
-
-    protected double despawnTime = Double.POSITIVE_INFINITY;
 
     private int numberOfPlatforms;
     private float length;
@@ -53,8 +52,6 @@ public class StationGhost extends AbstractGameObject implements Station {
     private final Coloring coloring = new Coloring(STATION_COLOR);
 
     public StationGhost(Game game, int nrOfPlatforms, int length) {
-        super(game);
-        this.game = game;
         assert nrOfPlatforms > 0 : "created station with " + nrOfPlatforms + " platforms";
 
         setSize(nrOfPlatforms, length);
@@ -71,30 +68,28 @@ public class StationGhost extends AbstractGameObject implements Station {
     }
 
     @Override
-    public void draw(SGL gl) {
+    public void draw(SGL gl, TickTime renderTime) {
         gl.pushMatrix();
         {
             gl.translate(position);
             gl.rotate(Vectors.Z, orientation);
 
             ShaderProgram shader = gl.getShader();
-            if (shader instanceof MaterialShader) {
-                MaterialShader matShader = (MaterialShader) shader;
+            if (shader instanceof MaterialShader matShader) {
                 Color4f color = coloring.getColor();
                 matShader.setMaterial(Material.ROUGH, color);
             }
 
             if (!(shader instanceof ClickShader)) { // draw cube
                 gl.scale(length / 2, realWidth / 2, HEIGHT); // half below ground
-                gl.render(GenericShapes.CUBE, this);
+                gl.render(GenericShapes.CUBE, entityId);
             }
         }
         gl.popMatrix();
     }
 
-    @Override
-    public UpdateFrequency getUpdateFrequency() {
-        return UpdateFrequency.NEVER;
+    public GameEntity.UpdateFrequency getUpdateFrequency() {
+        return GameEntity.UpdateFrequency.NEVER;
     }
 
     public void setOrientation(float orientation) {
@@ -105,18 +100,8 @@ public class StationGhost extends AbstractGameObject implements Station {
         this.position.set(position);
     }
 
-    @Override
-    public void reactMouse(MouseAction action, KeyControl keys) {
-        // handled by StationBuilder
-    }
-
     public void setMarking(Coloring.Marking mark) {
         coloring.addMark(mark);
-    }
-
-    @Override
-    public void despawn(double gameTime) {
-        despawnTime = gameTime;
     }
 
     public float getLength() {
@@ -167,14 +152,14 @@ public class StationGhost extends AbstractGameObject implements Station {
         return position;
     }
 
-    public Station solidify(Game game, TrackType trackType, double gameTime) {
+    public StationImpl solidify(Game game, TrackType trackType, double gameTime) {
         return new StationImpl(game,
                 numberOfPlatforms, (int) length, trackType, position, orientation, gameTime
         );
     }
 
     @Override
-    public AABBf getHitbox() {
+    public AABBfc getHitbox() {
         AABBf hitbox = new AABBf();
         forEachCorner(hitbox::union);
         hitbox.minZ = position.z() - HEIGHT_BELOW_STATION;
@@ -199,8 +184,4 @@ public class StationGhost extends AbstractGameObject implements Station {
         return pairs;
     }
 
-    @Override
-    public void restoreFields(Game game) {
-
-    }
 }

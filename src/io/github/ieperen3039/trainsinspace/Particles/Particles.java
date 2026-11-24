@@ -1,10 +1,11 @@
 package io.github.ieperen3039.trainsinspace.Particles;
 
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.MatrixStack;
-import io.github.ieperen3039.trainsinspace.Rendering.Shapes.Primitives.Plane;
-import io.github.ieperen3039.trainsinspace.Tools.Toolbox;
-import io.github.ieperen3039.trainsinspace.Tools.Vectors;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.MatrixStack;
+import io.github.ieperen3039.ngn.Rendering.Shapes.Primitives.Plane;
+
+import io.github.ieperen3039.ngn.Tools.Toolbox;
+import io.github.ieperen3039.ngn.Tools.Vectors;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 

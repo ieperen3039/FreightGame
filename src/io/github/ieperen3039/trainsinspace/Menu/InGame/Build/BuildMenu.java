@@ -1,9 +1,10 @@
 package io.github.ieperen3039.trainsinspace.Menu.InGame.Build;
 
+import io.github.ieperen3039.ngn.UserInterface.Components.*;
+import io.github.ieperen3039.ngn.UserInterface.LayoutManagers.SingleElementLayout;
+import io.github.ieperen3039.ngn.UserInterface.Rendering.SFrameLookAndFeel;
+import io.github.ieperen3039.ngn.UserInterface.SComponentProperties;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.*;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Rendering.SFrameLookAndFeel;
-import io.github.ieperen3039.trainsinspace.GUIMenu.SComponentProperties;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackType;
 import org.joml.Vector2ic;
 
@@ -12,40 +13,37 @@ import java.util.List;
 /**
  * @author Geert van Ieperen. Created on 5-11-2018.
  */
-public class BuildMenu extends SDecorator {
+public class BuildMenu extends SPanel {
     private static final SComponentProperties BUTTON_PROPERTIES = new SComponentProperties(250, 50);
 
     public BuildMenu(Game game, Runnable closeAction) {
+        super(new SingleElementLayout());
         List<TrackType> trackTypes = game.objectTypes().trackTypes;
         SDropDown typeChooser = new SDropDown(game.gui(), BUTTON_PROPERTIES, 0, trackTypes);
 
         SToggleButton buildTrack = new SToggleButton("Build Tracks", BUTTON_PROPERTIES);
-        buildTrack.addStateChangeListener(
-                (active) -> game.inputHandling()
-                        .setMouseTool(active ? new TrackBuilder(game, getType(trackTypes, typeChooser), buildTrack) : null)
+        buildTrack.addStateChangeListener((active) -> game.inputHandling().setMouseTool(
+                active ? new TrackBuilder(game, getType(trackTypes, typeChooser), buildTrack) : null)
         );
 
         SToggleButton buildStation = new SToggleButton("Build Station", BUTTON_PROPERTIES);
-        buildStation.addStateChangeListener(
-                (active) -> game.inputHandling()
-                        .setMouseTool(active ? new StationBuilder(game, buildStation, getType(trackTypes, typeChooser)) : null)
+        buildStation.addStateChangeListener((active) -> game.inputHandling().setMouseTool(
+                active ? new StationBuilder(game, buildStation, getType(trackTypes, typeChooser)) : null)
         );
 
         SToggleButton buildSignal = new SToggleButton("Build Signal", BUTTON_PROPERTIES);
-        buildSignal.addStateChangeListener(
-                (active) -> game.inputHandling()
-                        .setMouseTool(active ? new SignalBuilder(game, buildSignal) : null)
+        buildSignal.addStateChangeListener((active) -> game.inputHandling().setMouseTool(
+                active ? new SignalBuilder(game, buildSignal) : null)
         );
 
         SToggleButton buildTrain = new SToggleButton("Build Train", BUTTON_PROPERTIES);
-        buildTrain.addStateChangeListener((active) -> game.inputHandling()
-                .setMouseTool(active ? new InstantTrainBuilder(game, buildTrain) : null)
+        buildTrain.addStateChangeListener((active) -> game.inputHandling().setMouseTool(
+                active ? new InstantTrainBuilder(game, buildTrain) : null)
         );
 
         SToggleButton removeElement = new SToggleButton("Remove", BUTTON_PROPERTIES);
-        removeElement.addStateChangeListener(
-                (active) -> game.inputHandling()
-                        .setMouseTool(active ? new EntityRemover(game, removeElement) : null)
+        removeElement.addStateChangeListener((active) -> game.inputHandling().setMouseTool(
+                active ? new EntityRemover(game, removeElement) : null)
         );
 
         SButton closeMenu = new SButton("Close", () -> {
@@ -53,7 +51,7 @@ public class BuildMenu extends SDecorator {
             closeAction.run();
         });
 
-        setContents(SContainer.column(
+        add(SContainer.column(
                 typeChooser, buildTrack, buildStation, buildSignal, buildTrain, removeElement, closeMenu
         ));
 

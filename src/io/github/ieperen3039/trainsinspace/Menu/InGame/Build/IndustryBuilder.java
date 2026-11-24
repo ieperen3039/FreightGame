@@ -1,52 +1,50 @@
 package io.github.ieperen3039.trainsinspace.Menu.InGame.Build;
 
+import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTarget;
+import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTool;
+import io.github.ieperen3039.ngn.UserInterface.Components.SToggleButton;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.Entities.Entity;
+import io.github.ieperen3039.trainsinspace.Entities.GameEntity;
 import io.github.ieperen3039.trainsinspace.Entities.Industry;
 import io.github.ieperen3039.trainsinspace.Entities.StationImpl;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.SToggleButton;
-import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.AbstractMouseTool;
-import org.joml.Vector3fc;
+import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTargetMap;
 
 /**
  * @author Geert van Ieperen created on 21-6-2020.
  */
-public class IndustryBuilder extends AbstractMouseTool {
+public class IndustryBuilder implements MouseTool {
+    private final Game game;
     private final Runnable deactivation;
     private Industry.Properties properties;
 
     public IndustryBuilder(Game game, SToggleButton button, Industry.Properties properties) {
-        super(game);
+        this.game = game;
         this.deactivation = () -> button.setActive(false);
         this.properties = properties;
     }
 
     @Override
-    public void apply(Entity entity, Vector3fc origin, Vector3fc direction) {
-
-    }
-
-    @Override
-    public void apply(Vector3fc position, Vector3fc origin, Vector3fc direction) {
-        if (getMouseAction() == MouseAction.PRESS_ACTIVATE) {
-            Industry industry = new Industry(game, position, game.timer().getGameTime(), properties);
+    public boolean onPress(int button, MouseTarget target, int xSc, int ySc) {
+        if (target instanceof MouseTargetMap map) {
+            Industry industry = new Industry(game, map.position(), game.timer().getTime(), properties);
             game.state().addEntity(industry);
 
             // reset the industries of all entities
             // TODO make this less than quadratic runtime obnoxity
-            for (Entity entity : game.state()) {
-                if (entity instanceof StationImpl) {
-                    StationImpl station = (StationImpl) entity;
+            for (GameEntity entity : game.state()) {
+                if (entity instanceof StationImpl station) {
                     station.recalculateNearbyIndustries();
                 }
             }
 
             game.inputHandling().setMouseTool(null);
+            return true;
         }
+        return false;
     }
 
     @Override
-    public void dispose() {
+    public void onDeactivate() {
         deactivation.run();
     }
 }

@@ -1,0 +1,254 @@
+package io.github.ieperen3039.trainsinspace.Camera;
+
+import io.github.ieperen3039.ngn.Camera.Camera;
+import io.github.ieperen3039.ngn.Core.Main;
+import io.github.ieperen3039.ngn.Rendering.GLFWWindow;
+import io.github.ieperen3039.ngn.Settings.Settings;
+import io.github.ieperen3039.ngn.Tools.Vectors;
+import io.github.ieperen3039.trainsinspace.GameMap.GameMap;
+import org.joml.*;
+
+import java.io.Serializable;
+import java.lang.Math;
+
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_MIDDLE;
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
+
+/**
+ * A camera implementation that can be moved by holding the mouse to the corners of the screen
+ * @author Geert van Ieperen. Created on 18-11-2018.
+ */
+public class TycoonCamera implements Camera, Serializable {
+    private static final float BORDER_MOVE_SPEED = 0.6f;
+    private static final int SCREEN_MOVE_BORDER_SIZE = 50;
+    private static final int SCREEN_DEAD_ZONE = 30;
+    private static final float CAMERA_ZOOM_SPEED = 0.1f;
+
+    private static final float ZOOM_SPEED_LIMIT = 0.5f;
+    private static final float ROTATION_MODIFIER = 0.002f;
+    public static final float DRAG_MODIFIER = 0.0015f;
+
+    private transient Main main;
+    private transient GameMap map;
+
+    private final Vector3f focus = new Vector3f();
+    private final Vector3f eyeOffset;
+
+    private transient float mouseXPos;
+    private transient float mouseYPos;
+    private transient boolean isBeingRotated = false;
+    private transient boolean isBeingMoved = false;
+    private transient double minimumFocusDistance;
+
+    /**
+     * a camera that always has the same angle to the ground. The angle can be set by the ratio between eyeOffset and
+     * eyeHeight. The camera will start rotated at 45 degrees around the z-axis
+     * @param initialFocus the position of the camera focus
+     * @param eyeOffset    the x-offset of the camera
+     * @param eyeHeight    the z-offset of the camera
+     */
+    public TycoonCamera(Vector3fc initialFocus, float eyeOffset, float eyeHeight) {
+        this.eyeOffset = new Vector3f(-eyeOffset, 0, eyeHeight);
+        this.eyeOffset.rotateZ((float) (Math.PI / 4));
+        focus.set(initialFocus);
+    }
+
+    @Override
+    public void init(Main game) {
+        this.main = game;
+        minimumFocusDistance = game.settings().Z_NEAR;
+
+        Vector2i mousePosition = game.window().getMousePosition();
+        mouseXPos = mousePosition.x;
+        mouseYPos = mousePosition.y;
+    }
+
+    public void setMap(GameMap map) {
+        this.map = map;
+    }
+
+    @Override
+    public Vector3fc vectorToFocus() {
+        return new Vector3f(eyeOffset).negate();
+    }
+
+    @Override
+    public void updatePosition(float deltaTime) {
+        // prevents side-of-window movement when rotating or dragging
+        if (isBeingRotated || isBeingMoved) return;
+        // prevent overshooting when camera is not updated.
+        deltaTime = Math.min(deltaTime, 0.5f);
+
+        Vector3f eyeDir = new Vector3f(eyeOffset);
+        GLFWWindow window = main.window();
+        int width = window.getWidth();
+        int height = window.getHeight();
+
+        // correction for toolbar
+        int corrMouseYPos = (int) mouseYPos;
+        int corrMouseXPos = (int) mouseXPos;
+
+        // x movement
+        if (corrMouseXPos < SCREEN_MOVE_BORDER_SIZE) {
+            float value = positionToMovement(corrMouseXPos) * deltaTime;
+            eyeDir.normalize(value).cross(getUpVector());
+            focus.add(eyeDir.x, eyeDir.y, 0);
+
+        } else {
+            int xInv = width - corrMouseXPos;
+            if (xInv < SCREEN_MOVE_BORDER_SIZE) {
+                float value = positionToMovement(xInv) * deltaTime;
+                eyeDir.normalize(value).cross(getUpVector());
+                focus.sub(eyeDir.x, eyeDir.y, 0);
+            }
+        }
+
+        eyeDir.set(eyeOffset);
+        // y movement
+        if (corrMouseYPos < SCREEN_MOVE_BORDER_SIZE) {
+            float value = positionToMovement(corrMouseYPos) * deltaTime;
+            eyeDir.normalize(value);
+            focus.sub(eyeDir.x, eyeDir.y, 0);
+
+        } else {
+            int yInv = height - corrMouseYPos;
+            if (yInv < SCREEN_MOVE_BORDER_SIZE) {
+                float value = positionToMovement(yInv) * deltaTime;
+                eyeDir.normalize(value);
+                focus.add(eyeDir.x, eyeDir.y, 0);
+            }
+        }
+    }
+
+    @Override
+    public Vector3fc getEye() {
+        return new Vector3f(focus).add(eyeOffset);
+    }
+
+    @Override
+    public Vector3fc getFocus() {
+        return focus;
+    }
+
+    @Override
+    public Vector3fc getUpVector() {
+        return Vectors.Z;
+    }
+
+    @Override
+    public void set(Vector3fc focus) {
+        this.focus.set(focus);
+    }
+
+    public void set(Vector3fc focus, Vector3fc eye) {
+        this.focus.set(focus);
+        Vector3f offset = new Vector3f(eye).sub(focus);
+        this.eyeOffset.set(offset);
+    }
+
+    @Override
+    public Matrix4f getProjectionMatrix(float aspectRatio) {
+        Settings settings = main.settings();
+        Matrix4f vpMatrix = new Matrix4f();
+
+        if (settings.ISOMETRIC_VIEW) {
+            float visionSize = (vectorToFocus().length() - settings.Z_NEAR) / 2;
+            vpMatrix.setOrthoSymmetric(aspectRatio * visionSize, visionSize, settings.Z_NEAR, settings.Z_FAR);
+        } else {
+            vpMatrix.setPerspective(settings.FOV, aspectRatio, settings.Z_NEAR, settings.Z_FAR);
+        }
+        return vpMatrix;
+    }
+
+    @Override
+    public void onScroll(float value) {
+        Settings s = main.settings();
+        float maxZoom = s.MAX_CAMERA_DIST;
+
+        float v = Math.max(Math.min(CAMERA_ZOOM_SPEED * -value, ZOOM_SPEED_LIMIT), -ZOOM_SPEED_LIMIT);
+        eyeOffset.mul(v + 1f);
+        float minZoom = s.MIN_CAMERA_DIST;
+
+        if (eyeOffset.lengthSquared() > maxZoom * maxZoom) {
+            eyeOffset.normalize(maxZoom);
+        } else if (eyeOffset.lengthSquared() < minZoom * minZoom) {
+            eyeOffset.normalize(minZoom);
+        }
+    }
+
+    @Override
+    public void cleanup() {
+    }
+
+    /**
+     * gives how much the camera should move given how many pixels the mouse is from the edge of the screen
+     * @param pixels the number of pixels between the mouse and the edge of the screen, at least 0
+     * @return how fast the camera should move in the direction
+     */
+    protected float positionToMovement(int pixels) {
+        if (pixels >= SCREEN_MOVE_BORDER_SIZE) return 0;
+
+        int offset = Math.min(SCREEN_MOVE_BORDER_SIZE - pixels, SCREEN_DEAD_ZONE);
+        return offset * (1f / (SCREEN_MOVE_BORDER_SIZE - SCREEN_DEAD_ZONE)) * BORDER_MOVE_SPEED * eyeOffset.length();
+    }
+
+    @Override
+    public void onMouseMove(int xDelta, int yDelta, float xPos, float yPos) {
+//        float exactDelta = xPos - mouseXPos;
+        mouseXPos = xPos;
+        mouseYPos = yPos;
+
+        if (isBeingRotated) {
+            float angle = -xDelta * ROTATION_MODIFIER;
+            eyeOffset.rotateZ(angle);
+
+        } else if (isBeingMoved) {
+            // x movement
+            Vector3f eyeDir = new Vector3f(eyeOffset);
+            eyeDir.mul(xDelta * DRAG_MODIFIER).cross(getUpVector());
+            focus.add(eyeDir.x, eyeDir.y, 0);
+
+            // y movement
+            eyeDir.set(eyeOffset).mul(yDelta * DRAG_MODIFIER);
+            focus.sub(eyeDir.x, eyeDir.y, 0);
+        }
+    }
+
+    @Override
+    public void onClick(int button, int xPos, int yPos) {
+        if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+            isBeingRotated = true;
+            resetFocus();
+
+        } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+            isBeingMoved = true;
+        }
+    }
+
+    private void resetFocus() {
+        // set focus to middle of screen
+        Vector3fc eyePos = getEye();
+        Vector3fc eyeDir = vectorToFocus();
+
+        Float tFrac;
+        if (map != null) {
+            tFrac = map.gridMapIntersection(eyePos, eyeDir);
+        } else {
+            tFrac = Intersectionf.intersectRayPlane(eyePos, eyeDir, Vectors.O, Vectors.Z, 1f / 8);
+        }
+
+        if (tFrac != null && tFrac > minimumFocusDistance) {
+            focus.set(eyeDir).mul(tFrac).add(eyeOffset);
+            // given that the new focus is `eye + tFrac * vectorToFocus`, and `vectorToFocus = -eyeOffset`,
+            // the new eye offset is `tFrac * vectorToFocus`, or `eyeOffset * -tFrac`
+            eyeOffset.mul(-tFrac);
+        }
+    }
+
+    @Override
+    public void onRelease(int button) {
+        isBeingRotated = false;
+        isBeingMoved = false;
+    }
+}
+

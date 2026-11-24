@@ -1,6 +1,6 @@
 package io.github.ieperen3039.trainsinspace.Core;
 
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
 
 import java.io.Serializable;
 import java.util.ArrayList;

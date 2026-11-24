@@ -1,30 +1,30 @@
 package io.github.ieperen3039.trainsinspace.Entities;
 
-import io.github.ieperen3039.trainsinspace.Core.AbstractGameObject;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Pair;
+import io.github.ieperen3039.ngn.InputHandling.KeyControl;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Tools.Logger;
+import io.github.ieperen3039.ngn.Tools.TickTime;
+import io.github.ieperen3039.ngn.Tools.Toolbox;
+import io.github.ieperen3039.ngn.UserInterface.Components.SActiveTextComponent;
+import io.github.ieperen3039.ngn.UserInterface.Components.SButton;
+import io.github.ieperen3039.ngn.UserInterface.Components.SContainer;
+import io.github.ieperen3039.ngn.UserInterface.Components.SFrame;
+import io.github.ieperen3039.ngn.UserInterface.Rendering.NGFont;
+import io.github.ieperen3039.ngn.UserInterface.Rendering.SFrameLookAndFeel;
+import io.github.ieperen3039.ngn.UserInterface.SComponentProperties;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Pair;
 import io.github.ieperen3039.trainsinspace.DataStructures.Valuta;
 import io.github.ieperen3039.trainsinspace.Freight.Cargo;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.SActiveTextArea;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.SButton;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.SContainer;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.SFrame;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Rendering.NGFonts;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Rendering.SFrameLookAndFeel;
-import io.github.ieperen3039.trainsinspace.GUIMenu.SComponentProperties;
-import io.github.ieperen3039.trainsinspace.InputHandling.KeyControl;
-import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.AbstractMouseTool.MouseAction;
+import io.github.ieperen3039.trainsinspace.InputHandling.InputMapping;
 import io.github.ieperen3039.trainsinspace.Mods.CargoType;
 import io.github.ieperen3039.trainsinspace.Network.NetworkNode;
 import io.github.ieperen3039.trainsinspace.Network.NetworkPosition;
 import io.github.ieperen3039.trainsinspace.Network.RailNode;
 import io.github.ieperen3039.trainsinspace.Network.Schedule;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.trainsinspace.Tools.Logger;
 import io.github.ieperen3039.trainsinspace.Tools.NetworkPathFinder;
-import io.github.ieperen3039.trainsinspace.Tools.Toolbox;
 import io.github.ieperen3039.trainsinspace.Tracks.RailMovement;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackPiece;
 import org.joml.Quaternionf;
@@ -37,9 +37,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author Geert van Ieperen created on 19-5-2020.
  */
-public class Train extends AbstractGameObject implements Entity {
+public class Train extends GameEntity {
     private static final SComponentProperties BUTTON_PROPERTIES = new SComponentProperties(
-            300, 50, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
+            300, 50, false, false, NGFont.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
 
     private static final boolean CHOOSE_RANDOM_SPAWN_TRACK = true;
@@ -47,6 +47,7 @@ public class Train extends AbstractGameObject implements Entity {
 
     protected final List<TrainElement> entities = new CopyOnWriteArrayList<>();
 
+    private transient Game game;
     private final int id;
     private final RailMovement positionEngine;
     private final Coloring coloring = new Coloring(Color4f.WHITE);
@@ -65,13 +66,10 @@ public class Train extends AbstractGameObject implements Entity {
     private int maintenancePerSecond = 0;
     private double nextMaintenanceTick;
 
-    private double spawnTime;
-    private double despawnTime = Double.POSITIVE_INFINITY;
-
     public Train(Game game, int id, double spawnTime, TrackPiece startPiece) {
-        super(game);
+        super(spawnTime);
+        this.game = game;
         this.id = id;
-        this.spawnTime = spawnTime;
         storagePosition = null;
         positionEngine = new RailMovement(game, this, spawnTime, startPiece, true);
         nextMaintenanceTick = spawnTime;
@@ -79,9 +77,9 @@ public class Train extends AbstractGameObject implements Entity {
     }
 
     public Train(Game game, int id, double spawnTime, NetworkPosition storagePosition) {
-        super(game);
+        super(spawnTime);
+        this.game = game;
         this.id = id;
-        this.spawnTime = spawnTime;
         this.storagePosition = storagePosition;
         TrackPiece anyTrack = storagePosition.getTracks().get(0);
         this.positionEngine = new RailMovement(game, this, spawnTime, anyTrack, true);
@@ -92,7 +90,7 @@ public class Train extends AbstractGameObject implements Entity {
 
     @Override
     public void update() {
-        double gameTime = game.timer().getGameTime();
+        double gameTime = game.timer().getTime();
 
         if (storagePosition != null) {
             if (!positionEngine.isStopping()) {
@@ -124,7 +122,7 @@ public class Train extends AbstractGameObject implements Entity {
             if (target instanceof Station) {
                 Station station = (Station) target;
 
-                TrackPiece currentTrack = positionEngine.getTracksAt(gameTime).left;
+                TrackPiece currentTrack = positionEngine.getTracksAt(gameTime).left();
                 RailNode endNodeR = currentTrack.getEndNode();
                 NetworkNode endNodeN = endNodeR.getNetworkNode();
 
@@ -226,7 +224,7 @@ public class Train extends AbstractGameObject implements Entity {
         Collection<CargoType> acceptedCargo = station.getAcceptedCargo();
         for (TrainElement entity : entities) {
             Pair<CargoType, Integer> contents = entity.getContents();
-            if (acceptedCargo.contains(contents.left) && contents.right > 0) {
+            if (acceptedCargo.contains(contents.left()) && contents.right() > 0) {
                 return true;
             }
         }
@@ -255,11 +253,11 @@ public class Train extends AbstractGameObject implements Entity {
     }
 
     public void placeTrain(TrackPiece startPiece, boolean inPositiveDirection) {
-        double timeOfPlacement = game.timer().getGameTime();
+        double timeOfPlacement = game.timer().getTime();
         positionEngine.setPosition(timeOfPlacement, startPiece, inPositiveDirection);
         addScheduleListener(positionEngine);
         storagePosition = null;
-        timeOfUnstore = game.timer().getGameTime();
+        timeOfUnstore = game.timer().getTime();
         addLoadTime(TRAIN_PLACEMENT_STUN_TIME);
     }
 
@@ -268,7 +266,7 @@ public class Train extends AbstractGameObject implements Entity {
         positionEngine.stop();
         storagePosition = target;
         target.addTrain(this);
-        timeOfStore = game.timer().getGameTime();
+        timeOfStore = game.timer().getTime();
         timeOfUnstore = Double.POSITIVE_INFINITY;
     }
 
@@ -315,9 +313,9 @@ public class Train extends AbstractGameObject implements Entity {
     }
 
     @Override
-    public void draw(SGL gl) {
+    public void draw(SGL gl, TickTime renderTime) {
         if (entities.isEmpty()) return;
-        double now = game.timer().getRenderTime();
+        double now = renderTime.getTime();
         if (now > timeOfStore && now < timeOfUnstore) return;
         // position 0 is on the very front of the first wagon, hence the middle of first wagon is displaced
         float displacement = entities.get(0).getProperties().length / 2;
@@ -327,7 +325,7 @@ public class Train extends AbstractGameObject implements Entity {
             Vector3f position = positionEngine.getPosition(now, -displacement);
             Quaternionf rotation = positionEngine.getRotation(now, -displacement);
 
-            entity.draw(gl, position, rotation, this, coloring.getColor());
+            entity.draw(gl, position, rotation, entityId, coloring.getColor());
             displacement += entity.getProperties().length;
         }
     }
@@ -337,11 +335,10 @@ public class Train extends AbstractGameObject implements Entity {
         return positionEngine.getPosition(time);
     }
 
-    @Override
-    public void reactMouse(MouseAction action, KeyControl keys) {
+    public void onMouseClick(int button, KeyControl keys) {
         assert positionEngine != null : "visible but without position";
 
-        if (action == MouseAction.PRESS_ACTIVATE) {
+        if (button == InputMapping.UseMouseTool.getButton()) {
             if (keys.isControlPressed()) {
                 if (positionEngine.isStopping()) {
                     positionEngine.start();
@@ -380,9 +377,9 @@ public class Train extends AbstractGameObject implements Entity {
 
         for (TrainElement entity : entities) {
             Pair<CargoType, Integer> contents = entity.getContents();
-            if (contents.right > 0) {
-                int typeCapacity = entity.getCargoTypes().get(contents.left);
-                capacity.put(contents.left, typeCapacity - contents.right);
+            if (contents.right() > 0) {
+                int typeCapacity = entity.getCargoTypes().get(contents.left());
+                capacity.put(contents.left(), typeCapacity - contents.right());
 
             } else {
                 Map<CargoType, Integer> cargoTypes = entity.getCargoTypes();
@@ -400,8 +397,8 @@ public class Train extends AbstractGameObject implements Entity {
 
         for (TrainElement entity : entities) {
             Pair<CargoType, Integer> contents = entity.getContents();
-            if (contents.right > 0) {
-                capacity.merge(contents.left, contents.right, Integer::sum);
+            if (contents.right() > 0) {
+                capacity.merge(contents.left(), contents.right(), Integer::sum);
             }
         }
 
@@ -438,25 +435,15 @@ public class Train extends AbstractGameObject implements Entity {
     }
 
     protected void addLoadTime(double loadTime) {
-        double gameTime = game.timer().getGameTime();
+        double gameTime = game.timer().getTime();
         if (loadTimer < gameTime) loadTimer = gameTime;
         loadTimer = loadTimer + loadTime;
     }
 
     @Override
     public void despawn(double gameTime) {
-        despawnTime = gameTime;
+        super.despawn(gameTime);
         positionEngine.removePath();
-    }
-
-    @Override
-    public double getSpawnTime() {
-        return spawnTime;
-    }
-
-    @Override
-    public double getDespawnTime() {
-        return despawnTime;
     }
 
     /**
@@ -494,7 +481,7 @@ public class Train extends AbstractGameObject implements Entity {
     }
 
     public boolean isLoading() {
-        return loadTimer > game.timer().getGameTime();
+        return loadTimer > game.timer().getTime();
     }
 
     public void onArrival(TrackPiece next, RailNode newNode) {
@@ -548,36 +535,26 @@ public class Train extends AbstractGameObject implements Entity {
         positionEngine.start();
     }
 
-    @Override
-    public void restoreFields(Game game) {
-        for (TrainElement entity : entities) {
-            entity.restore(game);
-        }
-
-        positionEngine.restore(game);
-        updateProperties();
-    }
-
     private class TrainUI extends SFrame {
 
         public TrainUI() {
             super(Train.this.toString());
             setMainPanel(SContainer.column(
-                    new SActiveTextArea(this::getStatus, 50),
-                    new SActiveTextArea(() -> String.format("Speed: %5.01f", positionEngine.getSpeed()), 50),
-                    new SActiveTextArea(() -> String.format("Cargo: %s", getContents()), 50),
-                    new SButton("Start", positionEngine::start, BUTTON_PROPERTIES),
-                    new SButton("Stop", positionEngine::stop, BUTTON_PROPERTIES),
-                    new SButton("Reverse", positionEngine::reverse, BUTTON_PROPERTIES),
-                    new SButton("Schedule", () -> game.gui()
-                            .addFrame(new Schedule.ScheduleUI(game, schedule)), BUTTON_PROPERTIES)
+                    new SActiveTextComponent(this::getStatus, 50),
+                    new SActiveTextComponent(() -> String.format("Speed: %5.01f", positionEngine.getSpeed()), 50),
+                    new SActiveTextComponent(() -> String.format("Cargo: %s", getContents()), 50),
+                    new SButton("Start", BUTTON_PROPERTIES, positionEngine::start),
+                    new SButton("Stop", BUTTON_PROPERTIES, positionEngine::stop),
+                    new SButton("Reverse", BUTTON_PROPERTIES, positionEngine::reverse),
+                    new SButton("Schedule", BUTTON_PROPERTIES, () -> game.gui()
+                            .addFrame(new Schedule.ScheduleUI(game, schedule)))
             ));
             pack();
         }
 
         private String getStatus() {
             if (isLoading()) {
-                double time = loadTimer - game.timer().getGameTime();
+                double time = loadTimer - game.timer().getTime();
                 return String.format("Loading / Unloading (%4.01f sec left)", time);
             }
 

@@ -1,13 +1,13 @@
 package io.github.ieperen3039.trainsinspace.Menu.InGame.Build;
 
+import io.github.ieperen3039.ngn.UserInterface.Components.*;
+import io.github.ieperen3039.ngn.UserInterface.Rendering.NGFont;
+import io.github.ieperen3039.ngn.UserInterface.Rendering.SFrameLookAndFeel;
+import io.github.ieperen3039.ngn.UserInterface.SComponentProperties;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.PlayerStatus;
 import io.github.ieperen3039.trainsinspace.DataStructures.Valuta;
 import io.github.ieperen3039.trainsinspace.Entities.*;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Components.*;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Rendering.NGFonts;
-import io.github.ieperen3039.trainsinspace.GUIMenu.Rendering.SFrameLookAndFeel;
-import io.github.ieperen3039.trainsinspace.GUIMenu.SComponentProperties;
 import io.github.ieperen3039.trainsinspace.Menu.Main.MainMenu;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackPiece;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackType;
@@ -21,10 +21,10 @@ import java.util.stream.Collectors;
  */
 public class TrainConstructionMenu extends SFrame {
     public static final SComponentProperties PROPERTIES_COMPONENT_PROPERTIES = new SComponentProperties(
-            200, 0, false, true, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT_TOP
+            200, 0, false, true, NGFont.TextType.REGULAR, SFrameLookAndFeel.Alignment.LEFT_TOP
     );
     public static final SComponentProperties TRAIN_ELEMENT_BUTTON_PROPS = new SComponentProperties(
-            200, 30, false, false, NGFonts.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
+            200, 30, false, false, NGFont.TextType.REGULAR, SFrameLookAndFeel.Alignment.CENTER_MIDDLE
     );
 
     private static int id = 1;
@@ -34,7 +34,7 @@ public class TrainConstructionMenu extends SFrame {
     private final Train construction;
     private final Valuta costs = Valuta.ofUnitValue(0);
     private final float maxSize;
-    private final STextArea messageElement;
+    private final STextComponent messageElement;
 
     public TrainConstructionMenu(Game game, Station place) {
         super("New Train");
@@ -48,7 +48,7 @@ public class TrainConstructionMenu extends SFrame {
         }
         maxSize = tMaxSize;
 
-        double gameTime = game.timer().getGameTime();
+        double gameTime = game.timer().getTime();
         construction = new Train(game, id++, gameTime, place);
 
         List<Locomotive.Properties> locomotiveTypes = game.objectTypes().locomotiveTypes;
@@ -68,24 +68,23 @@ public class TrainConstructionMenu extends SFrame {
             for (Locomotive.Properties loco : locomotiveTypes) {
                 if (loco.isCompatibleWith(trackType)) {
                     SContainer trainPanel = SPanel.column(
-                            new STextArea(
+                            new STextComponent(
                                     loco + "\n\n" +
-                                            "build cost : " + loco.buildCost + "\n" +
-                                            "maintenance : " + loco.maintenancePerSecond + "\n" +
-                                            "max speed : " + loco.maxSpeed + "\n" +
-                                            "tractive effort : " + loco.tractiveEffort + "\n" +
-                                            "mass : " + loco.mass + "\n" +
-                                            "R1 : " + loco.linearResistance + "\n" +
-                                            "R2 : " + loco.quadraticResistance + "\n",
+                                    "build cost : " + loco.buildCost + "\n" +
+                                    "maintenance : " + loco.maintenancePerSecond + "\n" +
+                                    "max speed : " + loco.maxSpeed + "\n" +
+                                    "tractive effort : " + loco.tractiveEffort + "\n" +
+                                    "mass : " + loco.mass + "\n" +
+                                    "resistance : " + loco.linearResistance + "/" + loco.quadraticResistance + "\n",
                                     PROPERTIES_COMPONENT_PROPERTIES
                             ),
-                            new SButton("Add", () -> add(new Locomotive(loco)), MainMenu.BUTTON_PROPERTIES_STRETCH)
+                            new SButton("Add", MainMenu.BUTTON_PROPERTIES_STRETCH, () -> add(new Locomotive(loco)))
                     );
 
                     locoButtons.add(new SButton(
                             loco.toString(),
-                            () -> trainTabArea.show(trainPanel),
-                            TRAIN_ELEMENT_BUTTON_PROPS
+                            TRAIN_ELEMENT_BUTTON_PROPS,
+                            () -> trainTabArea.show(trainPanel)
                     ));
                 }
             }
@@ -102,22 +101,22 @@ public class TrainConstructionMenu extends SFrame {
             for (Wagon.Properties wagon : wagonTypes) {
                 if (wagon.isCompatibleWith(trackType)) {
                     SContainer wagonPanel = SPanel.column(
-                            new STextArea(
+                            new STextComponent(
                                     wagon.name + "\n\n" +
-                                            "build cost : " + wagon.buildCost + "\n" +
-                                            "maintenance : " + wagon.maintenancePerSecond + "\n" +
-                                            "max speed : " + wagon.maxSpeed + "\n" +
-                                            "mass : " + wagon.mass + "\n" +
-                                            "R1 : " + wagon.linearResistance + "\n",
+                                    "build cost : " + wagon.buildCost + "\n" +
+                                    "maintenance : " + wagon.maintenancePerSecond + "\n" +
+                                    "max speed : " + wagon.maxSpeed + "\n" +
+                                    "mass : " + wagon.mass + "\n" +
+                                    "resistance : " + wagon.linearResistance + "\n",
                                     PROPERTIES_COMPONENT_PROPERTIES
                             ),
-                            new SButton("Add", () -> add(new Wagon(wagon)), MainMenu.BUTTON_PROPERTIES_STRETCH)
+                            new SButton("Add", MainMenu.BUTTON_PROPERTIES_STRETCH, () -> add(new Wagon(wagon)))
                     );
 
                     wagonButtons.add(new SButton(
                             wagon.toString(),
-                            () -> wagonTabArea.show(wagonPanel),
-                            TRAIN_ELEMENT_BUTTON_PROPS
+                            TRAIN_ELEMENT_BUTTON_PROPS,
+                            () -> wagonTabArea.show(wagonPanel)
                     ));
                 }
             }
@@ -133,7 +132,7 @@ public class TrainConstructionMenu extends SFrame {
         STabPanel typeSelectionTabs = new STabPanel(tabLabels, typeTabArea, MainMenu.BUTTON_PROPERTIES_STATIC);
 
         // train preview
-        SComponent trainDisplay = new SActiveTextArea(
+        SComponent trainDisplay = new SActiveTextComponent(
                 () -> construction.getElements()
                         .stream()
                         .map(e -> e.getClass().getSimpleName())
@@ -141,15 +140,15 @@ public class TrainConstructionMenu extends SFrame {
                 MainMenu.BUTTON_PROPERTIES_STRETCH
         );
 
-        messageElement = new STextArea("", MainMenu.TEXT_PROPERTIES);
+        messageElement = new STextComponent("", MainMenu.TEXT_PROPERTIES);
 
         setMainPanel(SContainer.column(
                 typeSelectionTabs,
                 trainDisplay,
                 messageElement,
                 SContainer.row(
-                        new SButton("Build this", this::confirmAndClose, MainMenu.BUTTON_PROPERTIES_STATIC),
-                        new SButton("Remove Last", this::removeLast, MainMenu.BUTTON_PROPERTIES_STATIC)
+                        new SButton("Build this", MainMenu.BUTTON_PROPERTIES_STATIC, this::confirmAndClose),
+                        new SButton("Remove Last", MainMenu.BUTTON_PROPERTIES_STATIC, this::removeLast)
                 )
         ));
     }
@@ -162,7 +161,7 @@ public class TrainConstructionMenu extends SFrame {
         targetPlace.addTrain(construction);
         construction.openUI();
 
-        dispose(); // sepukku
+        dispose();
     }
 
     private void removeLast() {

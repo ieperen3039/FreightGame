@@ -1,15 +1,12 @@
 package io.github.ieperen3039.trainsinspace.Entities;
 
-import io.github.ieperen3039.trainsinspace.Core.GameObject;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Color4f;
-import io.github.ieperen3039.trainsinspace.DataStructures.Generic.Pair;
+import io.github.ieperen3039.ngn.AssetHandling.Asset;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
+import io.github.ieperen3039.ngn.DataStructures.Generic.Pair;
+import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.MeshLoading.Mesh;
 import io.github.ieperen3039.trainsinspace.Freight.Cargo;
 import io.github.ieperen3039.trainsinspace.Mods.CargoType;
-import io.github.ieperen3039.trainsinspace.Rendering.Material;
-import io.github.ieperen3039.trainsinspace.Rendering.MatrixStack.SGL;
-import io.github.ieperen3039.trainsinspace.Rendering.MeshLoading.Mesh;
-import io.github.ieperen3039.trainsinspace.Rendering.Shaders.MaterialShader;
-import io.github.ieperen3039.trainsinspace.AssetHandling.Asset;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackType;
 import org.joml.Quaternionfc;
 import org.joml.Vector3fc;
@@ -21,24 +18,9 @@ import java.util.Map;
 /**
  * @author Geert van Ieperen created on 19-5-2020.
  */
-public interface TrainElement extends GameObject {
-    default void draw(
-            SGL gl, Vector3fc position, Quaternionfc rotation, Entity trainEntity, Color4f color
-    ) {
-        MaterialShader.ifPresent(gl, mat -> {
-            mat.setMaterial(Material.METAL, color);
-        });
+public interface TrainElement {
 
-        gl.pushMatrix();
-        {
-            gl.translate(position);
-            gl.rotate(rotation);
-
-            Mesh mesh = getProperties().mesh.get();
-            gl.render(mesh, trainEntity);
-        }
-        gl.popMatrix();
-    }
+    void draw(SGL gl, Vector3fc position, Quaternionfc rotation, int entityId, Color4f color);
 
     Properties getProperties();
 
@@ -64,17 +46,17 @@ public interface TrainElement extends GameObject {
     default int getStorableAmount(CargoType type) {
         Pair<CargoType, Integer> contents = getContents();
 
-        if (contents.right == 0) {
+        if (contents.right() == 0) {
             Map<CargoType, Integer> capacity = getCargoTypes();
             //noinspection Java8MapApi
             return capacity.containsKey(type) ? capacity.get(type) : 0;
 
-        } else if (contents.left != type) {
+        } else if (contents.left() != type) {
             return 0;
 
         } else {
             Integer capacity = getCargoTypes().get(type);
-            return capacity - contents.right;
+            return capacity - contents.right();
         }
     }
 
