@@ -27,6 +27,7 @@ import io.github.ieperen3039.trainsinspace.GameMap.HeightMap;
 import io.github.ieperen3039.trainsinspace.GameMap.MapSelector;
 import io.github.ieperen3039.trainsinspace.GameState.GameLoop;
 import io.github.ieperen3039.trainsinspace.GameState.GameState;
+import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MyDefaultMouseTool;
 import io.github.ieperen3039.trainsinspace.Menu.InGame.TrainGameUI;
 import io.github.ieperen3039.trainsinspace.Menu.Main.MainMenu;
 import io.github.ieperen3039.trainsinspace.Mods.InitialisationMod;
@@ -125,6 +126,7 @@ public class TrainGame implements Game, ModLoader {
                 new MapSelector(this, gameMap),
                 new UISelector(frameManager)
         );
+        inputHandler.setDefaultMouseTool(new MyDefaultMouseTool(this));
 
         // load mods
         File[] files = Directory.mods.getFiles();
