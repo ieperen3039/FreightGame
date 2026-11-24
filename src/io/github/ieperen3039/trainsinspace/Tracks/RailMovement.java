@@ -714,16 +714,12 @@ public class RailMovement implements Schedule.UpdateListener {
         /** computes which speed target must be reacted on first */
         @Override
         public int compareTo(SpeedTarget other) {
-            if (this.startMillis < other.startMillis) {
-                return compareSorted(this, other);
-            } else {
-                return -compareSorted(other, this);
-            }
-        }
-
-        private int compareSorted(SpeedTarget first, SpeedTarget last) {
-            int breakDistance = getBreakDistanceMillis(first.speed, last.speed);
-            return Float.compare(first.startMillis + breakDistance, last.startMillis);
+            int breakDistanceThisToOther = getBreakDistanceMillis(this.speed, other.speed);
+            int breakDistanceOtherToThis = getBreakDistanceMillis(other.speed, this.speed);
+            return Long.compare(
+                    this.startMillis + breakDistanceThisToOther,
+                    other.startMillis + breakDistanceOtherToThis
+            );
         }
 
         @Override
