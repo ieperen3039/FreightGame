@@ -57,7 +57,7 @@ public class NetworkPathFinder implements Callable<NetworkPathFinder.Path> {
     @Override
     public Path call() {
         // edge case: end of line
-        if (startNode == null) return new Path();
+        if (startNode == null) return null;
 
         Map<NetworkNode, NetworkNode> predecessors = new HashMap<>();
         distanceMap = new HashMap<>();

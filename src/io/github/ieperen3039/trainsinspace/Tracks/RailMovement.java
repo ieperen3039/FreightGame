@@ -35,7 +35,7 @@ public class RailMovement implements Schedule.UpdateListener {
     private static final double SIGNAL_PATHING_TIMEOUT = 1.0 / 8;
     private static final int STOP_TARGET_SNAP_DISTANCE_MILLIS = 10;
 
-    public static final Conditional ALWAYS = () -> true;
+    private static final Conditional ALWAYS = () -> true;
 
     private final Train controller;
 
@@ -98,9 +98,23 @@ public class RailMovement implements Schedule.UpdateListener {
         long trackStartDistanceMillis = (long) (-1 * startPiece.getLength() * METERS_TO_MILLIS * 1);
         this.trackEndDistanceMillis = (long) (trackStartDistanceMillis + startPiece.getLength() * METERS_TO_MILLIS);
 
-        this.scanEndNode = isPositiveDirection ? startPiece.getEndNode() : startPiece.getStartNode();
+        if (isPositiveDirection) {
+            this.totalToLocalDistance = new FloatInterpolator(
+                    0,
+                    0f, trackStartDistanceMillis,
+                    startPiece.getLength(), trackEndDistanceMillis
+            );
+            this.scanEndNode = startPiece.getEndNode();
 
-        this.totalToLocalDistance = new FloatInterpolator(0, 0f, trackStartDistanceMillis, startPiece.getLength(), trackEndDistanceMillis);
+        } else {
+            this.totalToLocalDistance = new FloatInterpolator(
+                    0,
+                    startPiece.getLength(), trackStartDistanceMillis,
+                    0f, trackEndDistanceMillis
+            );
+            this.scanEndNode = startPiece.getStartNode();
+        }
+
         this.tracks = new BlockingTimedArrayQueue<>(0);
         tracks.add(new Pair<>(startPiece, isPositiveDirection), trackStartDistanceMillis);
 
@@ -118,8 +132,8 @@ public class RailMovement implements Schedule.UpdateListener {
      * @param R1            linear resistance factor
      * @param R2            quadratic resistance factor
      * @param breakForce    force added to the TE when breaking
-     * @param trainLength   length of the train in units
-     * @param trainMaxSpeed
+     * @param trainLength   length of the train in meters
+     * @param trainMaxSpeed speed limit of the train in m/s
      */
     public synchronized void setProperties(
             float TE, float mass, float R1, float R2, float breakForce, float trainLength, float trainMaxSpeed
@@ -356,11 +370,12 @@ public class RailMovement implements Schedule.UpdateListener {
         if (currentSpeed < targetSpeed) return false;
 
         // calculate distance required vs distance available
-        long speedTargetSpaceNext = targetMillis - currentTotalMillis + (int) (currentSpeed * DELTA_TIME * METERS_TO_MILLIS);
-        int speedTargetDistance = getBreakDistanceMillis(currentSpeed, targetSpeed);
+        int distanceToTarget = (int) (targetMillis - currentTotalMillis);
+        int distanceToTargetNextTick = distanceToTarget - (int) (currentSpeed * DELTA_TIME * METERS_TO_MILLIS);
+        int breakDistance = getBreakDistanceMillis(currentSpeed, targetSpeed);
 
         // only break when necessary
-        return (speedTargetSpaceNext < speedTargetDistance);
+        return (distanceToTargetNextTick < breakDistance);
     }
 
     private synchronized void executeReversal() {
@@ -426,7 +441,7 @@ public class RailMovement implements Schedule.UpdateListener {
                     // hence even if it is straight, we have to do path finding.
                     if (path == null) {
                         path = new NetworkPathFinder(nextTrack, networkNode, target).call();
-                        if (path.isEmpty()) return;
+                        if (path == null) return;
                     }
 
                     NetworkNode targetNode = path.remove();
@@ -504,12 +519,18 @@ public class RailMovement implements Schedule.UpdateListener {
             // if the train is halfway an empty track (e.g. upon spawning),
             // extend path to next switch like the pathfinder requires
             if (!scanEndNodeNetworkNode.isNetworkCritical()) {
-                TrackPiece nextTrack = reservedPath.getLast();
-                do {
-                    nextTrack = scanEndNodeNetworkNode.getNext(nextTrack).get(0).trackPiece;
-                    appendToPath(nextTrack);
-                    scanEndNodeNetworkNode = scanEndNode.getNetworkNode();
-                } while (!scanEndNodeNetworkNode.isNetworkCritical());
+                synchronized (this) {
+                    TrackPiece nextTrack = reservedPath.peekLast();
+                    if (nextTrack == null) {
+                        nextTrack = currentTrack;
+                    }
+
+                    do {
+                        nextTrack = scanEndNodeNetworkNode.getNext(nextTrack).get(0).trackPiece;
+                        appendToPath(nextTrack);
+                        scanEndNodeNetworkNode = scanEndNode.getNetworkNode();
+                    } while (!scanEndNodeNetworkNode.isNetworkCritical());
+                }
             }
 
             // compute both directions to find the direction to start
@@ -520,8 +541,12 @@ public class RailMovement implements Schedule.UpdateListener {
             NetworkPathFinder.Path pathAgainstDirection = againstDirection.call();
 
             boolean inSameDirection;
-            if (pathInDirection == null) {
-                assert pathAgainstDirection != null : "No path possible"; // TODO stop instead
+            if (pathInDirection == null && pathAgainstDirection == null) {
+                Logger.ERROR.print("No path found to next schedule element");
+                scanIsAhead = false;
+                return;
+            }
+            else if (pathInDirection == null) {
                 inSameDirection = false;
 
             } else if (pathAgainstDirection == null) {
@@ -578,8 +603,7 @@ public class RailMovement implements Schedule.UpdateListener {
      * @return actual speed in meters per second
      */
     public float getSpeed() {
-        int millisPerSecond = (int) (speed * DELTA_TIME * METERS_TO_MILLIS);
-        return millisPerSecond / (DELTA_TIME * METERS_TO_MILLIS);
+        return speed;
     }
 
     public float getMaxSpeed() {
@@ -667,7 +691,7 @@ public class RailMovement implements Schedule.UpdateListener {
 
     public void discardUpTo(double time, float maxOffset) {
         long interpolated = totalMillimeters.getInterpolated(time);
-        long minimumMillis = (currentTotalMillis - (long) (maxOffset / METERS_TO_MILLIS));
+        long minimumMillis = (currentTotalMillis - (long) (maxOffset * METERS_TO_MILLIS));
         long distance = java.lang.Math.min(interpolated, minimumMillis);
         double totalMillimetersMinimum = totalToLocalDistance.timeOfPrevious(distance - trainLengthMillis);
         distance = (long) totalMillimetersMinimum;
@@ -679,13 +703,6 @@ public class RailMovement implements Schedule.UpdateListener {
 
     public boolean hasPath() {
         return !(reservedPath.isEmpty() && scanTrackEndMillis >= trackEndDistanceMillis);
-    }
-
-    public void removePath() {
-        for (TrackPiece trackPiece : reservedPath) {
-            trackPiece.setOccupied(false);
-        }
-        reservedPath.clear();
     }
 
     private class SpeedTarget implements Comparable<SpeedTarget>, Serializable {
