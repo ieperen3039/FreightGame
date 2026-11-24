@@ -393,13 +393,18 @@ public class RailMovement implements Schedule.UpdateListener {
         activeSpeedTargets.clear();
         clearPath();
 
-        Pair<TrackPiece, Boolean> previous = tracks.getPrevious(startDistanceMillis);
+        double searchFromMillis = startDistanceMillis;
         while (currentTotalMillis > trackEndDistanceMillis) {
+            Pair<TrackPiece, Boolean> previous = tracks.getPrevious(searchFromMillis);
             TrackPiece track = previous.left();
+            long lengthMillis = (long) (track.getLength() * METERS_TO_MILLIS);
+
             commitTrack(track, !previous.right());
 
             long trackStart = trackEndDistanceMillis - (long) (track.getLength() * METERS_TO_MILLIS);
             futureSpeedTargets.add(new SpeedTarget(trackStart, trackEndDistanceMillis, track.getMaximumSpeed()));
+
+            searchFromMillis -= lengthMillis; // move to the start of the track we just mirrored
         }
 
         initPath();
