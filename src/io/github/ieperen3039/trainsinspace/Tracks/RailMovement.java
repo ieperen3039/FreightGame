@@ -194,35 +194,23 @@ public class RailMovement implements Schedule.UpdateListener {
                 accelerationFraction = -1;
 
             } else { // search for the next speed target
-                boolean shouldStop = false;
                 // first remove all non-applicable speed targets
                 futureSpeedTargets.removeIf(SpeedTarget::isInvalid);
                 activeSpeedTargets.removeIf(t -> t.isInvalid() || t.endMillis < currentTotalMillis - trainLengthMillis);
 
-                SpeedTarget nextSpeedTarget = null;
                 // move speed targets that have passed to active
-                Iterator<SpeedTarget> futureTargetIterator = futureSpeedTargets.iterator();
-                while (futureTargetIterator.hasNext()) {
-                    nextSpeedTarget = futureTargetIterator.next();
+                float trainEndMillis = currentTotalMillis - trainLengthMillis;
+                futureSpeedTargets.removeIf(t -> {
+                    if (t.startMillis >= currentTotalMillis) return false; // still ahead
+                    if (t.speed > 0 && t.endMillis > trainEndMillis) activeSpeedTargets.add(t);
+                    return true; // passed: drop from future
+                });
 
-                    if (nextSpeedTarget.startMillis < currentTotalMillis) { // has passed
-                        futureTargetIterator.remove();
-
-                        // only move if applicable
-                        float trainEndMillis = currentTotalMillis - trainLengthMillis;
-                        if (nextSpeedTarget.speed > 0 && nextSpeedTarget.endMillis > trainEndMillis) {
-                            activeSpeedTargets.add(nextSpeedTarget);
-                        }
-
-                    } else if (shouldSnapStopped(nextSpeedTarget)) {
-                        currentTotalMillis = nextSpeedTarget.startMillis; // snap
-                        shouldStop = true;
-                        break;
-
-                    } else {
-                        // all targets have been moved
-                        break;
-                    }
+                SpeedTarget nextSpeedTarget = futureSpeedTargets.peek(); // null if none ahead
+                boolean shouldStop = false;
+                if (nextSpeedTarget != null && shouldSnapStopped(nextSpeedTarget)) {
+                    currentTotalMillis = nextSpeedTarget.startMillis; // snap
+                    shouldStop = true;
                 }
 
                 if (shouldStop) {
@@ -651,7 +639,7 @@ public class RailMovement implements Schedule.UpdateListener {
     public Vector3f getDirection(double time, float displacement) {
         update(time);
 
-        float distanceMillis = totalMillimeters.getInterpolated(time) + displacement * METERS_TO_MILLIS;
+        double distanceMillis = totalMillimeters.getInterpolated(time) + displacement * METERS_TO_MILLIS;
         float localDistance = totalToLocalDistance.getInterpolated(distanceMillis);
         Pair<TrackPiece, Boolean> activeTrack = tracks.getPrevious(distanceMillis);
         if (activeTrack == null) activeTrack = tracks.getNext(distanceMillis);
@@ -690,7 +678,7 @@ public class RailMovement implements Schedule.UpdateListener {
     }
 
     public boolean hasPath() {
-        return reservedPath.isEmpty() && scanTrackEndMillis >= trackEndDistanceMillis;
+        return !(reservedPath.isEmpty() && scanTrackEndMillis >= trackEndDistanceMillis);
     }
 
     public void removePath() {
