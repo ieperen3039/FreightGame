@@ -443,7 +443,7 @@ public class Train extends GameEntity {
     @Override
     public void despawn(double gameTime) {
         super.despawn(gameTime);
-        positionEngine.removePath();
+        positionEngine.clearPath();
     }
 
     /**

@@ -15,7 +15,7 @@ public class PlayerStatus implements GameAspect, Serializable {
     public final Valuta money = Valuta.ofUnitValue(1000);
     public final List<Train> trains = new ArrayList<>();
     public final List<Station> stations = new ArrayList<>();
-    private Game game;
+    private transient Game game;
 
     @Override
     public void init(Game game) throws Exception {

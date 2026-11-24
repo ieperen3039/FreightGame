@@ -578,7 +578,7 @@ public class RailMovement implements Schedule.UpdateListener {
         initPath();
     }
 
-    private void clearPath() {
+    public synchronized void clearPath() {
         for (TrackPiece piece : reservedPath) {
             piece.setOccupied(false);
         }
