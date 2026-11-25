@@ -16,6 +16,10 @@ public abstract class GridMap implements GameMap {
     @Override
     public Float gridMapIntersection(Vector3fc origin, Vector3fc direction) {
         Vector2ic size = getCoordinateSize();
+
+        // no tiles
+        if (size.x() <= 0 || size.y() <= 0) return null;
+
         // edge case, direction == (0, 0, dz)
         if (direction.x() == 0 && direction.y() == 0) {
             Vector3f realSize = getPosition(size.x(), size.y());
@@ -52,6 +56,7 @@ public abstract class GridMap implements GameMap {
         } else {
             // check this tile before setting up voxel ray casting
             Float secFrac = getTileIntersect(origin, direction, (int) coordPos.x, (int) coordPos.y);
+            assert secFrac != null : "coordPos is not a valid tile coordinate";
             if (secFrac < 1) {
                 return secFrac;
             }
