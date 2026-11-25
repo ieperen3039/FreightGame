@@ -4,6 +4,7 @@ import io.github.ieperen3039.ngn.DataStructures.Generic.Color4f;
 import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTarget;
 import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTool;
 import io.github.ieperen3039.ngn.Rendering.MatrixStack.SGL;
+import io.github.ieperen3039.ngn.Rendering.Shaders.ClickShader;
 import io.github.ieperen3039.ngn.Tools.Logger;
 import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.ngn.UserInterface.Components.SFrame;
@@ -27,7 +28,7 @@ import org.joml.primitives.Rayf;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Geert van Ieperen created on 16-12-2018.
@@ -41,12 +42,12 @@ public class TrackBuilder implements MouseTool {
     private Vector3fc firstPosition;
 
     private final TrackTypeGhost ghostType;
-    private List<TrackPiece> ghostTracks = new CopyOnWriteArrayList<>();
+    private AtomicReference<List<TrackPiece>> ghostTracks = new AtomicReference<>(Collections.emptyList());
     // TODO UI option to change signal distance
     private float signalDistance = 10f;
     private Coloring.Marking mark = new Coloring.Marking();
     private Vector3f cursorPosition;
-    private float cursorBaseHaight;
+    private float cursorBaseHeight;
     private SFrame selector;
 
     /**
@@ -72,7 +73,7 @@ public class TrackBuilder implements MouseTool {
         if (button != InputMapping.UseMouseTool.getButton()) return HandleResult.CONTINUE;
 
         mark.invalidate();
-        clearGhostTracks();
+        swapGhostTracks(Collections.emptyList());
 
         if (target instanceof MouseTargetMap) {
             if (firstNode != null) {
@@ -127,7 +128,20 @@ public class TrackBuilder implements MouseTool {
                 }
 
                 if (firstNode == null) {
-                    firstNode = targetNode;
+                    if (firstPosition != null) {
+                        List<TrackPiece> tracks = RailTools.createNew(
+                                game, targetNode, firstPosition, signalDistance);
+
+                        if (isValidTracks(tracks)) {
+                            processTracksReturnLast(game, tracks);
+                            // we created this track from node to position - the inverse of what the player did
+                            firstNode = tracks.get(0).getStartNode();
+                            firstPosition = null;
+                        }
+
+                    } else {
+                        firstNode = targetNode;
+                    }
 
                 } else if (firstNode == targetNode) {
                     return HandleResult.CAPTURE;
@@ -152,8 +166,6 @@ public class TrackBuilder implements MouseTool {
 
     @Override
     public HandleResult onHover(MouseTarget target, int xDelta, int yDelta, float xSc, float ySc) {
-        // remake ghost tracks
-        clearGhostTracks();
         Settings settings = game.settings();
 
         if (target instanceof MouseTargetMap map) {
@@ -167,8 +179,8 @@ public class TrackBuilder implements MouseTool {
                 Vector3f result = new Vector3f();
 
                 Intersectionf.findClosestPointsLineSegments(
-                        cursorPosition.x, cursorPosition.y, cursorBaseHaight,
-                        cursorPosition.x, cursorPosition.y, cursorBaseHaight + 100,
+                        cursorPosition.x, cursorPosition.y, cursorBaseHeight,
+                        cursorPosition.x, cursorPosition.y, cursorBaseHeight + 100,
                         rayf.oX, rayf.oY, rayf.oZ,
                         endPoint.x, endPoint.y, endPoint.z,
                         result, new Vector3f()
@@ -179,24 +191,26 @@ public class TrackBuilder implements MouseTool {
 
             } else {
                 cursorPosition = new Vector3f(map.position()).add(0, 0, settings.TRACK_HEIGHT_ABOVE_GROUND);
-                cursorBaseHaight = cursorPosition.z;
+                cursorBaseHeight = cursorPosition.z;
             }
+
+            // remake ghost tracks
+            mark.invalidate();
 
             if (firstNode != null) {
                 RailNode ghostNode = new RailNode(firstNode, ghostType);
-                List<TrackPiece> tracks = RailTools.createNew(
-                        game, ghostNode, cursorPosition, Float.POSITIVE_INFINITY);
+                List<TrackPiece> tracks = RailTools.createNew(game, ghostNode, cursorPosition, Float.POSITIVE_INFINITY);
                 checkCollisions(tracks);
-
-                ghostTracks.addAll(tracks);
+                swapGhostTracks(tracks);
 
             } else if (firstPosition != null) {
                 Vector3f toNode = new Vector3f(cursorPosition).sub(firstPosition);
                 RailNode ghostNode = new RailNode(game, firstPosition, ghostType, toNode, null);
                 StraightTrack track = new StraightTrack(game, ghostType, ghostNode, cursorPosition, true);
-                checkCollisions(Collections.singletonList(track));
+                List<TrackPiece> tracks = Collections.singletonList(track);
 
-                ghostTracks.add(track);
+                checkCollisions(tracks);
+                swapGhostTracks(tracks);
             }
             return HandleResult.STOP;
 
@@ -207,7 +221,9 @@ public class TrackBuilder implements MouseTool {
                 Vector3f direction = new Vector3f(rayf.dX, rayf.dY, rayf.dZ);
                 float fraction = getFraction(trackPiece, origin, direction);
 
-                if (firstNode == null) {
+                mark.invalidate();
+
+                if (firstNode == null && firstPosition == null) {
                     mark = new Coloring.Marking(Color4f.BLUE, Coloring.Priority.MOUSE_HOVER);
 
                     if (fraction == 0 || fraction == 1) {
@@ -240,14 +256,17 @@ public class TrackBuilder implements MouseTool {
                         ghostNodeTarget = new RailNode(ghostNodeTarget, ghostType);
                     }
 
-                    RailNode ghostNodeFirst = new RailNode(firstNode, ghostType);
-                    List<TrackPiece> connection =
-                            RailTools.createConnection(
-                                    game, ghostNodeFirst, ghostNodeTarget, Float.POSITIVE_INFINITY);
+                    List<TrackPiece> tracks;
+                    if (firstPosition != null) {
+                        tracks = RailTools.createNew(game, ghostNodeTarget, firstPosition, Float.POSITIVE_INFINITY);
 
-                    checkCollisions(connection);
+                    } else {
+                        RailNode ghostNodeFirst = new RailNode(firstNode, ghostType);
+                        tracks = RailTools.createConnection(game, ghostNodeFirst, ghostNodeTarget, Float.POSITIVE_INFINITY);
+                    }
 
-                    ghostTracks.addAll(connection);
+                    checkCollisions(tracks);
+                    swapGhostTracks(tracks);
                 }
             }
             return HandleResult.STOP;
@@ -257,6 +276,8 @@ public class TrackBuilder implements MouseTool {
     }
 
     private boolean isValidTracks(List<TrackPiece> tracks) {
+        if (tracks.isEmpty()) return false;
+
 //        if (checkCollisions(tracks)) return false;
 
         for (TrackPiece track : tracks) {
@@ -323,12 +344,12 @@ public class TrackBuilder implements MouseTool {
         return lastTrack;
     }
 
-    public void clearGhostTracks() {
+    public void swapGhostTracks(List<TrackPiece> newGhostTracks) {
         double gameTime = game.timer().getTime();
-        for (TrackPiece ghostTrack : ghostTracks) {
+        for (TrackPiece ghostTrack : ghostTracks.get()) {
             ghostTrack.despawn(gameTime);
         }
-        ghostTracks.clear();
+        ghostTracks.set(newGhostTracks);
     }
 
     @Override
@@ -337,7 +358,9 @@ public class TrackBuilder implements MouseTool {
         game.state().addEntity(new MouseToolVisuals(selector) {
             @Override
             public void draw(SGL gl, TickTime renderTime) {
-                for (TrackPiece ghostTrack : ghostTracks) {
+                if (gl.getShader() instanceof ClickShader) return;
+
+                for (TrackPiece ghostTrack : ghostTracks.get()) {
                     ghostTrack.draw(gl, renderTime);
                 }
             }
@@ -346,7 +369,7 @@ public class TrackBuilder implements MouseTool {
 
     @Override
     public void onDeactivate() {
-        clearGhostTracks();
+        swapGhostTracks(Collections.emptyList());
         deactivation.run();
         mark.invalidate();
         selector.dispose();
