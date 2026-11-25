@@ -87,17 +87,18 @@ public class StationBuilder implements MouseTool {
     }
 
     @Override
-    public boolean onPress(int button, MouseTarget target, int xSc, int ySc) {
+    public HandleResult onPress(int button, MouseTarget target, int xSc, int ySc) {
         if (button == InputMapping.DeactivateMouseTool.getButton()) {
-            onDeactivate();
-            return false;
+            return HandleResult.DEACTIVATE;
         }
 
-        if (button != InputMapping.UseMouseTool.getButton()) return false;
+        if (button != InputMapping.UseMouseTool.getButton()) {
+            return HandleResult.CONTINUE;
+        }
 
         if (target instanceof MouseTargetEntity) {
             cursorIsOnMap = false;
-            return false;
+            return HandleResult.CONTINUE;
 
         } else if (target instanceof MouseTargetMap map) {
             placementPos = map.position();
@@ -105,10 +106,10 @@ public class StationBuilder implements MouseTool {
             cursorPosition.set(map.position());
             isPositioned = true;
 
-            return true;
+            return HandleResult.CAPTURE;
         }
 
-        return false;
+        return HandleResult.CONTINUE;
     }
 
     @Override
@@ -144,7 +145,7 @@ public class StationBuilder implements MouseTool {
     }
 
     @Override
-    public boolean onHover(MouseTarget target, int xDelta, int yDelta, float xSc, float ySc) {
+    public HandleResult onHover(MouseTarget target, int xDelta, int yDelta, float xSc, float ySc) {
         if (target instanceof MouseTargetMap map) {
             if (!isPositioned) {
                 cursorPosition.set(map.position());
@@ -153,7 +154,7 @@ public class StationBuilder implements MouseTool {
         } else {
             cursorIsOnMap = false;
         }
-        return true;
+        return HandleResult.STOP;
     }
 
     private float hypotenuse(float a, float b) {
@@ -172,8 +173,8 @@ public class StationBuilder implements MouseTool {
     }
 
     @Override
-    public void onRelease(int button, MouseTarget target, int xSc, int ySc) {
-        if (!isPositioned) return;
+    public HandleResult onRelease(int button, MouseTarget target, int xSc, int ySc) {
+        if (!isPositioned) return HandleResult.CONTINUE;
         double gameTime = game.timer().getTime();
 
         GameEntity newStation = station.solidify(game, trackType, gameTime);
@@ -182,6 +183,7 @@ public class StationBuilder implements MouseTool {
 
         station.despawn(gameTime);
         game.inputHandling().setMouseTool(null);
+        return HandleResult.CONTINUE;
     }
 
     private class Visuals extends MouseToolVisuals {

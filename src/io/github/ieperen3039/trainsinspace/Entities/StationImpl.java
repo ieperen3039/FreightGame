@@ -16,6 +16,7 @@ import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.DataStructures.Valuta;
 import io.github.ieperen3039.trainsinspace.Freight.Cargo;
+import io.github.ieperen3039.trainsinspace.Menu.EntityScreens.TrainScreen;
 import io.github.ieperen3039.trainsinspace.Menu.InGame.Build.TrainConstructionMenu;
 import io.github.ieperen3039.trainsinspace.Menu.Main.MainMenu;
 import io.github.ieperen3039.trainsinspace.Mods.CargoType;
@@ -383,11 +384,15 @@ public class StationImpl extends Storage implements Station {
 
             for (Train train : trains) {
                 SContainer trainComponent = SContainer.row(
-                        new SButton(train.toString(), MainMenu.BUTTON_PROPERTIES_STRETCH, train::openUI),
+                        new SButton(train.toString(), MainMenu.BUTTON_PROPERTIES_STRETCH, () -> openScreen(train)),
                         new SButton(">", MainMenu.SQUARE_BUTTON_PROPS, train::start)
                 );
                 trainList.add(trainComponent);
             }
+        }
+
+        private void openScreen(Train train) {
+            game.gui().addFrame(new TrainScreen(game, train));
         }
     }
 }

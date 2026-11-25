@@ -13,7 +13,7 @@ import io.github.ieperen3039.trainsinspace.Menu.EntityScreens.TrainScreen;
 
 public class MyDefaultMouseTool extends DefaultMouseTool {
     private final Game game;
-    private Coloring.Marking hoverMark;
+    private Coloring.Marking hoverMark = new Coloring.Marking();
 
     public MyDefaultMouseTool(Game game) {
         super(game);
@@ -23,7 +23,7 @@ public class MyDefaultMouseTool extends DefaultMouseTool {
     @Override
     public HandleResult onHover(MouseTarget target, int xDelta, int yDelta, float xSc, float ySc) {
         if (target instanceof MouseTargetEntity entity) {
-            if (hoverMark != null) hoverMark.invalidate();
+            hoverMark.invalidate();
             hoverMark = new Coloring.Marking(Color4f.GREY, Coloring.Priority.MOUSE_HOVER);
             entity.target().setMarking(hoverMark);
             return HandleResult.STOP;

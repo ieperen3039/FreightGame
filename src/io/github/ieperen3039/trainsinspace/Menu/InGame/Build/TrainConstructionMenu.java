@@ -8,6 +8,7 @@ import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Core.PlayerStatus;
 import io.github.ieperen3039.trainsinspace.DataStructures.Valuta;
 import io.github.ieperen3039.trainsinspace.Entities.*;
+import io.github.ieperen3039.trainsinspace.Menu.EntityScreens.TrainScreen;
 import io.github.ieperen3039.trainsinspace.Menu.Main.MainMenu;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackPiece;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackType;
@@ -159,7 +160,7 @@ public class TrainConstructionMenu extends SFrame {
         player.trains.add(construction);
         game.state().addEntity(construction);
         targetPlace.addTrain(construction);
-        construction.openUI();
+        game.gui().addFrame(new TrainScreen(game, construction));
 
         dispose();
     }

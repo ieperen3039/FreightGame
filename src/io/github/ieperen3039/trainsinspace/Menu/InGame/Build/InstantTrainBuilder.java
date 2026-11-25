@@ -6,8 +6,8 @@ import io.github.ieperen3039.trainsinspace.Entities.Locomotive;
 import io.github.ieperen3039.trainsinspace.Entities.Train;
 import io.github.ieperen3039.trainsinspace.Entities.Wagon;
 import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.EntityActionTool;
+import io.github.ieperen3039.trainsinspace.Menu.EntityScreens.TrainScreen;
 import io.github.ieperen3039.trainsinspace.Tracks.TrackPiece;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -41,8 +41,7 @@ public class InstantTrainBuilder extends EntityActionTool {
             wagon = new Wagon(wagonTypes.get(0));
         }
 
-        // click on it
-        construction.onMouseClick(GLFW.GLFW_MOUSE_BUTTON_LEFT, game.keyControl());
+        game.gui().addFrame(new TrainScreen(game, construction));
     }
 
     public void onDeactivate() {

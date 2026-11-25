@@ -7,6 +7,7 @@ import io.github.ieperen3039.ngn.Tools.TickTime;
 import io.github.ieperen3039.ngn.UserInterface.Components.SFrame;
 import io.github.ieperen3039.ngn.UserInterface.Components.SToggleButton;
 import io.github.ieperen3039.trainsinspace.Core.Game;
+import io.github.ieperen3039.trainsinspace.InputHandling.InputMapping;
 import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTargetEntity;
 import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseToolVisuals;
 import io.github.ieperen3039.trainsinspace.Network.RailNode;
@@ -31,37 +32,45 @@ public class SignalBuilder implements MouseTool {
     }
 
     @Override
-    public boolean onPress(int button, MouseTarget target, int xSc, int ySc) {
-        if (target instanceof MouseTargetEntity entity) {
-            if (entity.target() instanceof TrackPiece trackPiece) {
-                assert trackPiece.isValid();
+    public HandleResult onPress(int button, MouseTarget target, int xSc, int ySc) {
+        if (button == InputMapping.DeactivateMouseTool.getButton()) {
+            return HandleResult.DEACTIVATE;
+        }
+        if (button == InputMapping.UseMouseTool.getButton()) {
+            if (target instanceof MouseTargetEntity entity) {
+                if (entity.target() instanceof TrackPiece trackPiece) {
+                    buildSignal(trackPiece, xSc, ySc);
+                    return HandleResult.CAPTURE;
 
-                Rayf rayf = game.camera().unproject(xSc, ySc, game.getViewPort());
-                Vector3f origin = new Vector3f(rayf.oX, rayf.oY, rayf.oZ);
-                Vector3f direction = new Vector3f(rayf.dX, rayf.dY, rayf.dZ);
-
-                float fraction = TrackBuilder.getFraction(trackPiece, origin, direction);
-                RailNode targetNode = TrackBuilder.getIfExisting(game, trackPiece, fraction);
-
-                if (targetNode == null) {
-                    double gameTime = game.timer().getTime();
-                    targetNode = RailTools.createSplit(game, trackPiece, fraction, gameTime);
+                } else {
+                    ghostSignal = null;
                 }
-
-                targetNode.addSignal(game, true);
-
-                return true;
-
-            } else {
-                ghostSignal = null;
             }
         }
 
-        return false;
+        return HandleResult.CONTINUE;
+    }
+
+    private void buildSignal(TrackPiece trackPiece, int xSc, int ySc) {
+        assert trackPiece.isValid();
+
+        Rayf rayf = game.camera().unproject(xSc, ySc, game.getViewPort());
+        Vector3f origin = new Vector3f(rayf.oX, rayf.oY, rayf.oZ);
+        Vector3f direction = new Vector3f(rayf.dX, rayf.dY, rayf.dZ);
+
+        float fraction = TrackBuilder.getFraction(trackPiece, origin, direction);
+        RailNode targetNode = TrackBuilder.getIfExisting(game, trackPiece, fraction);
+
+        if (targetNode == null) {
+            double gameTime = game.timer().getTime();
+            targetNode = RailTools.createSplit(game, trackPiece, fraction, gameTime);
+        }
+
+        targetNode.addSignal(game, true);
     }
 
     @Override
-    public boolean onHover(MouseTarget target, int xDelta, int yDelta, float xSc, float ySc) {
+    public HandleResult onHover(MouseTarget target, int xDelta, int yDelta, float xSc, float ySc) {
         if (target instanceof MouseTargetEntity entity) {
             if (entity.target() instanceof TrackPiece trackPiece) {
                 Rayf rayf = game.camera().unproject((int) xSc, (int) ySc, game.getViewPort());
@@ -85,14 +94,14 @@ public class SignalBuilder implements MouseTool {
                     ghostSignal = new SignalEntity(game, ghostNodeTarget, true, true);
                 }
 
-                return true;
+                return HandleResult.STOP;
 
             } else {
                 ghostSignal = null;
             }
         }
 
-        return false;
+        return HandleResult.CONTINUE;
     }
 
     @Override

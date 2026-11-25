@@ -7,6 +7,7 @@ import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Entities.GameEntity;
 import io.github.ieperen3039.trainsinspace.Entities.Industry;
 import io.github.ieperen3039.trainsinspace.Entities.StationImpl;
+import io.github.ieperen3039.trainsinspace.InputHandling.InputMapping;
 import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTargetMap;
 
 /**
@@ -24,7 +25,13 @@ public class IndustryBuilder implements MouseTool {
     }
 
     @Override
-    public boolean onPress(int button, MouseTarget target, int xSc, int ySc) {
+    public HandleResult onPress(int button, MouseTarget target, int xSc, int ySc) {
+        if (button == InputMapping.DeactivateMouseTool.getButton()) {
+            return HandleResult.DEACTIVATE;
+        }
+
+        if (button != InputMapping.UseMouseTool.getButton()) return HandleResult.CONTINUE;
+
         if (target instanceof MouseTargetMap map) {
             Industry industry = new Industry(game, map.position(), game.timer().getTime(), properties);
             game.state().addEntity(industry);
@@ -38,9 +45,9 @@ public class IndustryBuilder implements MouseTool {
             }
 
             game.inputHandling().setMouseTool(null);
-            return true;
+            return HandleResult.CAPTURE;
         }
-        return false;
+        return HandleResult.CONTINUE;
     }
 
     @Override

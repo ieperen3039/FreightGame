@@ -3,7 +3,7 @@ package io.github.ieperen3039.trainsinspace.InputHandling.MouseTool;
 import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTarget;
 import io.github.ieperen3039.ngn.InputHandling.MouseTools.MouseTool;
 import io.github.ieperen3039.trainsinspace.Entities.GameEntity;
-import org.lwjgl.glfw.GLFW;
+import io.github.ieperen3039.trainsinspace.InputHandling.InputMapping;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -23,7 +23,11 @@ public class EntityActionTool implements MouseTool {
 
     @Override
     public HandleResult onPress(int button, MouseTarget target, int xSc, int ySc) {
-        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (button == InputMapping.DeactivateMouseTool.getButton()) {
+            return HandleResult.DEACTIVATE;
+        }
+
+        if (button == InputMapping.UseMouseTool.getButton()) {
             if (target instanceof MouseTargetEntity entity) {
                 if (guard.test(entity.target())) {
                     action.accept(entity.target());

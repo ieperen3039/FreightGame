@@ -11,6 +11,7 @@ import io.github.ieperen3039.ngn.UserInterface.Components.SToggleButton;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Core.Game;
 import io.github.ieperen3039.trainsinspace.Entities.GameEntity;
+import io.github.ieperen3039.trainsinspace.InputHandling.InputMapping;
 import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTargetEntity;
 import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseTargetMap;
 import io.github.ieperen3039.trainsinspace.InputHandling.MouseTool.MouseToolVisuals;
@@ -22,7 +23,6 @@ import org.joml.Intersectionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.joml.primitives.Rayf;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -64,11 +64,12 @@ public class TrackBuilder implements MouseTool {
     }
 
     @Override
-    public boolean onPress(int button, MouseTarget target, int xSc, int ySc) {
-        if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-            onDeactivate();
-            return true;
+    public HandleResult onPress(int button, MouseTarget target, int xSc, int ySc) {
+        if (button == InputMapping.DeactivateMouseTool.getButton()) {
+            return HandleResult.DEACTIVATE;
         }
+
+        if (button != InputMapping.UseMouseTool.getButton()) return HandleResult.CONTINUE;
 
         mark.invalidate();
         clearGhostTracks();
@@ -100,7 +101,7 @@ public class TrackBuilder implements MouseTool {
                 firstPosition = new Vector3f(cursorPosition);
             }
 
-            return true;
+            return HandleResult.CAPTURE;
         } else if (target instanceof MouseTargetEntity entity) {
             Logger.DEBUG.print("Clicked on entity " + entity.target());
             if (entity.target() instanceof TrackPiece trackPiece) {
@@ -129,7 +130,7 @@ public class TrackBuilder implements MouseTool {
                     firstNode = targetNode;
 
                 } else if (firstNode == targetNode) {
-                    return true;
+                    return HandleResult.CAPTURE;
 
                 } else {
                     List<TrackPiece> connection =
@@ -143,14 +144,14 @@ public class TrackBuilder implements MouseTool {
                 }
             }
 
-            return true;
+            return HandleResult.CAPTURE;
         }
 
-        return false;
+        return HandleResult.CONTINUE;
     }
 
     @Override
-    public boolean onHover(MouseTarget target, int xDelta, int yDelta, float xSc, float ySc) {
+    public HandleResult onHover(MouseTarget target, int xDelta, int yDelta, float xSc, float ySc) {
         // remake ghost tracks
         clearGhostTracks();
         Settings settings = game.settings();
@@ -197,7 +198,8 @@ public class TrackBuilder implements MouseTool {
 
                 ghostTracks.add(track);
             }
-            return true;
+            return HandleResult.STOP;
+
         } else if (target instanceof MouseTargetEntity entity) {
             if (entity.target() instanceof TrackPiece trackPiece) {
                 Rayf rayf = game.camera().unproject((int) xSc, (int) ySc, game.getViewPort());
@@ -225,7 +227,7 @@ public class TrackBuilder implements MouseTool {
 
                     if (ghostNodeTarget == null) {
                         ghostNodeTarget = getIfExisting(game, trackPiece, fraction);
-                        if (ghostNodeTarget == firstNode) return true;
+                        if (ghostNodeTarget == firstNode) return HandleResult.STOP;
                     }
 
                     if (ghostNodeTarget == null) {
@@ -248,10 +250,10 @@ public class TrackBuilder implements MouseTool {
                     ghostTracks.addAll(connection);
                 }
             }
-            return true;
+            return HandleResult.STOP;
         }
 
-        return false;
+        return HandleResult.CONTINUE;
     }
 
     private boolean isValidTracks(List<TrackPiece> tracks) {
@@ -269,6 +271,7 @@ public class TrackBuilder implements MouseTool {
     }
 
     protected boolean checkCollisions(List<TrackPiece> tracks) {
+        mark.invalidate();
         mark = new Coloring.Marking(Color4f.RED, Coloring.Priority.MAXIMUM);
         boolean hasCollisions = false;
 

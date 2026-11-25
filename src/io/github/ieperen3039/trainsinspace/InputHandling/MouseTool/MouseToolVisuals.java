@@ -4,21 +4,21 @@ import io.github.ieperen3039.ngn.UserInterface.Components.SFrame;
 import io.github.ieperen3039.trainsinspace.Core.Coloring;
 import io.github.ieperen3039.trainsinspace.Entities.GameEntity;
 
+import java.util.function.BooleanSupplier;
+
 public abstract class MouseToolVisuals extends GameEntity {
-    private SFrame uiElement;
+    private BooleanSupplier disposedLogic;
 
     public MouseToolVisuals(SFrame uiElement) {
-        assert uiElement != null;
-        this.uiElement = uiElement;
+        this(uiElement::isDisposed);
+    }
+
+    public MouseToolVisuals(BooleanSupplier disposedLogic) {
+        this.disposedLogic = disposedLogic;
     }
 
     @Override
     public void setMarking(Coloring.Marking mark) {
-    }
-
-    @Override
-    public void despawn(double gameTime) {
-        uiElement.dispose();
     }
 
     @Override
@@ -27,6 +27,6 @@ public abstract class MouseToolVisuals extends GameEntity {
 
     @Override
     public boolean isDespawnedAt(double gameTime) {
-        return uiElement.isDisposed();
+        return disposedLogic.getAsBoolean();
     }
 }
